@@ -38,17 +38,21 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::PoisonError;
 use std::thread;
+use std::time::Duration;
 
+use crate::cli::GpsdSpec;
 use crate::cli::ProviderSpec;
 use crate::event;
 use crate::link::Backoff;
+use crate::link::connect;
+use crate::link::ready;
+use crate::link::timed_out;
 
 /// gpsd's port.
 pub(crate) const GPSD_PORT: u16 = 2947;
-/// What asks gpsd for its devices' raw output, byte for byte ("super-raw"
-/// in gpsd's `?WATCH`).  It is a request to gpsd alone: nothing is sent
-/// to the receiver behind it.
-pub(crate) const WATCH: &[u8] = b"?WATCH={\"enable\":true,\"raw\":2}\n";
+/// How long gpsd may send nothing before it is taken to have gone, and
+/// connected to again.  A device it reads sends every second.
+pub(crate) const GPSD_SILENCE: Duration = Duration::from_secs(10);
 /// GPS less UTC since the end of 2016, which the made-up sky carries.
 pub(crate) const UTC_OFFSET: Seconds<i8> = Seconds(18);
 /// How long before its leap second a `leap:` sky starts, unless a fake
@@ -147,7 +151,7 @@ pub(crate) const fn kind(spec: &ProviderSpec) -> Kind {
     match spec {
         ProviderSpec::Fixed | ProviderSpec::Leap(_) => Kind::Scene,
         ProviderSpec::Ubx(_) => Kind::Recording,
-        ProviderSpec::Gpsd { .. } => Kind::Live,
+        ProviderSpec::Gpsd(_) => Kind::Live,
     }
 }
 
@@ -185,7 +189,7 @@ pub(crate) fn build(
             let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
             (recording(bytes), relabel(fake_start), None)
         }
-        ProviderSpec::Gpsd { .. } => (
+        ProviderSpec::Gpsd(_) => (
             Provider::Live(Box::new(Latest::new())),
             relabel(fake_start),
             None,
@@ -254,26 +258,44 @@ fn ecef(position: Position) -> Ecef {
     }
 }
 
-/// Reads gpsd at `host` and `port` for ever, delivering each epoch's
+/// What asks gpsd for the raw output of `device`, or of every device it
+/// has, byte for byte ("super-raw" in gpsd's `?WATCH`).  It is a request
+/// to gpsd alone: nothing is sent to the receiver behind it.  The
+/// device has no character JSON would have to escape (`cli`).
+pub(crate) fn watch(device: Option<&str>) -> Vec<u8> {
+    let device = device.map_or_else(String::new, |device| format!(",\"device\":\"{device}\""));
+    format!("?WATCH={{\"enable\":true,\"raw\":2{device}}}\n").into_bytes()
+}
+
+/// Reads gpsd as `spec` names it for ever, delivering each epoch's
 /// record to `shared`, and connects again, after a wait that grows,
-/// whenever the connection fails or ends.
+/// whenever the connection fails or ends, or gpsd sends nothing for
+/// `silence`.  A connection is tried for a time, and probed when idle,
+/// as the link to the instrument is.
 pub(crate) fn spawn_gpsd(
-    host: String,
-    port: u16,
+    spec: GpsdSpec,
     shared: Arc<Mutex<Shared>>,
     mut backoff: Backoff,
+    silence: Duration,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         let mut assembler = Ubx::new();
+        let watch = watch(spec.device.as_deref());
         loop {
-            let ended = TcpStream::connect((host.as_str(), port)).and_then(|stream| {
-                event(format_args!("gpsd: connected to {host}:{port}"));
+            let ended = connect((spec.host.as_str(), spec.port)).and_then(|stream| {
+                event(format_args!("gpsd: connected to {spec}"));
                 backoff.reset();
-                read_gpsd(stream, &mut assembler, &shared)
+                ready(&stream)?;
+                stream.set_read_timeout(Some(silence))?;
+                read_gpsd(stream, &watch, &mut assembler, &shared)
             });
             match ended {
-                Ok(()) => event(format_args!("gpsd: {host}:{port} closed the connection")),
-                Err(error) => event(format_args!("gpsd: {host}:{port}: {error}")),
+                Ok(()) => event(format_args!("gpsd: {spec} closed the connection")),
+                Err(error) if timed_out(&error) => event(format_args!(
+                    "gpsd: {spec} sent nothing for {} s",
+                    silence.as_secs_f64()
+                )),
+                Err(error) => event(format_args!("gpsd: {spec}: {error}")),
             }
             assembler.reset();
             let wait = backoff.next_wait();
@@ -289,8 +311,13 @@ pub(crate) fn spawn_gpsd(
 /// Asks gpsd for its raw output and delivers each epoch's record, until
 /// the connection ends.  What gpsd says of itself in JSON is not UBX,
 /// and the deframer passes over it.
-fn read_gpsd(mut stream: TcpStream, assembler: &mut Ubx, shared: &Mutex<Shared>) -> io::Result<()> {
-    stream.write_all(WATCH)?;
+fn read_gpsd(
+    mut stream: TcpStream,
+    watch: &[u8],
+    assembler: &mut Ubx,
+    shared: &Mutex<Shared>,
+) -> io::Result<()> {
+    stream.write_all(watch)?;
     let mut chunk = [0; GPSD_CHUNK];
     let mut record = Record::EMPTY;
     loop {
@@ -316,11 +343,12 @@ pub(crate) mod tests {
     use super::Kind;
     use super::Provider;
     use super::Shared;
-    use super::WATCH;
     use super::build;
     use super::complete_scene;
     use super::recording;
     use super::spawn_gpsd;
+    use super::watch;
+    use crate::cli::GpsdSpec;
     use crate::cli::ProviderSpec;
     use crate::link::Backoff;
     use smartclock_gps::engine::Engine;
@@ -355,6 +383,7 @@ pub(crate) mod tests {
     use std::io::Read as _;
     use std::io::Write as _;
     use std::net::TcpListener;
+    use std::net::TcpStream;
     use std::path::Path;
     use std::sync::Arc;
     use std::sync::Mutex;
@@ -560,11 +589,9 @@ pub(crate) mod tests {
         assert!(unshown.is_empty(), "unshown: {unshown:?}");
     }
 
-    /// gpsd's reader asks for raw output, makes records of what comes,
-    /// stamps each with the driver's tick, and connects again when
-    /// gpsd goes.
-    #[test]
-    fn gpsd_is_read_and_read_again() {
+    /// A fake gpsd on loopback, and the reader of it, `device` its
+    /// device, taken to have gone after `silence`.
+    fn fake_gpsd(device: Option<&str>, silence: Duration) -> (TcpListener, Arc<Mutex<Shared>>) {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let shared = Arc::new(Mutex::new(nest(
@@ -573,17 +600,80 @@ pub(crate) mod tests {
         )));
         shared.lock().unwrap().tick = Tick(7);
         spawn_gpsd(
-            "127.0.0.1".to_owned(),
-            port,
+            GpsdSpec {
+                host: "127.0.0.1".to_owned(),
+                port,
+                device: device.map(str::to_owned),
+            },
             Arc::clone(&shared),
             Backoff::new(Duration::from_millis(10), Duration::from_millis(10)),
+            silence,
         );
+        (listener, shared)
+    }
 
+    /// Accepts the reader's next connection, within patience.
+    fn accept(listener: &TcpListener) -> TcpStream {
+        listener.set_nonblocking(true).unwrap();
+        let started = Instant::now();
+        loop {
+            match listener.accept() {
+                Ok((stream, _)) => {
+                    stream.set_nonblocking(false).unwrap();
+                    return stream;
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                    assert!(started.elapsed() < PATIENCE, "never connected");
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("{error}"),
+            }
+        }
+    }
+
+    /// What the reader asked gpsd for.
+    fn asked(gpsd: &mut TcpStream) -> Vec<u8> {
+        let mut asked = Vec::new();
+        let mut byte = [0; 1];
+        while asked.last() != Some(&b'\n') {
+            gpsd.read_exact(&mut byte).unwrap();
+            asked.push(byte[0]);
+        }
+        asked
+    }
+
+    #[test]
+    fn watch_names_the_device_given() {
+        assert_eq!(watch(None), b"?WATCH={\"enable\":true,\"raw\":2}\n");
+        assert_eq!(
+            watch(Some("/dev/ttyACM0")),
+            b"?WATCH={\"enable\":true,\"raw\":2,\"device\":\"/dev/ttyACM0\"}\n"
+        );
+    }
+
+    /// A gpsd that holds its connection open and sends nothing, as one
+    /// whose host has gone without a word, is connected to again; the
+    /// device named is asked for each time.
+    #[test]
+    fn a_silent_gpsd_is_connected_to_again() {
+        const DEVICE: &str = "/dev/ttyACM0";
+        let (listener, _shared) = fake_gpsd(Some(DEVICE), Duration::from_millis(200));
+        let mut first = accept(&listener);
+        assert_eq!(asked(&mut first), watch(Some(DEVICE)));
+        let mut second = accept(&listener);
+        assert_eq!(asked(&mut second), watch(Some(DEVICE)));
+        drop(first);
+    }
+
+    /// gpsd's reader asks for raw output, makes records of what comes,
+    /// stamps each with the driver's tick, and connects again when
+    /// gpsd goes.
+    #[test]
+    fn gpsd_is_read_and_read_again() {
+        let (listener, shared) = fake_gpsd(None, PATIENCE);
         for _ in 0..2 {
-            let (mut gpsd, _) = listener.accept().unwrap();
-            let mut asked = vec![0; WATCH.len()];
-            gpsd.read_exact(&mut asked).unwrap();
-            assert_eq!(asked, WATCH);
+            let mut gpsd = accept(&listener);
+            assert_eq!(asked(&mut gpsd), watch(None));
             gpsd.write_all(&capture()).unwrap();
             let started = Instant::now();
             loop {

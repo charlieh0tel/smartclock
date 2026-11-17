@@ -39,8 +39,10 @@ use crate::provider::UTC_OFFSET;
 #[derive(Debug, Parser)]
 #[command(version)]
 pub(crate) struct Cli {
-    /// Where each second's record comes from: `gpsd:HOST[:PORT]` (a
-    /// u-blox receiver's raw output through gpsd), `ubx:FILE` (a raw
+    /// Where each second's record comes from: `gpsd:HOST[:PORT][DEVICE]`
+    /// (a u-blox receiver's raw output through gpsd: of the device
+    /// DEVICE names, a path such as /dev/ttyACM0, or else of every
+    /// device gpsd has, merged), `ubx:FILE` (a raw
     /// UBX recording, such as `gpspipe -R` writes), `fixed` (a made-up
     /// sky over a fixed place) or `leap:MIDNIGHT[,insert|,remove]` (that
     /// sky, with a leap second ending the UTC day before MIDNIGHT).
@@ -174,19 +176,39 @@ impl Saved {
 /// it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ProviderSpec {
-    /// gpsd at a host and port, giving a u-blox receiver's raw output.
-    Gpsd {
-        /// The host.
-        host: String,
-        /// The port.
-        port: u16,
-    },
+    /// gpsd, giving a u-blox receiver's raw output.
+    Gpsd(GpsdSpec),
     /// A raw UBX recording.
     Ubx(PathBuf),
     /// The made-up sky.
     Fixed,
     /// The made-up sky with a leap second.
     Leap(LeapEvent),
+}
+
+/// gpsd at a host and port, and the device of its that is read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct GpsdSpec {
+    pub(crate) host: String,
+    pub(crate) port: u16,
+    /// The device, as gpsd names it, such as `/dev/ttyACM0`; with none,
+    /// every device gpsd has, their raw output merged.
+    pub(crate) device: Option<String>,
+}
+
+impl fmt::Display for GpsdSpec {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Self { host, port, device } = self;
+        if host.contains(':') {
+            write!(formatter, "[{host}]:{port}")?;
+        } else {
+            write!(formatter, "{host}:{port}")?;
+        }
+        match device {
+            Some(device) => write!(formatter, "{device}"),
+            None => Ok(()),
+        }
+    }
 }
 
 /// What a provider is called on the command line, before its colon.
@@ -208,14 +230,11 @@ impl FromStr for ProviderSpec {
         };
         match (kind, rest) {
             (FIXED, None) => Ok(Self::Fixed),
-            (GPSD, Some(address)) if !address.is_empty() => {
-                let (host, port) = host_and_port(address)?;
-                Ok(Self::Gpsd { host, port })
-            }
+            (GPSD, Some(address)) if !address.is_empty() => gpsd(address).map(Self::Gpsd),
             (UBX, Some(path)) if !path.is_empty() => Ok(Self::Ubx(PathBuf::from(path))),
             (LEAP, Some(leap)) => leap_event(leap).map(Self::Leap),
             _ => bail!(
-                "no provider \"{text}\": give gpsd:HOST[:PORT], ubx:FILE, fixed or leap:MIDNIGHT[,insert|,remove]"
+                "no provider \"{text}\": give gpsd:HOST[:PORT][DEVICE], ubx:FILE, fixed or leap:MIDNIGHT[,insert|,remove]"
             ),
         }
     }
@@ -224,12 +243,37 @@ impl FromStr for ProviderSpec {
 impl fmt::Display for ProviderSpec {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Gpsd { host, port } => write!(formatter, "{GPSD}:{host}:{port}"),
+            Self::Gpsd(gpsd) => write!(formatter, "{GPSD}:{gpsd}"),
             Self::Ubx(path) => write!(formatter, "{UBX}:{}", path.display()),
             Self::Fixed => write!(formatter, "{FIXED}"),
             Self::Leap(event) => write!(formatter, "{LEAP} ({:?})", event.change),
         }
     }
+}
+
+/// `HOST[:PORT][DEVICE]`, DEVICE from the first `/` on.
+fn gpsd(text: &str) -> Result<GpsdSpec> {
+    let (address, device) = match text.find('/') {
+        Some(at) => (&text[..at], Some(&text[at..])),
+        None => (text, None),
+    };
+    if let Some(device) = device
+        && (device.len() == 1
+            || device
+                .chars()
+                .any(|c| c == '"' || c == '\\' || c.is_control()))
+    {
+        bail!("no device \"{device}\" in \"{text}\": give a path such as /dev/ttyACM0");
+    }
+    if address.is_empty() {
+        bail!("no host in \"{text}\"");
+    }
+    let (host, port) = host_and_port(address)?;
+    Ok(GpsdSpec {
+        host,
+        port,
+        device: device.map(str::to_owned),
+    })
 }
 
 /// `HOST`, `HOST:PORT`, `[V6]` or `[V6]:PORT`, gpsd's port if none.
@@ -403,6 +447,7 @@ mod tests {
     use super::Cli;
     use super::Config;
     use super::EngineSpec;
+    use super::GpsdSpec;
     use super::ProviderSpec;
     use super::TransportSpec;
     use crate::provider::GPSD_PORT;
@@ -519,10 +564,36 @@ mod tests {
 
     #[test]
     fn providers_parse() {
-        let gpsd = |host: &str, port| ProviderSpec::Gpsd {
-            host: host.to_owned(),
-            port,
+        let gpsd = |host: &str, port| {
+            ProviderSpec::Gpsd(GpsdSpec {
+                host: host.to_owned(),
+                port,
+                device: None,
+            })
         };
+        let on = |host: &str, port, device: &str| {
+            ProviderSpec::Gpsd(GpsdSpec {
+                host: host.to_owned(),
+                port,
+                device: Some(device.to_owned()),
+            })
+        };
+        assert_eq!(
+            provider("gpsd:apu-0/dev/ttyACM0").unwrap(),
+            on("apu-0", GPSD_PORT, "/dev/ttyACM0")
+        );
+        assert_eq!(
+            provider("gpsd:[::1]:3000/dev/ttyACM0").unwrap(),
+            on("::1", 3000, "/dev/ttyACM0")
+        );
+        for text in [
+            "gpsd:apu-0",
+            "gpsd:apu-0:3000/dev/ttyACM0",
+            "gpsd:[::1]:3000/dev/ttyACM0",
+        ] {
+            let spec = provider(text).unwrap();
+            assert_eq!(provider(&spec.to_string()).unwrap(), spec, "{text}");
+        }
         assert_eq!(provider("gpsd:apu-0").unwrap(), gpsd("apu-0", GPSD_PORT));
         assert_eq!(provider("gpsd:apu-0:3000").unwrap(), gpsd("apu-0", 3000));
         assert_eq!(provider("gpsd:[::1]").unwrap(), gpsd("::1", GPSD_PORT));
@@ -558,6 +629,9 @@ mod tests {
             "gpsd:",
             "gpsd:host:port",
             "gpsd:[::1",
+            "gpsd:/dev/ttyACM0",
+            "gpsd:apu-0/",
+            "gpsd:apu-0/dev/a\"b",
             "ubx:",
             "fixed:x",
             "leap:2028-01-01T00:00:01Z",

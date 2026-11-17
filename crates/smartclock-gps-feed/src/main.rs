@@ -35,6 +35,7 @@ use crate::feed::run;
 use crate::feed::utc_second;
 use crate::link::Backoff;
 use crate::provider::Built;
+use crate::provider::GPSD_SILENCE;
 use crate::provider::Shared;
 use crate::provider::build;
 use crate::provider::kind;
@@ -55,8 +56,13 @@ fn main() -> Result<()> {
         nest,
         tick: Tick(0),
     }));
-    if let ProviderSpec::Gpsd { host, port } = &config.provider {
-        spawn_gpsd(host.clone(), *port, Arc::clone(&shared), Backoff::default());
+    if let ProviderSpec::Gpsd(gpsd) = &config.provider {
+        spawn_gpsd(
+            gpsd.clone(),
+            Arc::clone(&shared),
+            Backoff::default(),
+            GPSD_SILENCE,
+        );
     }
     let mut log = config
         .log

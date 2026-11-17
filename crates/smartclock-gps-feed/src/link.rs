@@ -129,7 +129,7 @@ trait Link {
     fn write_within(&mut self, bytes: &[u8], timeout: Duration) -> io::Result<()>;
 }
 
-fn timed_out(error: &io::Error) -> bool {
+pub(crate) fn timed_out(error: &io::Error) -> bool {
     matches!(error.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut)
 }
 

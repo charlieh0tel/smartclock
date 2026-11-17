@@ -51,8 +51,8 @@ struct Epoch {
     dops: Option<Dops>,
     /// Its `NAV-POSECEF`.
     ecef: Option<Ecef>,
-    /// Its `NAV-SAT`.
-    satellites: Satellites,
+    /// The sky its `NAV-SAT` gave.
+    satellites: Option<Satellites>,
 }
 
 impl Epoch {
@@ -64,7 +64,7 @@ impl Epoch {
         leap: None,
         dops: None,
         ecef: None,
-        satellites: Satellites::EMPTY,
+        satellites: None,
     };
 }
 
@@ -271,7 +271,7 @@ impl Assembly {
             Message::NavPvt(solution) => self.epoch.solution = Some(*solution),
             Message::NavTimeGps(time) => self.epoch.time = Some(*time),
             Message::NavTimeLs(leap) => self.epoch.leap = Some(*leap),
-            Message::NavSat(sat) => self.epoch.satellites = sat.sky(),
+            Message::NavSat(sat) => self.epoch.satellites = Some(sat.sky()),
             Message::NavVelEcef(_)
             | Message::NavClock(_)
             | Message::NavEoe(_)
@@ -293,7 +293,7 @@ impl Assembly {
         // The receiver that sent the epoch runs, and tells of no fault.
         record.self_test = SelfTest::PASS;
         record.derived.raim = self.raim;
-        record.satellites = epoch.satellites;
+        record.satellites = epoch.satellites.unwrap_or(Satellites::EMPTY);
         if let Some(solution) = epoch
             .solution
             .filter(|solution| solution.fix() != Fix::None)

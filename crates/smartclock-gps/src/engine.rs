@@ -1776,7 +1776,7 @@ impl Engine {
     /// family's channels at a tracking mode of [`TRACKING_LEAST`] or
     /// above, not every satellite a channel holds.  The fix, Time RAIM
     /// and the 1 PPS go by this count too.
-    fn tracking(&self, record: &Record, family: &Family) -> usize {
+    fn tracked_count(&self, record: &Record, family: &Family) -> usize {
         self.tracked(record, family)
             .filter(|satellite| satellite.tracking >= TRACKING_LEAST)
             .count()
@@ -1910,7 +1910,7 @@ impl Engine {
     fn status(&self, record: &Record, family: &Family) -> Data {
         let ut_plus = self.identity.model() == Model::UtPlus;
         let place = self.place(record);
-        let tracked = self.tracking(record, family);
+        let tracked = self.tracked_count(record, family);
         let antenna_sense = match (ut_plus, record.antenna) {
             (true, Antenna::Open) => DOP_TYPE_ANTENNA_UNDERCURRENT,
             (true, Antenna::Shorted) => DOP_TYPE_ANTENNA_OVERCURRENT,
@@ -2279,20 +2279,27 @@ impl Engine {
         }
     }
 
-    /// `@@Bn` and `@@En` (VP pp. 102 to 106 and 138 to 142; UT
-    /// pp. 6.92 to 6.95).
-    fn traim_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
-        let setup = self.state.traim;
-        let tracked = self.tracking(record, family);
-        let TraimResult {
-            solution, ability, ..
-        } = self.traim_result(record, tracked);
-        let pulse = match setup.pulse_mode {
+    /// Whether the 1 PPS is put out, by the 1PPS control mode (VP
+    /// p. 102), with `tracked` satellites tracked and Time RAIM's
+    /// solution status `solution`.
+    const fn pulse(&self, tracked: usize, solution: u8) -> bool {
+        match self.state.traim.pulse_mode {
             PulseMode::Off => false,
             PulseMode::Always => true,
             PulseMode::Tracking => tracked != 0,
             PulseMode::Confirmed => solution == TRAIM_SOLUTION_OK,
-        };
+        }
+    }
+
+    /// `@@Bn` and `@@En` (VP pp. 102 to 106 and 138 to 142; UT
+    /// pp. 6.92 to 6.95).
+    fn traim_status<O: Output + ?Sized>(&self, record: &Record, family: &Family, out: &mut O) {
+        let setup = self.state.traim;
+        let tracked = self.tracked_count(record, family);
+        let TraimResult {
+            solution, ability, ..
+        } = self.traim_result(record, tracked);
+        let pulse = self.pulse(tracked, solution);
         let timing = record.timing.filter(|_| tracked >= SPREAD_OF);
         let mut data = Data::new();
         data.byte(self.state.rates[family.index].traim.0)

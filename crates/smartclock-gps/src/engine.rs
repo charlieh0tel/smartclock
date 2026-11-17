@@ -218,7 +218,8 @@ pub struct Options {
     /// the one it was made with, in its `@@Cj` and in all else an
     /// identity decides.  It has eight channels whatever this
     /// identity's model, so the one the engine was made with keeps it
-    /// who it was.  `@@Cf` undoes neither, as it restores settings and
+    /// who it was.  At the turn, each setting no command has set takes
+    /// this identity's default, and a UT Plus, always fixing, fixes.  `@@Cf` undoes neither, as it restores settings and
     /// an Oncore's channels are not one; only a new engine, a power-up,
     /// has six again.  `None` for an engine that stays as made.
     pub eight_on_ea: Option<&'static Identity>,
@@ -1406,8 +1407,7 @@ impl Engine {
             if family.status != EA_POSITION_STATUS || member != Member::Status {
                 return;
             }
-            self.channels = family.channels;
-            self.identity = identity;
+            self.turn_into(identity, family.channels);
         }
         match member {
             Member::Status => {
@@ -1423,6 +1423,20 @@ impl Engine {
                 self.traim_status(record, family, out);
             }
             Member::SelfTest => self.self_test(family.self_test, record, now),
+        }
+    }
+
+    /// Becomes the Oncore `identity` names, with `channels`
+    /// ([`Options::eight_on_ea`]): what no command has set is as that
+    /// Oncore powers up with, and a UT Plus, always fixing, fixes.
+    fn turn_into(&mut self, identity: &'static Identity, channels: usize) {
+        let model = identity.model();
+        self.identity = identity;
+        self.channels = channels;
+        self.state.store.default_untold(model);
+        if model == Model::UtPlus {
+            self.state.fixing = true;
+            self.follow();
         }
     }
 

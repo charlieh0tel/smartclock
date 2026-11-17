@@ -1002,6 +1002,33 @@ fn what_an_identity_decides_follows_the_one_carried() {
     assert!(engine.fixing());
 }
 
+/// An idle six-channel VP that turns into a UT Plus at its first
+/// `@@Ea` fixes from then on, as a UT Plus always does, and takes a
+/// UT Plus's default for a setting no command has set (UT p. 6.21),
+/// keeping one a command has.
+#[test]
+fn an_idle_vp_that_turns_into_a_ut_plus_fixes() {
+    let record = full();
+    for (told, mask) in [(None, 0), (Some(20), 20)] {
+        let mut options = Options::DEFAULT;
+        options.eight_on_ea = Some(&UT_PLUS_3_1);
+        let mut engine = Engine::new(&VP_SIX, options).expect("an engine that powers up");
+        if let Some(angle) = told {
+            ask(&mut engine, &record, AG_MASK_ANGLE, &[angle]);
+        }
+        assert!(!engine.fixing());
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[1]);
+        assert!(engine.fixing());
+        assert_eq!(engine.settings().mask_angle, Degrees(mask));
+        let data = only(&frames, EA_POSITION_STATUS);
+        let channels = data[36..68].iter().step_by(4).copied().collect::<Vec<_>>();
+        assert_eq!(channels, [3, 4, 31, 26, 16, 0, 0, 0]);
+        let mut sent = Sent::default();
+        engine.second(&record, NOW, &mut sent);
+        assert_eq!(ids(&sent.0), [EA_POSITION_STATUS]);
+    }
+}
+
 /// A configuration of a six-channel engine that fixes and sends its
 /// status every other second.
 const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration {

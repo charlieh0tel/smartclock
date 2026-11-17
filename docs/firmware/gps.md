@@ -32,7 +32,9 @@ below for what an engine in a receiver must do.  One made six-channel
 can be set to become an eight-channel Oncore at its first `@@Ea`
 (`Options::eight_on_ea`, which holds the identity it becomes): from
 then on it answers `@@Cj` as that one, through a `@@Cf` too, until it
-is made again, as at a power-up ("Six or eight channels" has when a
+is made again, as at a power-up; it turns with that one's defaults for
+the settings no command has set, and fixing if that one is a UT Plus,
+which is never idle ("Six or eight channels" has when a
 58503A sends that `@@Ea`).  One can be made configured, as an engine
 that keeps its output rates and setup through a power cycle
 (VPCommands pp. 70, 124 and 138) comes up sending unasked

@@ -362,7 +362,12 @@ impl Place {
 pub(super) struct Store {
     /// The values.
     bytes: [u8; SETTINGS_BYTES],
+    /// Bit `n` set if the table's setting `n` has been set by its
+    /// command since power-up or `@@Cf`.
+    told: u32,
 }
+
+const _: () = assert!(SETTINGS.len() <= u32::BITS as usize);
 
 impl Store {
     /// A VP's values at power-up.
@@ -383,7 +388,7 @@ impl Store {
             }
             index += 1;
         }
-        Self { bytes }
+        Self { bytes, told: 0 }
     }
 
     fn index(id: MessageId) -> Option<usize> {
@@ -413,6 +418,17 @@ impl Store {
             && let Some(held) = self.bytes.get_mut(start(index)..start(index) + data.len())
         {
             held.copy_from_slice(data);
+            self.told |= 1 << index;
+        }
+    }
+
+    /// Puts each setting no command has set to its default on an Oncore
+    /// of `model`.
+    pub(super) fn default_untold(&mut self, model: Model) {
+        let starting = Self::starting(model);
+        for index in (0..SETTINGS.len()).filter(|index| self.told & (1 << index) == 0) {
+            let range = start(index)..start(index) + SETTINGS[index].default.len();
+            self.bytes[range.clone()].copy_from_slice(&starting.bytes[range]);
         }
     }
 

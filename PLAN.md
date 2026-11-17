@@ -1579,7 +1579,10 @@ stands in for one.
   Plain threads, not tokio: one loop owns the engine and the link with
   a read timeout up to the next second, and gpsd's reader is a second
   thread delivering into the `Latest` under a mutex; an async runtime
-  would buy nothing for one connection each way.  Its scene is the
+  would buy nothing for one connection each way.  A connection to the
+  instrument, or a serial port, is made on a thread of its own, a name
+  looked up and each address tried for 5 s, and handed to the loop
+  once made, so no connect holds the seconds up.  Its scene is the
   vectors' provider, so it is held to `source::scene::DECLARATION` and
   the exceptions tables' rows named `scene` (named `engine vectors`
   until the feed shared the provider, renamed 2026-11-15), and works

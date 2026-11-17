@@ -1559,7 +1559,8 @@ stands in for one.
   options are refused with a GT-74, each saying why: `--eight-on-ea`
   (it has no `@@Ea`), `--saved` (the one configuration is a 58503A's,
   whose engine is an Oncore) and `--deaf` (the model has no deaf mode).  The engine runs on while no instrument is connected, as an
-  engine powered with its cable out would, and its frames are dropped.
+  engine powered with its cable out would, and its frames are dropped,
+  and left out of the wire log, which has only what went.
   Its providers are gpsd's raw output of a u-blox receiver (asked for
   with `?WATCH` and `"raw":2`, a request to gpsd alone; nothing is sent
   to the receiver), a UBX recording, read whole and played an epoch a

@@ -78,7 +78,9 @@ pub(crate) struct Cli {
     #[command(flatten)]
     pub(crate) transport: TransportArgs,
 
-    /// Logs every byte each way, with its time, to this file.
+    /// Logs every byte each way, with its time, to this file: what the
+    /// engine sends once it has gone, none of what is dropped with no
+    /// instrument connected.
     #[arg(long, value_name = "FILE")]
     pub(crate) log: Option<PathBuf>,
 }

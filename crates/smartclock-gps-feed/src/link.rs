@@ -76,8 +76,8 @@ pub(crate) trait Transport {
     fn read(&mut self, into: &mut Vec<u8>, timeout: Duration);
 
     /// Sends `bytes` to the instrument, or drops them with no
-    /// connection.
-    fn write(&mut self, bytes: &[u8]);
+    /// connection or when the write fails; whether they went.
+    fn write(&mut self, bytes: &[u8]) -> bool;
 }
 
 /// A wait before connecting again that doubles with each failure, up to
@@ -384,13 +384,16 @@ impl<D: Dial> Transport for Dialer<D> {
         }
     }
 
-    fn write(&mut self, bytes: &[u8]) {
+    fn write(&mut self, bytes: &[u8]) -> bool {
         let name = self.dial.name();
-        if let Some(link) = &mut self.link
-            && !write_link(link, bytes, &name)
-        {
+        let Some(link) = &mut self.link else {
+            return false;
+        };
+        let sent = write_link(link, bytes, &name);
+        if !sent {
             self.drop_link();
         }
+        sent
     }
 }
 
@@ -448,13 +451,16 @@ impl Transport for Server {
         }
     }
 
-    fn write(&mut self, bytes: &[u8]) {
-        if let Some((stream, peer)) = &mut self.link {
-            let name = peer.to_string();
-            if !write_link(stream, bytes, &name) {
-                self.link = None;
-            }
+    fn write(&mut self, bytes: &[u8]) -> bool {
+        let Some((stream, peer)) = &mut self.link else {
+            return false;
+        };
+        let name = peer.to_string();
+        let sent = write_link(stream, bytes, &name);
+        if !sent {
+            self.link = None;
         }
+        sent
     }
 }
 
@@ -532,7 +538,7 @@ mod tests {
             let (mut bridge, _) = listener.accept().unwrap();
             bridge.write_all(greeting).unwrap();
             assert_eq!(read_until(&mut dialer, greeting.len()), greeting);
-            dialer.write(b"back");
+            assert!(dialer.write(b"back"));
             let mut back = [0; 4];
             bridge.read_exact(&mut back).unwrap();
             assert_eq!(&back, b"back");
@@ -543,8 +549,8 @@ mod tests {
                 assert!(started.elapsed() < PATIENCE, "never dropped");
                 dialer.read(&mut Vec::new(), STEP);
             }
-            // Written with none, it is dropped.
-            dialer.write(b"lost");
+            // Written with none, it is dropped, and says so.
+            assert!(!dialer.write(b"lost"));
         }
     }
 
@@ -633,7 +639,7 @@ mod tests {
         while server.link.is_some() {
             assert!(started.elapsed() < PATIENCE * 4, "never dropped");
             let write = Instant::now();
-            server.write(&block);
+            let _ = server.write(&block);
             assert!(
                 write.elapsed() < WRITE_TIMEOUT * 4,
                 "a write waited {:?}",
@@ -658,7 +664,7 @@ mod tests {
         let mut nothing = [0; 1];
         assert_eq!(second.read(&mut nothing).unwrap(), 0, "a second was held");
 
-        server.write(b"to first");
+        assert!(server.write(b"to first"));
         let mut back = [0; 8];
         first.read_exact(&mut back).unwrap();
         assert_eq!(&back, b"to first");

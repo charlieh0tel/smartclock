@@ -1495,7 +1495,11 @@ stands in for one.
     in, an event out, the caller's loop in charge), lend nothing a
     caller could not already have, and need the decoders' types in the
     framing.  The cost is that a part comes before its checksum, so a
-    caller stages what it decodes and keeps it only at the end.  The
+    caller stages what it decodes and keeps it only at the end.  A
+    streamed length need not fit the buffer, so it is held to what the
+    header's one-byte count can give (255 blocks), and the header's
+    count to the length's, the message dropped at its header if they
+    differ: a damaged length is not followed for up to 64 KB.  The
     whole-frame `Deframer` and the `Assembler` on it stay for hosts.
   - *Later, perhaps:* the decoders could let the provider fill a
     record's URA (subframe 1), velocity
@@ -1518,7 +1522,8 @@ stands in for one.
   - *A length is not followed on its own word.*  A UBX frame says its
     own length, up to 65535 bytes, and the checksum that would vouch
     for it comes after them.  A message the crate decodes must have
-    its documented length and any other must fit the buffer, or the
+    its documented length, of no more blocks than its header's count
+    can give, and any other must fit the buffer, or the
     frame is dropped at its header and the next start looked for from
     there.
   - *An epoch is the messages of one `iTOW`*, ended by `NAV-EOE` or,

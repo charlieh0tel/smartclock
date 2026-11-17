@@ -85,6 +85,11 @@ pub const MON_HW: MessageId = MessageId::new(CLASS_MON, 0x09);
 /// `UBX-TIM-TP`, the next time pulse (section 32.20.8, p. 432).
 pub const TIM_TP: MessageId = MessageId::new(CLASS_TIM, 0x01);
 
+/// The most blocks a message of a header and blocks has: its count,
+/// `numSvs`, `numMeas` or `numWords`, is a `U1` (sections 32.17.20,
+/// 32.18.4 and 32.18.7, pp. 381, 409 and 419).
+const BLOCKS_MAX: usize = u8::MAX as usize;
+
 /// How long a message's payload is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PayloadLength {
@@ -103,13 +108,17 @@ pub enum PayloadLength {
 }
 
 impl PayloadLength {
-    /// Whether a payload may be `length` bytes.
+    /// Whether a payload may be `length` bytes: a fixed message's own,
+    /// or a header and a whole number of blocks, no more than its
+    /// header's one-byte count can give.
     #[must_use]
     pub const fn allows(self, length: usize) -> bool {
         match self {
             Self::Fixed(fixed) => length == fixed,
             Self::Blocks { header, block, .. } => {
-                length >= header && (length - header).is_multiple_of(block)
+                length >= header
+                    && (length - header).is_multiple_of(block)
+                    && (length - header) / block <= BLOCKS_MAX
             }
         }
     }

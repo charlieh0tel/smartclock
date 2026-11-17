@@ -33,7 +33,9 @@
 //!   taken as the start.
 //! - A length is believed only as far as it can be checked before the
 //!   checksum.  For a message of [`MESSAGES`](message::MESSAGES) it
-//!   must be that message's own, or the frame is
+//!   must be that message's own, for one of a header and blocks no
+//!   more blocks than its header's one-byte count can give, or the
+//!   frame is
 //!   [`FrameError::BadLength`](frame::FrameError::BadLength); for any
 //!   message it must fit the deframer's buffer, or it is
 //!   [`FrameError::Overflow`](frame::FrameError::Overflow).  Either is
@@ -84,7 +86,13 @@
 //! [`Event::End`](frame::Event::End) or drops it at the error that
 //! comes instead.  The rules of "Resynchronizing" hold as they are; a
 //! streamed message's length must be its own, and need not fit the
-//! buffer.
+//! buffer.  Its header's count of blocks must be the count its length
+//! gives, or the message is
+//! [`FrameError::BadLength`](frame::FrameError::BadLength), reported at
+//! the header's last byte, and a new start is looked for from the
+//! next.  So a damaged length that passes costs at most the longest
+//! such message, 8176 bytes of `RXM-RAWX`'s 255 measurements, and only
+//! if the header's count agrees with it.
 //!
 //! # From messages to a record
 //!

@@ -126,7 +126,9 @@ impl<'a> Frame<'a> {
 /// Why a [`Deframer`] discarded what it was reading.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum FrameError {
-    /// A message of [`MESSAGES`](crate::message::MESSAGES) with a length that is not its own.
+    /// A message of [`MESSAGES`](crate::message::MESSAGES) with a length that is not its own,
+    /// or, from a [`Streamer`], a streamed message whose header's count
+    /// of blocks is not the count its length gives.
     #[error("{id} cannot have a payload of {length} bytes")]
     BadLength {
         /// The message.
@@ -318,6 +320,12 @@ impl<const N: usize> Deframer<N> {
         }
     }
 
+    /// How many blocks a streamed message cut as `parts` has, by its
+    /// length.
+    const fn blocks(&self, parts: Layout) -> usize {
+        (self.length - parts.header) / parts.block
+    }
+
     fn step(&mut self, byte: u8) -> Step<FrameError> {
         match self.state {
             State::Idle => {
@@ -381,6 +389,15 @@ impl<const N: usize> Deframer<N> {
                         given => (parts.block, Ended::Block(given - 1)),
                     };
                     if self.filled == part {
+                        if ended == Ended::Header
+                            && usize::from(self.buffer[parts.count]) != self.blocks(parts)
+                        {
+                            self.state = State::Idle;
+                            return Some(Err(FrameError::BadLength {
+                                id: self.id,
+                                length: self.length,
+                            }));
+                        }
                         self.ended = ended;
                         self.given += 1;
                         self.filled = 0;
@@ -458,7 +475,9 @@ pub enum Event<'a> {
 /// the longest part ([`LONGEST_PART`]), however many satellites a
 /// message reports.  The parts come before the checksum that vouches
 /// for them, so a caller keeps what they say aside until
-/// [`Event::End`], and drops it at an error ("Streaming" in the crate's
+/// [`Event::End`], and drops it at an error.  A header whose count of
+/// blocks is not the count the length gives is not given: it is
+/// [`FrameError::BadLength`] ("Streaming" in the crate's
 /// documentation).
 ///
 /// ```
@@ -544,9 +563,7 @@ impl<const N: usize> Streamer<N> {
             Ended::Frame => Event::Frame(deframer.frame(length)),
             Ended::Header => Event::Header(Header {
                 id,
-                blocks: deframer
-                    .parts
-                    .map_or(0, |parts| (deframer.length - parts.header) / parts.block),
+                blocks: deframer.parts.map_or(0, |parts| deframer.blocks(parts)),
                 bytes,
             }),
             Ended::Block(index) => Event::Block(Block { id, index, bytes }),

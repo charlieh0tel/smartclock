@@ -1167,7 +1167,10 @@ stands in for one.
 - **The model's command framer is its own**, not the deframer run the
   other way: an engine resynchronizes a byte at a time, so a whole
   command straight after the start of a broken one is taken, where the
-  receiver's firmware, which the deframer follows, would lose it.
+  receiver's firmware, which the deframer follows, would lose it; so
+  is each whole command within the length a broken one's ID gives,
+  the bytes after it kept (fixed 2026-11-16: a command found that way
+  was dropped when more bytes followed it).
 - **A model stands in for the Z3815A's GT-74** (`engine::furuno`,
   decided 2026-11-16), built from the GT-8031's protocol specification,
   the nearest at hand, and the Z3815A 4010's tables, as decided

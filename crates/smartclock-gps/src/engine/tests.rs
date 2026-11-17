@@ -95,6 +95,7 @@ use crate::oncore::MESSAGES;
 use crate::oncore::MessageId;
 use crate::oncore::OVERHEAD;
 use crate::oncore::TRAILER;
+use crate::oncore::command_length;
 use crate::oncore::encode;
 use crate::oncore::response_length;
 use crate::record::Almanac;
@@ -1315,6 +1316,57 @@ fn a_command_straight_after_a_broken_one_is_taken() {
     let mut sent = Sent::default();
     engine.receive(&bytes, &full(), NOW, &mut sent);
     assert_eq!(only(&sent.0, CG_FIX_MODE), [1]);
+}
+
+/// The IDs of the frames sent, in order.
+fn ids(frames: &[Vec<u8>]) -> Vec<MessageId> {
+    frames
+        .iter()
+        .map(|frame| MessageId::new([frame[2], frame[3]]))
+        .collect()
+}
+
+/// A whole command within the length of a cut-off longer one is taken,
+/// and so is one whose start was buffered after it.
+#[test]
+fn a_command_within_a_cut_off_longer_one_is_taken() {
+    let mut engine = fixing(&VP_EIGHT);
+    let mut bytes = command(BN_TIME_RAIM, &TRAIM_EACH_SECOND);
+    bytes.truncate(HEADER + 3);
+    bytes.extend(command(AG_MASK_ANGLE, &[0xff]));
+    bytes.extend(command(AT_POSITION_HOLD, &[0xff]));
+    let mut sent = Sent::default();
+    engine.receive(&bytes, &full(), NOW, &mut sent);
+    assert_eq!(ids(&sent.0), [AG_MASK_ANGLE, AT_POSITION_HOLD]);
+}
+
+/// A whole command followed by more bytes of a broken one is taken.
+#[test]
+fn a_command_followed_by_the_rest_of_a_broken_one_is_taken() {
+    let length = command_length(AS_HOLD_POSITION).expect("a command");
+    let mut engine = fixing(&VP_EIGHT);
+    let mut bytes = command(AS_HOLD_POSITION, &vec![0; length - OVERHEAD]);
+    bytes.truncate(HEADER);
+    bytes.extend(command(CJ_RECEIVER_ID, &[]));
+    bytes.resize(length, 0);
+    let mut sent = Sent::default();
+    engine.receive(&bytes, &full(), NOW, &mut sent);
+    assert_eq!(ids(&sent.0), [CJ_RECEIVER_ID]);
+}
+
+/// Every whole command a broken one holds is taken by its last byte.
+#[test]
+fn every_command_within_a_broken_one_is_taken() {
+    let length = command_length(BN_TIME_RAIM).expect("a command");
+    let mut engine = fixing(&VP_EIGHT);
+    let mut bytes = command(BN_TIME_RAIM, &TRAIM_EACH_SECOND);
+    bytes.truncate(HEADER);
+    bytes.extend(command(AG_MASK_ANGLE, &[0xff]));
+    bytes.extend(command(AT_POSITION_HOLD, &[0xff]));
+    bytes.resize(length, 0);
+    let mut sent = Sent::default();
+    engine.receive(&bytes, &full(), NOW, &mut sent);
+    assert_eq!(ids(&sent.0), [AG_MASK_ANGLE, AT_POSITION_HOLD]);
 }
 
 /// VP pp. 76 and 77: the record's table when it is of the kind `@@Aj`

@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPS Support Architecture</title>
+<meta name="description" content="How the GPS crates fit together: one copy of the code, smartclock-gps and smartclock-gps-ublox, and the places it runs, a microcontroller board in a SmartClock's Oncore socket and smartclock-gps-feed on a host, each holding its own provider and engine; who acts on each setting the SmartClock sends, and who makes the 1 PPS.">
+<meta name="smartclock-group" content="firmware">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f6f5f1; --ink:#1d2126; --muted:#5d646c; --rule:#d9d6ce;
+  --panel:#ffffff; --accent:#1f6f8b; --accent-bg:#e1eef3; --pps:#b0661a;
+  --measure:44rem; --flow:1rem; --gap:1.5rem; --section:3.5rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#15181c; --ink:#e8e6e0; --muted:#a3a9b0; --rule:#343a41;
+    --panel:#1c2025; --accent:#5fb3d0; --accent-bg:#1b3540; --pps:#e0a05a;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#15181c; --ink:#e8e6e0; --muted:#a3a9b0; --rule:#343a41;
+  --panel:#1c2025; --accent:#5fb3d0; --accent-bg:#1b3540; --pps:#e0a05a;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:16px;line-height:1.5;margin:0;padding:2rem 16px 4rem}
+main{max-width:1180px;margin:0 auto;display:grid;gap:var(--section)}
+main>*{min-width:0}
+/* One vertical rhythm, as on the loop page: blocks carry no margins of
+   their own; the space between siblings is --flow, or --gap around
+   figures and tables. */
+header>*,section>*,figure{margin:0}
+header>*+*,section>*+*{margin-top:var(--flow)}
+section>:is(.fig,.wide),section>:is(.fig,.wide)+*{margin-top:var(--gap)}
+h1{font-size:2rem;font-weight:600;line-height:1.15;text-wrap:balance}
+h2{font-size:1.375rem;font-weight:600;line-height:1.25;text-wrap:balance}
+p,.lede,ul{max-width:var(--measure)}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header>.eyebrow+h1{margin-top:.5rem}
+.lede{color:var(--muted);font-size:1.0625rem}
+code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.92em;overflow-wrap:anywhere}
+a{color:var(--accent)}
+ul{padding-left:1.25rem}
+li+li{margin-top:.5rem}
+
+/* A figure scrolls inside its frame below its drawn width rather than
+   shrinking its text. */
+.fig{border:1px solid var(--rule);background:var(--panel);padding:16px;overflow-x:auto}
+.fig svg{display:block;width:100%;height:auto;margin:0 auto;color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif}
+.fig svg.places{min-width:760px;max-width:900px}
+.fig svg.loop{min-width:900px;max-width:1140px}
+.fig figcaption{font-size:.875rem;color:var(--muted);margin-top:.75rem;max-width:var(--measure)}
+.legend{display:flex;gap:.5rem 1.5rem;flex-wrap:wrap;font-size:.875rem;color:var(--muted);margin-top:.75rem}
+.legend span::before{content:"";display:inline-block;width:22px;height:12px;border:1.5px solid var(--ink);margin-right:6px;vertical-align:middle}
+.legend span.ours::before{background:var(--accent-bg);border-color:var(--accent)}
+.legend span.inst::before{border-color:var(--accent);border-style:dashed}
+.legend span.back::before{height:0;border-width:2px 0 0;border-style:dashed}
+.legend span.pps::before{height:0;border-width:2.5px 0 0;border-color:var(--pps)}
+
+/* Diagram classes: boxes outside the crates, the crates (one copy),
+   an instance of them running in a place, a place's frame, lines, and
+   the text sizes. */
+.bx{fill:var(--bg);stroke:currentColor;stroke-width:1.2}
+.ours{fill:var(--accent-bg);stroke:var(--accent);stroke-width:1.6}
+.in{fill:var(--panel);stroke:var(--accent);stroke-width:1.6;stroke-dasharray:6 3}
+.ctr{fill:none;stroke:var(--muted);stroke-width:1.2}
+.ctr.here{stroke:var(--accent);stroke-width:1.8}
+.ln{stroke:currentColor;stroke-width:1.3;fill:none}
+.lk{stroke:var(--accent);stroke-width:1.3;fill:none}
+.da{stroke-dasharray:5 4}
+.pps{stroke:var(--pps);stroke-width:1.8;fill:none}
+.h{font-size:14px;font-weight:600;fill:currentColor}
+.t{font-size:13px;font-weight:600;fill:currentColor}
+.u{font-size:11px;fill:var(--muted)}
+.s{font-size:12px;fill:currentColor}
+.m{font-size:11px;fill:var(--muted)}
+.ma{font-size:11px;fill:var(--accent)}
+.mp{font-size:11px;fill:var(--pps)}
+.k{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* The table: the first column flush with the text. */
+.wide{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th,td{text-align:left;vertical-align:top;padding:.5rem .75rem;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);vertical-align:bottom;border-bottom-color:var(--muted)}
+
+@media (max-width:720px){
+  body{padding-top:1.5rem}
+  h1{font-size:1.75rem}
+  /* The table stacks: the part over where it lives. */
+  .where,.where tbody,.where tr,.where td{display:block}
+  .where thead{display:none}
+  .where tr{padding-block:.5rem;border-bottom:1px solid var(--rule)}
+  .where td{padding:0;border:0}
+  .where td:first-child{font-weight:600}
+  .where td+td{margin-top:.25rem}
+}
+</style>
+</head>
+<body>
+
+<main>
+<header>
+  <div class="eyebrow">HP / Symmetricom SmartClock · crates smartclock-gps, smartclock-gps-ublox, smartclock-gps-feed</div>
+  <h1>GPS Support Architecture</h1>
+  <p class="lede">One copy of the code, and the places it runs. The crates are written once, in this repository; a microcontroller board in a SmartClock's Oncore socket and a program on a host each link them in and hold their own provider and their own engine. Whatever provider fills a second's record, the engine builds the same bytes.</p>
+</header>
+
+<section id="the-places">
+  <h2>One copy of the code, two places it runs</h2>
+  <figure class="fig" data-scroll="x">
+    <svg class="places" viewBox="0 0 790 960" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two library crates, smartclock-gps and smartclock-gps-ublox, are each one copy of code, linked into two places. A microcontroller board in the SmartClock's Oncore socket runs its own provider, reading its u-blox module with the u-blox crate, and an engine instance; its module makes the 1 PPS, which the provider shifts and gates by the SmartClock's pulse settings and which goes straight to the socket. smartclock-gps-feed on a host runs the u-blox crate's assembler or the made-up sky and an Oncore or GT-74 engine instance, out to a SmartClock's engine port, with no 1 PPS.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+        <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--pps)"/></marker>
+      </defs>
+
+      <text class="h" x="40" y="22">The code: one copy of each crate</text>
+
+      <!-- smartclock-gps -->
+      <rect class="ours" x="40" y="34" width="710" height="160" rx="4"/>
+      <text class="t k" x="54" y="56">smartclock-gps</text>
+      <text class="u" x="54" y="72">no_std, no allocation</text>
+      <text class="s" x="54" y="92"><tspan class="k">engine</tspan>: Oncore VP six, VP eight, UT Plus</text>
+      <text class="s" x="54" y="109"><tspan class="k">engine::furuno</tspan>: the Z3815A's GT-74</text>
+      <text class="s" x="54" y="126">Identity, Settings, Events</text>
+      <text class="s" x="54" y="143">SavedConfiguration; CONFIGURATION_58503A</text>
+      <text class="s" x="54" y="160"><tspan class="k">record</tspan>: one second of what an engine knows</text>
+      <text class="s" x="54" y="177"><tspan class="k">record::field</tspan>: Declaration (makes_pulse)</text>
+      <text class="t" x="414" y="56">source: a made-up sky</text>
+      <text class="u" x="414" y="72">built by const fn; a table can stay in flash</text>
+      <text class="s" x="414" y="92"><tspan class="k">scene</tspan>; <tspan class="k">scenario</tspan>: Fixed, Scenario</text>
+      <text class="s" x="414" y="109"><tspan class="k">wrap</tspan>: FakeTime, LeapSchedule</text>
+      <text class="s" x="414" y="126"><tspan class="k">replay</tspan>: Replay, of a recording</text>
+      <text class="s" x="414" y="143">the scene acts on mask, hold, ignore list</text>
+      <text class="s" x="414" y="160">IMAGE_SETS, IMAGE_HOLDS: what the</text>
+      <text class="s" x="414" y="177">images set, which a Declaration is held to</text>
+
+      <!-- smartclock-gps-ublox: spans the board and the host -->
+      <rect class="ours" x="120" y="218" width="550" height="108" rx="4"/>
+      <text class="t k" x="134" y="240">smartclock-gps-ublox: the one UBX parser</text>
+      <text class="u" x="134" y="256">no_std, no allocation; the board and the host both link it</text>
+      <text class="s" x="134" y="276"><tspan class="k">frame</tspan>: Deframer; Streamer, a long message a block at a time</text>
+      <text class="s" x="134" y="293">decoders: nav, rxm, tim, mon, ack; <tspan class="k">subframe</tspan>: GPS subframes</text>
+      <text class="s" x="134" y="310"><tspan class="k">assembler</tspan>: Assembler, almanac; no DOPs in a time-only fix</text>
+
+      <!-- linked in -->
+      <line class="lk" x1="80" y1="194" x2="80" y2="368" marker-end="url(#aha)"/>
+      <line class="lk" x1="710" y1="194" x2="710" y2="368" marker-end="url(#aha)"/>
+      <line class="lk" x1="230" y1="326" x2="230" y2="368" marker-end="url(#aha)"/>
+      <line class="lk" x1="560" y1="326" x2="560" y2="368" marker-end="url(#aha)"/>
+      <text class="ma" x="238" y="351">linked in</text>
+      <text class="ma" x="568" y="351">linked in</text>
+
+      <g transform="translate(0 40)">
+      <!-- the places -->
+      <rect class="ctr" x="40" y="330" width="340" height="470" rx="6"/>
+      <text class="t" x="54" y="352">A board in the Oncore socket</text>
+      <text class="u" x="54" y="368">a microcontroller's firmware, kept elsewhere</text>
+      <rect class="ctr here" x="410" y="330" width="340" height="470" rx="6"/>
+      <text class="t k" x="424" y="352">smartclock-gps-feed, on a host</text>
+      <text class="u" x="424" y="368">a program in this repository, paced to real time</text>
+
+      <!-- where the data starts -->
+      <rect class="bx" x="54" y="384" width="312" height="66" rx="4"/>
+      <text class="t" x="66" y="404">A u-blox timing module</text>
+      <text class="s" x="66" y="422">position, time, satellites, subframes,</text>
+      <text class="s" x="66" y="439">and the 1 PPS on its TIMEPULSE pin</text>
+
+      <rect class="bx" x="424" y="384" width="312" height="66" rx="4"/>
+      <text class="t k" x="436" y="404">gpsd:HOST, ubx:FILE, fixed, leap:</text>
+      <text class="s" x="436" y="422">gpsd: a u-blox's raw UBX, listen-only</text>
+      <text class="s" x="436" y="439"><tspan class="k">--fake-start</tspan> relabels any one's time</text>
+
+      <line class="ln" x1="120" y1="450" x2="120" y2="482" marker-end="url(#ah)"/>
+      <text class="m" x="112" y="470" text-anchor="end">UBX</text>
+      <line class="ln da" x1="230" y1="482" x2="230" y2="450" marker-end="url(#ah)"/>
+      <text class="m" x="238" y="470">configures: CFG-*, CFG-TP5</text>
+      <line class="ln" x1="580" y1="450" x2="580" y2="482" marker-end="url(#ah)"/>
+      <text class="m" x="588" y="470">nothing sent back</text>
+
+      <!-- the providers -->
+      <rect class="bx" x="54" y="482" width="312" height="96" rx="4"/>
+      <text class="t" x="66" y="502">Its own provider</text>
+      <text class="s" x="66" y="520">reads UBX with smartclock-gps-ublox</text>
+      <text class="s" x="66" y="537">picks satellites, Time RAIM, DOPs</text>
+      <text class="s" x="66" y="554">acts on the held settings, the pulse's</text>
+      <text class="s" x="66" y="571">among them: makes_pulse is true</text>
+
+      <rect class="in" x="424" y="482" width="312" height="96" rx="4"/>
+      <text class="t" x="436" y="502">Assembler, or the scene</text>
+      <text class="s" x="436" y="520">u-blox crate's Assembler: acts on the</text>
+      <text class="s" x="436" y="537">mask and ignore list; configures nothing</text>
+      <text class="s" x="436" y="554">scene: mask, hold, held position, ignore</text>
+      <text class="s" x="436" y="571">neither makes a pulse</text>
+
+      <line class="ln" x1="120" y1="578" x2="120" y2="610" marker-end="url(#ah)"/>
+      <text class="m" x="112" y="598" text-anchor="end">record</text>
+      <line class="ln da" x1="230" y1="610" x2="230" y2="578" marker-end="url(#ah)"/>
+      <text class="m" x="238" y="598">held settings, events</text>
+      <line class="ln" x1="490" y1="578" x2="490" y2="610" marker-end="url(#ah)"/>
+      <text class="m" x="482" y="598" text-anchor="end">record</text>
+      <line class="ln da" x1="600" y1="610" x2="600" y2="578" marker-end="url(#ah)"/>
+      <text class="m" x="608" y="598">held settings, events</text>
+
+      <!-- the engine instances -->
+      <rect class="in" x="54" y="610" width="312" height="80" rx="4"/>
+      <text class="t" x="66" y="630">Engine (smartclock-gps)</text>
+      <text class="s" x="66" y="648">Oncore VP six, VP eight or UT Plus</text>
+      <text class="s" x="66" y="665">takes the SmartClock's commands,</text>
+      <text class="s" x="66" y="682">a record each second</text>
+
+      <rect class="in" x="424" y="610" width="312" height="80" rx="4"/>
+      <text class="t" x="436" y="630">Engine (smartclock-gps), <tspan class="k">--engine</tspan></text>
+      <text class="s" x="436" y="648">Oncore VP six, VP eight, UT Plus,</text>
+      <text class="s" x="436" y="665">or <tspan class="k">engine::furuno</tspan>: GT-74, three</text>
+      <text class="s" x="436" y="682">identities, from any provider</text>
+
+      <!-- the pulse -->
+      <rect class="bx" x="54" y="716" width="270" height="66" rx="4"/>
+      <text class="t" x="66" y="736">Pulse maker: the module</text>
+      <text class="s" x="66" y="754">the provider shifts it and gates</text>
+      <text class="s" x="66" y="771">it by the pulse settings, CFG-TP5</text>
+
+      <rect class="bx" x="424" y="716" width="270" height="66" rx="4"/>
+      <text class="t" x="436" y="736">No 1 PPS</text>
+      <text class="s" x="436" y="754">a record carries none; the</text>
+      <text class="s" x="436" y="771">instrument's comes from elsewhere</text>
+
+      <!-- out to the SmartClock -->
+      <line class="ln" x1="350" y1="690" x2="350" y2="836" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <text class="m" x="342" y="822" text-anchor="end">Oncore binary</text>
+      <line class="ln" x1="720" y1="690" x2="720" y2="836" marker-start="url(#ah)" marker-end="url(#ah)"/>
+      <text class="m" x="712" y="822" text-anchor="end">Oncore binary or GT-74 NMEA</text>
+
+      <rect class="bx" x="40" y="836" width="340" height="70" rx="4"/>
+      <text class="t" x="54" y="856">The SmartClock's Oncore socket</text>
+      <text class="s" x="54" y="874">Oncore binary and the module's 1 PPS;</text>
+      <text class="s" x="54" y="891">the board sits where the Oncore sat</text>
+
+      <rect class="bx" x="410" y="836" width="340" height="70" rx="4"/>
+      <text class="t" x="424" y="856">A SmartClock's engine port</text>
+      <text class="s" x="424" y="874"><tspan class="k">--serial</tspan>, or TCP: <tspan class="k">--connect</tspan> (a bridge</text>
+      <text class="s" x="424" y="891">such as ser2net), <tspan class="k">--listen</tspan>; data only</text>
+
+      <!-- the board's 1 PPS wire -->
+      <polyline class="pps" points="54,417 26,417 26,880 40,880" marker-end="url(#ahp)"/>
+      <text class="mp" transform="translate(20 650) rotate(-90)" text-anchor="middle">1 PPS: a wire from the module straight to the socket, not through the engine</text>
+      </g>
+    </svg>
+    <div class="legend"><span class="ours">library code in this repository: one copy</span><span class="inst">an instance of it, running in that place</span><span>outside the crates: hardware, the board's own code, a transport</span><span class="back">settings going back to whoever acts on them</span><span class="pps">1 PPS</span></div>
+    <figcaption>The arrows from the crates are links, not data: each place compiles the crates in and runs its own engine. A record is one second of what an engine would know: time, leap second, fix, position, the satellites on each channel, almanac, antenna, Time RAIM. The places differ in their provider, in who makes the 1 PPS, and in what carries the engine's bytes away.</figcaption>
+  </figure>
+</section>
+
+<section id="settings">
+  <h2>Who acts on a setting</h2>
+  <figure class="fig" data-scroll="x">
+    <svg class="loop" viewBox="0 0 1140 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The settings loop: a SmartClock's commands go to the engine, which acts itself on those that change only its bytes and holds the rest as settings with an event; the provider acts on the held settings it declares, the pulse maker on the pulse settings, and each provider's declaration is checked against what the images set.">
+      <defs>
+        <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+      </defs>
+      <text class="h" x="40" y="22">The settings loop, in every place</text>
+
+      <rect class="bx" x="40" y="110" width="180" height="80" rx="4"/>
+      <text class="t" x="54" y="132">A SmartClock's image</text>
+      <text class="s" x="54" y="152">commands it: @@ messages,</text>
+      <text class="s" x="54" y="169">or the GT-74's $PFEC</text>
+
+      <line class="ln" x1="220" y1="135" x2="300" y2="135" marker-end="url(#ah2)"/>
+      <text class="m" x="260" y="127" text-anchor="middle">commands</text>
+      <line class="ln" x1="300" y1="168" x2="220" y2="168" marker-end="url(#ah2)"/>
+      <text class="m" x="260" y="186" text-anchor="middle">answers</text>
+
+      <rect class="in" x="300" y="40" width="340" height="230" rx="4"/>
+      <text class="t" x="314" y="62">Engine: commands into Settings</text>
+      <text class="s" x="314" y="88">Engine-acted: what changes only the</text>
+      <text class="s" x="314" y="105">bytes it builds: the time and date, the</text>
+      <text class="s" x="314" y="122">ignore list, the position it reports</text>
+      <text class="s" x="314" y="148">Holder-acted: how a receiver tracks, fixes</text>
+      <text class="s" x="314" y="165">or pulses: the value kept and answered</text>
+      <text class="s" x="314" y="182">with, an Event raised; position hold,</text>
+      <text class="s" x="314" y="199">mask angle, Time RAIM limit, pulse mode</text>
+      <text class="s" x="314" y="225">Neither: a recorded gap; no command</text>
+      <text class="s" x="314" y="242">an image sets is one</text>
+
+      <line class="ln da" x1="640" y1="95" x2="720" y2="95" marker-end="url(#ah2)"/>
+      <text class="m" x="680" y="87" text-anchor="middle">held, events</text>
+      <line class="ln" x1="720" y1="120" x2="640" y2="120" marker-end="url(#ah2)"/>
+      <text class="m" x="680" y="136" text-anchor="middle">record</text>
+      <line class="ln da" x1="640" y1="215" x2="720" y2="215" marker-end="url(#ah2)"/>
+      <text class="m" x="680" y="207" text-anchor="middle">pulse settings</text>
+
+      <rect class="bx" x="720" y="40" width="400" height="110" rx="4"/>
+      <text class="t" x="734" y="62">The provider: the settings it declares (acts)</text>
+      <text class="s" x="734" y="82">board: what its Declaration says; Assembler: mask,</text>
+      <text class="s" x="734" y="99">ignore list; scene: mask, hold, held position, ignore</text>
+      <text class="s" x="734" y="116">held to IMAGE_HOLDS, less PULSE_SETTINGS if it</text>
+      <text class="s" x="734" y="133">makes no pulse; a gap is an exceptions row</text>
+
+      <rect class="bx" x="720" y="170" width="400" height="100" rx="4"/>
+      <text class="t" x="734" y="192">The pulse maker: PULSE_SETTINGS</text>
+      <text class="s" x="734" y="212">cable delay @@Az, offset @@Ay, mode @@Bn</text>
+      <text class="s" x="734" y="229">board: its provider, by CFG-TP5 to the module</text>
+      <text class="s" x="734" y="246">host feed: no pulse, so no one</text>
+    </svg>
+    <figcaption>A provider's <code>Declaration</code> says which settings it acts on and whether it makes the pulse. Its tests hold it to every setting some image's path sets that a holder acts on (<code>IMAGE_HOLDS</code>), less the pulse settings for one that makes no pulse, or to a row of <code>docs/firmware/gps-setting-exceptions.tsv</code> excusing it, with the reason. The pulse settings fall to whoever makes the pulse.</figcaption>
+  </figure>
+</section>
+
+<section id="where-it-lives">
+  <h2>Where it lives</h2>
+  <div class="wide"><table class="where">
+    <thead><tr><th>Part</th><th>Crate and module</th></tr></thead>
+    <tbody>
+      <tr><td>Engine, Oncore</td><td><code>smartclock-gps</code>, <code>engine</code>: <code>Engine</code>, made by an <code>Identity</code> (<code>engine::identity</code>: VP six, VP eight, VP eight without Time RAIM, UT Plus 2.2 and 3.1), with <code>Options</code>; <code>engine::settings</code> (<code>Settings</code>, <code>Setting</code>) and <code>engine::event</code> (<code>Events</code>)</td></tr>
+      <tr><td>Engine, Furuno</td><td><code>smartclock-gps</code>, <code>engine::furuno</code>: the Z3815A's GT-74, on NMEA sentences, giving the same settings and events where its sentences mean the same</td></tr>
+      <tr><td>Saved configuration</td><td><code>smartclock-gps</code>, <code>engine::saved</code>: <code>SavedConfiguration</code>, and <code>CONFIGURATION_58503A</code> built in</td></tr>
+      <tr><td>Record</td><td><code>smartclock-gps</code>, <code>record</code>; <code>record::field</code>: the field table (<code>RecordField</code>), what the images use and set (<code>IMAGE_USES</code>, <code>IMAGE_SETS</code>, <code>IMAGE_HOLDS</code>), the <code>PULSE_SETTINGS</code>, and a provider's <code>Declaration</code></td></tr>
+      <tr><td>Made-up sky</td><td><code>smartclock-gps</code>, <code>source</code>: <code>source::scene</code>, <code>source::scenario</code> (<code>Fixed</code>, <code>Scenario</code>), <code>source::wrap</code> (<code>FakeTime</code>, <code>LeapSchedule</code>), <code>source::replay</code> (<code>Replay</code>, for a recording)</td></tr>
+      <tr><td>UBX parser</td><td><code>smartclock-gps-ublox</code>: <code>frame</code> (<code>Deframer</code>, and <code>Streamer</code> for a caller that takes a long message a block at a time), the message decoders (<code>message</code>, <code>nav</code>, <code>rxm</code>, <code>tim</code>, <code>mon</code>, <code>ack</code>) and <code>subframe</code>, the GPS subframes decoded</td></tr>
+      <tr><td>u-blox provider</td><td><code>smartclock-gps-ublox</code>, <code>assembler</code>: <code>Assembler</code>, its <code>DECLARATION</code> and <code>act</code></td></tr>
+      <tr><td>Host feed</td><td><code>smartclock-gps-feed</code>: providers (<code>provider</code>), the Oncore or GT-74 engine (<code>engine</code>), transports (<code>link</code>), the paced loop (<code>feed</code>)</td></tr>
+      <tr><td>Board provider</td><td>not in this repository: a microcontroller board's own code, depending on the two library crates</td></tr>
+    </tbody>
+  </table></div>
+  <p>The link from the firmware's side, message by message, every path by which an image sets something, and the field and setting tables the tests hold providers to, are in <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/gps.md">docs/firmware/gps.md</a>.</p>
+</section>
+
+<section id="notes">
+  <h2>Notes</h2>
+  <ul>
+    <li><strong>One copy, several instances.</strong> The board and the feed each make their own <code>Engine</code> from the same crate; neither talks to the other. The u-blox crate is the only UBX parser: the feed uses its <code>Assembler</code>, the board its framing, decoders and subframes under a provider of its own.</li>
+    <li><strong>Position hold.</strong> A SmartClock's normal running state: it holds its surveyed position, and its engine solves only for the clock. A survey is the exception. A u-blox receiver holding its position reports a fix of time alone (its fix type 5) and gives its position DOPs as placeholders, so the u-blox provider passes on no DOPs then, and the engine sends zeros for DOPs a record lacks.</li>
+    <li><strong>Saved configuration.</strong> A VP keeps its settings and output rates through a power cycle, so an engine can be made already configured. <code>CONFIGURATION_58503A</code> is how a 58503A leaves its engine, for a receiver that cannot command its engine, as the Z3817A. <code>@@Cf</code> still returns it to the defaults.</li>
+    <li><strong>1 PPS.</strong> A record carries no pulse. On the board the u-blox module makes it and the board's provider shifts and gates it by the SmartClock's pulse settings; the host feed has none, and the instrument's comes from elsewhere.</li>
+    <li><strong>Scope.</strong> The engines are the ones SmartClocks carry: the Oncore VP and UT Plus, and the Z3815A's Furuno GT-74. Each answers only what the receivers' firmware sends and fills in only what it decodes. <code>smartclock-gps-feed</code> runs both families; the board, in an Oncore socket, runs the Oncores.</li>
+  </ul>
+</section>
+</main>
+
+</body>
+</html>

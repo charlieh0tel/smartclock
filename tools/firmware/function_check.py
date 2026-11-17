@@ -2501,6 +2501,96 @@ ENTER_HOLDOVER_STATES_58503B = States(
 # its second argument's low byte (0x41a06): most sources report nothing,
 # and C reading the first agreed
 OSCILLATOR_KIND_DONE_STATES = {"oscillator_kind_done": States(hooks=(Hook("status_report_from"),))}
+# The Z3805A 1.01.03's loop stages and readings, the Z3815A 4010's code
+# on the 58503B 1.01.04's (docs/firmware/z3805a-1.01.03.md, "The link
+# list"): Z3815A_COMMON less the cells it has not (DAT_0010218b and the
+# switch word's bits), and Z3815A_LOOP_PRESETS' functions with its own
+# cells where the Z3815A's differ: holdover's block in separate cells,
+# not a structure (holdover_seconds, holdover_readings,
+# holdover_ti_largest, holdover_ti_sum); no TI setpoint in pll_normal;
+# holdover_recovery's restart of the ramp after more holdover than half
+# of max_loop_time (0x44990), about each half; startup_pll's ramp from
+# initial_loop_time; and powerup without an external reference.  Its
+# enter_holdover keeps its own (IMAGE_STATES).
+Z3805A_1_01_03_COMMON = tuple(
+    preset
+    for preset in Z3815A_COMMON
+    if preset.target != "DAT_0010218b" and not preset.target.startswith("switch_word_")
+)
+Z3805A_1_01_03_RENAMED = {
+    "holdover_steering.seconds": "holdover_seconds",
+    "holdover_steering.readings": "holdover_readings",
+    "holdover_steering.ti_largest": "holdover_ti_largest",
+}
+Z3805A_1_01_03_DROPPED = {"loop_steering.field_0f", "ti_setpoint", "pll.external_reference", "DAT_0010218b"}
+Z3805A_1_01_03_ADDED = {
+    "holdover": (Preset("holdover_ti_sum", SMALL),),
+    "holdover_recovery": (
+        Preset("pll.holdover_duration", (0, 150, 151, 500, 501, 100000)),
+        Preset("max_loop_time", (1000.0, 300.0)),
+        Preset("initial_loop_time", (150.0, 300.0)),
+    ),
+    "startup_pll": (Preset("initial_loop_time", (150.0, 300.0)),),
+}
+
+
+def image_loop_presets(base: dict, renamed: dict, dropped: set, added: dict) -> dict:
+    """Another image's loop functions' presets from base's: each target
+    renamed or dropped, then each function's added presets, an added
+    target in place of base's."""
+    presets = {}
+    for name, own in base.items():
+        kept = tuple(
+            Preset(renamed.get(preset.target, preset.target), preset.values)
+            for preset in own
+            if preset.target not in dropped
+        )
+        extra = added.get(name, ())
+        replaced = {preset.target for preset in extra}
+        presets[name] = tuple(preset for preset in kept if preset.target not in replaced) + extra
+    return presets
+
+
+Z3805A_1_01_03_LOOP_STATES = loop_states(
+    Z3805A_1_01_03_COMMON,
+    Z3815A_PLL_HOOKS,
+    image_loop_presets(Z3815A_LOOP_PRESETS, Z3805A_1_01_03_RENAMED, Z3805A_1_01_03_DROPPED, Z3805A_1_01_03_ADDED),
+) | {
+    "fine": States(
+        presets=STATES["fine"].presets + Z3805A_1_01_03_COMMON[2:],
+        hooks=Z3815A_PLL_HOOKS,
+        cases=STATES["fine"].cases,
+    ),
+}
+# Its pllp_task as the Z3815A's (PLLP_TASK_STATES_Z3815A), each stage's
+# routine answered: its power-up recovery's check is pll_check_reference,
+# it has no n3 lock pll, and a loop it starts, restored with a stage or
+# not, starts from power-up, logged by the preserved region's restore
+# word, each of its three.  And the stage's readers, the Z3815A's
+# (PLLP_STAGE_STATES_Z3815A) less its card's standby and switch word.
+PLLP_STAGE_HOOKS_Z3805A_1_01_03 = tuple(
+    Hook("pll_check_reference", results=hook.results) if hook.routine == "pll_reference_check" else hook
+    for hook in PLLP_STAGE_HOOKS_Z3815A
+    if hook.routine != "n3_lock_pll"
+)
+PLLP_TASK_STATES_Z3805A_1_01_03 = States(
+    presets=tuple(
+        Preset("preserved_region.restore", (0, 1, 2)) if preset.target == "preserved_region.restore" else preset
+        for preset in PLLP_TASK_STATES_Z3815A.presets
+        if preset.target != "switch_word_bit_4_copy"
+    ),
+    hooks=PLLP_STAGE_HOOKS_Z3805A_1_01_03,
+    cases=PLLP_TASK_STATES_Z3815A.cases,
+)
+PLLP_STAGE_STATES_Z3805A_1_01_03 = States(
+    presets=tuple(
+        preset
+        for preset in PLLP_STAGE_STATES_Z3815A.presets
+        if preset.target not in {"pll.external_reference", "switch_word_bit_11"}
+    ),
+    hooks=(LOG_EVENT,),
+    cases=PLLP_STAGE_STATES_Z3815A.cases,
+)
 IMAGE_STATES = {
     "58503a-3704": LOG_EVENT_BY_CODE_STATES,
     "z3816a-4001": LOG_EVENT_BY_CODE_STATES,
@@ -2613,6 +2703,18 @@ IMAGE_STATES = {
     # Z3805A 3543B's is gps.status_reported: STATES' with that preset's
     # target and values the Z3815A's (Z3815A_LOOP_STATES).
     "z3805a-1.01.03": {
+        **Z3805A_1_01_03_LOOP_STATES,
+        "pllp_task": PLLP_TASK_STATES_Z3805A_1_01_03,
+        **{
+            name: PLLP_STAGE_STATES_Z3805A_1_01_03
+            for name in (
+                "pll_mode",
+                "get_ffom",
+                "pll_stage_status",
+                "recovery_suffix_index",
+                "holdover_waiting_reason",
+            )
+        },
         **LOG_EVENT_BY_CODE_STATES,
         "enter_holdover": States(
             presets=tuple(
@@ -2669,6 +2771,9 @@ PLLP_SET_UP_COUNTS_Z3815A = 2
 PLLP_PASSES_Z3815A = 9
 IMAGE_COUNTED_LOOPS = {
     "z3815a-4010": {"pllp_task": ("watchdog_pll", PLLP_SET_UP_COUNTS_Z3815A + PLLP_PASSES_Z3815A)},
+    # the Z3805A 1.01.03's, which counts its set-up and passes so too
+    # (0x47fc4)
+    "z3805a-1.01.03": {"pllp_task": ("watchdog_pll", PLLP_SET_UP_COUNTS_Z3815A + PLLP_PASSES_Z3815A)},
 }
 # The status register a function starts with that runs only in a task,
 # as a task does, in user mode, its interrupts unmasked, rather than

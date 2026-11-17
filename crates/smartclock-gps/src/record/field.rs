@@ -36,6 +36,7 @@ use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
 use crate::record::Fault;
 use crate::record::FaultSet;
+use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::Satellite;
 use crate::record::SelfTest;
@@ -263,7 +264,10 @@ impl RecordField {
     /// ([`Satellite::new`]).  The part of a second, the timing's two
     /// values and the satellites isolated are taken as zero or none
     /// where what holds them is absent, so that giving the second, one
-    /// of the timing's values or a RAIM status is not giving them.
+    /// of the timing's values or a RAIM status is not giving them.  A
+    /// RAIM solution not known is taken as none, so that giving a RAIM
+    /// status whose solution is the manual's value for not known is not
+    /// giving the solution.
     #[must_use]
     pub fn differs(self, one: &Record, other: &Record) -> bool {
         match self {
@@ -351,8 +355,14 @@ impl RecordField {
             Self::Xdops => one.derived.xdops != other.derived.xdops,
             Self::Corrections => one.derived.corrections != other.derived.corrections,
             Self::RaimSolution => {
-                one.derived.raim.map(|raim| raim.solution)
-                    != other.derived.raim.map(|raim| raim.solution)
+                let solution = |record: &Record| {
+                    record
+                        .derived
+                        .raim
+                        .map(|raim| raim.solution)
+                        .filter(|&solution| solution != RaimSolution::Unknown)
+                };
+                solution(one) != solution(other)
             }
             Self::RaimAbility => {
                 one.derived.raim.map(|raim| raim.ability)
@@ -670,6 +680,9 @@ mod tests {
     use crate::engine::settings::SettingSet;
     use crate::record::Fix;
     use crate::record::Health;
+    use crate::record::Raim;
+    use crate::record::RaimAbility;
+    use crate::record::RaimSolution;
     use crate::record::Record;
     use crate::record::Satellite;
     use crate::units::DecibelHertz;
@@ -736,6 +749,28 @@ mod tests {
         assert_eq!(
             changed(&before, &record),
             FieldSet::of(&[RecordField::SatelliteSignal, RecordField::SatelliteHealth])
+        );
+    }
+
+    /// A RAIM status whose solution is not known gives its ability and
+    /// not its solution; one whose solution is known gives both.
+    #[test]
+    fn an_unknown_raim_solution_is_not_given() {
+        let mut record = Record::EMPTY;
+        record.derived.raim = Some(Raim::new(RaimSolution::Unknown, RaimAbility::Detection));
+        assert_eq!(
+            changed(&Record::EMPTY, &record),
+            FieldSet::of(&[RecordField::RaimAbility])
+        );
+        let before = record;
+        record.derived.raim = Some(Raim::new(RaimSolution::Ok, RaimAbility::Detection));
+        assert_eq!(
+            changed(&before, &record),
+            FieldSet::of(&[RecordField::RaimSolution])
+        );
+        assert_eq!(
+            changed(&Record::EMPTY, &record),
+            FieldSet::of(&[RecordField::RaimSolution, RecordField::RaimAbility])
         );
     }
 

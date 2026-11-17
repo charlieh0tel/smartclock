@@ -79,7 +79,9 @@ struct Announced {
 /// each of those the images set
 /// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)) would
 /// be a configuration sent.  `docs/firmware/gps-setting-exceptions.tsv`
-/// excuses it each.
+/// excuses it each.  Of Time RAIM it fills the ability alone: the
+/// solution it gives is always unknown, and
+/// `docs/firmware/gps-field-exceptions.tsv` excuses it the solution.
 pub const DECLARATION: Declaration = Declaration {
     name: "u-blox",
     fills: FieldSet::of(&[
@@ -110,7 +112,6 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::Antenna,
         RecordField::SelfTest,
         RecordField::Ecef,
-        RecordField::RaimSolution,
         RecordField::RaimAbility,
     ]),
     acts: SettingSet::EMPTY,

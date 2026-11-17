@@ -1247,15 +1247,19 @@ stands in for one.
   `FieldSet`, `Declaration`), and its tests hold the declaration to
   `IMAGE_USES`, which the check writes from the table's used rows, to
   `docs/firmware/gps-field-exceptions.tsv`, the owner's alone to add
-  to, and to what a fill really changes.  Both providers here write
+  to, and to what a fill really changes.  Both providers here fill
   all the images use but the satellites Time RAIM isolated, which the
   Z3815A's status screen shows from `rrm` and for which the owner
   granted each a row (2026-11-16): the self-test as a pass, the almanac
   (the u-blox crate's from `RXM-SFRBX`), and
   the Time RAIM result from the scene's sky and from a u-blox
-  receiver's `TIM-TP`.  The u-blox crate reports that result's
-  solution as unknown, `TIM-TP` giving no RAIM result or alarm, so
-  only the ability is its receiver's.  Every field of a response
+  receiver's `TIM-TP`.  The u-blox crate fills of that result only
+  the ability: it reports the solution as unknown, `TIM-TP` giving no
+  RAIM result or alarm, and the owner granted it a row for the
+  solution too (2026-11-16).  A solution of unknown is taken as none
+  when a fill is seen (`RecordField::differs`), as the satellites
+  isolated are when no RAIM status is given, so a status with the
+  solution unknown does not count as filling it.  Every field of a response
   is now the record's, the model's state or the manual's value for not
   known, a channel's URA of 63 the one such value; `RECORD_BYTES_MAX`
   went from 640 to 704 for it.  A command is one of three classes, the

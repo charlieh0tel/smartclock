@@ -2766,6 +2766,30 @@ fn a_command_not_taken_changes_no_setting() {
     assert_eq!(engine.settings(), defaults());
 }
 
+/// VP p. 69 and UT p. 6.82: a cable delay is 0 to 999,999 ns, with no
+/// sign.  One past it, or negative, is not taken, and the answer is the
+/// delay held.
+#[test]
+fn a_cable_delay_keeps_to_the_manuals_range() {
+    for identity in [&VP_EIGHT, &UT_PLUS_3_1] {
+        let mut engine = powered_up(identity);
+        assert_eq!(
+            tell(&mut engine, AZ_CABLE_DELAY, &999_999_u32.to_be_bytes()),
+            [changed(&[Setting::CableDelay])]
+        );
+        for refused in [1_000_000_i32, -1, -250, i32::MIN] {
+            let frames = ask(
+                &mut engine,
+                &Record::EMPTY,
+                AZ_CABLE_DELAY,
+                &refused.to_be_bytes(),
+            );
+            assert_eq!(only(&frames, AZ_CABLE_DELAY), 999_999_u32.to_be_bytes());
+            assert_eq!(engine.settings().cable_delay, Nanoseconds(999_999));
+        }
+    }
+}
+
 /// VP pp. 104 and 140: a Time RAIM setup with a byte out of range is
 /// not taken, none of it.
 #[test]

@@ -1150,6 +1150,16 @@ stands in for one.
   and changes nothing, the algorithm held kept; others answer as
   before.  What a real 8.4 does with 65 is not known: the echo is
   what the images need, and that a real 8.4 echoes it is inferred.
+- **The model takes `@@Az` only within its range** (decided
+  2026-11-16).  The VP, UT Plus and M12+ manuals give the cable delay
+  as 0 to 999,999 ns with no sign (VP p. 69, UT p. 6.82, M12+ p. 103),
+  a delay that only puts the pulse earlier.  The model stored any four
+  bytes and echoed them; it now takes none past that range, a negative
+  one included, and answers with the delay it holds, as every setting
+  out of range is answered.  `Settings::cable_delay` stays unsigned:
+  no manual gives the field a sign, and a pulse put later is
+  `@@Ay`'s offset (`Settings::pulse_offset`), as the Furuno model
+  already splits `set,t`'s signed correction between the two.
 - **The model takes `@@As` only while the position is not held**
   (decided 2026-11-16).  Both manuals execute it only with position
   hold disabled (VP p. 53, UT p. 6.87), so while `@@At` 1 holds, the

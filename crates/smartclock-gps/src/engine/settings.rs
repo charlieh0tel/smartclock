@@ -198,8 +198,13 @@ pub struct Settings {
     /// Which time is reported (`@@Aw`).
     pub time_base: TimeBase,
     /// How much earlier the 1 PPS is put out, to make up for the
-    /// antenna cable (`@@Az`, pp. 68 and 69).  The manual's most is
-    /// 999,999 ns; the engine keeps whatever it is given.
+    /// antenna cable (`@@Az`, pp. 68 and 69): 0 to 999,999 ns, never
+    /// negative (UT p. 6.82 has the same range).  An Oncore takes no
+    /// delay past it, a negative one included, and answers with the
+    /// one it holds.  The Furuno model's comes from a negative `set,t`
+    /// ([`furuno`](crate::engine::furuno)), whose range, -999,999 to
+    /// 999,999 ns, is less what its software takes back off, so may be
+    /// a little more.
     pub cable_delay: Nanoseconds<u32>,
     /// How far after the second the 1 PPS is put out (`@@Ay`, pp. 66
     /// and 67): 0 to 999,999,999 ns, never negative.

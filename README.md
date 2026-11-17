@@ -247,6 +247,8 @@ own GPS less UTC, which a recording or gpsd gives in its first record
 that has one (until then it is taken to be 18, the made-up sky's), and
 GPS less UTC stays at it.  `smartclock-gps-feed --help` has the rest,
 and `PLAN.md` the design.
+How the feed, the engine and the u-blox crate fit together is drawn in
+[the GPS support architecture](https://charlieh0tel.github.io/smartclock/gps-architecture.html).
 
 ## Development
 
@@ -304,6 +306,7 @@ inside its own frame.
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the six FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |
 | [`fpga-detail.html`](https://charlieh0tel.github.io/smartclock/fpga-detail.html) | each FPGA design drawn twice by one generator: the whole chip, its pins on the frame and its function blocks in the signal's flow, the counters with their moduli and the nets between them named; and the time-interval counter gate by gate, each logic block with its equations; every element listed below with its trace's confidence word and section; a click opens a drawing full screen at its own scale to pan and zoom; pins, equations and connections read from the decoded netlists; built by `make fpga-detail` and checked by `check-detail` |
 | [`loop.html`](https://charlieh0tel.github.io/smartclock/loop.html) | the disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives |
+| [`gps-architecture.html`](https://charlieh0tel.github.io/smartclock/gps-architecture.html) | the GPS crates drawn together: one copy of the code and the places it runs, a microcontroller board in a SmartClock's Oncore socket and `smartclock-gps-feed` on a host, each with its own provider and engine; who acts on each setting, who makes the 1 PPS, and where each part lives |
 | [`board-atlas.html`](https://charlieh0tel.github.io/smartclock/board-atlas.html) | the first-family main board, part by part on its photographs: each part's role, its address or QSPI device, the nets measured, and the Z3801A's and 58503A's boards against it; a ring or a row opens the part's card, the photos zoom and pan, the parts filter by subsystem, confidence or text, and `#J4` links to a part; built from `docs/board-atlas.json` by `make board-atlas` |
 | [`block-diagram.html`](https://charlieh0tel.github.io/smartclock/block-diagram.html) | the same board as blocks and signals: the oscillator, the FPGA's count, port and 1 PPS outputs with their pins, the interpolator drawn as a hypothesis, the processor and what it drives, each marked read, board, simulated, inferred or open and cited; on a narrow screen a tap opens the diagram full screen to pan and zoom; built from `docs/block-diagram.json` by `make block-diagram` |
 | [`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html) | every image's pForth words side by side, each with its code address, flags and stack effect, filtered by text, by table and image, to the words that differ or those every image shares; built by `make pforth-models` |

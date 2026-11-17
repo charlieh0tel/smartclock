@@ -66,7 +66,9 @@ gives as types (`Engine::settings`), and `Engine::receive` returns
 whether a command reset it (`@@Cf`) and which settings changed, for a
 tool that has something else to set the same way.  Its `engine::furuno`
 module stands in for the Z3815A's GT-74 the same way ("In every
-image").
+image").  How these crates and `smartclock-gps-feed` fit together,
+and where each part lives, is drawn in
+[the GPS support architecture](https://charlieh0tel.github.io/smartclock/gps-architecture.html).
 
 ## The serial link
 

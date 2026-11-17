@@ -166,7 +166,6 @@
       "gps_channels": "8: `Ea`",
       "rewrite": "docs/firmware/z3817a-3752.md",
       "cells": {
-        "loop": "wip",
         "daemon": {
           "evidence": [{"dialect": "{model}", "is": "{dialect}"},
                        {"toml": "crates/smartclock/commands.toml", "key": "complete", "value": "{model}"}]

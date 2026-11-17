@@ -523,7 +523,7 @@ build of it agreeing with the image in the harness) gives the same
 law term for term, below, and the 58503A 3704, whose `pll_normal`
 (`0x4495a`) does too.  What
 does differ is where τ and G come from.  Read on 2026-10-09, the
-Z3805A 1.01.03 on 2026-11-16.  The
+Z3805A 1.01.03 and the Z3817A 3752 on 2026-11-16.  The
 table is made from `loop-constants.json`, which
 `docs/pages/loop.html`'s "By model" table is made from too (`make
 loop-constants`).  The addresses after a value are where the image
@@ -542,6 +542,7 @@ after "by" are the code that chooses.
 | 58503A 3704 | 700 s (`0x30840`) | 150 s (`0x475e2`, `0x441ea`) | +6.25 × 10⁻¹³ (`0x477dc`) | 350 s (`0x441b0`) |
 | 58503B 1.01.04 | 700 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | −1.25 × 10⁻¹² (`0x40dfc`) or +6.25 × 10⁻¹³ (`0x40e08`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` | not traced |
 | Z3805A 1.01.03 | 1000 s (`0x323a4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x323a4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | +6.25 × 10⁻¹³ (`0x329ec`) or +9.238 × 10⁻¹³ (`0x329f8`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` (`0x3277a`) | 500 s, half of τ (`0x44990`) |
+| Z3817A 3752 | 1000 s (`0x41450`) or 500 s (`0x4ca5a`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX`; by oscillator kind, `:DIAGnostic:ROSCillator:TYPE`, 500 s for kind 1 alone (`0x4ca4e`) | 150 s (`0x41450`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | +5 × 10⁻¹³ (`0x4180a`) or −2.125 × 10⁻¹² (`0x41820`), by oscillator kind, `:DIAGnostic:ROSCillator:TYPE`, the first for kind 0 alone (`0x41800`) | 500 s or 250 s, half of τ (`0x492f2`) |
 <!-- end loop_constants.py -->
 
 **The update, compared.**  Each image's `pll_normal` and fit
@@ -579,10 +580,8 @@ routine compares equal across images and a different one does not.
   (`z3817a-3752.md`, "The update law").
 
 The τ block has the 25-byte layout above in every image but the
-58503B and the Z3805A 1.01.03 (below), the 58503B's block (ROM `0x407b4`, copied to `0x1028b8` at
+58503B, the Z3805A 1.01.03 and the Z3817A 3752 (below), the 58503B's block (ROM `0x407b4`, copied to `0x1028b8` at
 `0x22d6e`) has 29 bytes: the startup constant at +0x14 and τ at +0x18.
-The Z3817A 3752's is laid out so too (ROM `0x41450`, copied to
-`0x1023b4`; `z3817a-3752.md`, "The loop's constants").
 Two SCPI parameters, undocumented, write them: `:DIAGnostic:
 ROSCillator:LTIMe:INIT` (`0x1028cc`, 10 to 1000 s) and `:LTIMe:MAX`
 (`0x1028d0`, 10 to 10000 s); each setter keeps the start at or below
@@ -625,6 +624,47 @@ taken as an integer and shifted right once (`0x44990`), or with the
 interval past 500 ns: 500 s at τ's default.  Its `pll_normal`
 (`0x4520c`) eases the aging term in as the 58503B's does
 (`z3805a-1.01.03.md`, "The link list").
+
+The Z3817A 3752 sets τ and G by its oscillator's kind, where the
+Z3815A goes by the switch word's bit 12 (`z3817a-3752.md`, "The loop's
+constants").  Its 29-byte block (ROM `0x41450`, copied to `0x1023b4` at
+`0x22e5e` and `0x22e94`) holds the startup constant, 150 s, at +0x14
+and τ, 1000 s, at +0x18.  `system_init` copies it on a cold start and
+on a warm one restores the copy the preserved region keeps
+(`0x22dec`), so a setting written over SCPI outlasts a warm restart
+but not a power-up.  The same two parameters write them,
+`:LTIMe:INIT` (`0x1023c8`, 10 to 1000 s) and `:LTIMe:MAX` (`0x1023cc`,
+10 to 10000 s), whose done hooks keep the start at or below the
+maximum (`0x4ae46`, `0x4aeb8`); neither descriptor (`0x44a58`,
+`0x44a94`) marks its value saved, and the time constant in force is
+`pll` + `0x3c8` (`0x102a62`).  The kind is the calibration block's byte at the
+EEPROM's `0x40009c` (`oscillator_kind`, `0x10222e`, read by
+`oscillator_kind_read`, `0x418ec`, 0 for an erased byte), which
+`:DIAGnostic:ROSCillator:TYPE` sets to 0 or 1 before a power-on reset
+(`0x3c38a`).  Kind 1 sets τ to 500 s in `pll_init` (`0x4ca4e`), which
+runs after the block's copy and at each restart of the loop; any other
+kind keeps the block's.  G is `:ASLOPe`'s default, which
+`efc_calibration_defaults` (`0x417fa`) gives by the kind: +5 × 10⁻¹³
+for kind 0, no other image's, with `:BSLOPe` 3.3 × 10⁻²⁴ (`0x41814`),
+and −2.125 × 10⁻¹², the Z3815A's second, with `:BSLOPe` 0, for any
+other.  So kind 0 runs at τ 1000 s and +5 × 10⁻¹³, kind 1 at 500 s and
+−2.125 × 10⁻¹², the Z3815A's pair with its bit clear, and a byte past 1,
+which only the EEPROM can hold, at 1000 s and −2.125 × 10⁻¹².  A
+calibration block taken for this kind, or an erased kind, stands in
+for the defaults (`efc_calibration_read`, `0x41834`).  Unlike the
+58503B's and the Z3805A 1.01.03's, the loop takes the gain as
+A + B·u² at the EFC in force u, as the Z3815A's does: from `:ASLOPe`
+alone as `pllp_task` starts (`0x4cbfe`), then in each block's first
+second of the start-up and normal loops (`0x4962a`, `0x49dbe`) and at
+each aging fit (`0x47842`) through `efc_gain_from_calibration`
+(`0x4d76c`); with kind 0's defaults G grows with the EFC's square from
+the table's +5 × 10⁻¹³ at EFC 0.  Holdover recovery restarts the ramp
+at the startup constant after a holdover longer than half of τ, taken
+as an integer and shifted right once (`0x492f2`), or with the interval
+past 500 ns: 500 s at τ 1000 s, 250 s at 500 s.  Its update law is the
+Z3815A's with the differences above; `loop.html`'s columns take a
+block of ten readings, the 1PPS's: with a PP2S its integral's step is half
+(`z3817a-3752.md`, "The update law").
 
 **The gain's second term and the measured uncertainty, Z3815A and
 58503B only.**  Beside G (A, `ASLOPe`) these two carry a second

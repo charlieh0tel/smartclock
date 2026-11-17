@@ -190,6 +190,35 @@
         "values": [{"value": 500}],
         "by": {"text": "half of τ", "cite": ["0x44990"]}
       }
+    },
+    {
+      "image": "z3817a-3752",
+      "model": "Z3817A",
+      "firmware": "3752",
+      "tau": {
+        "values": [
+          {"value": 1000, "rom": [{"at": "0x41450", "kind": "block", "offset": "0x18"}]},
+          {"value": 500, "rom": [{"at": "0x4ca5a", "kind": "immediate"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:MAX`; by oscillator kind, `:DIAGnostic:ROSCillator:TYPE`, 500 s for kind 1 alone", "cite": ["0x4ca4e"], "page": "settable: `LTIMe:MAX`*; by `TYPE`*"}
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x41450", "kind": "block", "offset": "0x14"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:INIT`", "page": "from `LTIMe:INIT`*"}
+      },
+      "gain": {
+        "values": [
+          {"value": 5e-13, "rom": [{"at": "0x4180a", "kind": "immediate"}]},
+          {"value": -2.125e-12, "rom": [{"at": "0x41820", "kind": "immediate"}]}
+        ],
+        "by": {"text": "by oscillator kind, `:DIAGnostic:ROSCillator:TYPE`, the first for kind 0 alone", "cite": ["0x41800"], "page": "by `TYPE`*"}
+      },
+      "recovery": {
+        "values": [{"value": 500}, {"value": 250}],
+        "by": {"text": "half of τ", "cite": ["0x492f2"]}
+      }
     }
   ]
 }

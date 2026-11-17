@@ -187,7 +187,8 @@ pub struct Settings {
     pub mask_angle: Degrees<u8>,
     /// Whether the position is held (`@@At`, pp. 56 and 57).
     pub position_hold: bool,
-    /// The position to hold, held or not (`@@As`, pp. 54 and 55).
+    /// The position to hold, held or not (`@@As`, pp. 54 and 55), which
+    /// `@@As` changes only while it is not held (p. 53).
     pub held_position: Location,
     /// Whether the altitude is held by hand (`@@Av`, pp. 60 and 61).
     pub altitude_hold: bool,

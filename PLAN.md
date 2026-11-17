@@ -1142,6 +1142,15 @@ stands in for one.
   and changes nothing, the algorithm held kept; others answer as
   before.  What a real 8.4 does with 65 is not known: the echo is
   what the images need, and that a real 8.4 echoes it is inferred.
+- **The model takes `@@As` only while the position is not held**
+  (decided 2026-11-16).  Both manuals execute it only with position
+  hold disabled (VP p. 53, UT p. 6.87), so while `@@At` 1 holds, the
+  model keeps the position held and answers with it; and a latitude,
+  longitude, height or height type outside p. 54's ranges is not
+  taken either, answered the same way, as every setting out of range
+  is.  Before, any `@@As` was stored and echoed, so an image that sent
+  one while holding passed against the model and would not against a
+  real Oncore.
 - **The model computes nothing physical.**  Dilutions of precision, a
   position in Earth-centered coordinates and magnetic variation need
   floating point or tables a Cortex-M0 should not carry, so a record

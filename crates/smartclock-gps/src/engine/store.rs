@@ -85,9 +85,14 @@ const CORRECTION_TROPOSPHERIC: u8 = 2;
 
 /// The first byte an ignore list's command must carry (`@@Am`, p. 41).
 const IGNORE_LIST_CONSTANT: u8 = 0;
-/// The heights an altitude hold takes, in centimeters (`@@Au`, p. 58).
+/// The heights an altitude hold and a position to hold take, in
+/// centimeters (`@@Au`, p. 58; `@@As`, p. 54).
 const HEIGHT_LEAST: i32 = -100_000;
 const HEIGHT_MOST: i32 = 1_800_000;
+/// The most a position to hold's latitude and longitude may be from 0,
+/// in milliarcseconds (`@@As`, p. 54).
+const LATITUDE_MOST: i32 = 324_000_000;
+const LONGITUDE_MOST: i32 = 648_000_000;
 /// The most a VP's atmospheric correction mode may be (`@@Aq`, p. 50),
 /// and a UT Plus's, which has two modes more.
 const CORRECTION_MOST_VP: u8 = 1;
@@ -110,6 +115,9 @@ enum Takes {
     Correction,
     /// A height within range and its type.
     Height,
+    /// A latitude and longitude within range, then a height as
+    /// [`Self::Height`].
+    Position,
 }
 
 impl Takes {
@@ -132,6 +140,12 @@ impl Takes {
             (Self::Height, &[a, b, c, d, kind]) => {
                 (HEIGHT_LEAST..=HEIGHT_MOST).contains(&i32::from_be_bytes([a, b, c, d]))
                     && kind <= HEIGHT_MEAN_SEA_LEVEL
+            }
+            (Self::Position, &[a, b, c, d, e, f, g, h, ref height @ ..]) => {
+                (-LATITUDE_MOST..=LATITUDE_MOST).contains(&i32::from_be_bytes([a, b, c, d]))
+                    && (-LONGITUDE_MOST..=LONGITUDE_MOST)
+                        .contains(&i32::from_be_bytes([e, f, g, h]))
+                    && Self::Height.takes(height, model)
             }
             _ => false,
         }
@@ -229,7 +243,7 @@ const SETTINGS: [Setting; 23] = [
             0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, QUERY,
         ],
         &[0; 13],
-        Takes::Anything,
+        Takes::Position,
     ),
     setting(AT_POSITION_HOLD, &[QUERY], &[0], Takes::Bytes(1)),
     setting(AU_ALTITUDE_HOLD_HEIGHT, &[QUERY; 5], &[0; 5], Takes::Height),
@@ -384,13 +398,16 @@ impl Store {
     }
 
     /// Takes a setting's command: stores `data` unless it asks for the
-    /// value, is of the wrong length or is out of range.
+    /// value, is of the wrong length or is out of range, or is `@@As`
+    /// while the position is held, which it may be set only while not
+    /// (p. 53; UT p. 6.87).
     pub(super) fn set_or_query(&mut self, id: MessageId, data: &[u8], model: Model) {
         let Some(index) = Self::index(id) else {
             return;
         };
         let setting = &SETTINGS[index];
-        if setting.query != data
+        if !(id == AS_HOLD_POSITION && self.holding())
+            && setting.query != data
             && setting.default.len() == data.len()
             && setting.takes.takes(data, model)
             && let Some(held) = self.bytes.get_mut(start(index)..start(index) + data.len())

@@ -157,7 +157,7 @@ fn gps(utc: UnixSeconds) -> Result<GpsSeconds> {
 }
 
 /// Builds the provider `spec` names, `fake_start` relabeling its time,
-/// `now` being the UTC second the driver starts in.  A recording is
+/// `now` being the UTC second the first tick goes out in.  A recording is
 /// read whole.  Refuses one the driver, paced to real time, cannot
 /// serve.
 pub(crate) fn build(

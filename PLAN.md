@@ -1614,7 +1614,10 @@ stands in for one.
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for
-  gpsd, whose epoch arrives after the second it is of.  The host's
+  gpsd, whose epoch arrives after the second it is of.  The clock is
+  read once for the first tick, and a made-up sky without a fake start
+  starts at that second, so each of its seconds is the one its frames
+  go out in.  The host's
   clock is read against the monotonic one, so the two things that make
   a second late are told apart: a step of the clock, either way,
   restarts the count from the next whole second rather than bursting

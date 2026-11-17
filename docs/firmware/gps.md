@@ -47,7 +47,10 @@ a limit of 10, the pulse mode as set and all 20 `@@A` settings queried
 as saved; only its clock was lost.  Told `@@Cf` and power-cycled the
 same way, it came up idle and silent, its position status's time at
 1997-01-01 12:00:00 and standing, its almanac dropped and its settings
-at `@@Cf`'s values.  One configuration is
+at `@@Cf`'s values.  A caller makes a configuration from
+`SavedConfiguration::starting`, how the model powers up with nothing
+saved, changed by its `with_` methods, and checks it as
+`Engine::new` does (`SavedConfiguration::check`).  One configuration is
 built in, `CONFIGURATION_58503A`: how the 58503A's power-up script
 `0x53` and its Time RAIM request leave an eight-channel engine
 ("Time RAIM"), fixing, with `@@Ea` and `@@En` each second and `@@Bb` at

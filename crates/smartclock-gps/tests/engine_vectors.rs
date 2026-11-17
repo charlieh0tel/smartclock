@@ -33,6 +33,7 @@ use smartclock_gps::engine::Engine;
 use smartclock_gps::engine::Options;
 use smartclock_gps::engine::Output;
 use smartclock_gps::engine::identity::Identity;
+use smartclock_gps::engine::identity::Model;
 use smartclock_gps::engine::identity::UT_PLUS_2_2;
 use smartclock_gps::engine::identity::VP_EIGHT;
 use smartclock_gps::engine::identity::VP_EIGHT_WITHOUT_TIME_RAIM;
@@ -40,7 +41,6 @@ use smartclock_gps::engine::identity::VP_SIX;
 use smartclock_gps::engine::saved::CONFIGURATION_58503A;
 use smartclock_gps::engine::saved::ChannelCount;
 use smartclock_gps::engine::saved::SavedConfiguration;
-use smartclock_gps::engine::settings::PulseMode;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::Position;
 use smartclock_gps::record::field::FieldSet;
@@ -50,7 +50,6 @@ use smartclock_gps::record::field::changed;
 use smartclock_gps::source::scene;
 use smartclock_gps::source::scene::DECLARATION;
 use smartclock_gps::units::Centimeters;
-use smartclock_gps::units::HundredNanoseconds;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Seconds;
@@ -84,20 +83,14 @@ const DECLARED_BY: &str = "vp-eight-leap.txt";
 /// The configuration a vector's head names `status-every-other-second`,
 /// of an engine that fixes from power-up and sends its position status
 /// every other second, six-channel and eight-channel.
-const STATUS_EVERY_OTHER_SECOND_SIX: SavedConfiguration = SavedConfiguration {
-    channels: ChannelCount::Six,
-    fixing: true,
-    position_status_rate: Seconds(2),
-    visibility_updates: false,
-    time_raim_rate: Seconds(0),
-    raim_algorithm: false,
-    raim_alarm_limit: HundredNanoseconds(10),
-    pulse_mode: PulseMode::Always,
-};
-const STATUS_EVERY_OTHER_SECOND_EIGHT: SavedConfiguration = SavedConfiguration {
-    channels: ChannelCount::Eight,
-    ..STATUS_EVERY_OTHER_SECOND_SIX
-};
+const STATUS_EVERY_OTHER_SECOND_SIX: SavedConfiguration =
+    SavedConfiguration::starting(Model::VpSix)
+        .with_fixing(true)
+        .with_position_status_rate(Seconds(2));
+const STATUS_EVERY_OTHER_SECOND_EIGHT: SavedConfiguration =
+    SavedConfiguration::starting(Model::VpEight)
+        .with_fixing(true)
+        .with_position_status_rate(Seconds(2));
 
 /// The engine a vector's head names.
 fn identity(head: &Head) -> &'static Identity {

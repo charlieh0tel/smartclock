@@ -27,9 +27,13 @@
 //! dropped and its settings at `@@Cf`'s values.  So a holder modeling that power cycle
 //! makes the next engine with no saved configuration.
 //!
-//! One configuration is built in, [`CONFIGURATION_58503A`]: how a
-//! 58503A leaves its engine, for a receiver that cannot command its
-//! own.
+//! A caller makes its own from
+//! [`SavedConfiguration::starting`], which is how an engine powers up
+//! with nothing saved, changed by its `with_` methods, and checks it
+//! for an Oncore with [`SavedConfiguration::check`], as
+//! [`Engine::new`](crate::engine::Engine::new) does.  One configuration
+//! is built in, [`CONFIGURATION_58503A`]: how a 58503A leaves its
+//! engine, for a receiver that cannot command its own.
 //!
 //! The pages cited are the VP Oncore's command reference,
 //! `third_party/motorola/VPCommands.pdf`, as printed.
@@ -37,6 +41,7 @@
 use thiserror::Error;
 
 use crate::engine::ALARM_LIMIT_LEAST;
+use crate::engine::TraimSetup;
 use crate::engine::identity::Model;
 use crate::engine::settings::PulseMode;
 use crate::units::HundredNanoseconds;
@@ -124,16 +129,16 @@ pub struct SavedConfiguration {
 /// request internally and so sends its engine nothing
 /// (`docs/firmware/gps.md`, "Which engines each image accepts").  An
 /// engine made with it needs an eight-channel identity.
-pub const CONFIGURATION_58503A: SavedConfiguration = SavedConfiguration {
-    channels: ChannelCount::Eight,
-    fixing: true,
-    position_status_rate: Seconds(1),
-    visibility_updates: true,
-    time_raim_rate: Seconds(1),
-    raim_algorithm: true,
-    raim_alarm_limit: HundredNanoseconds(10),
-    pulse_mode: PulseMode::Always,
-};
+pub const CONFIGURATION_58503A: SavedConfiguration = SavedConfiguration::starting(Model::VpEight)
+    .with_fixing(true)
+    .with_position_status_rate(Seconds(1))
+    .with_visibility_updates(true)
+    .with_time_raim_rate(Seconds(1))
+    .with_raim_algorithm(true)
+    .with_raim_alarm_limit(HundredNanoseconds(10))
+    .with_pulse_mode(PulseMode::Always);
+
+const _: () = assert!(CONFIGURATION_58503A.check(Model::VpEight).is_ok());
 
 /// Why an engine cannot power up with a [`SavedConfiguration`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
@@ -163,8 +168,100 @@ pub enum ConfigurationError {
 }
 
 impl SavedConfiguration {
-    /// Whether an engine of `model` can power up with it.
-    pub(super) const fn check(&self, model: Model) -> Result<(), ConfigurationError> {
+    /// How an engine of `model` powers up with nothing saved: with its
+    /// channels, idle if a VP and fixing if a UT Plus (p. 118), every
+    /// message polled only, Time RAIM off at an alarm limit of 1000 ns
+    /// and the 1 PPS on all the time (pp. 103 and 139).  An engine made
+    /// with it starts as one made with none; the `with_` methods make
+    /// a configuration of it.
+    #[must_use]
+    pub const fn starting(model: Model) -> Self {
+        let traim = TraimSetup::DEFAULT;
+        Self {
+            channels: ChannelCount::of(model),
+            fixing: matches!(model, Model::UtPlus),
+            position_status_rate: Seconds(0),
+            visibility_updates: false,
+            time_raim_rate: Seconds(0),
+            raim_algorithm: traim.algorithm,
+            raim_alarm_limit: traim.alarm_limit,
+            pulse_mode: traim.pulse_mode,
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::fixing`] as given.
+    #[must_use]
+    pub const fn with_fixing(self, fixing: bool) -> Self {
+        Self { fixing, ..self }
+    }
+
+    /// The same, with [`SavedConfiguration::position_status_rate`] as
+    /// given.
+    #[must_use]
+    pub const fn with_position_status_rate(self, rate: Seconds<u8>) -> Self {
+        Self {
+            position_status_rate: rate,
+            ..self
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::visibility_updates`] as
+    /// given.
+    #[must_use]
+    pub const fn with_visibility_updates(self, updates: bool) -> Self {
+        Self {
+            visibility_updates: updates,
+            ..self
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::time_raim_rate`] as given.
+    #[must_use]
+    pub const fn with_time_raim_rate(self, rate: Seconds<u8>) -> Self {
+        Self {
+            time_raim_rate: rate,
+            ..self
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::raim_algorithm`] as given.
+    #[must_use]
+    pub const fn with_raim_algorithm(self, on: bool) -> Self {
+        Self {
+            raim_algorithm: on,
+            ..self
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::raim_alarm_limit`] as
+    /// given.
+    #[must_use]
+    pub const fn with_raim_alarm_limit(self, limit: HundredNanoseconds) -> Self {
+        Self {
+            raim_alarm_limit: limit,
+            ..self
+        }
+    }
+
+    /// The same, with [`SavedConfiguration::pulse_mode`] as given.
+    #[must_use]
+    pub const fn with_pulse_mode(self, mode: PulseMode) -> Self {
+        Self {
+            pulse_mode: mode,
+            ..self
+        }
+    }
+
+    /// Whether an engine of `model` can power up with it, as
+    /// [`Engine::new`](crate::engine::Engine::new) checks: its channels
+    /// must be the model's, a UT Plus's must fix, and its Time RAIM
+    /// alarm limit must be no less than 3 (pp. 104 and 140).
+    ///
+    /// # Errors
+    ///
+    /// The [`ConfigurationError`] [`Engine::new`](crate::engine::Engine::new)
+    /// would return.
+    pub const fn check(&self, model: Model) -> Result<(), ConfigurationError> {
         let identity = ChannelCount::of(model);
         if !matches!(
             (self.channels, identity),

@@ -1032,16 +1032,9 @@ fn an_idle_vp_that_turns_into_a_ut_plus_fixes() {
 
 /// A configuration of a six-channel engine that fixes and sends its
 /// status every other second.
-const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration {
-    channels: ChannelCount::Six,
-    fixing: true,
-    position_status_rate: Seconds(2),
-    visibility_updates: false,
-    time_raim_rate: Seconds(0),
-    raim_algorithm: false,
-    raim_alarm_limit: HundredNanoseconds(10),
-    pulse_mode: PulseMode::Always,
-};
+const STATUS_EVERY_OTHER_SECOND: SavedConfiguration = SavedConfiguration::starting(Model::VpSix)
+    .with_fixing(true)
+    .with_position_status_rate(Seconds(2));
 
 #[test]
 fn an_engine_saved_to_send_its_status_unasked_does() {
@@ -1107,6 +1100,7 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
     for (identity, saved, error) in cases {
         let mut options = Options::DEFAULT;
         options.saved = Some(saved);
+        assert_eq!(saved.check(identity.model()), Err(error));
         assert_eq!(Engine::new(identity, options).err(), Some(error));
     }
     let mut options = Options::DEFAULT;
@@ -1115,6 +1109,43 @@ fn an_engine_does_not_power_up_with_a_configuration_that_does_not_suit_it() {
         !Engine::new(&VP_EIGHT, options)
             .expect("an idle VP")
             .fixing()
+    );
+}
+
+/// An engine made with the configuration it starts with is made as one
+/// with none.
+#[test]
+fn an_engine_starting_as_saved_starts_as_with_nothing_saved() {
+    for identity in PRESETS {
+        let starting = SavedConfiguration::starting(identity.model());
+        assert_eq!(starting.check(identity.model()), Ok(()));
+        let mut options = Options::DEFAULT;
+        options.saved = Some(starting);
+        let saved = Engine::new(identity, options).expect("an engine that powers up");
+        assert_eq!(saved.state, powered_up(identity).state);
+    }
+}
+
+/// A configuration a caller makes, a status rate of its own among it,
+/// is powered up with: `@@Ea` each third second (VP p. 124).
+#[test]
+fn an_engine_powers_up_with_a_configuration_of_its_callers() {
+    let saved = SavedConfiguration::starting(Model::VpEight)
+        .with_fixing(true)
+        .with_position_status_rate(Seconds(3))
+        .with_raim_algorithm(true)
+        .with_raim_alarm_limit(HundredNanoseconds(3))
+        .with_pulse_mode(PulseMode::Confirmed);
+    let mut engine = saved_as(&VP_EIGHT, saved, false);
+    assert!(engine.fixing());
+    let settings = engine.settings();
+    assert!(settings.raim_algorithm);
+    assert_eq!(settings.raim_alarm_limit, HundredNanoseconds(3));
+    assert_eq!(settings.pulse_mode, PulseMode::Confirmed);
+    let status = vec![EA_POSITION_STATUS];
+    assert_eq!(
+        ids_each_second(&mut engine, &full(), 6),
+        [vec![], vec![], status.clone(), vec![], vec![], status]
     );
 }
 

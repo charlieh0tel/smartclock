@@ -1189,6 +1189,16 @@ NMEA_SECOND = (
     '$PFEC,GPrsd,1,100,2',
     '$PFEC,GPtps,261022120001,3,1,2,280101000000,+1,18,261024195006,2441,388819',
 )
+# The same second with tps's leap second due, at the end of the month
+# (nmea_leap_second_due), where NMEA_SECOND's is a year off and none of
+# its variants makes it due: the leap fields' variants then change what
+# the image keeps of a leap second pending.  A field's stores are those
+# its variants change in either second.
+NMEA_LEAP_DUE = tuple(
+    sentence.replace(',280101000000,', ',261101000000,') if sentence.startswith('$PFEC,GPtps,') else sentence
+    for sentence in NMEA_SECOND
+)
+NMEA_SECONDS = (NMEA_SECOND, NMEA_LEAP_DUE)
 # The commands gps_response_match is asked about, each with the response
 # that answers it: the set of each parameter the image sets, GLL and rrs.
 NMEA_COMMANDS = ('set', 'GLL', 'rrs')
@@ -1446,37 +1456,45 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, set[tuple[str, str | None]], di
     """The Z3815A's Traced, its sentences' fields by index, and what it
     sends to set.  Where a field is stored is where RAM differs after a
     second's sentences are decoded with the field's value another, each
-    of its variants, from a second decoded before; its readers are the scan's, the decoding
-    functions (NMEA_DECODING) left out."""
+    of its variants, from a second decoded before, for each of
+    NMEA_SECONDS; its readers are the scan's, the decoding functions
+    (NMEA_DECODING) left out."""
     rom = (FIRMWARE / 'images' / f'{NMEA_IMAGE}.bin').read_bytes()
     table = nmea_table(rom)
     machine = NmeaMachine(rom, table)
-    machine.second(NMEA_SECOND)
-    primed = machine.ram()
-    machine.watched = set()
-    reads = machine.second(NMEA_SECOND)
-    seen_all, machine.watched = machine.watched, None
-    base = machine.ram()
+    reads: dict[str, set[int]] = {}
+    seen_all: set[tuple[int, int]] = set()
     stored: dict[int, set[int]] = {}
-    for row in rows:
-        if row.direction != 'response' or not is_nmea(row.message):
-            continue
-        changes: set[int] = set()
-        for span in row.instances():
-            index = span.start
-            sentences = list(NMEA_SECOND)
-            at = next((place for place, sentence in enumerate(sentences) if nmea_name(sentence) == row.message), None)
-            if at is None or index >= len(sentences[at].split(',')):
+    primed_by: dict[tuple[str, ...], bytes] = {}
+    for second in NMEA_SECONDS:
+        machine.second(second)
+        primed = primed_by[second] = machine.ram()
+        machine.watched = set()
+        for name, indices in machine.second(second).items():
+            reads.setdefault(name, set()).update(indices)
+        seen_all |= machine.watched
+        machine.watched = None
+        base = machine.ram()
+        for row in rows:
+            if row.direction != 'response' or not is_nmea(row.message):
                 continue
-            for value in variants(sentences[at].split(',')[index]):
-                altered = list(sentences)
-                altered[at] = with_field(sentences[at], index, value)
-                machine.uc.mem_write(RAM, primed)
-                machine.second(tuple(altered))
-                changes |= changed(base, machine.ram())
-        # The framer's record holds the sentence itself.
-        stored[row.line] = {address for address in changes if not NMEA_FRAME <= address < NMEA_FRAME + FRAME_SIZE}
-    machine.uc.mem_write(RAM, primed)
+            changes = stored.setdefault(row.line, set())
+            for span in row.instances():
+                index = span.start
+                sentences = list(second)
+                at = next((place for place, sentence in enumerate(sentences) if nmea_name(sentence) == row.message), None)
+                if at is None or index >= len(sentences[at].split(',')):
+                    continue
+                for value in variants(sentences[at].split(',')[index]):
+                    altered = list(sentences)
+                    altered[at] = with_field(sentences[at], index, value)
+                    machine.uc.mem_write(RAM, primed)
+                    machine.second(tuple(altered))
+                    # The framer's record holds the sentence itself.
+                    changes |= {
+                        address for address in changed(base, machine.ram()) if not NMEA_FRAME <= address < NMEA_FRAME + FRAME_SIZE
+                    }
+    machine.uc.mem_write(RAM, primed_by[NMEA_SECOND])
     compared_fields = nmea_compared(machine, rom)
     every = set().union(*stored.values()) or {globals_of(NMEA_IMAGE)['gps']}
     first = min(min(every), globals_of(NMEA_IMAGE)['gps'])

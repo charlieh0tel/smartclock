@@ -1686,7 +1686,14 @@ stands in for one.
   receiver: two would have their messages of the same time of week
   made into one record.  gpsd is connected to as the instrument is,
   each address tried for 5 s and probed when idle, and connected to
-  again when it sends nothing for 10 s.  It is
+  again when it sends nothing for 10 s.  A UBX frame the assembler
+  discards, damaged or too long, and an epoch with a fix and no
+  `NAV-SAT` (`Assembler::lost_skies`), are reported after the read
+  they came in, with the count on the connection, so a message lost on
+  the way, which would otherwise show only as a record short of it,
+  shows in the feed's log.  gpsd passes on only the packets it read
+  whole, so a message lost between the receiver and gpsd shows as the
+  second, never the first.  It is
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for

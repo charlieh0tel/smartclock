@@ -26,11 +26,14 @@
 //! engine builds leaves its value in the engine's
 //! [`Settings`](crate::engine::settings::Settings) for the engine's
 //! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
-//! images set, and a provider's test holds that it acts on each or is
-//! excused it by a row of `docs/firmware/gps-setting-exceptions.tsv`,
-//! and is excused nothing else: [`Declaration::unacted`] and
-//! [`Declaration::needless`] are both empty.  A provider may act on more than
-//! the images set; only a row can be needless.
+//! images set, and a provider's test holds that it acts on each it is
+//! held to ([`Declaration::held`]), all of them less, for one that makes
+//! no pulse, the [`PULSE_SETTINGS`], which the pulse's maker acts on,
+//! or is excused it by a row of
+//! `docs/firmware/gps-setting-exceptions.tsv`, and is excused nothing
+//! else: [`Declaration::unacted`] and [`Declaration::needless`] are both
+//! empty.  A provider may act on more than the images set; only a row
+//! can be needless.
 
 use crate::engine::settings::Setting;
 use crate::engine::settings::SettingSet;
@@ -606,6 +609,18 @@ fn excused_settings(name: &str, exceptions: &str) -> SettingSet {
         .fold(SettingSet::EMPTY, SettingSet::with)
 }
 
+/// The settings that change only the 1 PPS: where it is put, `@@Az`'s
+/// cable delay (VP p. 68) and `@@Ay`'s offset (VP p. 66), and when it
+/// is put out at all, `@@Bn`'s 1PPS control mode, which turns the pulse
+/// on, off, on while tracking or on while Time RAIM confirms the time
+/// (VP p. 102).  Whoever makes the pulse acts on them: a provider of
+/// records that makes none is not held to them ([`Declaration::makes_pulse`]).
+pub const PULSE_SETTINGS: SettingSet = SettingSet::of(&[
+    Setting::CableDelay,
+    Setting::PulseOffset,
+    Setting::PulseMode,
+]);
+
 /// What a provider of records declares of itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Declaration {
@@ -615,6 +630,12 @@ pub struct Declaration {
     pub fills: FieldSet,
     /// The engine's settings it acts on.
     pub acts: SettingSet,
+    /// Whether it makes the 1 PPS the engine's holder puts out.  One
+    /// that does is held to [`PULSE_SETTINGS`] as to the rest of
+    /// [`IMAGE_SETS`]; one that does not is held to none of them, and
+    /// a row excusing it one is needless: the pulse's maker in its setup
+    /// acts on them.
+    pub makes_pulse: bool,
 }
 
 impl Declaration {
@@ -644,26 +665,39 @@ impl Declaration {
         self.fills.without(shown)
     }
 
-    /// The settings the images set that it does not act on and
-    /// `exceptions`, the text of
+    /// The settings it is held to: [`IMAGE_SETS`], less
+    /// [`PULSE_SETTINGS`] unless it makes the pulse.
+    #[must_use]
+    pub const fn held(&self) -> SettingSet {
+        if self.makes_pulse {
+            IMAGE_SETS
+        } else {
+            IMAGE_SETS.without(PULSE_SETTINGS)
+        }
+    }
+
+    /// The settings it is held to ([`Declaration::held`]) that it does
+    /// not act on and `exceptions`, the text of
     /// `docs/firmware/gps-setting-exceptions.tsv`, does not excuse it.
     /// A provider's test fails unless this is empty.
     #[must_use]
     pub fn unacted(&self, exceptions: &str) -> SettingSet {
-        IMAGE_SETS
+        self.held()
             .without(self.acts)
             .without(excused_settings(self.name, exceptions))
     }
 
-    /// The settings `exceptions` excuses it that need no excuse: one
-    /// no image sets, and one it acts on, a row gone stale.  A setting
-    /// it acts on that no image sets is not among them: a provider may
-    /// act on more than the images set.  A provider's test fails unless
-    /// this is empty.
+    /// The settings `exceptions` excuses it that need no excuse: one it
+    /// is not held to, and one it acts on, a row gone stale.  A setting
+    /// it acts on that it is not held to is not among them: a provider
+    /// may act on more than the images set.  A provider's test fails
+    /// unless this is empty.
     #[must_use]
     pub fn needless(&self, exceptions: &str) -> SettingSet {
         let excused = excused_settings(self.name, exceptions);
-        excused.without(IMAGE_SETS).union(self.acts.common(excused))
+        excused
+            .without(self.held())
+            .union(self.acts.common(excused))
     }
 }
 
@@ -673,6 +707,7 @@ mod tests {
     use super::FieldSet;
     use super::IMAGE_SETS;
     use super::IMAGE_USES;
+    use super::PULSE_SETTINGS;
     use super::RecordField;
     use super::changed;
     use super::excused;
@@ -782,12 +817,14 @@ mod tests {
             name: "all",
             fills: FieldSet::of(&RecordField::ALL),
             acts: SettingSet::EMPTY,
+            makes_pulse: false,
         };
         assert!(all.shortfall("").is_empty());
         let none = Declaration {
             name: "none",
             fills: FieldSet::EMPTY,
             acts: SettingSet::EMPTY,
+            makes_pulse: false,
         };
         assert_eq!(none.shortfall(""), IMAGE_USES);
         assert!(IMAGE_USES.contains(RecordField::Fix));
@@ -817,6 +854,7 @@ mod tests {
             name: "one",
             fills: FieldSet::EMPTY,
             acts: hold,
+            makes_pulse: true,
         };
         assert_eq!(declaration.unacted(""), IMAGE_SETS.without(hold));
         assert!(declaration.needless("").is_empty());
@@ -873,6 +911,35 @@ mod tests {
         };
         assert!(tabler.unacted(&table).is_empty());
         assert!(tabler.needless(&table).is_empty());
+    }
+
+    /// Whoever makes the pulse acts on the pulse settings: a provider
+    /// that makes it is held to those the images set, and one that does
+    /// not is held to none of them, a row excusing it one being
+    /// needless.
+    #[test]
+    fn the_pulse_settings_are_the_pulse_makers() {
+        let set = IMAGE_SETS.common(PULSE_SETTINGS);
+        let maker = Declaration {
+            name: "maker",
+            fills: FieldSet::EMPTY,
+            acts: SettingSet::EMPTY,
+            makes_pulse: true,
+        };
+        assert_eq!(maker.unacted("").common(PULSE_SETTINGS), set);
+        let reader = Declaration {
+            name: "reader",
+            makes_pulse: false,
+            ..maker
+        };
+        assert!(reader.unacted("").common(PULSE_SETTINGS).is_empty());
+        assert_eq!(reader.unacted(""), IMAGE_SETS.without(PULSE_SETTINGS));
+        let row = "reader\tpulse_offset\tmakes no pulse\n";
+        assert_eq!(
+            reader.needless(row),
+            SettingSet::of(&[Setting::PulseOffset])
+        );
+        assert!(maker.needless("maker\tpulse_offset\t-\n").is_empty());
     }
 
     /// The setting exceptions table as it is: every row names a

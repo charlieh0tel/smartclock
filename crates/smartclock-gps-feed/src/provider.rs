@@ -249,10 +249,10 @@ pub(crate) fn recording(bytes: Vec<u8>) -> Provider {
     Provider::Recording(Box::new(Replay::new(bytes.leak(), Ubx::new())))
 }
 
-/// Completes a record of the made-up sky: acts on position hold, and
-/// works out the Earth-centered position.
+/// Completes a record of the made-up sky: acts on the engine's settings
+/// ([`scene::act`]), and works out the Earth-centered position.
 pub(crate) fn complete_scene(record: &mut Record, settings: &Settings) {
-    scene::hold(record, settings);
+    scene::act(record, settings);
     record.derived.ecef = record.position.map(ecef);
 }
 
@@ -367,6 +367,7 @@ pub(crate) mod tests {
     use super::Kind;
     use super::Provider;
     use super::Shared;
+    use super::UTC_OFFSET;
     use super::build;
     use super::complete_scene;
     use super::recording;
@@ -377,15 +378,24 @@ pub(crate) mod tests {
     use crate::link::Backoff;
     use smartclock_gps::engine::Engine;
     use smartclock_gps::engine::Options;
+    use smartclock_gps::engine::Output;
+    use smartclock_gps::engine::event::Event;
     use smartclock_gps::engine::identity::VP_EIGHT;
+    use smartclock_gps::engine::settings::Setting;
+    use smartclock_gps::engine::settings::SettingSet;
+    use smartclock_gps::engine::settings::Settings;
+    use smartclock_gps::oncore;
     use smartclock_gps::record::Fix;
     use smartclock_gps::record::Record;
+    use smartclock_gps::record::field::Declaration;
+    use smartclock_gps::record::field::IMAGE_SETS;
     use smartclock_gps::record::field::UNFILLED;
     use smartclock_gps::record::field::changed;
     use smartclock_gps::source::Clocking;
     use smartclock_gps::source::Presence;
     use smartclock_gps::source::Source;
     use smartclock_gps::source::Tick;
+    use smartclock_gps::source::scene;
     use smartclock_gps::source::scene::DECLARATION as SCENE;
     use smartclock_gps::source::wrap::FakeTime;
     use smartclock_gps::source::wrap::LeapSchedule;
@@ -396,9 +406,12 @@ pub(crate) mod tests {
     use smartclock_gps::time::LeapChange;
     use smartclock_gps::time::LeapEvent;
     use smartclock_gps::time::UnixSeconds;
+    use smartclock_gps::units::MilliArcSeconds;
     use smartclock_gps::units::Milliseconds;
     use smartclock_gps::units::Nanoseconds;
     use smartclock_gps::units::Seconds;
+    use smartclock_gps_ublox::assembler;
+    use smartclock_gps_ublox::assembler::DECLARATION as UBLOX;
     use smartclock_gps_ublox::frame::MessageId;
     use smartclock_gps_ublox::frame::OVERHEAD;
     use smartclock_gps_ublox::frame::encode;
@@ -761,6 +774,122 @@ pub(crate) mod tests {
             guard.tick = Tick(7);
             drop(guard);
             drop(gpsd);
+        }
+    }
+
+    /// What an engine sends, dropped.
+    struct Dropped;
+
+    impl Output for Dropped {
+        fn send(&mut self, _frame: &[u8]) {}
+    }
+
+    /// Each setting the images set that a provider acts on, driven
+    /// through an engine by its command, changes the provider's record
+    /// as a receiver set so would have it (`docs/firmware/gps.md`,
+    /// "Every path to a setting"); and each provider acts on no setting
+    /// the images set that this does not drive.
+    #[test]
+    fn each_setting_the_images_set_reaches_the_providers() {
+        /// The mask angle the engine is set to, in degrees.
+        const MASK: i8 = 20;
+        /// A satellite of the scene's sky to ignore, and `@@Am`'s data
+        /// for it: the constant byte, then the mask, bit 0 satellite 1
+        /// (VP p. 42).
+        const IGNORED: u8 = 3;
+        const IGNORE_DATA: [u8; 5] = [0, 0, 0, 0, 1 << (IGNORED - 1)];
+        /// The latitude the position is held at.
+        const HELD_LATITUDE: MilliArcSeconds = MilliArcSeconds(123_456_789);
+        /// What a provider does to a record.
+        type Act = fn(&mut Record, &Settings);
+        /// A setting, the command that sets it, and whether a record
+        /// shows it acted on.
+        type Case = (Setting, oncore::MessageId, Vec<u8>, fn(&Record) -> bool);
+        let hold_position = [
+            &HELD_LATITUDE.0.to_be_bytes()[..],
+            &(-98_765_432_i32).to_be_bytes()[..],
+            &1234_i32.to_be_bytes()[..],
+            &[1],
+        ]
+        .concat();
+        let cases: [Case; 4] = [
+            (
+                Setting::MaskAngle,
+                oncore::AG_MASK_ANGLE,
+                vec![MASK.cast_unsigned()],
+                |record| {
+                    record
+                        .satellites
+                        .iter()
+                        .all(|satellite| !satellite.used || satellite.elevation.0 >= MASK)
+                },
+            ),
+            (
+                Setting::IgnoreList,
+                oncore::AM_IGNORE_LIST,
+                IGNORE_DATA.to_vec(),
+                |record| {
+                    record
+                        .satellites
+                        .iter()
+                        .any(|satellite| satellite.prn.get() == IGNORED && !satellite.used)
+                },
+            ),
+            (
+                Setting::HeldPosition,
+                oncore::AS_HOLD_POSITION,
+                hold_position,
+                |record| {
+                    record
+                        .position
+                        .is_some_and(|position| position.latitude == HELD_LATITUDE)
+                },
+            ),
+            (
+                Setting::PositionHold,
+                oncore::AT_POSITION_HOLD,
+                vec![1],
+                |record| record.fix == Fix::TimeOnly,
+            ),
+        ];
+        let driven = cases
+            .iter()
+            .fold(SettingSet::EMPTY, |set, case| set.with(case.0));
+        let providers: [(Declaration, Act); 2] = [(SCENE, complete_scene), (UBLOX, assembler::act)];
+        let sky = scene::sky(scene::PLACE, UTC_OFFSET, GpsWeek::new(WEEK));
+        for (declaration, act) in providers {
+            let undriven: Vec<Setting> = IMAGE_SETS
+                .iter()
+                .filter(|setting| declaration.acts.contains(*setting) && !driven.contains(*setting))
+                .collect();
+            assert!(
+                undriven.is_empty(),
+                "{}: undriven: {undriven:?}",
+                declaration.name
+            );
+            let mut engine = Engine::new(&VP_EIGHT, Options::DEFAULT).unwrap();
+            for (setting, id, data, shown) in &cases {
+                let mut frame = vec![0; oncore::command_length(*id).unwrap()];
+                oncore::encode(*id, data, &mut frame).unwrap();
+                let changed = engine
+                    .receive(&frame, &sky, Milliseconds(0), &mut Dropped)
+                    .any(|event| {
+                        matches!(event, Event::SettingsChanged(changed) if changed.contains(*setting))
+                    });
+                assert!(changed, "{setting:?}");
+                if !declaration.acts.contains(*setting) {
+                    continue;
+                }
+                let mut record = sky;
+                assert!(!shown(&record), "{}: {setting:?} before", declaration.name);
+                // The engine refuses `@@As` while the position is held,
+                // and the held position shows only in position hold: it
+                // is acted on as the hold that follows it will have it.
+                let mut settings = engine.settings();
+                settings.position_hold |= *setting == Setting::HeldPosition;
+                act(&mut record, &settings);
+                assert!(shown(&record), "{}: {setting:?}", declaration.name);
+            }
         }
     }
 }

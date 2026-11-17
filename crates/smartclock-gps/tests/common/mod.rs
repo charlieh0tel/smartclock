@@ -170,7 +170,7 @@ impl Scene {
             subsecond: Nanoseconds(0),
         });
         record.utc_offset = Some(offset);
-        scene::hold(&mut record, settings);
+        scene::act(&mut record, settings);
         record.derived.ecef = record.position.map(ecef);
         if !antenna {
             scene::unplug(&mut record);

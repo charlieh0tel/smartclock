@@ -3,7 +3,9 @@
 
 use core::mem;
 
+use smartclock_gps::engine::settings::Setting;
 use smartclock_gps::engine::settings::SettingSet;
+use smartclock_gps::engine::settings::Settings;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
 use smartclock_gps::record::Ecef;
@@ -74,14 +76,17 @@ struct Announced {
     before: Seconds<i8>,
 }
 
-/// What an [`Assembler`] fills of a record.  It acts on none of an
-/// engine's settings: it reads a receiver and sends it nothing, and
-/// each of those the images set
-/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)) would
-/// be a configuration sent.  `docs/firmware/gps-setting-exceptions.tsv`
-/// excuses it each.  Of Time RAIM it fills the ability alone: the
-/// solution it gives is always unknown, and
-/// `docs/firmware/gps-field-exceptions.tsv` excuses it the solution.
+/// What an [`Assembler`] fills of a record, and the engine's settings
+/// it acts on ([`act`]): the mask angle and the satellites to ignore,
+/// which it applies to its own records.  It reads a receiver and sends
+/// it nothing, so the rest of those the images set
+/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)), each
+/// of which would be a configuration sent, are excused it by
+/// `docs/firmware/gps-setting-exceptions.tsv`.  It makes no pulse: the
+/// receiver makes its own, which the holder shifts by the pulse settings.
+/// Of Time RAIM it fills the ability alone: the solution it gives is
+/// always unknown, and `docs/firmware/gps-field-exceptions.tsv` excuses
+/// it the solution.
 pub const DECLARATION: Declaration = Declaration {
     name: "u-blox",
     fills: FieldSet::of(&[
@@ -114,8 +119,17 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::Ecef,
         RecordField::RaimAbility,
     ]),
-    acts: SettingSet::EMPTY,
+    acts: SettingSet::of(&[Setting::MaskAngle, Setting::IgnoreList]),
+    makes_pulse: false,
 };
+
+/// Acts on `settings` in a record an [`Assembler`] made, as a receiver
+/// set so would have: its fix leaves out the satellites below the mask
+/// angle and those it is told to ignore ([`Settings::leave_out`]).  The
+/// receiver itself is not configured; its fix and DOPs are its own.
+pub fn act(record: &mut Record, settings: &Settings) {
+    settings.leave_out(record);
+}
 
 /// Makes a [`Record`] of each navigation epoch in a stream of UBX bytes
 /// ("From messages to a record" in the crate's documentation).  `N`

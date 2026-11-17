@@ -1,9 +1,7 @@
-# Settings a receiver's image sets that a provider of records is excused from acting on (docs/firmware/gps.md, "The fields").  A provider's test holds that each setting the images set is one it acts on or one of its rows here, and that no row is for a setting it acts on or one no image sets; it may act on more than the images set.  A row is the project owner's to grant.  The rows are for the providers this repository carries: a provider kept elsewhere keeps a table of its own and gives its text to `Declaration::unacted` and `Declaration::needless`.
+# Settings a receiver's image sets for a holder to act on (`IMAGE_SETS`) that a provider of records is excused from acting on (docs/firmware/gps.md, "The fields").  A provider's test holds that each setting it is held to is one it acts on or one of its rows here, and that no row is for a setting it acts on or one it is not held to; it may act on more than the images set.  A provider that makes no pulse is held to none of the pulse settings (`PULSE_SETTINGS`: the cable delay, the pulse offset and the 1PPS control mode), whose maker in its setup acts on them, and has no row for them.  A row is the project owner's to grant.  The rows are for the providers this repository carries: a provider kept elsewhere keeps a table of its own and gives its text to `Declaration::unacted` and `Declaration::needless`.
 provider	setting	reason
 scene	altitude_hold	its fix is 3D under a sky of eight, never the 2D one an altitude is held for
 scene	time_base	a record carries GPS time and its offset from UTC whatever the base, and a scene has no pulse to put on either
-scene	pulse_offset	a scene has no pulse, and a record carries none
-scene	pulse_mode	a scene has no pulse, and a record carries none
 scene	raim_algorithm	a scene gives one Time RAIM result, the same every second, and checks no time solution to turn on or off
 scene	raim_alarm_limit	a scene gives one Time RAIM result, the same every second, and has no error in its time to hold to a limit
 scene	application	a scene stays where its head puts it and searches for nothing
@@ -22,8 +20,6 @@ u-blox	position_hold	it would be a configuration sent to the receiver, and the c
 u-blox	held_position	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	altitude_hold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	time_base	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
-u-blox	pulse_offset	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
-u-blox	pulse_mode	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	raim_algorithm	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none: it reports the receiver's own Time RAIM as it finds it
 u-blox	raim_alarm_limit	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none: it reports the receiver's own Time RAIM as it finds it
 u-blox	application	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none

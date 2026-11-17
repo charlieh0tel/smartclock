@@ -1300,11 +1300,26 @@ stands in for one.
   the owner's to grant, and that no row is for a setting it acts on
   or one no image sets.  It may act on more than the images set:
   only a row can be needless.
-  The scene acts on position hold and the position to hold; the
-  u-blox crate, which sends its receiver nothing, on none.  Each has
-  a row for the rest, Time RAIM's algorithm and alarm limit among
-  them: the scene gives one Time RAIM result and checks no time
-  solution, and the u-blox crate reports its receiver's own.
+  The scene acts on position hold and the position to hold, and both
+  it and the u-blox crate on the mask angle and the satellites to
+  ignore, decided 2026-11-16: a record they make leaves out of its
+  fix, marking them not used, the satellites below the mask and those
+  ignored (`Settings::leave_out`), as a receiver set so would, the
+  u-blox crate on its own records without configuring its receiver.
+  Each has a row for the rest, Time RAIM's algorithm and alarm limit
+  among them: the scene gives one Time RAIM result and checks no time
+  solution, and the u-blox crate reports its receiver's own.  The
+  pulse settings, the cable delay, the pulse offset and the 1PPS
+  control mode (`PULSE_SETTINGS`), change only the 1 PPS (VP pp. 66,
+  68 and 102), and a record carries no pulse: whoever makes the pulse
+  acts on them, decided 2026-11-16.  A `Declaration` says whether its
+  provider makes the pulse (`makes_pulse`); one that does is held to
+  them, one that does not to none of them, with no row for them, a
+  row for one being needless.  Neither the scene nor the u-blox crate
+  makes one, so their rows for the pulse offset and the control mode
+  went.  Where the holder puts out a receiver's pulse, the receiver
+  makes it and the holder shifts it; where a pulse is timed from
+  records, what times it acts.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
   UT Plus's only selection, which has no `@@Ah` and "will attempt to

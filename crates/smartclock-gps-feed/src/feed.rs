@@ -21,6 +21,7 @@ use smartclock_gps::source::Tick;
 use smartclock_gps::time::UnixSeconds;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Seconds;
+use smartclock_gps_ublox::assembler;
 
 use crate::engine::Engine;
 use crate::event;
@@ -185,6 +186,8 @@ impl Feed {
         if presence == Presence::Fresh {
             if self.kind == Kind::Scene {
                 complete_scene(&mut record, &self.engine.settings());
+            } else {
+                assembler::act(&mut record, &self.engine.settings());
             }
             self.record = record;
             self.engine.second(&self.record, now, out);

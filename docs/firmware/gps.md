@@ -1435,8 +1435,14 @@ specification; in short:
   characters or ending NUL a decoder reads.  Where a field is stored is
   where RAM differs after the second is decoded again with the field
   changed, each digit's lowest bit, each hemisphere, sign or status
-  letter and `anc`'s healths in turn, the framer's record left out:
-  the commits copy the fields into the 58503A's records, and their
+  letter and `anc`'s healths in turn, the framer's record left out.
+  That is done on a second of the model's sentences and again on the
+  same second with `tps`'s leap second due, at the end of the month,
+  which in the first is a year off and is due in none of its changes
+  (`nmea_leap_second_due`): only then does a change to the leap
+  second, or to what decides whether it is due, change what the image
+  keeps of a leap second pending.  The commits copy the fields into
+  the 58503A's records, and their
   readers are the scan's, the walks running to the end of a field of
   the `gps` record as `check-layout.c` places it.  The decoding and
   committing functions of `gps_nmea.c` are not readers, but
@@ -1444,7 +1450,8 @@ specification; in short:
   `gps_periodic_send`, which `tps`'s commit calls to send the engine a
   sentence, and `psos_mode` return at once.  The run's state is the
   record as `gps_init` clears it, the receiver on GPS time, so that
-  `tps`'s date, the engine on UTC, is only stored ("In every image").
+  `tps`'s date, the engine on UTC, is stored as its time ("In every
+  image") and read only to decide whether the leap second is due.
   What the image compares is `gps_response_match` asked about each
   parameter of `set`, `GLL` and `rrs`, with the position held, and a
   field compared is one it reads whole.  What it sets is the sentences

@@ -386,12 +386,12 @@ ssd	response	W smoothing index	11	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
 ssd	response	X dynamic index	12	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
 ssd	response	Z observation point mode	13	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	stored	setting.set	-	-	-	-
 ssd	response	t 1PPS correction	14	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	reported	setting.set	-	-	-	-
-tps	response	present date and time	2	1	1	-	-	GT	36	z3815a-4010	-	stored	clock	-	Time	-	-
+tps	response	present date and time	2	1	1	-	-	GT	36	z3815a-4010	-	control	clock	-	Time	-	-
 tps	response	time standard	3	1	1	-	-	GT	36	z3815a-4010	-	control	record.time.seconds;record.utc_offset;computed	-	Time;UtcOffset	-	1 RTC, 2 GPS, 3 UTC
 tps	response	1PPS availability	4	1	1	-	-	GT	36	z3815a-4010	-	control	record.time.seconds;record.utc_offset;record.almanac;record.satellites.used;record.derived.raim.solution;setting.rrs;setting.set:Z;computed	-	Time;UtcOffset;SatelliteUsed;Almanac;RaimSolution	-	-
 tps	response	mode	5	1	1	-	-	GT	36	z3815a-4010	-	control	setting.set:Z	-	-	-	-
-tps	response	leap second date and time	6	1	1	-	-	GT	36	z3815a-4010	-	console	record.leap;record.utc_offset;state:the leap second last announced	000000000000	UtcOffset;Leap	-	-
-tps	response	leap second	7	1	1	-	-	GT	37	z3815a-4010	-	console	record.leap;record.utc_offset;state:the leap second last announced	00	UtcOffset;Leap	-	-
+tps	response	leap second date and time	6	1	1	-	-	GT	36	z3815a-4010	-	control	record.leap;record.utc_offset;state:the leap second last announced	000000000000	UtcOffset;Leap	-	-
+tps	response	leap second	7	1	1	-	-	GT	37	z3815a-4010	-	control	record.leap;record.utc_offset;state:the leap second last announced	00	UtcOffset;Leap	-	-
 tps	response	UTC-GPS offset	8	1	1	-	-	GT	37	z3815a-4010	-	control	record.utc_offset	00	UtcOffset	-	-
 tps	response	UTC parameter date and time	9	1	1	-	-	GT	38	z3815a-4010	-	stored	record.almanac;record.utc_offset	000000000000	UtcOffset;Almanac	-	-
 tps	response	GPS week	10	1	1	-	-	GT	38	z3815a-4010	-	control	clock	-	Time	-	-

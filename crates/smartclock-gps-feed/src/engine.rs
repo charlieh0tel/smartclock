@@ -1,6 +1,8 @@
 //! The engine the feed runs, of whichever family the command line
 //! names, behind the one face the per-second loop steps.
 
+use std::time::Duration;
+
 use anyhow::Result;
 use smartclock_gps::engine::Engine as OncoreEngine;
 use smartclock_gps::engine::Output;
@@ -33,6 +35,21 @@ impl Engine {
         })
     }
 
+    /// How long after a pulse it sends a second's frames, where that is
+    /// not when its record is taken: a GT-74 sends the sentences of the
+    /// second the next pulse marks
+    /// [`SENTENCES_AFTER_PULSE`](smartclock_gps::engine::furuno::SENTENCES_AFTER_PULSE)
+    /// after a pulse (`engine::furuno`, "Timing").  An Oncore's are of
+    /// the record's own second, sent when it is taken.
+    pub(crate) fn sentences_after_pulse(&self) -> Option<Duration> {
+        match self {
+            Self::Oncore(_) => None,
+            Self::Furuno(engine) => Some(Duration::from_millis(
+                engine.sentences_after_pulse().0.into(),
+            )),
+        }
+    }
+
     /// What commands have set it to.
     pub(crate) fn settings(&self) -> Settings {
         match self {
@@ -41,8 +58,10 @@ impl Engine {
         }
     }
 
-    /// A second starts, `record` being what is known in it.  A GT-74
-    /// counts seconds, not milliseconds, and takes no `now`.
+    /// A second starts, `record` being what is known in it, of the
+    /// second the next pulse marks for a GT-74
+    /// ([`Engine::sentences_after_pulse`]).  A GT-74 counts seconds, not
+    /// milliseconds, and takes no `now`.
     pub(crate) fn second<O: Output + ?Sized>(
         &mut self,
         record: &Record,

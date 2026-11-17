@@ -49,7 +49,7 @@ fn main() -> Result<()> {
     let config = Cli::parse().configure()?;
     let engine = Engine::new(&config.spec).context("making the engine")?;
     let clock = SystemClock::new();
-    let first = first_second(&clock, phase(kind(&config.provider)));
+    let first = first_second(&clock, phase(kind(&config.provider), &engine));
     let Built { nest, kind } = build(&config.provider, config.fake_start, utc_second(first))?;
     let shared = Arc::new(Mutex::new(Shared::new(nest)));
     if let ProviderSpec::Gpsd(gpsd) = &config.provider {

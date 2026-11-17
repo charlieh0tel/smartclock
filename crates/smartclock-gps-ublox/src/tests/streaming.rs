@@ -201,24 +201,10 @@ fn a_bad_checksum_ends_a_streamed_message_with_an_error() {
     assert_eq!(given[12], Given::Frame(NAV_EOE, eoe(1).to_vec()));
 }
 
-/// A streamed message's header whose count disagrees with its length
-/// does not decode, as the whole message would not; its length is still
-/// checked at the frame's header, and a message not streamed must still
-/// fit the buffer.
+/// A streamed message's length is still checked at the frame's header,
+/// and a message not streamed must still fit the buffer.
 #[test]
 fn a_streamer_keeps_the_deframers_checks() {
-    let mut sat = many_satellites(3);
-    sat[5] = 4;
-    let bytes = frame(NAV_SAT, &sat);
-    let mut streamer = Streamer::<BOARD>::new();
-    let header = bytes
-        .iter()
-        .find_map(|&byte| match streamer.push(byte) {
-            Some(Ok(Event::Header(header))) => Some(Part::header(&header)),
-            _ => None,
-        })
-        .unwrap();
-    assert_eq!(header, None);
     // A length a whole number of blocks past the header, or not.
     let short = std::vec![0xb5, 0x62, 0x01, 0x35, 0x09, 0x00];
     assert_eq!(
@@ -250,6 +236,68 @@ fn a_streamer_keeps_the_deframers_checks() {
         .collect();
     assert!(matches!(errors[0], Err(FrameError::Overflow { .. })));
     assert!(nav_sat_length(40) > BOARD);
+}
+
+/// A streamed message's header whose count is not the count its length
+/// gives ends the message at the header's last byte, with no header
+/// given, and the next frame is found.
+#[test]
+fn a_header_off_its_length_ends_a_streamed_message() {
+    let mut sat = many_satellites(3);
+    sat[5] = 4;
+    let mut bytes = frame(NAV_SAT, &sat);
+    bytes.extend(frame(NAV_EOE, &eoe(1)));
+    let mut streamer = Streamer::<BOARD>::new();
+    let header_end = 6 + 8;
+    let ended: Vec<_> = bytes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, &byte)| streamer.push(byte).map(|event| (index, given(event))))
+        .collect();
+    assert_eq!(
+        ended,
+        [
+            (
+                header_end - 1,
+                Given::Error(FrameError::BadLength {
+                    id: NAV_SAT,
+                    length: sat.len()
+                })
+            ),
+            (bytes.len() - 1, Given::Frame(NAV_EOE, eoe(1).to_vec())),
+        ]
+    );
+}
+
+/// A streamed message's header gives its count of blocks in one byte,
+/// so a length past 255 blocks is refused at its second byte, however
+/// many blocks it is a whole number of, and the next frame is found.
+#[test]
+fn a_streamed_length_past_its_count_is_refused() {
+    for (id, length) in [
+        (NAV_SAT, nav_sat_length(256)),
+        (NAV_SAT, 0xfff8),
+        (RXM_RAWX, rxm_rawx_length(256)),
+    ] {
+        let [low, high] = u16::try_from(length).unwrap().to_le_bytes();
+        let mut bytes = std::vec![0xb5, 0x62, id.class, id.id, low, high];
+        bytes.extend(frame(NAV_EOE, &eoe(1)));
+        assert_eq!(
+            streamed(&bytes, &[1]),
+            [
+                Given::Error(FrameError::BadLength { id, length }),
+                Given::Frame(NAV_EOE, eoe(1).to_vec()),
+            ],
+            "{id} of {length}"
+        );
+    }
+    // The longest a damaged length can run, as the crate's
+    // documentation gives it.
+    assert_eq!(rxm_rawx_length(u8::MAX.into()), 8176);
+    assert!(nav_sat_length(u8::MAX.into()) < 8176);
+    let most = many_satellites(u8::MAX);
+    let given = streamed(&frame(NAV_SAT, &most), &[1]);
+    assert_eq!(given, parts(NAV_SAT, &most, 8, 12));
 }
 
 /// Reset forgets a streamed message half taken.

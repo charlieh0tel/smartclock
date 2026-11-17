@@ -11,6 +11,9 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::net::ToSocketAddrs;
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::RecvTimeoutError;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -164,16 +167,16 @@ fn write_link(link: &mut dyn Link, bytes: &[u8], name: &str) -> bool {
     }
 }
 
-/// How a [`Dialer`] makes its connection.
-trait Dial {
-    type Link: Link;
+/// How a [`Dialer`] makes its connection, on a thread of its own.
+trait Dial: Clone + Send + 'static {
+    type Link: Link + Send + 'static;
     /// What it connects to, for the log.
     fn name(&self) -> String;
     fn dial(&self) -> io::Result<Self::Link>;
 }
 
 /// A TCP server to connect to.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct TcpDial(String);
 
 impl Dial for TcpDial {
@@ -204,7 +207,7 @@ pub(crate) fn connect(address: impl ToSocketAddrs) -> io::Result<TcpStream> {
 }
 
 /// A serial port to open.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct SerialDial(PathBuf);
 
 impl Dial for SerialDial {
@@ -225,11 +228,17 @@ impl Dial for SerialDial {
     }
 }
 
-/// A connection it makes itself, made again after it drops.
+/// A connection it makes itself, made again after it drops.  It is
+/// made on a thread of its own, a name looked up and each address tried
+/// for [`CONNECT_TIMEOUT`], while the reads go on waiting no longer
+/// than they are asked to.
 #[derive(Debug)]
 struct Dialer<D: Dial> {
     dial: D,
     link: Option<D::Link>,
+    /// The connection being made, which its thread sends when made or
+    /// failed.
+    dialing: Option<Receiver<io::Result<D::Link>>>,
     backoff: Backoff,
     /// When it may try again.
     next_attempt: Instant,
@@ -240,8 +249,44 @@ impl<D: Dial> Dialer<D> {
         Self {
             dial,
             link: None,
+            dialing: None,
             backoff,
             next_attempt: Instant::now(),
+        }
+    }
+
+    /// Starts making the connection.
+    fn start(&mut self) {
+        let (sender, receiver) = mpsc::channel();
+        let dial = self.dial.clone();
+        thread::spawn(move || {
+            // Nobody is waiting if the dialer has gone.
+            let _ = sender.send(dial.dial());
+        });
+        self.dialing = Some(receiver);
+    }
+
+    /// Waits up to `timeout` for the connection being made.
+    fn await_dial(&mut self, timeout: Duration) {
+        let Some(dialing) = &self.dialing else {
+            return;
+        };
+        let made = match dialing.recv_timeout(timeout.max(SHORTEST_WAIT)) {
+            Err(RecvTimeoutError::Timeout) => return,
+            Ok(made) => made,
+            Err(RecvTimeoutError::Disconnected) => Err(io::Error::other("connecting failed")),
+        };
+        self.dialing = None;
+        match made {
+            Ok(link) => {
+                event(format_args!("{}: connected", self.dial.name()));
+                self.backoff.reset();
+                self.link = Some(link);
+            }
+            Err(error) => {
+                event(format_args!("{}: {error}", self.dial.name()));
+                self.wait();
+            }
         }
     }
 
@@ -264,17 +309,13 @@ impl<D: Dial> Dialer<D> {
 
 impl<D: Dial> Transport for Dialer<D> {
     fn read(&mut self, into: &mut Vec<u8>, timeout: Duration) {
-        if self.link.is_none() && Instant::now() >= self.next_attempt {
-            match self.dial.dial() {
-                Ok(link) => {
-                    event(format_args!("{}: connected", self.dial.name()));
-                    self.backoff.reset();
-                    self.link = Some(link);
-                }
-                Err(error) => {
-                    event(format_args!("{}: {error}", self.dial.name()));
-                    self.wait();
-                }
+        if self.link.is_none() {
+            if self.dialing.is_none() && Instant::now() >= self.next_attempt {
+                self.start();
+            }
+            if self.dialing.is_some() {
+                self.await_dial(timeout);
+                return;
             }
         }
         let name = self.dial.name();
@@ -386,6 +427,7 @@ pub(crate) fn open(spec: &TransportSpec) -> Result<Box<dyn Transport>> {
 #[cfg(test)]
 mod tests {
     use super::Backoff;
+    use super::Dial;
     use super::Dialer;
     use super::Server;
     use super::TcpDial;
@@ -453,6 +495,48 @@ mod tests {
             // Written with none, it is dropped.
             dialer.write(b"lost");
         }
+    }
+
+    /// A server slow to answer, as one whose name is slow to look up or
+    /// which drops what is sent to it.
+    #[derive(Clone)]
+    struct Slow(TcpDial);
+
+    impl Dial for Slow {
+        type Link = TcpStream;
+
+        fn name(&self) -> String {
+            self.0.name()
+        }
+
+        fn dial(&self) -> std::io::Result<TcpStream> {
+            std::thread::sleep(Duration::from_secs(1));
+            self.0.dial()
+        }
+    }
+
+    /// A connection slow to make does not hold up the reads: each
+    /// waits no longer than it was asked to, and the connection is
+    /// taken once made.
+    #[test]
+    fn a_dialer_does_not_wait_for_its_connection() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap().to_string();
+        let mut dialer = Dialer::new(Slow(TcpDial(address)), Backoff::default());
+        let started = Instant::now();
+        while dialer.link.is_none() {
+            assert!(started.elapsed() < PATIENCE, "never connected");
+            let read = Instant::now();
+            dialer.read(&mut Vec::new(), STEP);
+            assert!(
+                read.elapsed() < STEP * 5,
+                "a read waited {:?}",
+                read.elapsed()
+            );
+        }
+        let (mut bridge, _) = listener.accept().unwrap();
+        bridge.write_all(b"made").unwrap();
+        assert_eq!(read_until(&mut dialer, 4), b"made");
     }
 
     /// A listener holds one connection, closes a second, and takes the

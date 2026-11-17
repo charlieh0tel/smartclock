@@ -1193,8 +1193,21 @@ specification; in short:
   response it reads are noted.  It compares the data and the trailer
   of the responses the table marks and nothing of `@@Aa`, `@@Ac` or
   a `@@B` or `@@E` message.
-- **Set by is the request scripts and lists** of `oncore/`: a command
-  sent in mode 0 or 2 ("Requests").  A query sends no field.
+- **Set by is what the image sends to set**, mode 0 or 2
+  ("Requests"): a step of the request scripts and lists of `oncore/`,
+  or a request its code posts.  That is a call of `gpsx_send` whose
+  code and mode are constants, found by a scan of the image's
+  instructions -- the start-up sequence sends the mask angle, the
+  cable delay and the satellites to ignore this way, `@@Ag`, `@@Az`
+  and `@@Am` on an Oncore, `set,M`, `set,t` and `set,U` on the
+  Z3815A -- or the request of a SCPI descriptor whose flags send it to
+  the GPS, which `pll_scpi_send_to_loop` posts in mode 0
+  (`:GPS:EMANgle`, `:GPS:ADELay`, `:GPS:SATellite:TRACking:IGNore`
+  among them).  The console's `gps_command_send`, which posts whatever
+  the console asks for, is left out, and so is a request the GPS task
+  refuses: the Z3817A takes a sequence's or a setting's only if
+  `gps_admitted_requests` has its code, which none of these is.  A
+  query sends no field.
 - **A message's rows tile its data**, every byte once, and end where
   the images' tables frame the message.  Rows share a byte only as
   bits of it: they must have the same offset, length, count and
@@ -1434,9 +1447,10 @@ specification; in short:
   `tps`'s date, the engine on UTC, is only stored ("In every image").
   What the image compares is `gps_response_match` asked about each
   parameter of `set`, `GLL` and `rrs`, with the position held, and a
-  field compared is one it reads whole.  What it sets is its scripts'
-  and lists' sentences of mode 0 or 2, the Oncore's requests translated
-  first, a parameter of `set` or `int` by its letter or name.
+  field compared is one it reads whole.  What it sets is the sentences
+  of mode 0 or 2 of its scripts and lists and of the requests its code
+  posts, the Oncore's requests translated first, a parameter of `set`
+  or `int` by its letter or name.
 
 What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 `@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
@@ -1488,15 +1502,15 @@ every command field, with who acts on it.
 | `@@Ae` | longitude | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
 | `@@Af` | height | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
 | `@@Af` | height type | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Ag` | mask angle | none | engine, holder | honored; `mask_angle` |
+| `@@Ag` | mask angle | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `mask_angle` |
 | `@@Ah` | select option | all four | engine, holder | honored: 2, highest in sky; `satellite_select` |
 | `@@Ai` | channel | all four | holder | `manual_satellites` |
 | `@@Ai` | satellite | all four | holder | `manual_satellites` |
 | `@@Aj` | xDOP type | all four | engine | honored; given: dop_kind |
 | `@@Ak` | xDOP hysteresis | all four | holder | `xdop_hysteresis` |
 | `@@Al` | xDOP threshold | all four | engine | honored |
-| `@@Am` | constant | none | engine | honored |
-| `@@Am` | ignore list | none | engine | honored; given: ignore_list |
+| `@@Am` | constant | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Am` | ignore list | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored; given: ignore_list |
 | `@@An` | almanac update | all four | holder | `almanac_update` |
 | `@@Ao` | datum | all four | engine | honored |
 | `@@Aq` | ionospheric correction | all four | holder | `atmospheric_correction` |
@@ -1512,13 +1526,13 @@ every command field, with who acts on it.
 | `@@Aw` | time mode | all four | engine, holder | honored; `time_base` |
 | `@@Ax` | epoch offset | all four | holder | `epoch_offset` |
 | `@@Ay` | pulse offset | all four | holder | `pulse_offset` |
-| `@@Az` | cable delay | none | holder | `cable_delay` |
+| `@@Az` | cable delay | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `cable_delay` |
 | `@@Ba` | rate | all four | engine | honored |
 | `@@Bb` | mode | all four | engine | honored |
 | `@@Bc` | mode | all four | engine | honored: 1 sends it again at each change |
 | `@@Bd` | mode | none | engine | honored: 1 sends it again at each change |
 | `@@Bh` | rate | none | engine | honored |
-| `@@Bj` | mode | none | engine | honored: polled only, nothing to do |
+| `@@Bj` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: polled only, nothing to do |
 | `@@Bk` | rate | all four | engine | honored |
 | `@@Bn` | rate | all four | engine | honored |
 | `@@Bn` | algorithm | all four | engine, holder | honored; `raim_algorithm` |
@@ -1540,15 +1554,15 @@ every command field, with who acts on it.
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |
 | `$PFEC,GPset` | H altitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$PFEC,GPset` | M elevation mask | none | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
+| `$PFEC,GPset` | M elevation mask | z3815a-4010 | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
 | `$PFEC,GPset` | S signal mask | none | gap | stored |
 | `$PFEC,GPset` | T 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
-| `$PFEC,GPset` | U deleted satellites | none | engine | honored: left out of the fix; given: ignore_list |
+| `$PFEC,GPset` | U deleted satellites | z3815a-4010 | engine | honored: left out of the fix; given: ignore_list |
 | `$PFEC,GPset` | W smoothing index | none | gap | stored |
 | `$PFEC,GPset` | X dynamic index | none | gap | stored |
 | `$PFEC,GPset` | Z observation point mode | z3815a-4010 | engine, holder | honored: tps mode and the position reported; `position_hold` |
 | `$PFEC,GPset` | Z3 averaging time | none | gap | stored |
-| `$PFEC,GPset` | t 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
+| `$PFEC,GPset` | t 1PPS correction | z3815a-4010 | holder | `cable_delay`; `pulse_offset` |
 | `$PFEC,GPint` | GGA interval | z3815a-4010 | engine | honored |
 | `$PFEC,GPint` | ZDA interval | z3815a-4010 | engine | honored: kept, ZDA not sent |
 | `$PFEC,GPint` | GSA interval | z3815a-4010 | engine | honored |

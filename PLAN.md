@@ -1585,7 +1585,14 @@ stands in for one.
   would buy nothing for one connection each way.  A connection to the
   instrument, or a serial port, is made on a thread of its own, a name
   looked up and each address tried for 5 s, and handed to the loop
-  once made, so no connect holds the seconds up.  Its scene is the
+  once made, so no connect holds the seconds up.  A write waits at
+  most 500 ms for room, on TCP and on the serial port alike, and a
+  peer that has stopped reading is dropped when it runs out.  A TCP
+  connection, made or taken, carries keepalive probes (`socket2`: idle
+  10 s, then every 5 s, dropped after 3 unanswered) and, on Linux, a
+  30 s limit on data unacknowledged, so a peer gone without a word, as
+  a bridge powered off, is dropped within half a minute and a listener
+  takes the next connection rather than refusing it as one held.  Its scene is the
   vectors' provider, so it is held to `source::scene::DECLARATION` and
   the exceptions tables' rows named `scene` (named `engine vectors`
   until the feed shared the provider, renamed 2026-11-15), and works

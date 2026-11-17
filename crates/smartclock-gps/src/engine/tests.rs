@@ -128,6 +128,7 @@ use crate::record::Velocity;
 use crate::record::VelocityAxes;
 use crate::record::XdopCombination;
 use crate::record::XdopTable;
+use crate::record::field::IMAGE_SETS;
 use crate::time::DateTime;
 use crate::time::GpsSeconds;
 use crate::time::LeapChange;
@@ -2470,7 +2471,9 @@ fn each_setting_reads_back_after_its_command() {
             },
         ),
     ];
+    let mut driven = SettingSet::EMPTY;
     for (id, data, asked, setting, after) in cases {
+        driven = driven.with(setting);
         let mut engine = powered_up(&VP_EIGHT);
         assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked");
         assert_eq!(engine.settings(), defaults(), "{id:?} asked");
@@ -2484,6 +2487,15 @@ fn each_setting_reads_back_after_its_command() {
         assert_eq!(tell(&mut engine, id, &asked), [], "{id:?} asked after");
         assert_eq!(engine.settings(), after, "{id:?} asked after");
     }
+    // Every setting an image sets is driven through the engine: here,
+    // or the correction thresholds by
+    // `thresholds_and_a_ut_plus_correction_read_back` and the output
+    // format by `a_switched_format_is_held_and_told`.
+    let driven = driven
+        .with(Setting::CorrectionThresholds)
+        .with(Setting::OutputFormat);
+    let undriven = IMAGE_SETS.without(driven);
+    assert!(undriven.is_empty(), "undriven: {undriven:?}");
 }
 
 /// `@@AD` (VP p. 20) and a UT Plus's `@@Aq` (UT p. 6.28), each read

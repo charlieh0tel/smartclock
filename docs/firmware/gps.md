@@ -1111,6 +1111,686 @@ open with `@@Ci`, switch I/O format, with an argument long of 0
 NMEA, and 2, Loran emulation, and no other.  No other image's scripts
 send `@@Ci`.
 
+## Every path to a setting
+
+Every way an image sends its GPS engine a command, to set a value or
+to ask one, measured from the ROM by `tools/firmware/gps_paths.py`
+(its docstring is the specification) and held to this table by
+`make check-gps-fields`, which `make gps-fields` rewrites.  The
+images are the six with an Oncore message table and the two whose
+engine is a Furuno, the Z3815A 4010 and the Z3805A 1.01.03; the
+58503A 3633 has no names to read it by.  A path is:
+
+- a **script** of the GPS task, each step a request, or the command
+  monitor's **list** of queries;
+- a **sequence** of the loop task that posts a request through
+  `gpsx_send` with a constant code and mode: start-up, the leap
+  second check, the self-test and the diagnostic stage;
+- a **monitor** of the GPS task that posts one through
+  `gps_request_post`;
+- a **SCPI** descriptor whose flags send its request to the GPS,
+  which `pll_scpi_send_to_loop` posts in mode 0, found as a ROM
+  address an instruction names, or names.tsv labels, that has a
+  descriptor's shape; one named only by a ROM table would be missed;
+- a **console** word that leaves a code in `gps_command`, which
+  `gps_command_send`, run in Unicorn on each code, maps to the request
+  it posts.  `gps_change` and `gps_query` post whatever request they
+  are given.
+
+What it sends is the message at that code of the Oncore's table, or on
+a Furuno image the sentence its translation names, `set`'s and `int`'s
+by parameter; else a script, whose steps are its own rows, or a step
+the GPS task does itself.  Fields and Settings are those of the
+message's command rows (`gps-fields.tsv`), who acts on each in
+parentheses.  "Refused" is a request the GPS task does not take: the
+Z3817A's takes from its sequences, its settings and its console only
+the codes `gps_admitted_requests` lists, and so its scripts, which its
+sequences alone post, send nothing.  A path that sets a message's
+value and is not refused puts the settings of its rows in the crate's
+`IMAGE_SETS`, and those a holder acts on in `IMAGE_HOLDS`; a message
+with no row is one the engine does not speak.
+
+<!-- gps_fields.py paths -->
+| Path | Name | Sends | Fields | Settings | Does | Images |
+|---|---|---|---|---|---|---|
+| script | `0x4f` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `0x4f` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `0x4f` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `0x4f` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543 |
+| script | `0x5a` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | 58503a-3704 |
+| script | `0x5a` | `@@At` | position hold | `position_hold` (holder) | sets | 58503a-3704 |
+| script | `0x5a` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704 |
+| script | `0x5a` | `@@Cg` | mode | - | sets | 58503a-3704 |
+| script | `0x5a` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704 |
+| script | `0x5b` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets, refused | z3817a-3752 |
+| script | `0x5b` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `0x5b` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `0x5b` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `0x5b` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `0x63` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `0x63` | `@@At` | position hold | `position_hold` (holder) | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `0x63` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `0x63` | `@@Cg` | mode | - | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `0x63` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_DATE_SET` | `$GPZDA` | time, day, month, year, zone hours, zone minutes | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_DATE_SET` | `@@Ac` | month, day, year | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_DATE_SET` | `@@Ac` | month, day, year | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_DATE_SET` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_DATE_SET` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_DATE_SET` | step `GPS_STEP_DATE_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_DEFAULTS` | `$PFEC,GPclr` | clear mode | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_DEFAULTS` | step `GPS_STEP_PPS_CHECK` | - | - | posts | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_DEFAULTS` | step `GPS_STEP_SURVEYING_CLEAR` | - | - | posts | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Ca` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Ca` | no command row | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Cj` | no command row | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Fa` | no command row | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_ENGINE_SELFTEST` | `@@Fa` | no command row | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_FIX_RESTART` | `$PFEC,GPclr` | clear mode | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_FIX_RESTART` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_FIX_RESTART` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_FIX_RESTART` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_FIX_RESTART` | `@@Fa` | no command row | - | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_FIX_RESTART` | step `GPS_STEP_PPS_CHECK` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_FIX_RESTART` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_FIX_RESTART` | step `GPS_STEP_SURVEYING_CLEAR` | - | - | posts | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT` | `$PFEC,GPset,H` | H altitude | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `$PFEC,GPset,H` | H altitude | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_AT_QUIET` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_OFF` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_OFF` | step `GPS_STEP_AVERAGE_RESET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `$PFEC,GPset,H` | H altitude | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_POSITION` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | step `GPS_STEP_AVERAGE_RESET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_RELEASE` | step `GPS_STEP_SURVEY_STOP` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | step `GPS_REQUEST_POSITION_HOLD` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_HOLD_SELECT` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,GGA` | GGA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,GSA` | GSA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,VTG` | VTG interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,ZDA` | ZDA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,tst` | tst interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `@@AB` | application type | `application` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@AB` | application type | `application` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@AC` | HDOP threshold | `hdop_threshold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@AC` | HDOP threshold | `hdop_threshold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ab` | sign, hours, minutes | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ab` | sign, hours, minutes | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ah` | select option | `satellite_select` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ah` | select option | `satellite_select` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Aj` | xDOP type | `dop_kind` (engine) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Aj` | xDOP type | `dop_kind` (engine) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Al` | xDOP threshold | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Al` | xDOP threshold | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@An` | almanac update | `almanac_update` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@An` | almanac update | `almanac_update` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ao` | datum | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ao` | datum | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Av` | altitude hold | `altitude_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Av` | altitude hold | `altitude_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Aw` | time mode | `time_base` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Aw` | time mode | `time_base` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ax` | epoch offset | `epoch_offset` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ax` | epoch offset | `epoch_offset` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ay` | pulse offset | `pulse_offset` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ay` | pulse offset | `pulse_offset` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Bb` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Bb` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Bc` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Bc` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Bk` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Bk` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Bo` | mode | - | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ci` | format | `output_format` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT` | `@@Cj` | no command row | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Cj` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704 |
+| script | `GPS_SCRIPT_INIT` | `@@Cj` | no command row | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ek` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ek` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPclr` | clear mode | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,GGA` | GGA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,GSA` | GSA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,VTG` | VTG interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,ZDA` | ZDA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,tst` | tst interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AB` | application type | `application` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AB` | application type | `application` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AC` | HDOP threshold | `hdop_threshold` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AC` | HDOP threshold | `hdop_threshold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ab` | sign, hours, minutes | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ab` | sign, hours, minutes | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ad` | latitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ae` | longitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Af` | height, height type | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ah` | select option | `satellite_select` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ah` | select option | `satellite_select` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aj` | xDOP type | `dop_kind` (engine) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aj` | xDOP type | `dop_kind` (engine) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Al` | xDOP threshold | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Al` | xDOP threshold | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@An` | almanac update | `almanac_update` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@An` | almanac update | `almanac_update` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ao` | datum | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ao` | datum | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Av` | altitude hold | `altitude_hold` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Av` | altitude hold | `altitude_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aw` | time mode | `time_base` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Aw` | time mode | `time_base` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ax` | epoch offset | `epoch_offset` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ax` | epoch offset | `epoch_offset` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ay` | pulse offset | `pulse_offset` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ay` | pulse offset | `pulse_offset` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bb` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bb` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bc` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bc` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bk` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bk` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Bo` | mode | - | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cf` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cf` | no command row | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ci` | format | `output_format` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cj` | no command row | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cj` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Cj` | no command row | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ek` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ek` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_PPS_CHECK` | - | - | posts | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_SURVEYING_CLEAR` | - | - | posts | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_LATITUDE_SET` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_LATITUDE_SET` | step `GPS_STEP_LATITUDE_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_LONGITUDE_SET` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_LONGITUDE_SET` | step `GPS_STEP_LONGITUDE_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bb` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bb` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bc` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bc` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bk` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Bk` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_OFF` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GGA` | GGA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GSA` | GSA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Bb` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Bb` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Bo` | mode | - | sets | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Ad` | latitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Ad` | latitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Ae` | longitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Ae` | longitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Af` | height, height type | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Af` | height, height type | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_POSITION_SET` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@AB` | application type | `application` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@AB` | application type | `application` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aa` | hours, minutes, seconds | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aa` | hours, minutes, seconds | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ab` | sign, hours, minutes | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ab` | sign, hours, minutes | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ac` | month, day, year | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ac` | month, day, year | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ad` | latitude | `initial_position` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ad` | latitude | `initial_position` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ae` | longitude | `initial_position` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ae` | longitude | `initial_position` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Af` | height, height type | `initial_position` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Af` | height, height type | `initial_position` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ag` | mask angle | `mask_angle` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ah` | select option | `satellite_select` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ah` | select option | `satellite_select` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Al` | xDOP threshold | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Al` | xDOP threshold | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ao` | datum | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ao` | datum | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@At` | position hold | `position_hold` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@At` | position hold | `position_hold` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aw` | time mode | `time_base` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Aw` | time mode | `time_base` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Az` | cable delay | `cable_delay` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Az` | cable delay | `cable_delay` (holder) | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Bj` | mode | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Bj` | mode | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Cg` | mode | - | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Cg` | mode | - | asks, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Cj` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Gj` | no command row | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ah` | select option | `satellite_select` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ah` | select option | `satellite_select` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ai` | channel, satellite | `manual_satellites` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ai` | channel, satellite | `manual_satellites` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Ad` | latitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Ad` | latitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Ae` | longitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Ae` | longitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Af` | height, height type | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Af` | height, height type | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_SURVEY_FROM` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_TIME_SET` | `$GPZDA` | time, day, month, year, zone hours, zone minutes | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_TIME_SET` | `@@Aa` | hours, minutes, seconds | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_TIME_SET` | `@@Aa` | hours, minutes, seconds | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_TIME_SET` | `@@Cg` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_TIME_SET` | `@@Cg` | mode | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_TIME_SET` | step `GPS_STEP_TIME_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_TRAIM` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_TRAIM` | `$PFEC,GPrrs` | TRAIM switch, alarm limit, 1PPS control mode | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| script | `GPS_SCRIPT_TRAIM` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_TRAIM` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_TRAIM` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_TRAIM` | `@@En` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Aw` | time mode | `time_base` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Aw` | time mode | `time_base` (holder) | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Ea` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_UTC_SET` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
+| list | `0x523d0` | `@@AB` | application type | `application` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Aa` | hours, minutes, seconds | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ab` | sign, hours, minutes | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ac` | month, day, year | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ad` | latitude | `initial_position` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ae` | longitude | `initial_position` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Af` | height, height type | `initial_position` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ah` | select option | `satellite_select` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Al` | xDOP threshold | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ao` | datum | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@At` | position hold | `position_hold` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Aw` | time mode | `time_base` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Az` | cable delay | `cable_delay` (holder) | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Bj` | mode | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Cg` | mode | - | asks | 58503a-3704 |
+| list | `0x523d0` | `@@Cj` | no command row | - | sets | 58503a-3704 |
+| list | `0x57be2` | `@@AB` | application type | `application` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Aa` | hours, minutes, seconds | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ab` | sign, hours, minutes | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ac` | month, day, year | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ad` | latitude | `initial_position` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ae` | longitude | `initial_position` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Af` | height, height type | `initial_position` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ah` | select option | `satellite_select` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Al` | xDOP threshold | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ao` | datum | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@At` | position hold | `position_hold` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Aw` | time mode | `time_base` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Az` | cable delay | `cable_delay` (holder) | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Bj` | mode | - | asks | z3816a-4001 |
+| list | `0x57be2` | `@@Cg` | mode | - | asks | z3816a-4001 |
+| list | `0x57c46` | `@@Bo` | mode | - | sets | z3816a-4001 |
+| list | `0x57c46` | `@@Ta` | values | - | asks | z3816a-4001 |
+| list | `0x58858` | `@@AB` | application type | `application` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Aa` | hours, minutes, seconds | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ab` | sign, hours, minutes | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ac` | month, day, year | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ad` | latitude | `initial_position` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ae` | longitude | `initial_position` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Af` | height, height type | `initial_position` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ah` | select option | `satellite_select` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Al` | xDOP threshold | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ao` | datum | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@At` | position hold | `position_hold` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Aw` | time mode | `time_base` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Az` | cable delay | `cable_delay` (holder) | asks | z3817a-3752 |
+| list | `0x58858` | `@@Bj` | mode | - | asks | z3817a-3752 |
+| list | `0x58858` | `@@Cg` | mode | - | asks | z3817a-3752 |
+| list | `0x59f90` | `@@AB` | application type | `application` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Aa` | hours, minutes, seconds | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ab` | sign, hours, minutes | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ac` | month, day, year | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ad` | latitude | `initial_position` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ae` | longitude | `initial_position` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Af` | height, height type | `initial_position` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ah` | select option | `satellite_select` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Aj` | xDOP type | `dop_kind` (engine) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ak` | xDOP hysteresis | `xdop_hysteresis` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Al` | xDOP threshold | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Am` | constant, ignore list | `ignore_list` (engine) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ao` | datum | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Aq` | ionospheric correction | `atmospheric_correction` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ar` | fix algorithm | `fix_algorithm` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@At` | position hold | `position_hold` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Aw` | time mode | `time_base` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Ay` | pulse offset | `pulse_offset` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Az` | cable delay | `cable_delay` (holder) | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Bj` | mode | - | asks | 58503b-1.01.04 |
+| list | `0x59f90` | `@@Cg` | mode | - | asks | 58503b-1.01.04 |
+| list | `0x59ff4` | `@@Bo` | mode | - | sets | 58503b-1.01.04 |
+| list | `0x59ff4` | `@@Ta` | values | - | asks | 58503b-1.01.04 |
+| list | `command_monitor_queries` | `$PFEC,GPzzz` | not spoken | - | sets | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_diag_sequence` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_diag_sequence` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_diag_sequence` | step `GPS_STEP_LINK_RESET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | `$PFEC,GPset,M` | M elevation mask | `mask_angle` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | `$PFEC,GPset,U` | U deleted satellites | `ignore_list` (engine) | sets | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | `$PFEC,GPset,t` | t 1PPS correction | `cable_delay` (holder), `pulse_offset` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | `@@Ag` | mask angle | `mask_angle` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_init_sequence` | `@@Ag` | mask angle | `mask_angle` (holder) | sets, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | `@@Am` | constant, ignore list | `ignore_list` (engine) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_init_sequence` | `@@Am` | constant, ignore list | `ignore_list` (engine) | sets, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | `@@Aw` | time mode | `time_base` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_init_sequence` | `@@Aw` | time mode | `time_base` (holder) | sets, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | `@@Az` | cable delay | `cable_delay` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_init_sequence` | `@@Az` | cable delay | `cable_delay` (holder) | sets, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | script `0x4f` | - | - | posts | z3805a-3543b, z3801a-3543 |
+| sequence | `gps_init_sequence` | script `0x5a` | - | - | posts | 58503a-3704 |
+| sequence | `gps_init_sequence` | script `0x5b` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | script `0x63` | - | - | posts | z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_HOLD_AT_QUIET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_HOLD_AT_QUIET` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_HOLD_AT` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_HOLD_SELECT` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_HOLD_SELECT` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_INIT` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_init_sequence` | script `GPS_SCRIPT_INIT` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_init_sequence` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3817a-3752 |
+| sequence | `gps_init_sequence` | step `GPS_STEP_UTC_SELECT` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_leap_ack` | `@@Aw` | time mode | `time_base` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_leap_ack` | `@@Aw` | time mode | `time_base` (holder) | sets, refused | z3817a-3752 |
+| sequence | `gps_leap_ack` | script `GPS_SCRIPT_UTC_SET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_leap_ack` | script `GPS_SCRIPT_UTC_SET` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_leap_sequence` | `@@Bj` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| sequence | `gps_leap_sequence` | `@@Bj` | mode | - | sets, refused | z3817a-3752 |
+| sequence | `gps_leap_sequence` | step `GPS_REQUEST_LEAP_SECOND_PENDING` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_selftest_run` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| sequence | `gps_selftest_run` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts, refused | z3817a-3752 |
+| sequence | `gps_selftest_run` | step `GPS_STEP_LINK_RESET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| monitor | `command_monitor` | script `GPS_SCRIPT_OUTPUTS_ON` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `: (field 577 set)` | step `GPS_STEP_FIELD_577_SET` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:DIAGnostic:GPSystem:DCXO` | `@@Ta` | values | - | sets | 58503b-1.01.04 |
+| SCPI | `:DIAGnostic:GPSystem:DCXO` | step `GPS_REQUEST_DCXO` | - | - | posts | z3805a-1.01.03 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe` | script `GPS_SCRIPT_TRAIM` | - | - | posts | 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe` | script `GPS_SCRIPT_TRAIM` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold` | script `GPS_SCRIPT_TRAIM` | - | - | posts | 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:THReshold` | script `GPS_SCRIPT_TRAIM` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:DIAGnostic:GPSystem:TRACking:LOG` | step `GPS_STEP_TRACKING_LOG` | - | - | posts | 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DIAGnostic:GPSystem:TRACking:LOG` | step `GPS_STEP_TRACKING_LOG` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:DIAGnostic:REFerence:EXTernal:QUEStionable:HYSTeresis` | step `GPS_STEP_EXTERNAL_HYSTERESIS` | - | - | posts | z3815a-4010 |
+| SCPI | `:DIAGnostic:REFerence:GPSystem:QUEStionable:HYSTeresis` | step `0x44` | - | - | posts | 58503a-3704 |
+| SCPI | `:DIAGnostic:REFerence:GPSystem:QUEStionable:HYSTeresis` | step `GPS_STEP_GPS_HYSTERESIS` | - | - | posts | z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DOUGlas:STATe` | script `GPS_SCRIPT_HOLD_RELEASE` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DOUGlas:STATe` | script `GPS_SCRIPT_HOLD_RELEASE` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:DOUGlas:STATe (request)` | script `GPS_SCRIPT_HOLD_OFF` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:DOUGlas:STATe (request)` | script `GPS_SCRIPT_HOLD_OFF` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:ADELay` | `$PFEC,GPset,t` | t 1PPS correction | `cable_delay` (holder), `pulse_offset` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:ADELay` | `@@Az` | cable delay | `cable_delay` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:ADELay` | `@@Az` | cable delay | `cable_delay` (holder) | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:EMANgle` | `$PFEC,GPset,M` | M elevation mask | `mask_angle` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:EMANgle` | `@@Ag` | mask angle | `mask_angle` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:EMANgle` | `@@Ag` | mask angle | `mask_angle` (holder) | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:DATE` | `@@Ac` | month, day, year | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:DATE` | `@@Ac` | month, day, year | - | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:DATE` | script `GPS_SCRIPT_DATE_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (height)` | `$PFEC,GPset,H` | H altitude | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (height)` | `@@Af` | height, height type | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (height)` | `@@Af` | height, height type | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (latitude)` | `@@Ad` | latitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (latitude)` | `@@Ad` | latitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (latitude)` | script `GPS_SCRIPT_LATITUDE_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (longitude)` | `@@Ae` | longitude | `initial_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (longitude)` | `@@Ae` | longitude | `initial_position` (holder) | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (longitude)` | script `GPS_SCRIPT_LONGITUDE_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (request)` | step `GPS_STEP_67` | - | - | posts | z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:INITial:POSition (step)` | step `GPS_STEP_FIELD_5C0_SET` | - | - | posts | 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:TIME` | `@@Aa` | hours, minutes, seconds | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:INITial:TIME` | `@@Aa` | hours, minutes, seconds | - | sets, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:INITial:TIME` | script `GPS_SCRIPT_TIME_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:POSition` | script `0x4f` | - | - | posts | z3805a-3543b, z3801a-3543 |
+| SCPI | `:SOURce:GPSystem:POSition` | script `0x5a` | - | - | posts | 58503a-3704 |
+| SCPI | `:SOURce:GPSystem:POSition` | script `0x5b` | - | - | posts, refused | z3817a-3752 |
+| SCPI | `:SOURce:GPSystem:POSition` | script `0x63` | - | - | posts | z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:POSition` | script `GPS_SCRIPT_HOLD_AT` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:SATellite:TRACking:IGNore` | `$PFEC,GPset,U` | U deleted satellites | `ignore_list` (engine) | sets | z3815a-4010, z3805a-1.01.03 |
+| SCPI | `:SOURce:GPSystem:SATellite:TRACking:IGNore` | `@@Am` | constant, ignore list | `ignore_list` (engine) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| SCPI | `:SOURce:GPSystem:SATellite:TRACking:IGNore` | `@@Am` | constant, ignore list | `ignore_list` (engine) | sets, refused | z3817a-3752 |
+| SCPI | `:SYSTem:PRINt` | step `GPS_STEP_STATUS_SNAPSHOT` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `avg` | step `GPS_STEP_AVERAGE` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `avg` | step `GPS_STEP_AVERAGE` | - | - | posts, refused | z3817a-3752 |
+| console | `clr_avg` | step `GPS_STEP_AVERAGE_RESET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `clr_avg` | step `GPS_STEP_AVERAGE_RESET` | - | - | posts, refused | z3817a-3752 |
+| console | `eman` | `$PFEC,GPset,M` | M elevation mask | `mask_angle` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| console | `eman` | `@@Ag` | mask angle | `mask_angle` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `eman` | `@@Ag` | mask angle | `mask_angle` (holder) | sets, refused | z3817a-3752 |
+| console | `ext_msg_rate` | `@@Bk` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `ext_msg_rate` | `@@Bk` | rate | - | sets, refused | z3817a-3752 |
+| console | `ext_msg_rate` | step `GPS_REQUEST_POSITION_EXTENSION` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `gps_cable_dly` | `$PFEC,GPset,t` | t 1PPS correction | `cable_delay` (holder), `pulse_offset` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| console | `gps_cable_dly` | `@@Az` | cable delay | `cable_delay` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `gps_cable_dly` | `@@Az` | cable delay | `cable_delay` (holder) | sets, refused | z3817a-3752 |
+| console | `gps_change` | any request | - | - | any request, as set | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `gps_change` | any request | - | - | any request, as set, refused | z3817a-3752 |
+| console | `gps_date` | `@@Ac` | month, day, year | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `gps_date` | `@@Ac` | month, day, year | - | sets, refused | z3817a-3752 |
+| console | `gps_date` | script `GPS_SCRIPT_DATE_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `gps_ph` | `$PFEC,GPset,Z` | Z observation point mode | `position_hold` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| console | `gps_ph` | `@@At` | position hold | `position_hold` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `gps_ph` | `@@At` | position hold | `position_hold` (holder) | sets, refused | z3817a-3752 |
+| console | `gps_php` | `$GPGLL` | latitude, north or south, longitude, east or west, null | `held_position` (holder), `initial_position` (holder) | sets | z3815a-4010, z3805a-1.01.03 |
+| console | `gps_php` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `gps_php` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | sets, refused | z3817a-3752 |
+| console | `gps_query` | any request | - | - | any request, as a query | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `gps_query` | any request | - | - | any request, as a query, refused | z3817a-3752 |
+| console | `gps_query_all` | script `GPS_SCRIPT_QUERY_SETTINGS` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `gps_query_all` | script `GPS_SCRIPT_QUERY_SETTINGS` | - | - | posts, refused | z3817a-3752 |
+| console | `gps_time` | `@@Aa` | hours, minutes, seconds | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `gps_time` | `@@Aa` | hours, minutes, seconds | - | sets, refused | z3817a-3752 |
+| console | `gps_time` | script `GPS_SCRIPT_TIME_SET` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `init_gps` | script `GPS_SCRIPT_INIT` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `init_gps` | script `GPS_SCRIPT_INIT` | - | - | posts, refused | z3817a-3752 |
+| console | `master_reset` | script `GPS_SCRIPT_INIT_DEFAULTS` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `master_reset` | script `GPS_SCRIPT_INIT_DEFAULTS` | - | - | posts, refused | z3817a-3752 |
+| console | `pr_1pps` | step `GPS_STEP_PRINT_PPS` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3815a-4010 |
+| console | `pr_1pps` | step `GPS_STEP_PRINT_PPS` | - | - | posts, refused | z3817a-3752 |
+| console | `pr_avg` | step `GPS_STEP_PRINT_AVERAGE` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `pr_avg` | step `GPS_STEP_PRINT_AVERAGE` | - | - | posts, refused | z3817a-3752 |
+| console | `pr_gps_id` | step `GPS_STEP_PRINT_ID` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `pr_gps_id` | step `GPS_STEP_PRINT_ID` | - | - | posts, refused | z3817a-3752 |
+| console | `pr_gps_istate` | step `GPS_STEP_PRINT_INSTRUMENT_STATE` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `pr_gps_istate` | step `GPS_STEP_PRINT_INSTRUMENT_STATE` | - | - | posts, refused | z3817a-3752 |
+| console | `pr_satview` | step `GPS_STEP_PRINT_PPS` | - | - | posts | 58503b-1.01.04 |
+| console | `pr_satview` | step `GPS_STEP_PRINT_SATELLITE_VIEW` | - | - | posts | z3816a-4001 |
+| console | `pr_satview` | step `GPS_STEP_PRINT_SAT_VIEW` | - | - | posts | z3805a-1.01.03 |
+| console | `pr_time_raim` | step `GPS_STEP_PRINT_TIME_RAIM` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `print_bc` | step `GPS_STEP_PRINT_BEST_COMBINATIONS` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `print_ext_msg` | step `GPS_STEP_PRINT_EXTENSION` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `print_ext_msg` | step `GPS_STEP_PRINT_EXTENSION` | - | - | posts, refused | z3817a-3752 |
+| console | `print_stat` | step `GPS_STEP_PRINT_STATUS` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `print_vis` | step `GPS_STEP_PRINT_VISIBILITY` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `q_eman` | `@@Ag` | mask angle | `mask_angle` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `q_eman` | `@@Ag` | mask angle | `mask_angle` (holder) | asks, refused | z3817a-3752 |
+| console | `q_eman` | step `GPS_REQUEST_MASK_ANGLE` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `q_gps_cable_dly` | `@@Az` | cable delay | `cable_delay` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `q_gps_cable_dly` | `@@Az` | cable delay | `cable_delay` (holder) | asks, refused | z3817a-3752 |
+| console | `q_gps_cable_dly` | step `GPS_REQUEST_CABLE_DELAY` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `q_gps_php` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `q_gps_php` | `@@As` | latitude, longitude, height, height type | `held_position` (holder) | asks, refused | z3817a-3752 |
+| console | `q_gps_php` | step `GPS_REQUEST_POSITION_HOLD_POSITION` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `quiet_status` | script `GPS_SCRIPT_OUTPUTS_OFF` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
+| console | `quiet_status` | script `GPS_SCRIPT_OUTPUTS_OFF` | - | - | posts, refused | z3817a-3752 |
+| console | `stat_rate` | `@@Ba` | rate | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `stat_rate` | `@@Ba` | rate | - | sets, refused | z3817a-3752 |
+| console | `stat_rate` | step `GPS_REQUEST_POSITION_STATUS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `vis_stat_rate` | `@@Bb` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `vis_stat_rate` | `@@Bb` | mode | - | sets, refused | z3817a-3752 |
+| console | `vis_stat_rate` | step `GPS_REQUEST_VISIBILITY` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+| console | `xdop_stat_rate` | `@@Bc` | mode | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
+| console | `xdop_stat_rate` | `@@Bc` | mode | - | sets, refused | z3817a-3752 |
+| console | `xdop_stat_rate` | step `GPS_REQUEST_DOP_TABLE` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
+<!-- end gps_fields.py -->
+
 ## The fields
 
 `gps-fields.tsv` has a row for every field of every message the engine
@@ -1193,21 +1873,17 @@ specification; in short:
   response it reads are noted.  It compares the data and the trailer
   of the responses the table marks and nothing of `@@Aa`, `@@Ac` or
   a `@@B` or `@@E` message.
-- **Set by is what the image sends to set**, mode 0 or 2
-  ("Requests"): a step of the request scripts and lists of `oncore/`,
-  or a request its code posts.  That is a call of `gpsx_send` whose
-  code and mode are constants, found by a scan of the image's
-  instructions -- the start-up sequence sends the mask angle, the
-  cable delay and the satellites to ignore this way, `@@Ag`, `@@Az`
-  and `@@Am` on an Oncore, `set,M`, `set,t` and `set,U` on the
-  Z3815A -- or the request of a SCPI descriptor whose flags send it to
-  the GPS, which `pll_scpi_send_to_loop` posts in mode 0
-  (`:GPS:EMANgle`, `:GPS:ADELay`, `:GPS:SATellite:TRACking:IGNore`
-  among them).  The console's `gps_command_send`, which posts whatever
-  the console asks for, is left out, and so is a request the GPS task
-  refuses: the Z3817A takes a sequence's or a setting's only if
-  `gps_admitted_requests` has its code, which none of these is.  A
-  query sends no field.
+- **Set by is every path** ("Every path to a setting"): an image's
+  script and list steps, its sequences', monitors', SCPI descriptors'
+  and console words' requests, of mode 0 or 2, that the GPS task
+  takes.  The start-up sequence sends the mask angle, the cable delay
+  and the satellites to ignore through `gpsx_send`, `@@Ag`, `@@Az` and
+  `@@Am` on an Oncore, `set,M`, `set,t` and `set,U` on a Furuno, as
+  `:GPS:EMANgle`, `:GPS:ADELay` and `:GPS:SATellite:TRACking:IGNore`
+  do.  The console's `gps_change`, which sends whatever it is given,
+  sets nothing here.  A query sends no field.  The table's images are
+  the five whose reads it measures; the crate's `IMAGE_SETS` and
+  `IMAGE_HOLDS` are of every image's paths.
 - **A message's rows tile its data**, every byte once, and end where
   the images' tables frame the message.  Rows share a byte only as
   bits of it: they must have the same offset, length, count and
@@ -1329,17 +2005,19 @@ specification; in short:
   pp. 41, 42 and 75), and whatever chooses the satellites a record is
   made from may leave them out.  Each has its change event as the
   rest have.  Every field of the `Settings` is named by some row, the
-  check holds.  The settings the rows some image sets hold are the
-  crate's `IMAGE_SETS`, written by the tool as `IMAGE_USES` is;
-  `dop_kind` and `ignore_list`, given and not held, are not of them,
-  and no provider is held to either.  A provider's `Declaration`
-  gives the settings it acts on, and its test
-  holds that each of `IMAGE_SETS` is one of those or has a row of
+  check holds.  The settings the rows of what some image's path sets
+  hold or give are the crate's `IMAGE_SETS`, written by the tool as
+  `IMAGE_USES` is, and those they hold its `IMAGE_HOLDS`; `dop_kind`
+  and `ignore_list`, given and not held, are of the first and not the
+  second, and no provider is held to either.  A provider's
+  `Declaration` gives the settings it acts on, and its test
+  holds that each of `IMAGE_HOLDS` is one of those or has a row of
   `gps-setting-exceptions.tsv`, one for each setting it is excused
   with the reason, and that no row is for nothing:
   `Declaration::unacted` and `Declaration::needless` are empty, so a
   row goes when its setting is
-  acted on or no image sets it any longer.  A provider may act on more
+  acted on or no image's holder is to act on it any longer.  A
+  provider may act on more
   than the images set; that needs no row and fails nothing.  A row
   names a setting by its field of the `Settings`, and is the owner's
   to grant.  The
@@ -1455,9 +2133,9 @@ specification; in short:
   What the image compares is `gps_response_match` asked about each
   parameter of `set`, `GLL` and `rrs`, with the position held, and a
   field compared is one it reads whole.  What it sets is the sentences
-  of mode 0 or 2 of its scripts and lists and of the requests its code
-  posts, the Oncore's requests translated first, a parameter of `set`
-  or `int` by its letter or name.
+  of mode 0 or 2 its paths send ("Every path to a setting"), the
+  Oncore's requests translated first, a parameter of `set` or `int` by
+  its letter or name.
 
 What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 `@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
@@ -1492,70 +2170,70 @@ every command field, with who acts on it.
 
 | Command | Field | Set by | Who acts | How |
 |---|---|---|---|---|
-| `@@Aa` | hours | all four | engine | honored: while the record tells no time |
-| `@@Aa` | minutes | all four | engine | honored: while the record tells no time |
-| `@@Aa` | seconds | all four | engine | honored: while the record tells no time |
-| `@@Ab` | sign | all four | engine | honored |
-| `@@Ab` | hours | all four | engine | honored |
-| `@@Ab` | minutes | all four | engine | honored |
-| `@@AB` | application type | all four | holder | `application` |
-| `@@Ac` | month | all four | engine | honored: while the record tells no time |
-| `@@Ac` | day | all four | engine | honored: while the record tells no time |
-| `@@Ac` | year | all four | engine | honored: while the record tells no time |
-| `@@AC` | HDOP threshold | all four | holder | `hdop_threshold` |
-| `@@Ad` | latitude | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@AD` | fix threshold | all four | holder | `correction_thresholds` |
-| `@@AD` | output threshold | all four | holder | `correction_thresholds` |
-| `@@Ae` | longitude | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Af` | height | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Af` | height type | all four | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Aa` | hours | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@Aa` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@Aa` | seconds | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@Ab` | sign | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Ab` | hours | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Ab` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@AB` | application type | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `application` |
+| `@@Ac` | month | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@Ac` | day | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@Ac` | year | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
+| `@@AC` | HDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `hdop_threshold` |
+| `@@Ad` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@AD` | fix threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `correction_thresholds` |
+| `@@AD` | output threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `correction_thresholds` |
+| `@@Ae` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
 | `@@Ag` | mask angle | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `mask_angle` |
-| `@@Ah` | select option | all four | engine, holder | honored: 2, highest in sky; `satellite_select` |
-| `@@Ai` | channel | all four | holder | `manual_satellites` |
-| `@@Ai` | satellite | all four | holder | `manual_satellites` |
-| `@@Aj` | xDOP type | all four | engine | honored; given: dop_kind |
-| `@@Ak` | xDOP hysteresis | all four | holder | `xdop_hysteresis` |
-| `@@Al` | xDOP threshold | all four | engine | honored |
+| `@@Ah` | select option | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: 2, highest in sky; `satellite_select` |
+| `@@Ai` | channel | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `manual_satellites` |
+| `@@Ai` | satellite | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `manual_satellites` |
+| `@@Aj` | xDOP type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored; given: dop_kind |
+| `@@Ak` | xDOP hysteresis | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `xdop_hysteresis` |
+| `@@Al` | xDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
 | `@@Am` | constant | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
 | `@@Am` | ignore list | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored; given: ignore_list |
-| `@@An` | almanac update | all four | holder | `almanac_update` |
-| `@@Ao` | datum | all four | engine | honored |
-| `@@Aq` | ionospheric correction | all four | holder | `atmospheric_correction` |
-| `@@Ar` | fix algorithm | all four | holder | `fix_algorithm` |
-| `@@As` | latitude | all four | engine, holder | honored; `held_position` |
-| `@@As` | longitude | all four | engine, holder | honored; `held_position` |
-| `@@As` | height | all four | engine, holder | honored; `held_position` |
-| `@@As` | height type | all four | engine, holder | honored; `held_position` |
-| `@@At` | position hold | all four | engine, holder | honored; `position_hold` |
+| `@@An` | almanac update | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `almanac_update` |
+| `@@Ao` | datum | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Aq` | ionospheric correction | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `atmospheric_correction` |
+| `@@Ar` | fix algorithm | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `fix_algorithm` |
+| `@@As` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
+| `@@As` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
+| `@@As` | height | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
+| `@@As` | height type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
+| `@@At` | position hold | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `position_hold` |
 | `@@Au` | height | none | holder | `altitude_hold_height` |
 | `@@Au` | height type | none | holder | `altitude_hold_height` |
-| `@@Av` | altitude hold | all four | holder | `altitude_hold` |
-| `@@Aw` | time mode | all four | engine, holder | honored; `time_base` |
-| `@@Ax` | epoch offset | all four | holder | `epoch_offset` |
-| `@@Ay` | pulse offset | all four | holder | `pulse_offset` |
+| `@@Av` | altitude hold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `altitude_hold` |
+| `@@Aw` | time mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `time_base` |
+| `@@Ax` | epoch offset | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `epoch_offset` |
+| `@@Ay` | pulse offset | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `pulse_offset` |
 | `@@Az` | cable delay | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `cable_delay` |
-| `@@Ba` | rate | all four | engine | honored |
-| `@@Bb` | mode | all four | engine | honored |
-| `@@Bc` | mode | all four | engine | honored: 1 sends it again at each change |
+| `@@Ba` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Bb` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Bc` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: 1 sends it again at each change |
 | `@@Bd` | mode | none | engine | honored: 1 sends it again at each change |
 | `@@Bh` | rate | none | engine | honored |
 | `@@Bj` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: polled only, nothing to do |
-| `@@Bk` | rate | all four | engine | honored |
-| `@@Bn` | rate | all four | engine | honored |
-| `@@Bn` | algorithm | all four | engine, holder | honored; `raim_algorithm` |
-| `@@Bn` | alarm limit | all four | engine, holder | honored; `raim_alarm_limit` |
-| `@@Bn` | pulse mode | all four | engine, holder | honored; `pulse_mode` |
-| `@@Bn` | not used | all four | engine | honored: not used, nothing to do |
+| `@@Bk` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Bn` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Bn` | algorithm | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `raim_algorithm` |
+| `@@Bn` | alarm limit | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `raim_alarm_limit` |
+| `@@Bn` | pulse mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `pulse_mode` |
+| `@@Bn` | not used | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: not used, nothing to do |
 | `@@Bo` | mode | none | engine | honored |
-| `@@Cg` | mode | all four | engine | honored |
+| `@@Cg` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
 | `@@Ci` | format | z3805a-3543b, z3801a-3543 | holder | `output_format` |
-| `@@Ea` | rate | 58503a-3704, z3817a-3752 | engine | honored |
-| `@@Ek` | rate | 58503a-3704, z3817a-3752 | engine | honored |
-| `@@En` | rate | 58503a-3704, z3817a-3752 | engine | honored |
-| `@@En` | algorithm | 58503a-3704, z3817a-3752 | engine, holder | honored; `raim_algorithm` |
-| `@@En` | alarm limit | 58503a-3704, z3817a-3752 | engine, holder | honored; `raim_alarm_limit` |
-| `@@En` | pulse mode | 58503a-3704, z3817a-3752 | engine, holder | honored; `pulse_mode` |
-| `@@En` | not used | 58503a-3704, z3817a-3752 | engine | honored: not used, nothing to do |
+| `@@Ea` | rate | 58503a-3704 | engine | honored |
+| `@@Ek` | rate | 58503a-3704 | engine | honored |
+| `@@En` | rate | 58503a-3704 | engine | honored |
+| `@@En` | algorithm | 58503a-3704 | engine, holder | honored; `raim_algorithm` |
+| `@@En` | alarm limit | 58503a-3704 | engine, holder | honored; `raim_alarm_limit` |
+| `@@En` | pulse mode | 58503a-3704 | engine, holder | honored; `pulse_mode` |
+| `@@En` | not used | 58503a-3704 | engine | honored: not used, nothing to do |
 | `@@Ta` | values | none | gap | stored |
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |

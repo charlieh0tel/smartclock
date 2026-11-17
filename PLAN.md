@@ -1243,9 +1243,13 @@ stands in for one.
   it or set it, what they use it for and where the model gets it.  The
   readers are measured, each image's own decoders run in Unicorn on a
   message with the reads of its bytes noted, not read off the C, and
-  the setters come from the request scripts and lists and from the
-  requests the images' code posts, `gpsx_send`'s calls and the SCPI
-  descriptors' requests, found in the ROM.  The use, decided
+  the setters are every path by which an image sends its engine a
+  command (`tools/firmware/gps_paths.py`; `docs/firmware/gps.md`,
+  "Every path to a setting", decided 2026-11-16): its scripts and
+  lists, the requests its sequences and monitors post, its SCPI
+  descriptors' and its console words', each as the GPS task takes it,
+  read from the ROM of every image with a message table and both
+  Furuno images, in a table the check holds.  The use, decided
   2026-11-14, is what the work list goes by: a field counts as a gap
   only where an image uses it for control or reports it, not where it
   is only copied out, kept or shown by a console word.  Where a field
@@ -1296,32 +1300,34 @@ stands in for one.
   `Engine::settings()` with a change event; or a gap.  No command an
   image sets is a gap, and the check lists any that becomes one
   (`docs/firmware/gps.md`, "The fields").  A provider declares the
-  settings it acts on beside the fields it fills, and its test holds
-  that each of `IMAGE_SETS`, the settings the images set, is one of
-  those or has a row of `docs/firmware/gps-setting-exceptions.tsv`,
+  settings it acts on beside the fields it fills.  `IMAGE_SETS` is
+  the settings some image's path sets, those the engine is given as
+  well as those it holds, and `IMAGE_HOLDS` those of them a holder
+  acts on; a provider's test holds that each of `IMAGE_HOLDS` is one
+  it acts on or has a row of `docs/firmware/gps-setting-exceptions.tsv`,
   the owner's to grant, and that no row is for a setting it acts on
-  or one no image sets.  It may act on more than the images set:
-  only a row can be needless.
+  or one not of `IMAGE_HOLDS`.  It may act on more than the images
+  set: only a row can be needless.
   The scene acts on position hold and the position to hold, and both
   it and the u-blox crate on the mask angle and the satellites to
-  ignore, decided 2026-11-16: a record they make leaves out of its
-  fix, marking them not used, the satellites below the mask and those
-  ignored (`Settings::leave_out`), as a receiver set so would, the
-  u-blox crate on its own records without configuring its receiver.
-  Each has a row for the rest, Time RAIM's algorithm and alarm limit
-  among them: the scene gives one Time RAIM result and checks no time
-  solution, and the u-blox crate reports its receiver's own.  The
-  pulse settings, the cable delay, the pulse offset and the 1PPS
-  control mode (`PULSE_SETTINGS`), change only the 1 PPS (VP pp. 66,
-  68 and 102), and a record carries no pulse: whoever makes the pulse
-  acts on them, decided 2026-11-16.  A `Declaration` says whether its
-  provider makes the pulse (`makes_pulse`); one that does is held to
-  them, one that does not to none of them, with no row for them, a
-  row for one being needless.  Neither the scene nor the u-blox crate
-  makes one, so their rows for the pulse offset and the control mode
-  went.  Where the holder puts out a receiver's pulse, the receiver
-  makes it and the holder shifts it; where a pulse is timed from
-  records, what times it acts.
+  ignore, decided 2026-11-16 in place of rows for them: a record they
+  make leaves out of its fix, marking them not used, the satellites
+  below the mask and those ignored (`Settings::leave_out`), as a
+  receiver set so would, the u-blox crate on its own records without
+  configuring its receiver.  Each has a row for the rest, Time RAIM's
+  algorithm and alarm limit among them: the scene gives one Time RAIM
+  result and checks no time solution, and the u-blox crate reports
+  its receiver's own.  The pulse settings, the cable delay, the pulse
+  offset and the 1PPS control mode (`PULSE_SETTINGS`), change only the
+  1 PPS (VP pp. 66, 68 and 102), and a record carries no pulse:
+  whoever makes the pulse acts on them, decided 2026-11-16.  A
+  `Declaration` says whether its provider makes the pulse
+  (`makes_pulse`); one that does is held to them, one that does not to
+  none of them, with no row for them, a row for one being needless.
+  Neither the scene nor the u-blox crate makes one, so their rows for
+  the pulse offset and the control mode went.  Where the holder puts
+  out a receiver's pulse, the receiver makes it and the holder shifts
+  it; where a pulse is timed from records, what times it acts.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
   UT Plus's only selection, which has no `@@Ah` and "will attempt to
@@ -1389,8 +1395,9 @@ stands in for one.
   record's xDOP table has to know which kind to make.  So is the list
   of satellites `@@Am` says to ignore, which the model leaves off its
   channels and marks removed itself: whatever chooses the satellites
-  a record is made from may leave them out.  Neither is of
-  `IMAGE_SETS`, and no provider is held to either.  `@@Ci` 1 and 2
+  a record is made from may leave them out.  Both are of
+  `IMAGE_SETS`, the images setting them, and neither of
+  `IMAGE_HOLDS`: no provider is held to either.  `@@Ci` 1 and 2
   are held and told like the rest and change nothing in the model,
   which speaks neither NMEA nor Loran and goes on in binary; an
   earlier revision had it fall silent, which took a call of its

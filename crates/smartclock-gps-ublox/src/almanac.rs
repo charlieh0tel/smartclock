@@ -38,7 +38,8 @@ struct Reference {
     week: u8,
 }
 
-/// The pages of an almanac gathered so far, each the last broadcast.
+/// The pages of an almanac gathered so far, each the last broadcast,
+/// all since subframe 5, page 25 last gave another time or week.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Gathered {
     /// Each satellite's page, satellite 1 first; `None` for one not yet
@@ -77,10 +78,16 @@ impl Gathered {
                 }
             }
             Body::AlmanacHealth(page) => {
-                self.reference = Some(Reference {
+                let reference = Reference {
                     time_of_almanac: page.time_of_almanac.raw,
                     week: page.week,
-                });
+                };
+                // Another upload: a page's own time does not tell its
+                // week, so the pages before this one are not its.
+                if self.reference.is_some_and(|held| held != reference) {
+                    *self = Self::EMPTY;
+                }
+                self.reference = Some(reference);
                 for (kept, health) in self.health.iter_mut().zip(page.health) {
                     *kept = Some(health);
                 }

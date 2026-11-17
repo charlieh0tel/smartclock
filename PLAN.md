@@ -1481,7 +1481,10 @@ stands in for one.
   the engine reports none visible and a bad almanac.  It gathers them
   across epochs in fixed state, and a record has the almanac once
   subframe 5, page 25 has given its time and week, holding the
-  satellites whose page is of that time.  The crate decodes the rest
+  satellites whose page is of that time.  A page 25 of another time or
+  week drops the pages gathered before it, so one upload's pages are
+  never put with another's that has the same time: a page carries no
+  week of its own.  The crate decodes the rest
   of that data for a caller that wants it (below).
   - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
     receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`

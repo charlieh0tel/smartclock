@@ -164,7 +164,12 @@
 //!   are resolved to the week nearest the last epoch with a time, or
 //!   before one, the week the assembler was made to resolve near.  It
 //!   need not be complete: a satellite whose page has not come is not
-//!   held.  None without `RXM-SFRBX`, before page 25, with no page of
+//!   held.  A page 25 of another time or week than the last drops
+//!   every page before it, page 25s too: a page gives no week, and the
+//!   control segment uses the same time week after week, so a page of
+//!   that time from an earlier upload would pass for one of this.  A
+//!   page of the new upload that came before its page 25 is gathered
+//!   again at its next broadcast.  None without `RXM-SFRBX`, before page 25, with no page of
 //!   page 25's time, or with no week to resolve near.
 //! - **The self-test** passes: no message here tells of a part that
 //!   fails, and the receiver that sent the epoch runs.

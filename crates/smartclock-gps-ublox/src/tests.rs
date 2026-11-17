@@ -1855,6 +1855,42 @@ fn the_almanac_is_gathered_across_epochs() {
     );
 }
 
+/// Pages of one upload are not put with another's: a page 25 of
+/// another time or week drops the pages gathered before it, though a
+/// page's own time is the same in both, as a time the control segment
+/// uses week after week is.
+#[test]
+fn an_almanac_holds_one_uploads_pages() {
+    let bytes = stream(&[
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_page(5, 7, TIME_OF_ALMANAC, 0)),
+        ),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_health(TIME_OF_ALMANAC, ALMANAC_WEEK - 1, [0; 24])),
+        ),
+        (NAV_EOE, &eoe(NOON)),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_health(TIME_OF_ALMANAC, ALMANAC_WEEK, [0; 24])),
+        ),
+        (
+            RXM_SFRBX,
+            &subframe(&almanac_page(5, 9, TIME_OF_ALMANAC, 0)),
+        ),
+        (NAV_EOE, &eoe(NOON + 1000)),
+    ]);
+    let almanacs: Vec<_> = records(&mut Bench::near(GpsWeek::new(WEEK)), &bytes)
+        .iter()
+        .map(|record| record.almanac)
+        .collect();
+    assert_eq!(
+        almanacs,
+        [almanac(WEEK - 1, &[7], &[7]), almanac(WEEK, &[9], &[9])]
+    );
+}
+
 /// The almanac's eight bits of week are resolved to the week nearest
 /// the last epoch's, or before any epoch has a time, nearest the week
 /// an assembler was made to resolve near; with neither there is no

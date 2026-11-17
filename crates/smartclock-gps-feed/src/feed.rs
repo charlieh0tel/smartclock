@@ -641,7 +641,7 @@ mod tests {
     #[test]
     fn a_saved_engine_sends_each_second() {
         let mut options = Options::DEFAULT;
-        options.saved = Some(&CONFIGURATION_58503A);
+        options.saved = Some(CONFIGURATION_58503A);
         let mut feed = fixed(oncore(&VP_EIGHT, options));
         let mut instrument = instrument(BTreeMap::new());
         let clock = instrument.clock.clone();
@@ -1013,7 +1013,7 @@ mod tests {
 
     fn saved() -> Engine {
         let mut options = Options::DEFAULT;
-        options.saved = Some(&CONFIGURATION_58503A);
+        options.saved = Some(CONFIGURATION_58503A);
         oncore(&VP_EIGHT, options)
     }
 

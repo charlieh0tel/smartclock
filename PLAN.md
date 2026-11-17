@@ -1131,6 +1131,15 @@ stands in for one.
   (`docs/firmware/gps.md`, "Which engines each image accepts"), and
   needs an engine that comes up sending, and is given one configured as a
   58503A leaves its own.  More are added when a receiver needs one.
+  A caller makes its own (decided 2026-11-16) from
+  `SavedConfiguration::starting(model)`, which is how that model powers
+  up with nothing saved, so an engine made with it starts as one made
+  with none, changed by `const` `with_` methods, one a field, and
+  checked by `SavedConfiguration::check`, the check `Engine::new`
+  makes; `CONFIGURATION_58503A` is built so and checked at compile
+  time.  `Options::saved` holds the configuration by value, not as a
+  `'static` reference, so one made at run time, a status rate a user
+  chose, needs no constant.
   `@@Cf` puts the defaults back, not the saved configuration, as the
   manual has it set "all of the GPS receiver parameters to their
   default values" and a VP idle (VP pp. 116 and 118); a new model, a

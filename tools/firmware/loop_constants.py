@@ -246,7 +246,7 @@ def recovery_cell(quantity):
     ramp again."""
     if quantity is None:
         return UNTRACED
-    return 'over ' + ' or '.join(number(choice['value']) for choice in quantity['values']) + ' s'
+    return 'over ' + ' or '.join(number(choice['value']) for choice in quantity['values']) + ' s' + page_by(quantity)
 
 
 def page_table(data):

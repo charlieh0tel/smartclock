@@ -170,6 +170,15 @@ const fn setting(
 }
 
 impl Setting {
+    /// The setting with a UT Plus's default in place of a VP's.
+    const fn ut_plus(self, default: &'static [u8]) -> Self {
+        assert!(self.default.len() == default.len());
+        Self {
+            default_ut_plus: default,
+            ..self
+        }
+    }
+
     /// The value at power-up and after `@@Cf` on an Oncore of `model`.
     const fn default_of(&self, model: Model) -> &'static [u8] {
         match model {
@@ -183,7 +192,8 @@ impl Setting {
 /// ([`TA_DCXO`]).
 const SETTINGS: [Setting; 23] = [
     setting(AB_GMT_CORRECTION, &[QUERY; 3], &[0; 3], Takes::Anything),
-    setting(AG_MASK_ANGLE, &[QUERY], &[10], Takes::Bytes(89)),
+    // A UT Plus's starts at the horizon (UT p. 6.21).
+    setting(AG_MASK_ANGLE, &[QUERY], &[10], Takes::Bytes(89)).ut_plus(&[0]),
     setting(AH_SATELLITE_SELECT, &[QUERY], &[0], Takes::Bytes(2)),
     setting(
         AJ_XDOP_TYPE,

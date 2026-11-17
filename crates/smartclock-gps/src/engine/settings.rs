@@ -182,7 +182,8 @@ pub enum OutputFormat {
 #[non_exhaustive]
 pub struct Settings {
     /// The elevation a satellite must be above to be tracked (`@@Ag`,
-    /// pp. 27 and 28).
+    /// pp. 27 and 28): 10 at power-up on a VP, 0 on a UT Plus (UT
+    /// p. 6.21).
     pub mask_angle: Degrees<u8>,
     /// Whether the position is held (`@@At`, pp. 56 and 57).
     pub position_hold: bool,

@@ -1332,10 +1332,24 @@ specification; in short:
   to grant.  The
   vectors' scene acts on position hold and the position to hold: held,
   its record is at that position with a fix of time alone (VP pp. 56
-  and 73).  It is excused the rest, having no pulse, search, choice of
-  satellites or 2D fix for them to change, and for Time RAIM one
-  result, the same every second, with no time solution checked.  The
-  u-blox crate acts on none and is excused all: each would be a
+  and 73).  It and the u-blox crate act on the mask angle and the
+  satellites to ignore: their records mark not used the satellites
+  below the mask, at or above it being within it as the model takes
+  it, and those ignored (`Settings::leave_out`; VP pp. 28 and 42),
+  their fix and DOPs left as their source has them.  Whoever makes the
+  pulse acts on the pulse settings, the crate's `PULSE_SETTINGS`:
+  `@@Az`'s cable delay and `@@Ay`'s offset, which move the 1 PPS alone
+  (VP pp. 66 and 68), and `@@Bn`'s 1PPS control mode, which only turns
+  it on or off (VP p. 102).  A `Declaration` says whether its provider
+  makes the pulse; one that does is held to them, one that does not
+  to none of them, and a row excusing it one is needless.  Neither the
+  scene nor the u-blox crate makes a pulse, a record carrying none:
+  where the holder puts out a receiver's pulse, the receiver makes it
+  and the holder shifts it, and where a pulse is timed from records,
+  what times it acts.  The scene is excused the rest, having no
+  search, choice of satellites or 2D fix for them to change, and for
+  Time RAIM one result, the same every second, with no time solution
+  checked.  The u-blox crate is excused the rest: each would be a
   configuration sent to the receiver, and the crate only reads one,
   Time RAIM's setup with the rest, the receiver's own being what it
   reports.

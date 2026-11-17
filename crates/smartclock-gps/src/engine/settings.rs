@@ -35,6 +35,7 @@ use core::fmt::Formatter;
 use core::fmt::Result as FmtResult;
 
 use crate::record::DopKind;
+use crate::record::Record;
 use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::HundredNanoseconds;
@@ -476,6 +477,23 @@ impl SettingSet {
 }
 
 impl Settings {
+    /// Leaves out of `record`'s fix, marking them not used, the
+    /// satellites a receiver set so leaves out: those below the mask
+    /// angle, at or above it being within it as the engine takes it
+    /// (`@@Ag`, VP p. 28), and those on the ignore list (`@@Am`, VP
+    /// p. 42).  The record's fix and DOPs, which a provider has from its
+    /// source, are left as they are.
+    pub fn leave_out(&self, record: &mut Record) {
+        let mask = i8::try_from(self.mask_angle.0).unwrap_or(i8::MAX);
+        for satellite in record.satellites.iter_mut() {
+            if !super::reaches_mask(satellite.elevation.0, mask)
+                || self.ignore_list.contains(satellite.prn)
+            {
+                satellite.used = false;
+            }
+        }
+    }
+
     /// The settings that are not in `after` what they are here.
     pub(super) fn changed(&self, after: &Self) -> SettingSet {
         [

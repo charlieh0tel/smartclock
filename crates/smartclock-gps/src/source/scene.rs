@@ -7,8 +7,9 @@
 //! connected, a self-test that passes and Time RAIM's result for such a
 //! sky.  [`sky`] is the record less its time; a [`Fixed`] gives it each
 //! second, and a leap second comes from a scenario's row or a
-//! [`LeapSchedule`].  What a command sets that the scene acts on,
-//! position hold, [`hold`] does to a record.
+//! [`LeapSchedule`].  What commands set that the scene acts on,
+//! position hold and the satellites its fix leaves out, [`act`] does to
+//! a record.
 //!
 //! The position in Earth-centered coordinates is left to whoever holds
 //! the scene, being arithmetic this crate does not do
@@ -94,9 +95,11 @@ pub const PLACE: Position = position(
 
 /// What the scene fills of a record, with the position in
 /// Earth-centered coordinates its holder works out, and the settings
-/// it acts on: in position hold its receiver is where it was told it
-/// is.  The exceptions tables name it `scene`, for the vectors and the
-/// host feed alike.
+/// it acts on ([`act`]): in position hold its receiver is where it was
+/// told it is, and its fix leaves out the satellites below the mask and
+/// those ignored.  It makes no pulse, so whoever times one from its
+/// records acts on the pulse settings.  The exceptions tables name it
+/// `scene`, for the vectors and the host feed alike.
 pub const DECLARATION: Declaration = Declaration {
     name: "scene",
     fills: FieldSet::of(&[
@@ -130,7 +133,13 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::RaimSolution,
         RecordField::RaimAbility,
     ]),
-    acts: SettingSet::of(&[Setting::PositionHold, Setting::HeldPosition]),
+    acts: SettingSet::of(&[
+        Setting::MaskAngle,
+        Setting::PositionHold,
+        Setting::HeldPosition,
+        Setting::IgnoreList,
+    ]),
+    makes_pulse: false,
 };
 
 /// A place at `latitude` and `longitude`, `mean_sea_level` above mean
@@ -197,13 +206,16 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
 
 /// Acts on `settings`: in position hold the receiver takes the
 /// position it was given for its own and solves for time alone (VP
-/// pp. 56 and 73).  The holder works out the Earth-centered position
-/// again from the record's.
-pub const fn hold(record: &mut Record, settings: &Settings) {
+/// pp. 56 and 73), and its fix leaves out the satellites below the mask
+/// angle and those it is told to ignore ([`Settings::leave_out`]).  The
+/// holder works out the Earth-centered position again from the
+/// record's.
+pub fn act(record: &mut Record, settings: &Settings) {
     if settings.position_hold {
         record.fix = Fix::TimeOnly;
         record.position = Some(located(settings.held_position));
     }
+    settings.leave_out(record);
 }
 
 /// The antenna taken off: no satellite heard, and so Time RAIM's

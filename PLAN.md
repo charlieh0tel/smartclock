@@ -1094,6 +1094,14 @@ stands in for one.
   in step.  A power-up is a new model, six-channel again.  The cost is
   a caller of the flag that no longer builds, which is wanted: it has
   to say who.
+  At the turn the model also takes on what the carried Oncore powers
+  up with where no command has said otherwise (fixed 2026-11-16): the
+  defaults of the settings no command has set, a UT Plus's mask angle
+  of 0 among them, and for a UT Plus, which is always fixing (VP
+  p. 118) and takes no `@@Cg`, fixing.  Before, an idle six-channel
+  model that turned into a UT Plus stayed idle and had no command
+  that would make it fix but `@@Cf`.  A setting a command set before
+  the turn is kept.
 - **A model can power up configured** (`Options::saved`, a
   `SavedConfiguration` or none; decided 2026-11-15).  A VP keeps the
   rate of its position status in nonvolatile memory, and one sending

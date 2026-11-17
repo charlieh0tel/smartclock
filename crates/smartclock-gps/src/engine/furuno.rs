@@ -6,7 +6,9 @@
 //! The GT-74's own protocol specification was not found; the nearest at
 //! hand is Furuno's for the GT-8031 (GT,
 //! `third_party/furuno/Furuno_GT8031_Protocol_Specification_Rev1.pdf`,
-//! cited by printed page), and the image, the Z3815A 4010
+//! cited by printed page, and its hardware specification, HW,
+//! `third_party/furuno/Furuno_GT8031_Hardware_Specification_2005.04.28.pdf`,
+//! likewise), and the image, the Z3815A 4010
 //! (`third_party/firmware/rewritten/z3815a-4010/gps_nmea.c`, its tables
 //! read from `third_party/firmware/images/z3815a-4010.bin`), decides
 //! wherever the two part or the specification is silent.  Each such
@@ -52,11 +54,20 @@
 //!
 //! # Timing
 //!
-//! Whoever holds the engine calls [`Engine::second`] once a second with
-//! that second's record, and [`Engine::receive`] with the bytes the
-//! receiver sends; the engine counts the seconds it is given and sends a
-//! sentence when that count is a multiple of its interval.  Its clock is
-//! the record's time; with none, it runs on from its power-up time,
+//! A GT-8031 sends each second's sentences between two pulses, starting
+//! 500 ms, give or take 2 ms, after the first, and they are of the
+//! second the next pulse marks (HW p. 9, Fig. 2.2.2.4: "time = t serial
+//! data" between the pulses of t - 1 and t); `tps`'s 1 PPS flag says
+//! the pulse "will be output following this sentence" (GT p. 36).  How
+//! long the sentences take is the rest of the second less a gap that
+//! narrows as there are more of them, over 250 ms with `tps` alone (HW
+//! p. 9).  So whoever holds the engine calls [`Engine::second`] once a
+//! second, [`SENTENCES_AFTER_PULSE`] after a pulse
+//! ([`Engine::sentences_after_pulse`]), with the record of the second
+//! the next pulse marks, and [`Engine::receive`] with the bytes the
+//! receiver sends; the engine counts the seconds it is given and sends
+//! a sentence when that count is a multiple of its interval.  Its clock
+//! is the record's time; with none, it runs on from its power-up time,
 //! 2002-01-01 00:00:00 (GT p. 5), which `ZDA` sets.  Nothing it answers
 //! waits.
 //!
@@ -240,6 +251,7 @@ use crate::units::Centimeters;
 use crate::units::Degrees;
 use crate::units::HundredNanoseconds;
 use crate::units::MilliArcSeconds;
+use crate::units::Milliseconds;
 use crate::units::Nanoseconds;
 use crate::units::PRNS;
 use crate::units::Prn;
@@ -321,6 +333,11 @@ impl Identity {
         self.time_raim
     }
 }
+
+/// How long after a pulse a GT-8031 starts the sentences of the second
+/// the next pulse marks, 500 ms give or take 2 ms (HW p. 9, Fig.
+/// 2.2.2.4; [module](self), "Timing").
+pub const SENTENCES_AFTER_PULSE: Milliseconds<u16> = Milliseconds(500);
 
 /// A GT-74 with Time RAIM, its program number and version made up.
 pub const GT_74: Identity = Identity {
@@ -826,6 +843,13 @@ impl Engine {
         self.state.identity
     }
 
+    /// How long after a pulse to call [`Engine::second`], with the record
+    /// of the second the next pulse marks: [`SENTENCES_AFTER_PULSE`].
+    #[must_use]
+    pub const fn sentences_after_pulse(&self) -> Milliseconds<u16> {
+        SENTENCES_AFTER_PULSE
+    }
+
     /// What commands have set it to.  The settings none of its sentences
     /// sets stay at fixed values: the 1 PPS on UTC, which it reports
     /// once it knows it (GT p. 36), satellites chosen by their geometry,
@@ -846,8 +870,9 @@ impl Engine {
         self.state.pulse(record)
     }
 
-    /// A second starts, `record` being what is known in it: sends the
-    /// sentences due.
+    /// The sentences of a second are due, [`SENTENCES_AFTER_PULSE`]
+    /// after the pulse before it, `record` being what is known of the
+    /// second the next pulse marks: sends them.
     pub fn second<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {
         self.state.second(record, out);
     }

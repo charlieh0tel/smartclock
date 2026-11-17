@@ -2366,6 +2366,12 @@ exactly.  The 1.01.03 decodes one sentence more than the Z3815A, `acc`
 (GT p. 28), each satellite's accuracy as a hex digit or `X`, and asks
 for it with `int,acc`; the model gives each satellite's URA index, `X`
 where the record has none.
+Its holder calls it `SENTENCES_AFTER_PULSE`, 500 ms, after a pulse,
+with the record of the second the next pulse marks: a GT-8031 starts a
+second's sentences 500 ms after a pulse, give or take 2 ms, and they
+are of the second the next pulse marks
+(`third_party/furuno/Furuno_GT8031_Hardware_Specification_2005.04.28.pdf`
+p. 9, Fig. 2.2.2.4; `tps`'s 1 PPS flag, GT p. 36).
 Its recorded exchanges are `tests/vectors/furuno/`.
 `smartclock-gps-feed --engine gt-74` (or `gt-74-without-time-raim`,
 `gt-74-pulse-early`) runs it on a host in front of a Z3815A's engine

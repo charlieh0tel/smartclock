@@ -189,6 +189,9 @@ impl Feed {
             } else {
                 assembler::act(&mut record, &self.engine.settings());
             }
+            if self.engine.sentences_after_pulse().is_some() {
+                next_pulse(&mut record);
+            }
             self.record = record;
             self.engine.second(&self.record, now, out);
         } else {
@@ -300,6 +303,15 @@ impl Feed {
     }
 }
 
+/// A record as of the next pulse, for an engine that sends the second
+/// the next pulse marks after a pulse: its time a second on.  The rest
+/// is as of the second it was taken in, as a receiver's would be.
+fn next_pulse(record: &mut Record) {
+    if let Some(time) = record.time.as_mut() {
+        time.seconds += Seconds(1);
+    }
+}
+
 /// Where the feed counts its seconds from, on the host's clock, and
 /// how that clock stood against the monotonic one when last read.
 #[derive(Debug)]
@@ -357,12 +369,16 @@ impl Pace {
     }
 }
 
-/// How far into each second a provider of `kind` is taken.
-pub(crate) const fn phase(kind: Kind) -> Duration {
-    match kind {
+/// How far into each second a provider of `kind` is taken for
+/// `engine`: as long after the whole second, the pulse, as the engine
+/// sends a second's frames, where that is not when its record is taken
+/// ([`Engine::sentences_after_pulse`]); else as far as the provider's
+/// records need.
+pub(crate) fn phase(kind: Kind, engine: &Engine) -> Duration {
+    engine.sentences_after_pulse().unwrap_or(match kind {
         Kind::Live => LIVE_PHASE,
         Kind::Scene | Kind::Recording => Duration::ZERO,
-    }
+    })
 }
 
 /// Milliseconds from `origin` to `now`, none before it.
@@ -499,6 +515,7 @@ mod tests {
     use crate::provider::recording;
     use crate::provider::tests::EPOCHS;
     use crate::provider::tests::capture;
+    use jiff::Timestamp;
     use smartclock_gps::engine::Options;
     use smartclock_gps::engine::furuno::GT_74;
     use smartclock_gps::engine::identity::Identity;
@@ -767,12 +784,13 @@ mod tests {
                 behind,
             };
             let clock = delivering.instrument.clock.clone();
+            let first = first_second(&clock, phase(Kind::Live, &feed.engine));
             run(
                 &mut feed,
                 &mut delivering,
                 &clock,
                 &mut None::<WireLog<Vec<u8>>>,
-                first_second(&clock, phase(Kind::Live)),
+                first,
                 Some(SECONDS),
             );
             assert_eq!(feed.late, Seconds(i64::try_from(behind).unwrap()));
@@ -861,12 +879,16 @@ mod tests {
     }
 
     /// A GT-74 under the made-up sky sends what it sends at power-up
-    /// each second from the first, unasked; takes an interval for `GSA`
-    /// and sends it at that interval from then on; and answers `srq`
-    /// with `ssd` in the second it was asked.
+    /// each second from the first, unasked, half a second after the
+    /// whole second and of the next; takes an interval for `GSA` and
+    /// sends it at that interval from then on; and answers `srq` with
+    /// `ssd` in the second it was asked.
     #[test]
     fn a_furuno_engine_sends_at_its_intervals_and_answers() {
-        let mut feed = fixed(Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap());
+        let engine = Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap();
+        let phase = phase(Kind::Scene, &engine);
+        assert_eq!(phase, Duration::from_millis(500));
+        let mut feed = fixed(engine);
         let asked = START.as_secs() + 2;
         let mut instrument = instrument(BTreeMap::from([(
             asked,
@@ -879,13 +901,40 @@ mod tests {
             &mut instrument,
             &clock,
             &mut log,
-            first_second(&clock, Duration::ZERO),
+            first_second(&clock, phase),
             Some(8),
         );
         assert_eq!(end, End::Seconds);
 
         let first = START.as_secs() + 1;
         let every: Vec<u64> = (first..first + 8).collect();
+        // Each GGA half a second into a second, of the second after.
+        let text = String::from_utf8(log.as_ref().unwrap().out.clone()).unwrap();
+        let ggas: Vec<&str> = text
+            .lines()
+            .filter(|line| line.contains(" from 244750474741"))
+            .collect();
+        assert_eq!(ggas.len(), every.len());
+        for (line, second) in ggas.iter().zip(&every) {
+            let at = Timestamp::from_second(i64::try_from(*second).unwrap()).unwrap();
+            assert!(
+                line.starts_with(&format!("{at:.0}").replace('Z', ".500Z")),
+                "{line}"
+            );
+        }
+        let utc = |second: u64| {
+            let at = Timestamp::from_second(i64::try_from(second).unwrap()).unwrap();
+            at.strftime("%H%M%S").to_string()
+        };
+        let labels: Vec<String> = instrument
+            .received
+            .values()
+            .flatten()
+            .filter(|frame| sentence(frame, "GPGGA"))
+            .map(|frame| String::from_utf8_lossy(&frame[7..13]).into_owned())
+            .collect();
+        let expected: Vec<String> = every.iter().map(|second| utc(second + 1)).collect();
+        assert_eq!(labels, expected);
         // GSV takes as many sentences as the sky's satellites need.
         for address in ["GPGGA", "GPGSV", "PFEC,GPtps"] {
             let seconds: Vec<u64> = seconds_of(&instrument, address)
@@ -923,7 +972,8 @@ mod tests {
     }
 
     /// A UBX recording drives a GT-74 to its end: a `GGA` a second, each
-    /// of the recording's UTC second.
+    /// of the second after the recording's, the one the next pulse
+    /// marks.
     #[test]
     fn a_recording_drives_a_furuno_engine() {
         let shared = Shared::new(LeapSchedule::new(
@@ -937,16 +987,18 @@ mod tests {
         );
         let mut instrument = instrument(BTreeMap::new());
         let clock = instrument.clock.clone();
+        let first = first_second(&clock, phase(Kind::Recording, &feed.engine));
         let end = run(
             &mut feed,
             &mut instrument,
             &clock,
             &mut None::<WireLog<Vec<u8>>>,
-            first_second(&clock, Duration::ZERO),
+            first,
             Some(10),
         );
         assert_eq!(end, End::Recording);
-        // Noon GPS time less the recording's 18 leap seconds.
+        // Noon GPS time less the recording's 18 leap seconds, a second
+        // on.
         let times: Vec<String> = instrument
             .received
             .values()
@@ -955,7 +1007,7 @@ mod tests {
             .map(|frame| String::from_utf8_lossy(&frame[7..13]).into_owned())
             .collect();
         assert_eq!(times.len(), usize::try_from(EPOCHS).unwrap());
-        assert_eq!(times, ["115942", "115943", "115944"]);
+        assert_eq!(times, ["115943", "115944", "115945"]);
     }
 
     /// An instrument whose host's clock is stepped by `step`, or time
@@ -1059,7 +1111,8 @@ mod tests {
     }
 
     /// The made-up sky's time is the second each of its frames goes out
-    /// in.
+    /// in, and a GT-74 gives the second after it, the one the next pulse
+    /// marks.
     #[test]
     fn the_sky_reads_the_second_it_goes_out_in() {
         let interrupted = interrupted(
@@ -1069,7 +1122,7 @@ mod tests {
             4,
         );
         let offsets = sky_less_host(&interrupted.instrument);
-        assert_eq!(offsets, [0; 4]);
+        assert_eq!(offsets, [1; 4]);
     }
 
     /// A loop held up five seconds, the clock unstepped, as by a link

@@ -241,7 +241,9 @@ address, as in `gpsd:gpshost/dev/ttyACM0` or
 output of every device it has, so it should have one receiver only.
 
 `--eight-on-ea`, `--saved` and `--deaf` are an Oncore's alone, and
-refused with a GT-74.  `--fake-start RFC3339` relabels any provider's
+refused with a GT-74.  A GT-74's sentences go out half a second into
+each second and give the next second, the one its pulse marks, as a
+GT-8031's do.  `--fake-start RFC3339` relabels any provider's
 time: its first second reads as that UTC second under the provider's
 own GPS less UTC, which a recording or gpsd gives in its first record
 that has one (until then it is taken to be 18, the made-up sky's), and

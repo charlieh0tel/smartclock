@@ -1218,7 +1218,12 @@ stands in for one.
   the nearest at hand, and the Z3815A 4010's tables, as decided
   earlier.  It is a module of `engine`, not a crate or a module beside
   it: it shares `Output`, the `Settings` and the `Events`, and the
-  Oncore model's public API is as it was.  Its sentences are those the
+  Oncore model's public API is as it was.  Its holder calls it
+  `SENTENCES_AFTER_PULSE`, 500 ms, after a pulse with the record of the
+  second the next pulse marks (added 2026-11-17): a GT-8031 sends a
+  second's sentences between two pulses, starting 500 ms after the
+  first, and `tps` announces the pulse that follows (its hardware
+  specification's Fig. 2.2.2.4; GT p. 36).  Its sentences are those the
   images send and decode (`nmea::SENTENCES`), the Z3805A 1.01.03's
   `acc` among them (added 2026-11-17): it sends `GGA`, `GSA`, `GSV`,
   `RMC`, `anc`, `acc`, `tst`, `tps` and `rrm` at the intervals `int`
@@ -1698,7 +1703,11 @@ stands in for one.
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for
-  gpsd, whose epoch arrives after the second it is of.  That half
+  gpsd, whose epoch arrives after the second it is of, and for a GT-74
+  whatever the provider: a GT-8031 starts a second's sentences 500 ms
+  after a pulse, and they are of the second the next pulse marks
+  (`engine::furuno::SENTENCES_AFTER_PULSE`, added 2026-11-17), so the
+  feed gives a GT-74 the record it takes with its time a second on.  That half
   second is checked, not assumed: each record from gpsd is held, by its
   own time and offset, to the host second it is taken in, and one
   behind it, an epoch closed later than half a second in (a slow line,

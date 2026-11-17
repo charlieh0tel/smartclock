@@ -819,6 +819,16 @@ impl Engine {
         self.state.settings()
     }
 
+    /// Whether its 1 PPS goes out with `record`: the availability flag
+    /// its `tps` reports (GT p. 36), by the 1 PPS control mode as GT
+    /// p. 47 has it ("Assumptions"), for whoever makes the pulse to
+    /// gate it by, as [`Engine::pulsing`](crate::engine::Engine::pulsing)
+    /// is for an Oncore's.
+    #[must_use]
+    pub fn pulsing(&self, record: &Record) -> bool {
+        self.state.pulse(record)
+    }
+
     /// A second starts, `record` being what is known in it: sends the
     /// sentences due.
     pub fn second<O: Output + ?Sized>(&mut self, record: &Record, out: &mut O) {

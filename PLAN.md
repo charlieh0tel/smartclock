@@ -1330,7 +1330,11 @@ stands in for one.
   its receiver's own.  The pulse settings, the cable delay, the pulse
   offset and the 1PPS control mode (`PULSE_SETTINGS`), change only the
   1 PPS (VP pp. 66, 68 and 102), and a record carries no pulse:
-  whoever makes the pulse acts on them, decided 2026-11-16.  A
+  whoever makes the pulse acts on them, decided 2026-11-16, and gates
+  it by the model's rule: `Engine::pulsing` (and the Furuno model's)
+  says whether the control mode has the pulse on, as the Time RAIM
+  message or `tps` reports it, and `Engine::tracking` whether the
+  Oncore tracks a satellite, so a pulse maker does not copy the rule.  A
   `Declaration` says whether its provider makes the pulse
   (`makes_pulse`); one that does is held to them, one that does not to
   none of them, with no row for them, a row for one being needless.

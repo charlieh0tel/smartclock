@@ -1564,7 +1564,14 @@ stands in for one.
   with `?WATCH` and `"raw":2`, a request to gpsd alone; nothing is sent
   to the receiver), a UBX recording, read whole and played an epoch a
   second, and the vectors' scene, fixed or with a leap second, inside
-  the wrappers that relabel time and announce a leap second.  It is
+  the wrappers that relabel time and announce a leap second.
+  gpsd's output is of the one device a `"device"` names, given after
+  the address (`gpsd:HOST[:PORT]/dev/ttyACM0`), or else of every
+  device gpsd has, merged into one assembler, which is then to be one
+  receiver: two would have their messages of the same time of week
+  made into one record.  gpsd is connected to as the instrument is,
+  each address tried for 5 s and probed when idle, and connected to
+  again when it sends nothing for 10 s.  It is
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for

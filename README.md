@@ -235,6 +235,11 @@ is not carried.
         --connect bridge:2001 --log wire.log
     smartclock-gps-feed gpsd:gpshost --engine gt-74 --connect bridge:2002
 
+gpsd's provider reads one device of gpsd's when its path follows the
+address, as in `gpsd:gpshost/dev/ttyACM0` or
+`gpsd:gpshost:2947/dev/ttyACM0`; without one, gpsd merges the raw
+output of every device it has, so it should have one receiver only.
+
 `--eight-on-ea`, `--saved` and `--deaf` are an Oncore's alone, and
 refused with a GT-74.  `--fake-start RFC3339` relabels any provider's
 time;

@@ -10,16 +10,19 @@
 //! (`third_party/firmware/rewritten/z3815a-4010/gps_nmea.c`, its tables
 //! read from `third_party/firmware/images/z3815a-4010.bin`), decides
 //! wherever the two part or the specification is silent.  Each such
-//! decision is listed below, under "Assumptions".
+//! decision is listed below, under "Assumptions".  The Z3805A 1.01.03
+//! speaks the same protocol, and one sentence more, `acc`
+//! (`third_party/firmware/rewritten/z3805a-1.01.03/gps_nmea.c`).
 //!
 //! # What it speaks
 //!
-//! The sentences are those the image sends and decodes
+//! The sentences are those the images send and decode
 //! ([`SENTENCES`](crate::nmea::SENTENCES)), and no other:
 //!
-//! - It sends `GGA`, `GSA`, `GSV`, `RMC`, `anc`, `tst`, `tps` and `rrm`
-//!   at the intervals `int` sets (GT p. 13), in the order of GT p. 4's
-//!   priorities, and once at an `int` of interval 0, straight after it;
+//! - It sends `GGA`, `GSA`, `GSV`, `RMC`, `anc`, `acc`, `tst`, `tps` and
+//!   `rrm` at the intervals `int` sets (GT p. 13), in the order of GT
+//!   p. 4's priorities, and once at an `int` of interval 0, straight
+//!   after it;
 //!   `ssd` in answer to `srq` (GT pp. 12 and 32) and `rsd` to `rrq` (GT
 //!   pp. 15 and 40).
 //! - It takes `set` (GT p. 11), `srq`, `int`, `rrs`, `rrq`, `clr` (GT
@@ -144,6 +147,17 @@
 //!   minutes take its hours' sign, that of `-00` too: GT p. 8 shows the
 //!   hours as "-13 ... +00 ... +13", and `-00,30` is taken to be a zone
 //!   of -30 minutes.
+//! - **`acc` gives the URA the record has**, a hex digit for each
+//!   satellite 1 to 32 that has one, the URA index it sends (VP p. 98's
+//!   0 to 15), and GT p. 28's `X`, "SV Accuracy not available", for
+//!   the rest.  GT p. 28 does not say which accuracy the column is; a
+//!   hex digit, 0 to F, is the navigation message's URA index, and the
+//!   1.01.03 marks a satellite whose digit is above 6 in its channel's
+//!   status bit 3 (`nmea_decode_satellite_bits`, `nmea_acc_commit`), an
+//!   Oncore's "satellite reported inaccurate" (VP p. 73).  Like the
+//!   other sentences but `RMC` it is sent with no checksum: the
+//!   1.01.03 takes it only at the 46 bytes that gives (its table at
+//!   `0x54dee`), where GT p. 13 counts 49 with one.
 //! - **`anc`'s date is its almanac's reference time**, in local time
 //!   (GT p. 27: "Almanac Date/Time (Local Date/Time)"), the zone `ZDA`
 //!   gave taken off UTC (GT p. 8); GT p. 27 says the almanac is
@@ -351,13 +365,14 @@ enum Periodic {
     Vtg,
     Rmc,
     Anc,
+    Acc,
     Tst,
     Tps,
     Rrm,
 }
 
 /// The sentences `int` sets, in their priority.
-const PERIODIC: [Periodic; 10] = [
+const PERIODIC: [Periodic; 11] = [
     Periodic::Gga,
     Periodic::Zda,
     Periodic::Gsa,
@@ -365,6 +380,7 @@ const PERIODIC: [Periodic; 10] = [
     Periodic::Vtg,
     Periodic::Rmc,
     Periodic::Anc,
+    Periodic::Acc,
     Periodic::Tst,
     Periodic::Tps,
     Periodic::Rrm,
@@ -381,6 +397,7 @@ impl Periodic {
             Self::Vtg => b"VTG",
             Self::Rmc => b"RMC",
             Self::Anc => b"anc",
+            Self::Acc => b"acc",
             Self::Tst => b"tst",
             Self::Tps => b"tps",
             Self::Rrm => b"rrm",
@@ -393,7 +410,7 @@ impl Periodic {
     const fn power_up(self) -> u8 {
         match self {
             Self::Gga | Self::Zda | Self::Gsv | Self::Vtg | Self::Tps => 1,
-            Self::Gsa | Self::Rmc | Self::Anc | Self::Tst | Self::Rrm => 0,
+            Self::Gsa | Self::Rmc | Self::Anc | Self::Acc | Self::Tst | Self::Rrm => 0,
         }
     }
 
@@ -1259,6 +1276,7 @@ impl State {
             Periodic::Gsv => self.gsv(record, out),
             Periodic::Rmc => self.rmc(record, out),
             Periodic::Anc => self.anc(record, out),
+            Periodic::Acc => Self::acc(record, out),
             Periodic::Tst => self.tst(record, out),
             Periodic::Tps => self.tps(record, out),
             Periodic::Rrm if self.identity.time_raim => self.rrm(record, out),
@@ -1574,6 +1592,24 @@ impl State {
                 _ => NOT_HELD,
             };
             body.put(format_args!("{health}"));
+        }
+        body.send(Checksum::Omitted, out);
+    }
+
+    /// `acc` (GT p. 28): each satellite's URA index, or `X`
+    /// ("Assumptions").
+    fn acc<O: Output + ?Sized>(record: &Record, out: &mut O) {
+        const NOT_AVAILABLE: char = 'X';
+        let mut body = Body::new("PFEC,GPacc");
+        body.put(format_args!(","));
+        for id in 1..=PRNS {
+            let ura = Prn::new(id)
+                .and_then(|prn| record.satellites.get(prn))
+                .and_then(|satellite| satellite.ura);
+            match ura {
+                Some(ura) => body.put(format_args!("{:X}", ura.get())),
+                None => body.put(format_args!("{NOT_AVAILABLE}")),
+            }
         }
         body.send(Checksum::Omitted, out);
     }

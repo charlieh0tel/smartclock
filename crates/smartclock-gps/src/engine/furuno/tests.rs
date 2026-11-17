@@ -27,6 +27,8 @@ use crate::record::RaimAbility;
 use crate::record::RaimSolution;
 use crate::record::Record;
 use crate::record::Timing;
+use crate::record::URA_MAX;
+use crate::record::Ura;
 use crate::record::Velocity;
 use crate::source::scene;
 use crate::time::DateTime;
@@ -44,14 +46,20 @@ use crate::units::Seconds;
 use crate::units::TenthDegrees;
 use crate::units::TenthDegreesEast;
 
-/// The Z3815A's image, from the crate's directory.
-const IMAGE: &str = "../../third_party/firmware/images/z3815a-4010.bin";
-/// Its table of the sentences it decodes, `nmea_sentences`, and its
-/// entry, `nmea_sentence_entry`: a pointer to the name, the length and
-/// the count of field ends, and a pointer to the fields' entries, each
+/// The images that speak to a Furuno, from the crate's directory, each
+/// with its table of the sentences it decodes, `nmea_sentences`: the
+/// Z3815A 4010 and the Z3805A 1.01.03.  An entry of the table,
+/// `nmea_sentence_entry`, is a pointer to the name, the length and the
+/// count of field ends, and a pointer to the fields' entries, each
 /// `nmea_field_entry`: the field's index and length, and two pointers
-/// (`third_party/firmware/rewritten/z3815a-4010/types/smartclock.h`).
-const DECODED: usize = 0x5e32a;
+/// (`third_party/firmware/rewritten/IMAGE/types/smartclock.h`).
+const IMAGES: [(&str, usize); 2] = [
+    ("../../third_party/firmware/images/z3815a-4010.bin", 0x5e32a),
+    (
+        "../../third_party/firmware/images/z3805a-1.01.03.bin",
+        0x54dee,
+    ),
+];
 const ENTRY: usize = 10;
 const FIELD_ENTRY: usize = 10;
 /// `GSV`'s most field ends, and their multiple (`nmea_sentence_fields_allowed`).
@@ -70,16 +78,16 @@ struct Taken {
     lengths: Vec<(usize, i8)>,
 }
 
-/// The image's table, by name.
-fn table() -> BTreeMap<String, Taken> {
-    let image = fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(IMAGE)).expect("the image");
+/// An image's table, by name, from its file and the table's offset.
+fn table((path, decoded): (&str, usize)) -> BTreeMap<String, Taken> {
+    let image = fs::read(Path::new(env!("CARGO_MANIFEST_DIR")).join(path)).expect("the image");
     let pointer = |at: usize| {
         let bytes = image[at..at + 4].try_into().expect("four bytes");
         usize::try_from(u32::from_be_bytes(bytes)).expect("an offset")
     };
     let byte = |at: usize| i8::from_be_bytes([image[at]]);
     let mut table = BTreeMap::new();
-    let mut at = DECODED;
+    let mut at = decoded;
     while pointer(at) != 0 {
         let name = image[pointer(at)..]
             .split(|&byte| byte == 0)
@@ -212,20 +220,20 @@ fn record(time: GpsSeconds) -> Record {
 fn everything(engine: &mut Engine, record: &Record) -> Sent {
     let mut sent = Sent::default();
     engine.receive(
-        b"$PFEC,GPint,GGA00,GSA00,GSV00,RMC00,anc00,tst00,tps00,rrm00\r\n$PFEC,GPsrq\r\n$PFEC,GPrrq\r\n",
+        b"$PFEC,GPint,GGA00,GSA00,GSV00,RMC00,anc00,acc00,tst00,tps00,rrm00\r\n$PFEC,GPsrq\r\n$PFEC,GPrrq\r\n",
         record,
         &mut sent,
     );
     sent
 }
 
-/// Every sentence the engine sends is one the image takes, by its own
-/// table: before the record knows anything, fixing, in fixed observation
-/// point mode with Time RAIM, with the antenna off and over a leap
-/// second, each of `set`'s parameters at its longest.
+/// Every sentence the engine sends is one each image whose table has
+/// it takes, by that table: before the record knows anything, fixing,
+/// with each URA, in fixed observation point mode with Time RAIM, with
+/// the antenna off and over a leap second, each of `set`'s parameters
+/// at its longest.
 #[test]
-fn the_image_takes_every_sentence() {
-    let table = table();
+fn the_images_take_every_sentence() {
     let mut engine = Engine::new(&GT_74);
     let mut sent = everything(&mut engine, &Record::EMPTY);
     let time = at(2027, 12, 31, 23, 59, 59);
@@ -239,6 +247,9 @@ fn the_image_takes_every_sentence() {
         heading: TenthDegrees(3599),
     });
     known.derived.magnetic_variation = Some(TenthDegreesEast(-1800));
+    for (index, satellite) in known.satellites.iter_mut().enumerate() {
+        satellite.ura = Ura::new(u8::try_from(index).expect("a few satellites") % (URA_MAX + 1));
+    }
     engine.second(&known, &mut sent);
     sent.0.extend(everything(&mut engine, &known).0);
     engine.receive(
@@ -254,27 +265,79 @@ fn the_image_takes_every_sentence() {
         .with(Fault::Eeprom)
         .with(Fault::RealTimeClock);
     sent.0.extend(everything(&mut engine, &known).0);
-    for sentence in &sent.0 {
-        assert_eq!(
-            refused(&table, sentence),
-            None,
-            "{}",
-            sentence.escape_ascii()
-        );
-    }
     let names: Vec<String> = sent
         .text()
         .iter()
-        .filter_map(|sentence| {
+        .map(|sentence| {
             let address = sentence[1..]
                 .split(',')
-                .find(|field| field.starts_with("GP"))?;
-            Some(address[2..].to_string())
+                .find(|field| field.starts_with("GP"))
+                .expect("an address");
+            address[2..].to_string()
         })
         .collect();
-    for name in table.keys() {
-        assert!(names.contains(name), "{name} never sent");
+    for image in IMAGES {
+        let table = table(image);
+        for (sentence, name) in sent.0.iter().zip(&names) {
+            if table.contains_key(name) {
+                assert_eq!(
+                    refused(&table, sentence),
+                    None,
+                    "{}: {}",
+                    image.0,
+                    sentence.escape_ascii()
+                );
+            }
+        }
+        for name in table.keys() {
+            assert!(names.contains(name), "{name} never sent");
+        }
     }
+}
+
+/// `acc` gives each satellite's URA index as a hex digit, `X` where the
+/// record has none (GT p. 28), and is sent only when `int` asks for it.
+#[test]
+fn acc_gives_each_satellites_ura() {
+    let mut engine = Engine::new(&GT_74);
+    let mut known = record(at(2026, 11, 17, 12, 0, 0));
+    known
+        .satellites
+        .get_mut(Prn::new(3).expect("a PRN"))
+        .expect("satellite 3")
+        .ura = Ura::new(2);
+    known
+        .satellites
+        .get_mut(Prn::new(4).expect("a PRN"))
+        .expect("satellite 4")
+        .ura = Ura::new(URA_MAX);
+    let mut sent = Sent::default();
+    engine.second(&known, &mut sent);
+    assert!(
+        !sent
+            .text()
+            .iter()
+            .any(|sentence| sentence.starts_with("$PFEC,GPacc"))
+    );
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPint,acc00\r\n", &known, &mut sent);
+    let expected = format!("$PFEC,GPacc,XX2F{}", "X".repeat(28));
+    assert_eq!(sent.only("$PFEC,GPacc"), expected);
+    let mut sent = Sent::default();
+    engine.second(&known, &mut sent);
+    assert!(
+        !sent
+            .text()
+            .iter()
+            .any(|sentence| sentence.starts_with("$PFEC,GPacc"))
+    );
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPint,acc01\r\n", &known, &mut sent);
+    engine.second(&Record::EMPTY, &mut sent);
+    assert_eq!(
+        sent.only("$PFEC,GPacc"),
+        format!("$PFEC,GPacc,{}", "X".repeat(32))
+    );
 }
 
 /// The field table's rows of the Z3815A's sentences, its manual `GT`,
@@ -633,7 +696,7 @@ fn the_pulse_waits_for_a_first_fix_of_four_satellites() {
 /// sentence.
 #[test]
 fn gga_carries_the_geoid_separation_in_six_characters() {
-    let table = table();
+    let tables = IMAGES.map(table);
     for (separation, field) in [
         (160_000, "1600.0"),
         (2_000_000, "9999.9"),
@@ -650,7 +713,9 @@ fn gga_carries_the_geoid_separation_in_six_characters() {
         engine.receive(b"$PFEC,GPint,GGA00\r\n", &now, &mut sent);
         let gga = sent.only("$GPGGA");
         assert_eq!(gga.split(',').nth(11), Some(field), "{gga}");
-        assert_eq!(refused(&table, &sent.0[0]), None);
+        for table in &tables {
+            assert_eq!(refused(table, &sent.0[0]), None);
+        }
     }
 }
 

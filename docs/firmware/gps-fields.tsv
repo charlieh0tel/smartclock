@@ -294,68 +294,69 @@ Ta	response	values	4	5	1	-	-	-	-	-	-	-	setting.Ta	-	-	-	in no manual here
 set	command	A almanac validity	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	1 or 2
 set	command	D PDOP threshold	2	1	1	-	-	GT	11	-	-	-	honored:a 2D fix above it, none 3D at 0	-	-	engine	-
 set	command	G geodetic ID	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
-set	command	H altitude	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	above mean sea level
-set	command	M elevation mask	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:satellites below it left out of the fix;held:mask_angle	-	-	engine;holder	-
+set	command	H altitude	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	above mean sea level
+set	command	M elevation mask	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:satellites below it left out of the fix;held:mask_angle	-	-	engine;holder	-
 set	command	S signal mask	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
 set	command	T 1PPS correction	2	1	1	-	-	GT	11	-	-	-	held:cable_delay;held:pulse_offset	-	-	holder	t in tenths of a microsecond
-set	command	U deleted satellites	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:left out of the fix;given:ignore_list	-	-	engine	-
+set	command	U deleted satellites	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:left out of the fix;given:ignore_list	-	-	engine	-
 set	command	W smoothing index	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	-
 set	command	X dynamic index	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	-
-set	command	Z observation point mode	2	1	1	-	-	GT	12	z3815a-4010	-	-	honored:tps mode and the position reported;held:position_hold	-	-	engine;holder	-
+set	command	Z observation point mode	2	1	1	-	-	GT	12	z3815a-4010,z3805a-1.01.03	-	-	honored:tps mode and the position reported;held:position_hold	-	-	engine;holder	-
 set	command	Z3 averaging time	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	the hours after Z3
-set	command	t 1PPS correction	2	1	1	-	-	GT	12	z3815a-4010	-	-	held:cable_delay;held:pulse_offset	-	-	holder	negative earlier
-int	command	GGA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	ZDA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored:kept, ZDA not sent	-	-	engine	the image does not decode ZDA
-int	command	GSA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	GSV interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	VTG interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored:kept, VTG not sent	-	-	engine	the image does not decode VTG
+set	command	t 1PPS correction	2	1	1	-	-	GT	12	z3815a-4010,z3805a-1.01.03	-	-	held:cable_delay;held:pulse_offset	-	-	holder	negative earlier
+int	command	GGA interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	ZDA interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored:kept, ZDA not sent	-	-	engine	the image does not decode ZDA
+int	command	GSA interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	GSV interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	VTG interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored:kept, VTG not sent	-	-	engine	the image does not decode VTG
 int	command	RMC interval	2	1	1	-	-	GT	13	-	-	-	honored	-	-	engine	-
-int	command	anc interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	tst interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	tps interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-int	command	rrm interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
-rrs	command	TRAIM switch	2	1	1	-	-	GT	15	z3815a-4010	-	-	honored;held:raim_algorithm	-	-	engine;holder	-
-rrs	command	alarm limit	3	1	1	-	-	GT	15	z3815a-4010	-	-	honored;held:raim_alarm_limit	-	-	engine;holder	10 ns
-rrs	command	1PPS control mode	4	1	1	-	-	GT	15	z3815a-4010	-	-	honored;held:pulse_mode	-	-	engine;holder	-
-clr	command	clear mode	2	1	1	-	-	GT	10	z3815a-4010	-	-	honored:a restart	-	-	engine	-
-ZDA	command	time	1	1	1	-	-	GT	8	z3815a-4010	-	-	honored:while the record tells no time	-	-	engine	-
-ZDA	command	day	2	1	1	-	-	GT	8	z3815a-4010	-	-	honored:while the record tells no time	-	-	engine	-
-ZDA	command	month	3	1	1	-	-	GT	8	z3815a-4010	-	-	honored:while the record tells no time	-	-	engine	-
-ZDA	command	year	4	1	1	-	-	GT	8	z3815a-4010	-	-	honored:while the record tells no time	-	-	engine	-
-ZDA	command	zone hours	5	1	1	-	-	GT	8	z3815a-4010	-	-	honored:anc in local time	-	-	engine	-
-ZDA	command	zone minutes	6	1	1	-	-	GT	8	z3815a-4010	-	-	honored:anc in local time	-	-	engine	-
-GLL	command	latitude	1	1	1	-	-	GT	6	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	north or south	2	1	1	-	-	GT	6	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	longitude	3	1	1	-	-	GT	6	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	east or west	4	1	1	-	-	GT	6	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	null	5	1	3	1	-	GT	6	z3815a-4010	-	-	honored:null, any entry ignored	-	-	engine	-
-GGA	response	UTC	1	1	1	-	-	GT	19	-	z3815a-4010	-	clock	-	Time	-	-
-GGA	response	latitude	2	1	1	-	-	GT	19	z3815a-4010	z3815a-4010	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-GGA	response	north or south	3	1	1	-	-	GT	19	z3815a-4010	z3815a-4010	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-GGA	response	longitude	4	1	1	-	-	GT	19	z3815a-4010	z3815a-4010	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
-GGA	response	east or west	5	1	1	-	-	GT	19	z3815a-4010	z3815a-4010	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
+int	command	anc interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	acc interval	2	1	1	-	-	GT	13	z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	tst interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	tps interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+int	command	rrm interval	2	1	1	-	-	GT	13	z3815a-4010,z3805a-1.01.03	-	-	honored	-	-	engine	-
+rrs	command	TRAIM switch	2	1	1	-	-	GT	15	z3815a-4010,z3805a-1.01.03	-	-	honored;held:raim_algorithm	-	-	engine;holder	-
+rrs	command	alarm limit	3	1	1	-	-	GT	15	z3815a-4010,z3805a-1.01.03	-	-	honored;held:raim_alarm_limit	-	-	engine;holder	10 ns
+rrs	command	1PPS control mode	4	1	1	-	-	GT	15	z3815a-4010,z3805a-1.01.03	-	-	honored;held:pulse_mode	-	-	engine;holder	-
+clr	command	clear mode	2	1	1	-	-	GT	10	z3815a-4010,z3805a-1.01.03	-	-	honored:a restart	-	-	engine	-
+ZDA	command	time	1	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while the record tells no time	-	-	engine	-
+ZDA	command	day	2	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while the record tells no time	-	-	engine	-
+ZDA	command	month	3	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while the record tells no time	-	-	engine	-
+ZDA	command	year	4	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while the record tells no time	-	-	engine	-
+ZDA	command	zone hours	5	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:anc in local time	-	-	engine	-
+ZDA	command	zone minutes	6	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:anc in local time	-	-	engine	-
+GLL	command	latitude	1	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	north or south	2	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	longitude	3	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	east or west	4	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	null	5	1	3	1	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:null, any entry ignored	-	-	engine	-
+GGA	response	UTC	1	1	1	-	-	GT	19	-	z3815a-4010,z3805a-1.01.03	-	clock	-	Time	-	-
+GGA	response	latitude	2	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
+GGA	response	north or south	3	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
+GGA	response	longitude	4	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
+GGA	response	east or west	5	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
 GGA	response	quality	6	1	1	-	-	GT	19	-	-	-	record.fix;computed:by the satellites used and the mode	-	Fix	-	-
-GGA	response	satellites used	7	1	1	-	-	GT	19	z3815a-4010	-	console	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	-
+GGA	response	satellites used	7	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	console	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	-
 GGA	response	DOP	8	1	1	-	-	GT	19	-	-	-	record.dops.position;record.dops.horizontal;computed:PDOP 3D, HDOP 2D	00.00	PositionDop;HorizontalDop	-	-
-GGA	response	altitude	9	1	1	-	-	GT	19	z3815a-4010	-	control	record.position.mean_sea_level;state:the height entered, held or with none	-	MeanSeaLevelHeight	-	-
+GGA	response	altitude	9	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.mean_sea_level;state:the height entered, held or with none	-	MeanSeaLevelHeight	-	-
 GGA	response	altitude unit	10	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
-GGA	response	geoid altitude	11	1	1	-	-	GT	19	z3815a-4010	-	control	record.position.ellipsoid;record.position.mean_sea_level	-	EllipsoidHeight;MeanSeaLevelHeight	-	-
+GGA	response	geoid altitude	11	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.ellipsoid;record.position.mean_sea_level	-	EllipsoidHeight;MeanSeaLevelHeight	-	-
 GGA	response	geoid altitude unit	12	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
 GGA	response	DGPS data time	13	1	1	-	-	GT	19	-	-	-	fixed:null, no DGPS mode	-	-	-	-
 GGA	response	DGPS station	14	1	1	-	-	GT	19	-	-	-	fixed:null, no DGPS mode	-	-	-	-
 GSA	response	operational mode	1	1	1	-	-	GT	22	-	-	-	setting.set:D	-	-	-	-
-GSA	response	mode	2	1	1	-	-	GT	22	z3815a-4010	-	control	record.fix;computed:by the satellites used and the mode	-	Fix	-	-
-GSA	response	satellite used	3	1	12	1	-	GT	22	z3815a-4010	-	reported	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	null for none
-GSA	response	PDOP	15	1	1	-	-	GT	22	z3815a-4010	-	console	record.dops.position	00.00	PositionDop	-	-
-GSA	response	HDOP	16	1	1	-	-	GT	22	z3815a-4010	-	stored	record.dops.horizontal	00.00	HorizontalDop	-	-
+GSA	response	mode	2	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	control	record.fix;computed:by the satellites used and the mode	-	Fix	-	-
+GSA	response	satellite used	3	1	12	1	-	GT	22	z3815a-4010,z3805a-1.01.03	-	z3815a-4010=reported,z3805a-1.01.03=control	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	null for none
+GSA	response	PDOP	15	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	console	record.dops.position	00.00	PositionDop	-	-
+GSA	response	HDOP	16	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	stored	record.dops.horizontal	00.00	HorizontalDop	-	-
 GSA	response	VDOP	17	1	1	-	-	GT	22	-	-	-	record.dops.vertical	00.00	VerticalDop	-	-
 GSV	response	total sentences	1	1	1	-	-	GT	23	-	-	-	computed	-	-	-	-
-GSV	response	sentence number	2	1	1	-	-	GT	23	z3815a-4010	-	stored	computed	-	-	-	-
+GSV	response	sentence number	2	1	1	-	-	GT	23	z3815a-4010,z3805a-1.01.03	-	stored	computed	-	-	-	-
 GSV	response	satellites in view	3	1	1	-	-	GT	23	-	-	-	record.satellites.elevation;computed:at or above 5 degrees	-	SatelliteElevation	-	-
-GSV	response	satellite	4	1	4	4	-	GT	23	z3815a-4010	-	reported	record.satellites	-	Satellites	-	-
-GSV	response	elevation	5	1	4	4	-	GT	23	z3815a-4010	-	reported	record.satellites.elevation	-	SatelliteElevation	-	-
-GSV	response	azimuth	6	1	4	4	-	GT	23	z3815a-4010	-	reported	record.satellites.azimuth	-	SatelliteAzimuth	-	-
-GSV	response	SNR	7	1	4	4	-	GT	23	z3815a-4010	-	reported	record.satellites.signal;record.antenna	-	SatelliteSignal;Antenna	-	00 with no signal
+GSV	response	satellite	4	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites	-	Satellites	-	-
+GSV	response	elevation	5	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.elevation	-	SatelliteElevation	-	-
+GSV	response	azimuth	6	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.azimuth	-	SatelliteAzimuth	-	-
+GSV	response	SNR	7	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.signal;record.antenna	-	SatelliteSignal;Antenna	-	00 with no signal
 RMC	response	UTC	1	1	1	-	-	GT	25	-	-	-	state:the last fix;clock	-	Time	-	null before a fix
 RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;computed	-	Fix	-	-
 RMC	response	latitude	3	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
@@ -367,40 +368,41 @@ RMC	response	true course	8	1	1	-	-	GT	25	-	-	-	record.velocity.heading	-	Heading
 RMC	response	date	9	1	1	-	-	GT	25	-	-	-	state:the last fix;clock	-	Time	-	null before a fix
 RMC	response	magnetic variation	10	1	1	-	-	GT	25	-	-	-	record.derived.magnetic_variation	-	MagneticVariation	-	null without one
 RMC	response	variation east or west	11	1	1	-	-	GT	25	-	-	-	record.derived.magnetic_variation	-	MagneticVariation	-	-
-anc	response	almanac date	2	1	1	-	-	GT	27	z3815a-4010	-	stored	record.almanac;record.utc_offset;setting.ZDA:the zone	-	UtcOffset;Almanac	-	1980-01-06 with none
-anc	response	health	3	1	1	-	-	GT	27	z3815a-4010	-	reported	record.almanac	-	Almanac	-	32 characters, 0 not collected
-tst	response	status	2	1	1	-	-	GT	31	z3815a-4010	-	stored	fixed:completed	-	-	-	-
-tst	response	program and version	3	1	1	-	-	GT	31	z3815a-4010	-	control	identity	-	-	-	-
-tst	response	result 1	4	1	1	-	-	GT	31	z3815a-4010	-	stored	record.self_test	-	SelfTest	-	-
-tst	response	result 2	5	1	1	-	-	GT	31	z3815a-4010	-	control	record.self_test;record.antenna	-	Antenna;SelfTest	-	-
+anc	response	almanac date	2	1	1	-	-	GT	27	z3815a-4010,z3805a-1.01.03	-	stored	record.almanac;record.utc_offset;setting.ZDA:the zone	-	UtcOffset;Almanac	-	1980-01-06 with none
+anc	response	health	3	1	1	-	-	GT	27	z3815a-4010,z3805a-1.01.03	-	reported	record.almanac	-	Almanac	-	32 characters, 0 not collected
+acc	response	accuracies	2	1	1	-	-	GT	28	z3805a-1.01.03	-	console	record.satellites.ura;unknown:no URA decoded, or no satellite in the record	X	SatelliteUra	-	32 characters, a hex digit or X each
+tst	response	status	2	1	1	-	-	GT	31	z3815a-4010,z3805a-1.01.03	-	stored	fixed:completed	-	-	-	-
+tst	response	program and version	3	1	1	-	-	GT	31	z3815a-4010,z3805a-1.01.03	-	z3815a-4010=control,z3805a-1.01.03=console	identity	-	-	-	-
+tst	response	result 1	4	1	1	-	-	GT	31	z3815a-4010,z3805a-1.01.03	-	stored	record.self_test	-	SelfTest	-	-
+tst	response	result 2	5	1	1	-	-	GT	31	z3815a-4010,z3805a-1.01.03	-	control	record.self_test;record.antenna	-	Antenna;SelfTest	-	-
 ssd	response	A almanac validity	2	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
 ssd	response	D PDOP threshold	3	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
-ssd	response	E not known	4	1	1	-	-	GT	32	-	-	-	constant:made up, the GT-8031 has none	-	-	-	the image takes 13 parameters
+ssd	response	E not known	4	1	1	-	-	GT	32	z3805a-1.01.03	-	stored	constant:made up, the GT-8031 has none	-	-	-	the image takes 13 parameters
 ssd	response	G geodetic ID	5	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
-ssd	response	H altitude	6	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	stored	setting.set	-	-	-	-
-ssd	response	M elevation mask	7	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	reported	setting.set	-	-	-	-
+ssd	response	H altitude	6	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	stored	setting.set	-	-	-	-
+ssd	response	M elevation mask	7	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	reported	setting.set	-	-	-	-
 ssd	response	S signal mask	8	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
 ssd	response	T 1PPS correction	9	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
-ssd	response	U deleted satellites	10	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	reported	setting.set	-	-	-	-
+ssd	response	U deleted satellites	10	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	reported	setting.set	-	-	-	-
 ssd	response	W smoothing index	11	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
-ssd	response	X dynamic index	12	1	1	-	-	GT	32	-	-	-	setting.set	-	-	-	-
-ssd	response	Z observation point mode	13	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	stored	setting.set	-	-	-	-
-ssd	response	t 1PPS correction	14	1	1	-	-	GT	32	z3815a-4010	z3815a-4010	reported	setting.set	-	-	-	-
-tps	response	present date and time	2	1	1	-	-	GT	36	z3815a-4010	-	control	clock	-	Time	-	-
-tps	response	time standard	3	1	1	-	-	GT	36	z3815a-4010	-	control	record.time.seconds;record.utc_offset;computed	-	Time;UtcOffset	-	1 RTC, 2 GPS, 3 UTC
-tps	response	1PPS availability	4	1	1	-	-	GT	36	z3815a-4010	-	control	record.time.seconds;record.utc_offset;record.almanac;record.satellites.used;record.derived.raim.solution;setting.rrs;setting.set:Z;computed	-	Time;UtcOffset;SatelliteUsed;Almanac;RaimSolution	-	-
-tps	response	mode	5	1	1	-	-	GT	36	z3815a-4010	-	control	setting.set:Z	-	-	-	-
-tps	response	leap second date and time	6	1	1	-	-	GT	36	z3815a-4010	-	control	record.leap;record.utc_offset;state:the leap second last announced	000000000000	UtcOffset;Leap	-	-
-tps	response	leap second	7	1	1	-	-	GT	37	z3815a-4010	-	control	record.leap;record.utc_offset;state:the leap second last announced	00	UtcOffset;Leap	-	-
-tps	response	UTC-GPS offset	8	1	1	-	-	GT	37	z3815a-4010	-	control	record.utc_offset	00	UtcOffset	-	-
-tps	response	UTC parameter date and time	9	1	1	-	-	GT	38	z3815a-4010	-	stored	record.almanac;record.utc_offset	000000000000	UtcOffset;Almanac	-	-
-tps	response	GPS week	10	1	1	-	-	GT	38	z3815a-4010	-	control	clock	-	Time	-	-
-tps	response	GPS seconds	11	1	1	-	-	GT	38	z3815a-4010	-	control	clock	-	Time	-	-
-rrm	response	1PPS output result	2	1	1	-	-	GT	40	z3815a-4010	-	control	record.derived.raim.solution;setting.rrs;setting.set:Z;computed	2	RaimSolution	-	-
-rrm	response	TRAIM status	3	1	1	-	-	GT	40	z3815a-4010	-	control	record.derived.raim.ability;record.satellites.used;setting.rrs;setting.set:Z;computed	2	SatelliteUsed;RaimAbility	-	-
-rrm	response	deleted satellite	4	1	4	1	-	GT	40	z3815a-4010	-	reported	record.derived.raim.isolated	-	RaimIsolated	-	00 for none; GT has one and three reserved
+ssd	response	X dynamic index	12	1	1	-	-	GT	32	-	z3805a-1.01.03	-	setting.set	-	-	-	-
+ssd	response	Z observation point mode	13	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	stored	setting.set	-	-	-	-
+ssd	response	t 1PPS correction	14	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	reported	setting.set	-	-	-	-
+tps	response	present date and time	2	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
+tps	response	time standard	3	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.time.seconds;record.utc_offset;computed	-	Time;UtcOffset	-	1 RTC, 2 GPS, 3 UTC
+tps	response	1PPS availability	4	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.time.seconds;record.utc_offset;record.almanac;record.satellites.used;record.derived.raim.solution;setting.rrs;setting.set:Z;computed	-	Time;UtcOffset;SatelliteUsed;Almanac;RaimSolution	-	-
+tps	response	mode	5	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	setting.set:Z	-	-	-	-
+tps	response	leap second date and time	6	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.leap;record.utc_offset;state:the leap second last announced	000000000000	UtcOffset;Leap	-	-
+tps	response	leap second	7	1	1	-	-	GT	37	z3815a-4010,z3805a-1.01.03	-	control	record.leap;record.utc_offset;state:the leap second last announced	00	UtcOffset;Leap	-	-
+tps	response	UTC-GPS offset	8	1	1	-	-	GT	37	z3815a-4010,z3805a-1.01.03	-	control	record.utc_offset	00	UtcOffset	-	-
+tps	response	UTC parameter date and time	9	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	stored	record.almanac;record.utc_offset	000000000000	UtcOffset;Almanac	-	-
+tps	response	GPS week	10	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
+tps	response	GPS seconds	11	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
+rrm	response	1PPS output result	2	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.solution;setting.rrs;setting.set:Z;computed	2	RaimSolution	-	-
+rrm	response	TRAIM status	3	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.ability;record.satellites.used;setting.rrs;setting.set:Z;computed	2	SatelliteUsed;RaimAbility	-	-
+rrm	response	deleted satellite	4	1	4	1	-	GT	40	z3815a-4010,z3805a-1.01.03	-	reported	record.derived.raim.isolated	-	RaimIsolated	-	00 for none; GT has one and three reserved
 rrm	response	reserved	8	1	1	-	-	GT	40	-	-	-	constant:the specification example, +000	-	-	-	-
-rrm	response	sawtooth	9	1	1	-	-	GT	40	z3815a-4010	-	console	record.timing.sawtooth	-	Sawtooth	-	-15 to +14 ns
-rsd	response	TRAIM switch	2	1	1	-	-	GT	40	z3815a-4010	z3815a-4010	control	setting.rrs	-	-	-	-
-rsd	response	alarm limit	3	1	1	-	-	GT	40	z3815a-4010	z3815a-4010	console	setting.rrs	-	-	-	-
-rsd	response	1PPS control mode	4	1	1	-	-	GT	40	z3815a-4010	z3815a-4010	console	setting.rrs	-	-	-	-
+rrm	response	sawtooth	9	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	console	record.timing.sawtooth	-	Sawtooth	-	-15 to +14 ns
+rsd	response	TRAIM switch	2	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	setting.rrs	-	-	-	-
+rsd	response	alarm limit	3	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	console	setting.rrs	-	-	-	-
+rsd	response	1PPS control mode	4	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	z3815a-4010=console,z3805a-1.01.03=control	setting.rrs	-	-	-	-

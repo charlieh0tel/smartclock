@@ -1219,8 +1219,9 @@ stands in for one.
   earlier.  It is a module of `engine`, not a crate or a module beside
   it: it shares `Output`, the `Settings` and the `Events`, and the
   Oncore model's public API is as it was.  Its sentences are those the
-  image sends and decodes (`nmea::SENTENCES`): it sends `GGA`, `GSA`,
-  `GSV`, `RMC`, `anc`, `tst`, `tps` and `rrm` at the intervals `int`
+  images send and decode (`nmea::SENTENCES`), the Z3805A 1.01.03's
+  `acc` among them (added 2026-11-17): it sends `GGA`, `GSA`, `GSV`,
+  `RMC`, `anc`, `acc`, `tst`, `tps` and `rrm` at the intervals `int`
   sets, `ssd` and `rsd` in answer, and takes `set`, `srq`, `int`,
   `rrs`, `rrq`, `clr`, `ZDA` and `GLL`; `int` takes `ZDA` and `VTG`,
   which the image turns off, and the engine never sends them.  Where the

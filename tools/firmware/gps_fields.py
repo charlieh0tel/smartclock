@@ -24,12 +24,13 @@ set, compared set and counts of fields by use, and the gaps.
 
 The images are the four with an Oncore message table and rewritten C:
 the Z3805A 3543B, the Z3801A 3543, the 58503A 3704 and the Z3817A
-3752.  The Z3815A 4010 speaks NMEA with Furuno's sentences, which the
-Furuno model speaks (engine::furuno), and its rows, manual GT, count
-fields: a row's offset is the field's index as the image numbers it,
-the address's fields first, and its length one field.  Its reads,
-stores, compared fields and sets are measured as nmea_trace says, and
-the rest of what follows holds of them as of an Oncore's bytes.
+3752.  The Z3815A 4010 and the Z3805A 1.01.03 (NMEA_IMAGES) speak NMEA
+with Furuno's sentences, which the Furuno model speaks
+(engine::furuno), and their rows, manual GT, count fields: a row's
+offset is the field's index as the images number it, the address's
+fields first, and its length one field.  Their reads, stores, compared
+fields and sets are measured as nmea_trace says, and the rest of what
+follows holds of them as of an Oncore's bytes.
 
 A message's rows cover its data alone, by offset from the frame's
 first @: the four bytes of @@ and ID before it and the checksum, CR and
@@ -1038,7 +1039,7 @@ def trace(image: str, rows: list[Row], table: Requests) -> Traced:
 # vector table, as harness.py's profiles have it.  Where each keeps
 # its tables and its records is where its exported C's globals place
 # them (Nmea), and its request codes are gps_paths.py's.
-NMEA_IMAGES = {'z3815a-4010': 0x20000}
+NMEA_IMAGES = {'z3815a-4010': 0x20000, 'z3805a-1.01.03': 0x10000}
 # The sizes of an nmea_sentence_entry and an nmea_field_entry, and of a
 # gps_sentence_descriptor (rewritten/IMAGE/types/smartclock.h).
 NMEA_ENTRY = 10
@@ -1075,6 +1076,7 @@ NMEA_SECOND = (
     '$GPGSV,2,2,08,16,29,133,38,26,40,091,40,28,17,214,37,31,41,046,43',
     '$GPRMC,120001,A,3719.5350,N,12159.8700,W,020.0,123.5,221026,001.0,W',
     '$PFEC,GPanc,261024195006,00220200200000020000000002020020',
+    '$PFEC,GPacc,XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
     '$PFEC,GPssd,A1,D06,E06,G001,H000055.0,M05,S01,T+0000,U00000000,W2,X2,Z2,t+000000',
     '$PFEC,GPrrm,0,0,00,00,00,00,+000,+05',
     '$PFEC,GPrsd,1,100,2',
@@ -1279,20 +1281,28 @@ class NmeaMachine(Machine):
 
 
 # What a field's characters are changed to, each in turn, to find where
-# it is stored: a hemisphere, a mode or a status letter the other, and a
-# satellite's health in anc, healthy, unhealthy.
+# it is stored: a hemisphere, a mode or a status letter the other; a
+# satellite's health in anc, healthy, unhealthy; and its accuracy in
+# acc, one of 7 to F, which the 1.01.03 marks (nmea_decode_satellite_bits),
+# 0, and any other, not available among them, F.
 LETTERS = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E', 'A': 'V', 'V': 'A', 'M': 'A', '+': '-', '-': '+'}
 HEALTH = str.maketrans('21', '12')
+ACCURACY = str.maketrans('0123456789ABCDEFX', 'FFFFFFF000000000F')
+ACCURACIES = frozenset('0123456789ABCDEFX')
+SATELLITES = 32
 
 
 def variants(field: str) -> list[str]:
     """Other values of a field, of its length, as the flips are of an
     Oncore's bytes: each digit's lowest bit flipped in turn, a single
     digit of 1 or 2 the other too, each letter LETTERS has the other,
-    and anc's healths each the other at once."""
+    anc's healths each the other at once and acc's accuracies each
+    across the 1.01.03's mark at once."""
     found = []
-    if len(field) == 32 and set(field) <= set('012'):
+    if len(field) == SATELLITES and set(field) <= set('012'):
         found.append(field.translate(HEALTH))
+    elif len(field) == SATELLITES and set(field) <= ACCURACIES:
+        found.append(field.translate(ACCURACY))
     for at, character in enumerate(field):
         if character.isdigit():
             found.append(field[:at] + str(int(character) ^ 1) + field[at + 1 :])

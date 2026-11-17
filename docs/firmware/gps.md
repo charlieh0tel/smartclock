@@ -1273,7 +1273,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,VTG` | VTG interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,ZDA` | ZDA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
-| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,acc` | acc interval | - | sets | z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
@@ -1341,7 +1341,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,VTG` | VTG interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,ZDA` | ZDA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
-| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,acc` | acc interval | - | sets | z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
@@ -1429,7 +1429,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GGA` | GGA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GSA` | GSA interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,GSV` | GSV interval | - | sets | z3815a-4010, z3805a-1.01.03 |
-| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,acc` | not spoken | - | sets | z3805a-1.01.03 |
+| script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,acc` | acc interval | - | sets | z3805a-1.01.03 |
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,anc` | anc interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,rrm` | rrm interval | - | sets | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_OUTPUTS_ON` | `$PFEC,GPint,tps` | tps interval | - | sets | z3815a-4010, z3805a-1.01.03 |
@@ -1895,7 +1895,7 @@ specification; in short:
   `:GPS:EMANgle`, `:GPS:ADELay` and `:GPS:SATellite:TRACking:IGNore`
   do.  The console's `gps_change`, which sends whatever it is given,
   sets nothing here.  A query sends no field.  The table's images are
-  the five whose reads it measures; the crate's `IMAGE_SETS` and
+  the six whose reads it measures; the crate's `IMAGE_SETS` and
   `IMAGE_HOLDS` are of every image's paths.
 - **A message's rows tile its data**, every byte once, and end where
   the images' tables frame the message.  Rows share a byte only as
@@ -2115,23 +2115,27 @@ specification; in short:
   **a fix a record gives as propagated** sets the receiver status's
   position propagate bit with a DOP of zero (VP pp. 70, 72 and 73; UT
   p. 6.20).
-- **The Z3815A's sentences have rows by field.**  Its engine speaks
-  NMEA with Furuno's sentences, which the Furuno model
-  (`engine::furuno`) speaks, and their rows, manual `GT` (the GT-8031's
-  specification), count fields, not bytes: a row's offset is the
-  field's index as the image numbers it, the address's fields first,
-  and its length one field.  They tile each sentence's fields after the
-  address, a response's to the end the image's table counts
-  (`0x5e32a`); `set`'s and `int`'s are by parameter, each at field 2,
-  where the image sends it, the parameters coming in any order.  What
-  the image reads of each is measured the same way, in Unicorn: each
+- **The Furuno images' sentences have rows by field.**  The engine of
+  the Z3815A 4010 and of the Z3805A 1.01.03 speaks NMEA with Furuno's
+  sentences, which the Furuno model (`engine::furuno`) speaks, and
+  their rows, manual `GT` (the GT-8031's specification), count fields,
+  not bytes: a row's offset is the field's index as the images number
+  it, the address's fields first, and its length one field.  They tile
+  each sentence's fields after the address, a response's to the end
+  each image's table counts (`0x5e32a`, `0x54dee`); `set`'s and
+  `int`'s are by parameter, each at field 2, where the images send it,
+  the parameters coming in any order.  Each image's tables and records
+  are where its exported C's globals and its `check-layout.c` place
+  them.  What each reads of each is measured the same way, in Unicorn: each
   field's decoder of the image's table is called with the field and its
   place, the commit last, as `nmea_sentence_decode` calls them, on a
   second of the model's sentences, and a field read is one whose
   characters or ending NUL a decoder reads.  Where a field is stored is
   where RAM differs after the second is decoded again with the field
   changed, each digit's lowest bit, each hemisphere, sign or status
-  letter and `anc`'s healths in turn, the framer's record left out.
+  letter, `anc`'s healths and `acc`'s accuracies, each across the 6
+  above which the 1.01.03 marks a satellite, in turn, the framer's
+  record left out.
   That is done on a second of the model's sentences and again on the
   same second with `tps`'s leap second due, at the end of the month,
   which in the first is a year off and is due in none of its changes
@@ -2142,7 +2146,12 @@ specification; in short:
   readers are the scan's, the walks running to the end of a field of
   the `gps` record as `check-layout.c` places it.  The decoding and
   committing functions of `gps_nmea.c` are not readers, but
-  `nmea_position_message`, the 58503A's `oncore_position_message`.
+  `nmea_position_message`, the 58503A's `oncore_position_message`,
+  which the 1.01.03 keeps under that name.  A measure is blind to what
+  a commit does itself: the 1.01.03's `tst` commit takes the engine's
+  model from its software (`0x53c12`), which none of the field's
+  changes makes another, so its program and version come out as only
+  the console shows them.
   `gps_periodic_send`, which `tps`'s commit calls to send the engine a
   sentence, and `psos_mode` return at once.  The run's state is the
   record as `gps_init` clears it, the receiver on GPS time, so that
@@ -2179,9 +2188,11 @@ every command field, with who acts on it.
 |---|---|---|---|---|
 | `@@Bk` | channel URA | 36-41, 6 x 1 | console: all four | unknown: no URA decoded, or no satellite on the channel |
 | `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752 | unknown: no URA decoded, or no satellite on the channel |
+| `$PFEC,GPacc` | accuracies | field 2 | console: z3805a-1.01.03 | unknown: no URA decoded, or no satellite in the record |
 
 | Message | Field | Bytes | Stored only | The engine sends |
 |---|---|---|---|---|
+| `$PFEC,GPssd` | E not known | field 4 | stored: z3805a-1.01.03 | constant: made up, the GT-8031 has none |
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|
@@ -2256,41 +2267,42 @@ every command field, with who acts on it.
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |
-| `$PFEC,GPset` | H altitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$PFEC,GPset` | M elevation mask | z3815a-4010 | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
+| `$PFEC,GPset` | H altitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$PFEC,GPset` | M elevation mask | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
 | `$PFEC,GPset` | S signal mask | none | gap | stored |
 | `$PFEC,GPset` | T 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
-| `$PFEC,GPset` | U deleted satellites | z3815a-4010 | engine | honored: left out of the fix; given: ignore_list |
+| `$PFEC,GPset` | U deleted satellites | z3815a-4010, z3805a-1.01.03 | engine | honored: left out of the fix; given: ignore_list |
 | `$PFEC,GPset` | W smoothing index | none | gap | stored |
 | `$PFEC,GPset` | X dynamic index | none | gap | stored |
-| `$PFEC,GPset` | Z observation point mode | z3815a-4010 | engine, holder | honored: tps mode and the position reported; `position_hold` |
+| `$PFEC,GPset` | Z observation point mode | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: tps mode and the position reported; `position_hold` |
 | `$PFEC,GPset` | Z3 averaging time | none | gap | stored |
-| `$PFEC,GPset` | t 1PPS correction | z3815a-4010 | holder | `cable_delay`; `pulse_offset` |
-| `$PFEC,GPint` | GGA interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | ZDA interval | z3815a-4010 | engine | honored: kept, ZDA not sent |
-| `$PFEC,GPint` | GSA interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | GSV interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | VTG interval | z3815a-4010 | engine | honored: kept, VTG not sent |
+| `$PFEC,GPset` | t 1PPS correction | z3815a-4010, z3805a-1.01.03 | holder | `cable_delay`; `pulse_offset` |
+| `$PFEC,GPint` | GGA interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | ZDA interval | z3815a-4010, z3805a-1.01.03 | engine | honored: kept, ZDA not sent |
+| `$PFEC,GPint` | GSA interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | GSV interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | VTG interval | z3815a-4010, z3805a-1.01.03 | engine | honored: kept, VTG not sent |
 | `$PFEC,GPint` | RMC interval | none | engine | honored |
-| `$PFEC,GPint` | anc interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | tst interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | tps interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPint` | rrm interval | z3815a-4010 | engine | honored |
-| `$PFEC,GPrrs` | TRAIM switch | z3815a-4010 | engine, holder | honored; `raim_algorithm` |
-| `$PFEC,GPrrs` | alarm limit | z3815a-4010 | engine, holder | honored; `raim_alarm_limit` |
-| `$PFEC,GPrrs` | 1PPS control mode | z3815a-4010 | engine, holder | honored; `pulse_mode` |
-| `$PFEC,GPclr` | clear mode | z3815a-4010 | engine | honored: a restart |
-| `$GPZDA` | time | z3815a-4010 | engine | honored: while the record tells no time |
-| `$GPZDA` | day | z3815a-4010 | engine | honored: while the record tells no time |
-| `$GPZDA` | month | z3815a-4010 | engine | honored: while the record tells no time |
-| `$GPZDA` | year | z3815a-4010 | engine | honored: while the record tells no time |
-| `$GPZDA` | zone hours | z3815a-4010 | engine | honored: anc in local time |
-| `$GPZDA` | zone minutes | z3815a-4010 | engine | honored: anc in local time |
-| `$GPGLL` | latitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | north or south | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | longitude | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | east or west | z3815a-4010 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | null | z3815a-4010 | engine | honored: null, any entry ignored |
+| `$PFEC,GPint` | anc interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | acc interval | z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | tst interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | tps interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPint` | rrm interval | z3815a-4010, z3805a-1.01.03 | engine | honored |
+| `$PFEC,GPrrs` | TRAIM switch | z3815a-4010, z3805a-1.01.03 | engine, holder | honored; `raim_algorithm` |
+| `$PFEC,GPrrs` | alarm limit | z3815a-4010, z3805a-1.01.03 | engine, holder | honored; `raim_alarm_limit` |
+| `$PFEC,GPrrs` | 1PPS control mode | z3815a-4010, z3805a-1.01.03 | engine, holder | honored; `pulse_mode` |
+| `$PFEC,GPclr` | clear mode | z3815a-4010, z3805a-1.01.03 | engine | honored: a restart |
+| `$GPZDA` | time | z3815a-4010, z3805a-1.01.03 | engine | honored: while the record tells no time |
+| `$GPZDA` | day | z3815a-4010, z3805a-1.01.03 | engine | honored: while the record tells no time |
+| `$GPZDA` | month | z3815a-4010, z3805a-1.01.03 | engine | honored: while the record tells no time |
+| `$GPZDA` | year | z3815a-4010, z3805a-1.01.03 | engine | honored: while the record tells no time |
+| `$GPZDA` | zone hours | z3815a-4010, z3805a-1.01.03 | engine | honored: anc in local time |
+| `$GPZDA` | zone minutes | z3815a-4010, z3805a-1.01.03 | engine | honored: anc in local time |
+| `$GPGLL` | latitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | north or south | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | longitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | east or west | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | null | z3815a-4010, z3805a-1.01.03 | engine | honored: null, any entry ignored |
 <!-- end gps_fields.py -->
 
 ## In every image
@@ -2344,11 +2356,16 @@ is held (`gps_response_match`, `gps_nmea.c`).
 for the GT-74, from the GT-8031's specification and the image's
 tables, the image deciding where they part (its documentation lists
 each such assumption): it sends `GGA`, `GSA`, `GSV`, `RMC`, `anc`,
-`tst`, `tps` and `rrm` at the intervals `int` sets, once at an interval
-of 0, and `ssd` and `rsd` in answer, and gives what `set`, `GLL` and
-`rrs` set as the Oncore model's `Settings`.  A test holds each sentence
-it sends to the image's table at `0x5e32a`: its length, its count of
-fields and each decoded field's length, which the image takes exactly.
+`acc`, `tst`, `tps` and `rrm` at the intervals `int` sets, once at an
+interval of 0, and `ssd` and `rsd` in answer, and gives what `set`,
+`GLL` and `rrs` set as the Oncore model's `Settings`.  A test holds each
+sentence it sends to the table of each image that decodes it, the
+Z3815A's at `0x5e32a` and the 1.01.03's at `0x54dee`: its length, its
+count of fields and each decoded field's length, which the images take
+exactly.  The 1.01.03 decodes one sentence more than the Z3815A, `acc`
+(GT p. 28), each satellite's accuracy as a hex digit or `X`, and asks
+for it with `int,acc`; the model gives each satellite's URA index, `X`
+where the record has none.
 Its recorded exchanges are `tests/vectors/furuno/`.
 `smartclock-gps-feed --engine gt-74` (or `gt-74-without-time-raim`,
 `gt-74-pulse-early`) runs it on a host in front of a Z3815A's engine

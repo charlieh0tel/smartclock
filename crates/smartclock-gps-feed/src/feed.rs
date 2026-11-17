@@ -145,6 +145,11 @@ pub(crate) struct Feed {
     /// The leap seconds the wrappers withheld or dropped, last seen.
     withheld: u32,
     dropped: u32,
+    /// How many seconds a live provider's record was behind the host
+    /// second it was taken in, last seen, and how many records taken
+    /// were behind it at all.
+    late: Seconds<i64>,
+    late_records: u64,
 }
 
 impl Feed {
@@ -158,12 +163,14 @@ impl Feed {
             silent_since: None,
             withheld: 0,
             dropped: 0,
+            late: Seconds(0),
+            late_records: 0,
         }
     }
 
     /// Takes the next tick's record and steps the engine with it, or
-    /// leaves it silent for the second.
-    fn second(&mut self, now: Milliseconds<u64>, out: &mut Frames) -> Presence {
+    /// leaves it silent for the second.  `at` is the host's clock.
+    fn second(&mut self, now: Milliseconds<u64>, at: Duration, out: &mut Frames) -> Presence {
         let tick = Tick(self.tick);
         self.tick += 1;
         let mut record = Record::EMPTY;
@@ -172,7 +179,7 @@ impl Feed {
             let mut shared = held.lock().unwrap_or_else(PoisonError::into_inner);
             shared.tick = tick;
             let presence = shared.nest.record(tick, &mut record);
-            self.watch(&shared, tick, presence);
+            self.watch(&shared, tick, presence, utc_second(at));
             presence
         };
         if presence == Presence::Fresh {
@@ -188,8 +195,8 @@ impl Feed {
     }
 
     /// Reports what the provider and its wrappers did that changes what
-    /// the engine is given.
-    fn watch(&mut self, shared: &Shared, tick: Tick, presence: Presence) {
+    /// the engine is given, the record taken in host second `taken_in`.
+    fn watch(&mut self, shared: &Shared, tick: Tick, presence: Presence, taken_in: UnixSeconds) {
         let withheld = shared.nest.withheld();
         if withheld > 0 && self.withheld == 0 {
             event("the provider has a leap second of its own; the one asked for is withheld");
@@ -228,6 +235,41 @@ impl Feed {
                 slip.0
             ));
         }
+        if presence == Presence::Fresh
+            && let Some(of) = shared.delivered
+        {
+            self.lateness(of, taken_in);
+        }
+    }
+
+    /// Holds the record of UTC second `of`, by the provider's own time,
+    /// to the host second it was taken in, which is to be the same: one
+    /// a second or more behind arrived later than the phase it is taken
+    /// at.  A slip [`Latest::slip`] cannot see, being the same each
+    /// second.  Reported when it changes, with the count of records late
+    /// so far.
+    ///
+    /// [`Latest::slip`]: smartclock_gps::source::Latest::slip
+    fn lateness(&mut self, of: UnixSeconds, taken_in: UnixSeconds) {
+        let Some(late) = taken_in.checked_since(of) else {
+            return;
+        };
+        if late != Seconds(0) {
+            self.late_records = self.late_records.saturating_add(1);
+        }
+        if late != self.late {
+            if late == Seconds(0) {
+                event("gps provider's records are of the second they are taken in again");
+            } else {
+                event(format_args!(
+                    "gps provider's record is {} s behind the second it is taken in, {} ms into it: its epochs arrive late ({} records so far)",
+                    late.0,
+                    LIVE_PHASE.as_millis(),
+                    self.late_records
+                ));
+            }
+        }
+        self.late = late;
     }
 
     /// Answers the commands among `bytes`, with the current second's
@@ -418,7 +460,7 @@ pub(crate) fn run<W: Write>(
             send(&mut frames, transport, log, now);
         }
         let now = pace.now(clock, elapsed);
-        let presence = feed.second(since(pace.origin, now), &mut frames);
+        let presence = feed.second(since(pace.origin, now), now, &mut frames);
         send(&mut frames, transport, log, now);
         if presence == Presence::Silent && feed.kind == Kind::Recording {
             event(format_args!(
@@ -438,6 +480,7 @@ mod tests {
     use super::ONE_SECOND;
     use super::WireLog;
     use super::first_second;
+    use super::phase;
     use super::run;
     use super::utc_second;
     use crate::cli::EngineSpec;
@@ -446,7 +489,9 @@ mod tests {
     use crate::link::Transport;
     use crate::provider::Built;
     use crate::provider::Kind;
+    use crate::provider::Provider;
     use crate::provider::Shared;
+    use crate::provider::UTC_OFFSET;
     use crate::provider::build;
     use crate::provider::recording;
     use crate::provider::tests::EPOCHS;
@@ -460,10 +505,16 @@ mod tests {
     use smartclock_gps::oncore::CJ_RECEIVER_ID;
     use smartclock_gps::oncore::EA_POSITION_STATUS;
     use smartclock_gps::oncore::encode;
-    use smartclock_gps::source::Tick;
+    use smartclock_gps::record::GpsTime;
+    use smartclock_gps::record::Record;
+    use smartclock_gps::source::Latest;
     use smartclock_gps::source::wrap::FakeTime;
     use smartclock_gps::source::wrap::LeapSchedule;
     use smartclock_gps::source::wrap::Relabel;
+    use smartclock_gps::time::GpsSeconds;
+    use smartclock_gps::time::UnixSeconds;
+    use smartclock_gps::units::Nanoseconds;
+    use smartclock_gps::units::Seconds;
     use std::cell::Cell;
     use std::collections::BTreeMap;
     use std::rc::Rc;
@@ -572,14 +623,7 @@ mod tests {
         let clock = instrument(BTreeMap::new()).clock;
         let now = utc_second(first_second(&clock, Duration::ZERO));
         let Built { nest, kind } = build(&ProviderSpec::Fixed, None, now).unwrap();
-        Feed::new(
-            engine,
-            Arc::new(Mutex::new(Shared {
-                nest,
-                tick: Tick(0),
-            })),
-            kind,
-        )
+        Feed::new(engine, Arc::new(Mutex::new(Shared::new(nest))), kind)
     }
 
     /// Whether a frame is of `id`.
@@ -672,6 +716,67 @@ mod tests {
         assert_eq!(directions, ["to"], "{text}");
     }
 
+    /// gpsd's stand-in: an instrument that, before each second is
+    /// taken, delivers a record of the second `behind` before it.
+    struct Delivering {
+        instrument: Instrument,
+        shared: Arc<Mutex<Shared>>,
+        behind: u64,
+    }
+
+    impl Transport for Delivering {
+        fn read(&mut self, into: &mut Vec<u8>, timeout: Duration) {
+            let second = (self.instrument.clock.now() + timeout).as_secs() - self.behind;
+            let utc = UnixSeconds::from_epoch(Seconds(i64::try_from(second).unwrap()));
+            let mut record = Record::EMPTY;
+            record.utc_offset = Some(UTC_OFFSET);
+            record.time = Some(GpsTime {
+                seconds: GpsSeconds::from_utc(utc, UTC_OFFSET).unwrap(),
+                subsecond: Nanoseconds(0),
+            });
+            self.shared.lock().unwrap().deliver(&record);
+            self.instrument.read(into, timeout);
+        }
+        fn write(&mut self, bytes: &[u8]) -> bool {
+            self.instrument.write(bytes)
+        }
+    }
+
+    /// Each record gpsd gives is held to the host second it is taken
+    /// in: one of that second is in time, one of the second before is
+    /// late, and each such is counted.
+    #[test]
+    fn late_records_from_gpsd_are_counted() {
+        const SECONDS: u64 = 4;
+        for behind in [0, 1] {
+            let shared = Arc::new(Mutex::new(Shared::new(LeapSchedule::new(
+                FakeTime::new(Provider::Live(Box::new(Latest::new())), Relabel::Keep),
+                None,
+            ))));
+            let mut feed = Feed::new(
+                Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap(),
+                Arc::clone(&shared),
+                Kind::Live,
+            );
+            let mut delivering = Delivering {
+                instrument: instrument(BTreeMap::new()),
+                shared,
+                behind,
+            };
+            let clock = delivering.instrument.clock.clone();
+            run(
+                &mut feed,
+                &mut delivering,
+                &clock,
+                &mut None::<WireLog<Vec<u8>>>,
+                first_second(&clock, phase(Kind::Live)),
+                Some(SECONDS),
+            );
+            assert_eq!(feed.late, Seconds(i64::try_from(behind).unwrap()));
+            assert_eq!(feed.late_records, behind * SECONDS);
+        }
+    }
+
     /// An engine as it left the factory sends nothing until asked, and
     /// answers a command between seconds at once; a deaf one does not.
     #[test]
@@ -709,10 +814,10 @@ mod tests {
     /// A recording runs to its end, and the run ends with it.
     #[test]
     fn a_run_ends_with_its_recording() {
-        let shared = Shared {
-            nest: LeapSchedule::new(FakeTime::new(recording(Vec::new()), Relabel::Keep), None),
-            tick: Tick(0),
-        };
+        let shared = Shared::new(LeapSchedule::new(
+            FakeTime::new(recording(Vec::new()), Relabel::Keep),
+            None,
+        ));
         let mut feed = Feed::new(
             oncore(&VP_SIX, Options::DEFAULT),
             Arc::new(Mutex::new(shared)),
@@ -818,10 +923,10 @@ mod tests {
     /// of the recording's UTC second.
     #[test]
     fn a_recording_drives_a_furuno_engine() {
-        let shared = Shared {
-            nest: LeapSchedule::new(FakeTime::new(recording(capture()), Relabel::Keep), None),
-            tick: Tick(0),
-        };
+        let shared = Shared::new(LeapSchedule::new(
+            FakeTime::new(recording(capture()), Relabel::Keep),
+            None,
+        ));
         let mut feed = Feed::new(
             Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap(),
             Arc::new(Mutex::new(shared)),

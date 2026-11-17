@@ -106,9 +106,21 @@ pub(crate) struct Shared {
     /// The tick the driver's clock is at, which a record from gpsd is
     /// stamped with.
     pub(crate) tick: Tick,
+    /// The UTC second of the newest record from gpsd, by its own time
+    /// and offset, before any wrapper relabels it.
+    pub(crate) delivered: Option<UnixSeconds>,
 }
 
 impl Shared {
+    /// `nest`, at tick 0, nothing delivered.
+    pub(crate) const fn new(nest: Nest) -> Self {
+        Self {
+            nest,
+            tick: Tick(0),
+            delivered: None,
+        }
+    }
+
     /// The live provider, if it is one.
     pub(crate) const fn latest(&self) -> Option<&Latest> {
         match self.nest.inner().inner() {
@@ -118,11 +130,15 @@ impl Shared {
     }
 
     /// Delivers a record from gpsd, stamped with the driver's tick.
-    fn deliver(&mut self, record: &Record) {
+    pub(crate) fn deliver(&mut self, record: &Record) {
         let tick = self.tick;
         if let Provider::Live(latest) = self.nest.inner_mut().inner_mut() {
             *latest.slot() = *record;
             latest.commit(tick);
+            self.delivered = record
+                .time
+                .zip(record.utc_offset)
+                .and_then(|(time, offset)| time.seconds.to_utc(offset));
         }
     }
 }
@@ -476,10 +492,7 @@ pub(crate) mod tests {
     }
 
     fn nest(provider: Provider, relabel: Relabel) -> Shared {
-        Shared {
-            nest: LeapSchedule::new(FakeTime::new(provider, relabel), None),
-            tick: Tick(0),
-        }
+        Shared::new(LeapSchedule::new(FakeTime::new(provider, relabel), None))
     }
 
     /// A UBX recording gives a record an epoch a tick, each a second on,

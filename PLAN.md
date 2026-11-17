@@ -1622,7 +1622,14 @@ stands in for one.
   always paced to real time (`Driver::Paced`): a live source admits no
   other driver, and free running is not wanted yet.  A second starts
   on each whole second of the host's clock, and half a second in for
-  gpsd, whose epoch arrives after the second it is of.  The clock is
+  gpsd, whose epoch arrives after the second it is of.  That half
+  second is checked, not assumed: each record from gpsd is held, by its
+  own time and offset, to the host second it is taken in, and one
+  behind it, an epoch closed later than half a second in (a slow line,
+  or a receiver without `NAV-EOE`, whose epoch the next one's first
+  message closes), is reported when the lag changes and counted, where
+  `Latest::slip`, measuring one record against the one before, sees a
+  lag the same each second as none.  The clock is
   read once for the first tick, and a made-up sky without a fake start
   starts at that second, so each of its seconds is the one its frames
   go out in.  The host's

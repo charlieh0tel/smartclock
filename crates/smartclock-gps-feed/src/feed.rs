@@ -94,6 +94,8 @@ impl Output for Frames {
 
 /// Every byte each way, a line a frame or a read: its UTC time to the
 /// millisecond, `to` (the engine) or `from` (it), and the bytes in hex.
+/// A frame is logged only once it has gone: one dropped, with no
+/// instrument connected or a write that failed, never reached the wire.
 #[derive(Debug)]
 pub(crate) struct WireLog<W: Write> {
     out: W,
@@ -350,8 +352,9 @@ fn send<W: Write>(
     at: Duration,
 ) {
     for frame in frames.0.drain(..) {
-        transport.write(&frame);
-        log_line(log, at, "from", &frame);
+        if transport.write(&frame) {
+            log_line(log, at, "from", &frame);
+        }
     }
 }
 
@@ -507,6 +510,8 @@ mod tests {
         script: BTreeMap<u64, Vec<u8>>,
         /// What it was sent, by the whole second.
         received: BTreeMap<u64, Vec<Vec<u8>>>,
+        /// Whether it is connected: if not, what is sent is dropped.
+        connected: bool,
     }
 
     impl Transport for Instrument {
@@ -525,11 +530,14 @@ mod tests {
             self.clock.wait(timeout);
         }
 
-        fn write(&mut self, bytes: &[u8]) {
-            self.received
-                .entry(self.clock.now().as_secs())
-                .or_default()
-                .push(bytes.to_vec());
+        fn write(&mut self, bytes: &[u8]) -> bool {
+            if self.connected {
+                self.received
+                    .entry(self.clock.now().as_secs())
+                    .or_default()
+                    .push(bytes.to_vec());
+            }
+            self.connected
         }
     }
 
@@ -544,6 +552,7 @@ mod tests {
             },
             script,
             received: BTreeMap::new(),
+            connected: true,
         }
     }
 
@@ -633,6 +642,34 @@ mod tests {
                 "{line}"
             );
         }
+    }
+
+    /// With no instrument connected the engine runs on, and what it
+    /// sends, dropped, is not logged as sent; what it is sent is.
+    #[test]
+    fn the_log_has_only_what_went() {
+        let mut feed = fixed(saved());
+        let mut instrument = instrument(BTreeMap::from([(
+            START.as_secs() + 2,
+            command(CJ_RECEIVER_ID),
+        )]));
+        instrument.connected = false;
+        let clock = instrument.clock.clone();
+        let mut log = Some(WireLog::new(Vec::new()));
+        run(
+            &mut feed,
+            &mut instrument,
+            &clock,
+            &mut log,
+            first_second(&clock, Duration::ZERO),
+            Some(4),
+        );
+        let text = String::from_utf8(log.unwrap().out).unwrap();
+        let directions: Vec<&str> = text
+            .lines()
+            .map(|line| line.split(' ').nth(1).unwrap())
+            .collect();
+        assert_eq!(directions, ["to"], "{text}");
     }
 
     /// An engine as it left the factory sends nothing until asked, and
@@ -839,8 +876,8 @@ mod tests {
             }
             self.instrument.read(into, timeout);
         }
-        fn write(&mut self, bytes: &[u8]) {
-            self.instrument.write(bytes);
+        fn write(&mut self, bytes: &[u8]) -> bool {
+            self.instrument.write(bytes)
         }
     }
 

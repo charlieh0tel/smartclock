@@ -589,6 +589,42 @@ fn zda_keeps_the_sign_of_no_hours() {
     assert_eq!(almanac_date(b"-01,30") - utc, Seconds(90 * 60));
 }
 
+/// In estimated observation point mode the 1 PPS waits for a first fix
+/// of four satellites or more with a PDOP under 6, and then goes out
+/// with one satellite or more (GT p. 47, (2)-1): a 2D fix of three
+/// satellites, or a fix of four at a PDOP of 6.0, does not make it.
+#[test]
+fn the_pulse_waits_for_a_first_fix_of_four_satellites() {
+    let base = record(at(2026, 10, 22, 12, 0, 0));
+    let using = |count: usize, pdop: u16| {
+        let mut now = base;
+        for (index, satellite) in now
+            .satellites
+            .iter_mut()
+            .filter(|satellite| satellite.used)
+            .enumerate()
+        {
+            satellite.used = index < count;
+        }
+        let mut dops = now.dops.expect("DOPs");
+        dops.position = crate::units::Tenths(pdop);
+        now.dops = Some(dops);
+        now.fix = crate::record::Fix::TwoD;
+        now
+    };
+    let pulse = |engine: &mut Engine, now: &Record| {
+        let mut sent = Sent::default();
+        engine.second(now, &mut sent);
+        let tps = sent.only("$PFEC,GPtps");
+        tps.split(',').nth(4).expect("the pulse").to_string()
+    };
+    let mut engine = Engine::new(&GT_74);
+    assert_eq!(pulse(&mut engine, &using(3, 20)), "0");
+    assert_eq!(pulse(&mut engine, &using(4, 60)), "0");
+    assert_eq!(pulse(&mut engine, &using(4, 59)), "1");
+    assert_eq!(pulse(&mut engine, &using(1, 20)), "1");
+}
+
 /// `GGA`'s geoid separation stays six characters over GT p. 19's range,
 /// -999.9 to 9999.9, and at its ends past it, so the image takes the
 /// sentence.

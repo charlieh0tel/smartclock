@@ -1541,6 +1541,26 @@ stands in for one.
   satellite not yet changed over to the new upload, is ignored, so
   the almanac does not come and go through a changeover.  The crate decodes the rest
   of that data for a caller that wants it (below).
+  - *A lost `NAV-SAT` does not empty the sky.*  gpsd's raw output of
+    a NEO-M8T on USB now and then has an epoch without its `NAV-SAT`:
+    captured with each packet's arrival timed (2026-11-16 and -17),
+    the message is missing whole, not late or out of order, with every
+    `iTOW` in order, the rest of the epoch and its `NAV-EOE` there and
+    no frame damaged.  Other messages of an epoch go missing so too,
+    `NAV-POSECEF`, `NAV-DOP` and `NAV-VELECEF`, `NAV-SAT`, the longest,
+    most often.  So it was lost before gpsd passed it on, by the
+    receiver or by gpsd; the stream cannot tell which, and finding out
+    would mean polling the receiver.  The record of that epoch had no
+    satellites: the engine
+    sent `@@Ba` with none tracked and `@@Bn` with Time RAIM unable for
+    that second, and a `SmartClock` went into holdover.  An epoch with
+    a fix and no `NAV-SAT` of its own now has the last one's
+    satellites, if that came no more than three seconds of `iTOW`
+    before it (`SKY_CARRIED`): a short run of lost messages is ridden
+    out, over which a satellite moves less than a tenth of a degree,
+    and a longer loss is a stream that no longer carries the sky,
+    which the record then says.  Time RAIM needs nothing of the kind:
+    it is `TIM-TP`'s, kept from the last one already.
   - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
     receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`
     as 9999, placeholders for a position it does not solve for; passed

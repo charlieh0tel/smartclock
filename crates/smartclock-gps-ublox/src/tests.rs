@@ -1525,7 +1525,138 @@ fn another_itow_ends_the_epoch() {
     assert_eq!(record.time, time(WEEK, next));
     assert_eq!(record.position, None);
     assert_eq!(record.dops, None);
-    assert_eq!(record.satellites.len(), 0);
+    // The first's sky, carried into a fix that lost its own `NAV-SAT`.
+    assert_eq!(record.satellites.len(), 1);
+}
+
+/// `NAV-SAT`s of `count` satellites in a row, at [`NOON`] and each
+/// second after, the epochs of `missing` without theirs.
+fn epochs_losing_nav_sat(count: u32, missing: &[u32]) -> Vec<u8> {
+    (0..count)
+        .flat_map(|second| {
+            let time_of_week = NOON + second * 1000;
+            let mut bytes = stream(&[
+                (
+                    NAV_PVT,
+                    &Pvt {
+                        time_of_week,
+                        ..PVT
+                    }
+                    .payload(),
+                ),
+                (
+                    NAV_TIMEGPS,
+                    &time_gps(time_of_week, 0, WEEK.cast_signed(), 17, 7),
+                ),
+            ]);
+            if !missing.contains(&second) {
+                bytes.extend(stream(&[(NAV_SAT, &sat(time_of_week, &[SAT]))]));
+            }
+            bytes.extend(stream(&[(NAV_EOE, &eoe(time_of_week))]));
+            bytes
+        })
+        .collect()
+}
+
+/// An epoch with a fix whose `NAV-SAT` was lost has the last one's sky,
+/// a real receiver not losing its sky with a message.
+#[test]
+fn a_lost_nav_sat_carries_the_sky() {
+    let mut assembler = Bench::new();
+    let made = records(&mut assembler, &epochs_losing_nav_sat(3, &[1]));
+    let counts: Vec<usize> = made.iter().map(|record| record.satellites.len()).collect();
+    assert_eq!(counts, [1, 1, 1]);
+    assert_eq!(made[1].satellites, made[0].satellites);
+    assert_eq!(assembler.lost_skies(), 1);
+    assert_eq!(assembler.errors(), 0);
+    assert_eq!(made[1].fix, Fix::ThreeD);
+}
+
+/// The sky is carried three seconds past its `NAV-SAT` and no further,
+/// and comes back with the next.
+#[test]
+fn a_sky_is_carried_three_seconds() {
+    let mut assembler = Bench::new();
+    let made = records(&mut assembler, &epochs_losing_nav_sat(7, &[1, 2, 3, 4, 5]));
+    let counts: Vec<usize> = made.iter().map(|record| record.satellites.len()).collect();
+    assert_eq!(counts, [1, 1, 1, 1, 0, 0, 1]);
+    assert_eq!(assembler.lost_skies(), 5);
+    // None is lost before the first `NAV-SAT`.
+    let mut assembler = Bench::new();
+    records(&mut assembler, &epochs_losing_nav_sat(2, &[0]));
+    assert_eq!(assembler.lost_skies(), 0);
+}
+
+/// No sky is carried into an epoch without a fix, nor past a gap of
+/// lost epochs longer than the bound; one is carried across the week's
+/// end.
+#[test]
+fn a_sky_is_carried_only_into_a_fix_and_not_far() {
+    let no_fix = Pvt { flags: 0, ..PVT };
+    let with_sky = epochs_losing_nav_sat(1, &[]);
+    let bytes = [
+        with_sky.clone(),
+        stream(&[
+            (
+                NAV_PVT,
+                &Pvt {
+                    time_of_week: NOON + 1000,
+                    ..no_fix
+                }
+                .payload(),
+            ),
+            (NAV_EOE, &eoe(NOON + 1000)),
+        ]),
+    ]
+    .concat();
+    let counts: Vec<usize> = records(&mut Bench::new(), &bytes)
+        .iter()
+        .map(|record| record.satellites.len())
+        .collect();
+    assert_eq!(counts, [1, 0]);
+
+    let later = |time_of_week: u32| {
+        stream(&[
+            (
+                NAV_PVT,
+                &Pvt {
+                    time_of_week,
+                    ..PVT
+                }
+                .payload(),
+            ),
+            (NAV_EOE, &eoe(time_of_week)),
+        ])
+    };
+    let gap = [with_sky.clone(), later(NOON + 4000)].concat();
+    let counts: Vec<usize> = records(&mut Bench::new(), &gap)
+        .iter()
+        .map(|record| record.satellites.len())
+        .collect();
+    assert_eq!(counts, [1, 0]);
+
+    let week_end = 7 * 24 * 3600 * 1000 - 1000;
+    let across = [
+        stream(&[
+            (
+                NAV_PVT,
+                &Pvt {
+                    time_of_week: week_end,
+                    ..PVT
+                }
+                .payload(),
+            ),
+            (NAV_SAT, &sat(week_end, &[SAT])),
+            (NAV_EOE, &eoe(week_end)),
+        ]),
+        later(1000),
+    ]
+    .concat();
+    let counts: Vec<usize> = records(&mut Bench::new(), &across)
+        .iter()
+        .map(|record| record.satellites.len())
+        .collect();
+    assert_eq!(counts, [1, 1]);
 }
 
 /// A `NAV-EOE` of another `iTOW` than the epoch in progress: its own

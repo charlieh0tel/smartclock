@@ -22,6 +22,7 @@ use smartclock_gps::source::replay::Assemble;
 use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::GpsWeek;
 use smartclock_gps::time::LeapEvent;
+use smartclock_gps::time::SECONDS_PER_WEEK;
 use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
@@ -66,6 +67,39 @@ impl Epoch {
         ecef: None,
         satellites: None,
     };
+}
+
+/// How long after its `NAV-SAT` a sky is carried into an epoch that has
+/// a fix and lost its own ("From messages to a record" in the crate's
+/// documentation): three epochs of one a second.  A `NAV-SAT` the
+/// receiver or gpsd now and then drops costs one epoch's sky, and the
+/// bound rides
+/// out a short run of them, over which a GPS satellite moves less than
+/// a tenth of a degree; a longer loss is a stream that no longer
+/// carries the sky, and the record says so.
+const SKY_CARRIED: Milliseconds<u32> = Milliseconds(3_000);
+
+/// The milliseconds of a week, at which `iTOW` wraps.
+const MILLISECONDS_PER_WEEK: u32 = SECONDS_PER_WEEK * 1_000;
+
+/// The sky an epoch's `NAV-SAT` gave, kept to carry forward.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Sky {
+    /// Its epoch's `iTOW`.
+    time_of_week: Milliseconds<u32>,
+    /// Its satellites.
+    satellites: Satellites,
+}
+
+impl Sky {
+    /// Whether it may stand for the sky of the epoch at `time_of_week`,
+    /// a later one no more than [`SKY_CARRIED`] on, across the week's
+    /// end too.
+    const fn carries_to(&self, time_of_week: Milliseconds<u32>) -> bool {
+        let age =
+            (time_of_week.0 + MILLISECONDS_PER_WEEK - self.time_of_week.0) % MILLISECONDS_PER_WEEK;
+        age > 0 && age <= SKY_CARRIED.0
+    }
 }
 
 /// A leap second an [`Assembler`] was told of, with GPS less UTC until
@@ -175,6 +209,11 @@ struct Assembly {
     antenna: Antenna,
     /// The Time RAIM result, as `TIM-TP` last gave it.
     raim: Option<Raim>,
+    /// The sky the last `NAV-SAT` gave.
+    sky: Option<Sky>,
+    /// The epochs with a fix and no `NAV-SAT` of their own since the
+    /// first `NAV-SAT`.
+    lost_skies: u32,
     /// The leap second last announced.
     announced: Option<Announced>,
     /// The almanac's pages, as `RXM-SFRBX` has given them.
@@ -216,6 +255,8 @@ impl<const N: usize> Assembler<N> {
                 epoch: Epoch::EMPTY,
                 antenna: Antenna::Unknown,
                 raim: None,
+                sky: None,
+                lost_skies: 0,
                 announced: None,
                 almanac: Gathered::EMPTY,
                 week: None,
@@ -229,6 +270,16 @@ impl<const N: usize> Assembler<N> {
     #[must_use]
     pub const fn errors(&self) -> u32 {
         self.errors
+    }
+
+    /// How many epochs with a fix came without a `NAV-SAT` of their own
+    /// since the stream's first, whether or not the sky was carried
+    /// into them: a `NAV-SAT` the receiver did not send or the stream
+    /// lost whole, which [`errors`](Self::errors) does not see.  It
+    /// stops at the count's end.
+    #[must_use]
+    pub const fn lost_skies(&self) -> u32 {
+        self.assembly.lost_skies
     }
 }
 
@@ -293,11 +344,11 @@ impl Assembly {
         // The receiver that sent the epoch runs, and tells of no fault.
         record.self_test = SelfTest::PASS;
         record.derived.raim = self.raim;
-        record.satellites = epoch.satellites.unwrap_or(Satellites::EMPTY);
-        if let Some(solution) = epoch
+        let solution = epoch
             .solution
-            .filter(|solution| solution.fix() != Fix::None)
-        {
+            .filter(|solution| solution.fix() != Fix::None);
+        record.satellites = self.sky(&epoch, solution.is_some());
+        if let Some(solution) = solution {
             record.fix = solution.fix();
             record.position = solution.position();
             record.velocity = Some(solution.velocity());
@@ -331,6 +382,29 @@ impl Assembly {
             }
             _ => (count, None),
         };
+    }
+
+    /// The sky of `epoch`, `fixed` if it has a fix: its own `NAV-SAT`'s,
+    /// which is kept; or, with a fix, the last one's if it is no more
+    /// than [`SKY_CARRIED`] older; or none.
+    fn sky(&mut self, epoch: &Epoch, fixed: bool) -> Satellites {
+        // An epoch with a `NAV-SAT` has its `iTOW`.
+        let Some(time_of_week) = epoch.time_of_week else {
+            return Satellites::EMPTY;
+        };
+        if let Some(satellites) = epoch.satellites {
+            self.sky = Some(Sky {
+                time_of_week,
+                satellites,
+            });
+            return satellites;
+        }
+        if fixed && self.sky.is_some() {
+            self.lost_skies = self.lost_skies.saturating_add(1);
+        }
+        self.sky
+            .filter(|sky| fixed && sky.carries_to(time_of_week))
+            .map_or(Satellites::EMPTY, |sky| sky.satellites)
     }
 
     /// Keeps what an epoch's `NAV-TIMELS` says of a leap second to

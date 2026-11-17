@@ -6,14 +6,15 @@
 GPS engine of crates/smartclock-gps speaks, against what the images do:
 which bytes of each message an image's own decoders read, measured by
 running them in Unicorn, what becomes of each field read, and which
-commands its request scripts and its code send.
+commands it sends, by every path (gps_paths.py).
 
     uv run -q tools/firmware/gps_fields.py [--check]
 
 Without --check it rewrites the table's images, compared, use and
-fields columns, the list of gaps between the markers in
-docs/firmware/gps.md and the fields the images use between the markers
-in crates/smartclock-gps/src/record/field.rs; with it, it fails if any
+fields columns, the list of gaps and the table of paths between their
+markers in docs/firmware/gps.md, and the fields the images use and the
+settings they set between the markers in
+crates/smartclock-gps/src/record/field.rs; with it, it fails if any
 is not what the images give.  Either way it fails if a message's rows do not tile its
 data, if an image reads part of a field or outside the data, if a
 row's engine column is not in the vocabulary below, or if
@@ -108,17 +109,14 @@ on each response with a command of the same bytes and the offsets of
 the response it reads are noted.  The frame's trailer, compared too,
 has no row.
 
-A command field's images are those that send the command to set it,
-mode 0 or 2 (docs/firmware/gps.md, "Requests"): a step of a script or
-a list, or a request the image's code posts.  That is a call of
-gpsx_send whose code and mode are constants, found by a scan of the
-primary's instructions, or the request of a SCPI descriptor that
-names.tsv labels and whose flags send it to the GPS, which
-pll_scpi_send_to_loop posts in mode 0.  The console's gps_command_send,
-which posts whatever request the console asks for, is left out, and so
-is a post the GPS task refuses: the Z3817A's gps_request_admitted takes
-a sequence's or a setting's request only if its list has the code.  A
-query sends no field.
+A command field's images are those of the images above with a path
+(gps_paths.py) that sends the command to set it, mode 0 or 2, and that
+the GPS task takes: a script, a list, a sequence, a monitor, a SCPI
+descriptor or a console word.  The console's gps_change, which sends
+whatever request it is given, counts for none.  A query sends no
+field.  gps_paths.py's paths of every image, those above and the rest
+it reads, are the table of docs/firmware/gps.md, "Every path to a
+setting", which this rewrites and checks.
 
 The engine column says where crates/smartclock-gps/src/engine.rs gets
 a response field, as terms joined by ";", each with an optional note
@@ -165,8 +163,10 @@ stored, echoed or ignored term), and "-" for a response field.  A held
 or given term names a field of the Settings of
 crates/smartclock-gps/src/engine/settings.rs, each of which some row
 names.  The settings the images set (IMAGE_SETS) are those of the held
-terms of the rows some image sets; a given one is the engine's to act
-on and not among them.
+and given terms of the rows of what some path of any image sets, and
+of them those a holder acts on (IMAGE_HOLDS) are the held ones: a
+given one is the engine's to act on, and a provider is held to those
+of IMAGE_HOLDS alone.
 
 A gap is a response field with a constant, zero or unknown term that
 an image uses, as control or reported, or compares, or a command field
@@ -201,6 +201,7 @@ from unicorn.m68k_const import (
     UC_M68K_REG_SR,
 )
 
+import gps_paths
 import record_access
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
@@ -337,6 +338,10 @@ SET_MODES = (0, 2)
 
 BEGIN = '<!-- gps_fields.py gaps -->'
 END = '<!-- end gps_fields.py -->'
+# The same around the table of every path to a setting.
+PATHS_BEGIN = '<!-- gps_fields.py paths -->'
+# A message the engine speaks, as oncore.rs names it.
+SPOKEN = re.compile(r'MessageId::new\(\*b"(\w\w)"\)')
 # The same in field.rs, around the fields the images use.
 USES_BEGIN = '// gps_fields.py image uses'
 USES_END = '// end gps_fields.py'
@@ -435,11 +440,10 @@ class Row:
         return [stride if name == 'stride' else str(getattr(self, name)) for name in COLUMNS]
 
 
-def requests(image: str) -> Requests:
-    """An image's message table and what it sends, from dump-oncore's
-    text, and what its code posts (posted)."""
+def requests(image: str, found: list[gps_paths.Path]) -> Requests:
+    """An image's message table, from dump-oncore's text, and the IDs its
+    paths send, each with the modes, of those the GPS task takes."""
     entries = []
-    sent: dict[str, set[int]] = {}
     for line in (ONCORE / f'{image}.txt').read_text().splitlines():
         entry = re.match(r'message (0x[0-9a-f]+) (\w\w) kind \d+ length (\d+)(.*)', line)
         if entry:
@@ -452,108 +456,11 @@ def requests(image: str) -> Requests:
                     tuple((int(decode, 16), int(record, 16)) for decode, record in decoders),
                 )
             )
-        elif line.startswith(('script ', 'list ')):
-            for sender, mode in re.findall(r' (\w\w)/(\d)', line):
-                sent.setdefault(sender, set()).add(int(mode))
-    by_index = {entry.index: entry.id for entry in entries}
-    for code, mode in posted(image):
-        if code in by_index:
-            sent.setdefault(by_index[code], set()).add(mode)
+    sent: dict[str, set[int]] = {}
+    for path in found:
+        if not path.refused and path.target.kind == 'message' and path.mode is not None:
+            sent.setdefault(path.target.message, set()).add(path.mode)
     return Requests(tuple(entries), {sender: frozenset(modes) for sender, modes in sent.items()})
-
-
-# How an image's code posts a request to the GPS task besides its
-# scripts' and lists' steps (gps.md, "Requests"): a call of POSTER, its
-# code a word and its mode a byte, the first two arguments pushed last;
-# and the SCPI descriptors' requests, which pll_scpi_send_to_loop posts
-# in SCPI_MODE.  A descriptor is a label of names.tsv named as
-# SCPI_DESCRIPTOR, its first byte its type: of each type that sends one,
-# where its flags word is, the request byte after it
-# (rewritten/common/types/scpi.h, scpi_setting_param.h).  It sends its
-# request when its flags have SEND_TO_GPS (rewritten/common/pllc.h).
-POSTER = 'gpsx_send'
-POSTER_ARGUMENTS = 2
-SCPI_DESCRIPTOR = re.compile(r'scpi_param_\w+')
-DESCRIPTOR_FLAGS = {0: 0x1E, 1: 0x14, 3: 0x1E}
-SEND_TO_GPS = 1
-SCPI_MODE = 0
-# The codes the GPS task takes from a sequence or a setting, where an
-# image keeps a list of them (gps_request_admitted, in the Z3817A 3752's
-# gps_requests.c); a word each, to REQUEST_NONE.
-ADMITTED = 'gps_admitted_requests'
-
-
-class Posts(record_access.Scan):
-    """record_access's scan, noting at each call of an image's POSTER
-    the values its first arguments were pushed with, None where the scan
-    does not follow one: (function, call, values)."""
-
-    def __init__(self, functions: dict[int, str], poster: int) -> None:
-        super().__init__(functions, 0, 0, {})
-        self.poster = poster
-        self.function: int | None = None
-        self.pushes: list[int | None] = []
-        self.found: list[tuple[str, int, tuple[int | None, ...]]] = []
-
-    def step(self, function: int, address: int, mnemonic: str, operands: list[str]) -> None:
-        if function != self.function:
-            self.function, self.pushes = function, []
-        pushed = None
-        if len(operands) == 2 and operands[1] == '%sp@-':
-            pushed = [self.value(operands[0])]
-        elif operands == ['%sp@-'] and mnemonic.startswith('clr'):
-            pushed = [0]
-        elif mnemonic == 'pea':
-            pushed = [None]
-        callee = None
-        if mnemonic.startswith(('jsr', 'bsr')):
-            target = record_access.ABSOLUTE.fullmatch(operands[0]) or re.fullmatch(r'%pc@\((0x[0-9a-f]+)\)', operands[0])
-            register = re.fullmatch(r'%(a\d)@', operands[0])
-            callee = int(target[1], 16) if target else self.registers.get(register[1]) if register else None
-        super().step(function, address, mnemonic, operands)
-        self.pushes += pushed or []
-        if callee is not None:
-            if callee == self.poster:
-                values = tuple(reversed(self.pushes[-POSTER_ARGUMENTS:]))
-                self.found.append((self.functions[function], address, values))
-            self.pushes = []
-
-
-def labels(image: str) -> dict[str, int]:
-    """The primary's labels by name, from names.tsv."""
-    found = {}
-    for line in (FIRMWARE / 'analysis' / image / 'names.tsv').read_text().splitlines():
-        cells = line.split('\t')
-        if line.startswith('#') or len(cells) < 3 or cells[1] != 'label' or '::' in cells[0]:
-            continue
-        found.setdefault(cells[2], int(cells[0], 16))
-    return found
-
-
-def posted(image: str) -> set[tuple[int, int]]:
-    """The requests an image's code posts, each a code and a mode: those
-    of the calls of its POSTER whose code and mode are constants, the
-    console's gps_command_send, which posts what the console asks,
-    among those left out, and those of its SCPI descriptors; each as
-    the GPS task admits it."""
-    rom = (FIRMWARE / 'images' / f'{image}.bin').read_bytes()
-    scan = Posts(record_access.primary_functions(image), names(image)[POSTER])
-    scan.run(record_access.disassemble(image), image)
-    found = {values for _, _, values in scan.found if None not in values}
-    for name, at in labels(image).items():
-        if not SCPI_DESCRIPTOR.fullmatch(name) or at >= len(rom) or rom[at] not in DESCRIPTOR_FLAGS:
-            continue
-        flags, code = struct.unpack_from('>HB', rom, at + DESCRIPTOR_FLAGS[rom[at]])
-        if flags & SEND_TO_GPS and code != REQUEST_NONE:
-            found.add((code, SCPI_MODE))
-    admitted = labels(image).get(ADMITTED)
-    if admitted is None:
-        return found
-    codes = set()
-    while (code := struct.unpack_from('>H', rom, admitted)[0]) != REQUEST_NONE:
-        codes.add(code)
-        admitted += 2
-    return {(code, mode) for code, mode in found if code in codes}
 
 
 class Machine:
@@ -1259,45 +1166,16 @@ def nmea_table(rom: bytes) -> dict[str, Sentence]:
     return found
 
 
-def nmea_sent(rom: bytes) -> set[tuple[str, str | None]]:
-    """What the image's scripts and lists send to set, mode 0 or 2, and
-    what its code posts to set (posted): each sentence by its name and,
-    for set and int, the parameter, the sentence alone for the rest."""
-    def long(at: int) -> int:
-        return struct.unpack_from('>I', rom, at)[0]
+def nmea_sent(found: list[gps_paths.Path]) -> set[tuple[str, str | None]]:
+    """What an image's paths send to set: each sentence by its name and,
+    for set and int, the parameter."""
+    return {(path.target.message, path.target.key) for path in found if sets(path)}
 
-    translations = {}
-    at = NMEA_TRANSLATIONS
-    while True:
-        code, mode, to, to_mode = struct.unpack_from('>HBxHBx', rom, at)
-        if code == REQUEST_NONE:
-            break
-        translations.setdefault((code, mode), (to, to_mode))
-        at += NMEA_TRANSLATION
-    requests = posted(NMEA_IMAGE)
-    for line in (FIRMWARE / 'analysis' / NMEA_IMAGE / 'names.tsv').read_text().splitlines():
-        cells = line.split('\t')
-        if len(cells) < 3 or cells[1] != 'label' or not NMEA_SCRIPTS.fullmatch(cells[2]):
-            continue
-        at = int(cells[0], 16)
-        while step := long(at):
-            at += VECTOR_SIZE
-            # gps_script_message's step is in RAM, a request's own.
-            if step < len(rom):
-                requests.add(struct.unpack_from('>HB', rom, step))
-    found = set()
-    for request in requests:
-        code, mode = translations.get(request, request)
-        if mode not in SET_MODES or not NMEA_FIRST_CODE <= code < NMEA_FIRST_CODE + NMEA_CODES:
-            continue
-        descriptor = NMEA_DESCRIPTORS + (code - NMEA_FIRST_CODE) * NMEA_DESCRIPTOR
-        address = rom[long(descriptor) : rom.index(0, long(descriptor))].decode('ascii')
-        name, _, parameter = address.partition(',')
-        if name in ('set', 'int'):
-            found.add((name, parameter[:1] if name == 'set' else parameter[:3]))
-        elif parameter == '' and name != address:
-            found.add((name, None))
-    return found
+
+def sets(path: gps_paths.Path) -> bool:
+    """Whether a path sets a message's value: one the GPS task takes, of
+    mode 0 or 2."""
+    return not path.refused and path.target.kind == 'message' and path.mode in SET_MODES
 
 
 def nmea_frame(sentence: str) -> tuple[bytes, list[int]]:
@@ -1452,9 +1330,9 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
     return found
 
 
-def nmea_trace(rows: list[Row]) -> tuple[Traced, set[tuple[str, str | None]], dict[str, Sentence]]:
-    """The Z3815A's Traced, its sentences' fields by index, and what it
-    sends to set.  Where a field is stored is where RAM differs after a
+def nmea_trace(rows: list[Row]) -> tuple[Traced, dict[str, Sentence]]:
+    """The Z3815A's Traced, and its sentences' fields by index.
+    Where a field is stored is where RAM differs after a
     second's sentences are decoded with the field's value another, each
     of its variants, from a second decoded before, for each of
     NMEA_SECONDS; its readers are the scan's, the decoding functions
@@ -1546,7 +1424,7 @@ def nmea_trace(rows: list[Row]) -> tuple[Traced, set[tuple[str, str | None]], di
             if not walked and not called:
                 ran[row.line].add(function)
     traced = Traced(reads, compared_fields, stored, found, reach, ran, scan.walks)
-    return traced, nmea_sent(rom), table
+    return traced, table
 
 
 def rows_of(text: str) -> list[Row]:
@@ -1623,18 +1501,57 @@ def settings_fields() -> dict[str, str]:
     return fields
 
 
-def image_uses(rows: list[Row], found: 'dict[int, dict[str, Found]]', paths: dict[str, str]) -> str:
-    """IMAGE_USES and IMAGE_SETS as field.rs has them between its
-    markers: the fields of the rows some image uses as control or
-    reported, and the settings some image sets that a holder acts on."""
-    set_by_images = {name for row in rows if row.direction == 'command' and row.images != NONE for name in row.held()}
+def targeted(rows: list[Row], target: gps_paths.Target) -> list[Row]:
+    """The command rows of what a path sends: its message's, of set and
+    int its parameter's alone."""
+    if target.kind != 'message':
+        return []
+    return [
+        row
+        for row in rows
+        if row.direction == 'command'
+        and row.message == target.message
+        and (target.message not in ANY_ORDER or row.field.split()[0] == target.key)
+    ]
+
+
+def path_settings(rows: list[Row], found: dict[str, list[gps_paths.Path]]) -> tuple[set[str], set[str]]:
+    """The fields of the engine's Settings some image's path sets, and of
+    them those a holder acts on: the held and given terms, and the held,
+    of the command rows of what each path that sets sends."""
+    setting: set[str] = set()
+    holding: set[str] = set()
+    for each in found.values():
+        for path in each:
+            if sets(path):
+                for row in targeted(rows, path.target):
+                    setting.update(row.settings())
+                    holding.update(row.held())
+    return setting, holding
+
+
+def image_uses(
+    rows: list[Row], found: 'dict[int, dict[str, Found]]', paths: dict[str, str], settings: tuple[set[str], set[str]]
+) -> str:
+    """IMAGE_USES, IMAGE_SETS and IMAGE_HOLDS as field.rs has them
+    between its markers: the fields of the rows some image uses as
+    control or reported, the settings some image's path sets
+    (path_settings), and of them those a holder acts on."""
+    setting, holding = settings
+    members = settings_fields()
     sets = [
         '',
-        "/// The settings a receiver's image sets that are a holder's to act",
-        '/// on: those a command row of the field table holds and some image',
-        '/// sets.',
+        "/// The settings a receiver's image sets: those a command row of the",
+        '/// field table holds or gives whose message a path of some image',
+        '/// sends to set (`docs/firmware/gps.md`, "Every path to a setting").',
         'pub const IMAGE_SETS: SettingSet = SettingSet::of(&[',
-        *(f'    Setting::{member},' for name, member in settings_fields().items() if name in set_by_images),
+        *(f'    Setting::{member},' for name, member in members.items() if name in setting),
+        ']);',
+        '',
+        '/// Of [`IMAGE_SETS`], those a holder acts on: some such row holds',
+        '/// them.  A provider is held to each.',
+        'pub const IMAGE_HOLDS: SettingSet = SettingSet::of(&[',
+        *(f'    Setting::{member},' for name, member in members.items() if name in holding),
         ']);',
     ]
     used = {
@@ -2070,6 +1987,58 @@ def gaps(rows: list[Row], found: dict[int, dict[str, Found]]) -> str:
     return '\n'.join(lines) + '\n'
 
 
+def spoken_messages() -> set[str]:
+    """The Oncore messages the engine speaks, by oncore.rs's MessageIds."""
+    return set(SPOKEN.findall((ROOT / 'crates/smartclock-gps/src/oncore.rs').read_text()))
+
+
+def path_table(rows: list[Row], found: dict[str, list[gps_paths.Path]]) -> str:
+    """Every path of every image as the document's table: each kind, name,
+    what it sends and does, with the command rows' fields and settings
+    of what it sends, and the images it is theirs in."""
+    images: dict[tuple, list[str]] = {}
+    for image, each in found.items():
+        for path in each:
+            if path.target.kind == 'any':
+                does = 'any request, as set' if path.mode in SET_MODES else 'any request, as a query'
+            elif path.mode is None:
+                does = 'posts'
+            else:
+                does = 'sets' if path.mode in SET_MODES else 'asks'
+            if path.refused:
+                does += ', refused'
+            key = (gps_paths.PATH_KINDS.index(path.kind), path.name, path.target.shown(), does, path.target)
+            images.setdefault(key, [])
+            if image not in images[key]:
+                images[key].append(image)
+    lines = ['| Path | Name | Sends | Fields | Settings | Does | Images |', '|---|---|---|---|---|---|---|']
+    for key in sorted(images, key=lambda key: key[:4]):
+        kind, name, shown, does, target = key
+        matched = targeted(rows, target)
+        if target.kind != 'message':
+            fields = settings = NONE
+        elif not matched:
+            if is_nmea(target.message):
+                spoken = target.message not in ANY_ORDER and any(row.message == target.message for row in rows)
+            else:
+                spoken = target.message in spoken_messages()
+            fields, settings = 'no command row' if spoken else 'not spoken', NONE
+        else:
+            fields = ', '.join(row.field for row in matched)
+            named = dict.fromkeys(
+                f'`{note}` ({HOLDER_ACTS if term == HELD else ENGINE_ACTS})'
+                for row in matched
+                for term, note in row.terms()
+                if term in NAMES_SETTING
+            )
+            settings = ', '.join(named) or NONE
+        lines.append(
+            f'| {gps_paths.PATH_KINDS[kind]} | `{name}` | {shown} | {fields} | {settings} | {does} | '
+            f'{", ".join(images[key])} |'
+        )
+    return '\n'.join(lines) + '\n'
+
+
 def between_markers(document: str, made: str, begin: str = BEGIN, end: str = END) -> str | None:
     """The document with made between its markers, or nothing if it
     lacks them."""
@@ -2124,10 +2093,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--check', action='store_true', help='fail if the table or the document is stale')
     arguments = parser.parse_args()
-    tables = {image: requests(image) for image in IMAGES}
+    found_paths = {image: gps_paths.paths(image) for image in gps_paths.PATH_IMAGES}
+    tables = {image: requests(image, found_paths[image]) for image in IMAGES}
+    sent = nmea_sent(found_paths[NMEA_IMAGE])
     was = TABLE.read_text()
     rows = rows_of(was)
-    nmea, sent, sentences = nmea_trace(rows)
+    nmea, sentences = nmea_trace(rows)
     problems = check_rows(rows, tables, sentences)
     hand, wrong = uses_of(USES.read_text())
     problems += wrong
@@ -2142,22 +2113,28 @@ def main() -> None:
     if made is None:
         problems.append(f'{DOCUMENT.relative_to(ROOT)}: no {BEGIN} ... {END}')
         made = document
+    with_paths = between_markers(made, path_table(rows, found_paths), PATHS_BEGIN, END)
+    if with_paths is None:
+        problems.append(f'{DOCUMENT.relative_to(ROOT)}: no {PATHS_BEGIN} ... {END}')
+    else:
+        made = with_paths
     table = text_of(rows)
     source = FIELD.read_text()
-    uses = between_markers(source, image_uses(rows, found, field_paths()), USES_BEGIN, USES_END)
+    made_uses = image_uses(rows, found, field_paths(), path_settings(rows, found_paths))
+    uses = between_markers(source, made_uses, USES_BEGIN, USES_END)
     if uses is None:
         problems.append(f'{FIELD.relative_to(ROOT)}: no {USES_BEGIN} ... {USES_END}')
         uses = source
     if arguments.check:
         if uses != source:
             problems.append(
-                f'{FIELD.relative_to(ROOT)}: IMAGE_USES or IMAGE_SETS is not what the table gives; '
+                f'{FIELD.relative_to(ROOT)}: IMAGE_USES, IMAGE_SETS or IMAGE_HOLDS is not what the table gives; '
                 'make gps-fields rewrites it'
             )
         if table != was:
             problems.append(f'{TABLE.relative_to(ROOT)} is not what the images give; make gps-fields rewrites it')
         if made != document:
-            problems.append(f'{DOCUMENT.relative_to(ROOT)}: the gaps are stale; make gps-fields rewrites them')
+            problems.append(f'{DOCUMENT.relative_to(ROOT)}: the gaps or the paths are stale; make gps-fields rewrites them')
     elif not problems:
         TABLE.write_text(table)
         DOCUMENT.write_text(made)

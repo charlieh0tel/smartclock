@@ -80,7 +80,7 @@ struct Announced {
 /// it acts on ([`act`]): the mask angle and the satellites to ignore,
 /// which it applies to its own records.  It reads a receiver and sends
 /// it nothing, so the rest of those the images set
-/// ([`IMAGE_SETS`](smartclock_gps::record::field::IMAGE_SETS)), each
+/// ([`IMAGE_HOLDS`](smartclock_gps::record::field::IMAGE_HOLDS)), each
 /// of which would be a configuration sent, are excused it by
 /// `docs/firmware/gps-setting-exceptions.tsv`.  It makes no pulse: the
 /// receiver makes its own, which the holder shifts by the pulse settings.

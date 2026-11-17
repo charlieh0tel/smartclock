@@ -26,10 +26,12 @@
 //! engine builds leaves its value in the engine's
 //! [`Settings`](crate::engine::settings::Settings) for the engine's
 //! holder to apply.  [`IMAGE_SETS`], made the same way, is those the
-//! images set, and a provider's test holds that it acts on each it is
-//! held to ([`Declaration::held`]), all of them less, for one that makes
-//! no pulse, the [`PULSE_SETTINGS`], which the pulse's maker acts on,
-//! or is excused it by a row of
+//! images set, by any path (`docs/firmware/gps.md`, "Every path to a
+//! setting"), and [`IMAGE_HOLDS`] those of them a holder acts on, the
+//! rest being the engine's.  A provider's test holds that it acts on
+//! each it is held to ([`Declaration::held`]), all of [`IMAGE_HOLDS`]
+//! less, for one that makes no pulse, the [`PULSE_SETTINGS`], which the
+//! pulse's maker acts on, or is excused it by a row of
 //! `docs/firmware/gps-setting-exceptions.tsv`, and is excused nothing
 //! else: [`Declaration::unacted`] and [`Declaration::needless`] are both
 //! empty.  A provider may act on more than the images set; only a row
@@ -527,10 +529,39 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::RaimIsolated,
 ]);
 
-/// The settings a receiver's image sets that are a holder's to act
-/// on: those a command row of the field table holds and some image
-/// sets.
+/// The settings a receiver's image sets: those a command row of the
+/// field table holds or gives whose message a path of some image
+/// sends to set (`docs/firmware/gps.md`, "Every path to a setting").
 pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
+    Setting::MaskAngle,
+    Setting::PositionHold,
+    Setting::HeldPosition,
+    Setting::AltitudeHold,
+    Setting::TimeBase,
+    Setting::CableDelay,
+    Setting::PulseOffset,
+    Setting::PulseMode,
+    Setting::RaimAlgorithm,
+    Setting::RaimAlarmLimit,
+    Setting::Application,
+    Setting::InitialPosition,
+    Setting::SatelliteSelect,
+    Setting::ManualSatellites,
+    Setting::DopKind,
+    Setting::XdopHysteresis,
+    Setting::IgnoreList,
+    Setting::AlmanacUpdate,
+    Setting::AtmosphericCorrection,
+    Setting::FixAlgorithm,
+    Setting::EpochOffset,
+    Setting::HdopThreshold,
+    Setting::CorrectionThresholds,
+    Setting::OutputFormat,
+]);
+
+/// Of [`IMAGE_SETS`], those a holder acts on: some such row holds
+/// them.  A provider is held to each.
+pub const IMAGE_HOLDS: SettingSet = SettingSet::of(&[
     Setting::MaskAngle,
     Setting::PositionHold,
     Setting::HeldPosition,
@@ -634,7 +665,7 @@ pub struct Declaration {
     pub acts: SettingSet,
     /// Whether it makes the 1 PPS the engine's holder puts out.  One
     /// that does is held to [`PULSE_SETTINGS`] as to the rest of
-    /// [`IMAGE_SETS`]; one that does not is held to none of them, and
+    /// [`IMAGE_HOLDS`]; one that does not is held to none of them, and
     /// a row excusing it one is needless: the pulse's maker in its setup
     /// acts on them.
     pub makes_pulse: bool,
@@ -667,14 +698,14 @@ impl Declaration {
         self.fills.without(shown)
     }
 
-    /// The settings it is held to: [`IMAGE_SETS`], less
+    /// The settings it is held to: [`IMAGE_HOLDS`], less
     /// [`PULSE_SETTINGS`] unless it makes the pulse.
     #[must_use]
     pub const fn held(&self) -> SettingSet {
         if self.makes_pulse {
-            IMAGE_SETS
+            IMAGE_HOLDS
         } else {
-            IMAGE_SETS.without(PULSE_SETTINGS)
+            IMAGE_HOLDS.without(PULSE_SETTINGS)
         }
     }
 
@@ -707,6 +738,7 @@ impl Declaration {
 mod tests {
     use super::Declaration;
     use super::FieldSet;
+    use super::IMAGE_HOLDS;
     use super::IMAGE_SETS;
     use super::IMAGE_USES;
     use super::PULSE_SETTINGS;
@@ -858,10 +890,10 @@ mod tests {
             acts: hold,
             makes_pulse: true,
         };
-        assert_eq!(declaration.unacted(""), IMAGE_SETS.without(hold));
+        assert_eq!(declaration.unacted(""), IMAGE_HOLDS.without(hold));
         assert!(declaration.needless("").is_empty());
 
-        let rest = IMAGE_SETS
+        let rest = IMAGE_HOLDS
             .without(hold)
             .iter()
             .fold(std::string::String::new(), |table, setting| {
@@ -875,13 +907,13 @@ mod tests {
             name: "other",
             ..declaration
         };
-        assert_eq!(other.unacted(&table), IMAGE_SETS.without(hold));
+        assert_eq!(other.unacted(&table), IMAGE_HOLDS.without(hold));
 
         // A row for a setting acted on, and one for a setting no image
         // sets, are both needless.
         let stale = table.clone() + "one\tposition_hold\tstale\n";
         assert_eq!(declaration.needless(&stale), hold);
-        assert!(!IMAGE_SETS.contains(Setting::AltitudeHoldHeight));
+        assert!(!IMAGE_HOLDS.contains(Setting::AltitudeHoldHeight));
         let unset = SettingSet::of(&[Setting::AltitudeHoldHeight]);
         let unset_excused = table.clone() + "one\taltitude_hold_height\t-\n";
         assert_eq!(declaration.needless(&unset_excused), unset);
@@ -889,7 +921,7 @@ mod tests {
         // Acting on a setting no image sets is not, with the rest
         // acted on or excused; acting on it and being excused it is.
         let keen = Declaration {
-            acts: IMAGE_SETS.union(unset),
+            acts: IMAGE_HOLDS.union(unset),
             ..declaration
         };
         assert!(keen.unacted("").is_empty());
@@ -902,11 +934,13 @@ mod tests {
         assert!(also.needless(&table).is_empty());
         assert_eq!(also.needless(&unset_excused), unset);
 
-        // The kind of DOP and the ignore list are the engine's to act
-        // on: no provider is held to either, and one may act on them all
-        // the same.
-        assert!(!IMAGE_SETS.contains(Setting::DopKind));
-        assert!(!IMAGE_SETS.contains(Setting::IgnoreList));
+        // The kind of DOP and the ignore list, which the images set, are
+        // the engine's to act on: no provider is held to either, and one
+        // may act on them all the same.
+        assert!(IMAGE_SETS.contains(Setting::DopKind) && !IMAGE_HOLDS.contains(Setting::DopKind));
+        assert!(
+            IMAGE_SETS.contains(Setting::IgnoreList) && !IMAGE_HOLDS.contains(Setting::IgnoreList)
+        );
         let tabler = Declaration {
             acts: hold.with(Setting::DopKind).with(Setting::IgnoreList),
             ..declaration
@@ -915,33 +949,30 @@ mod tests {
         assert!(tabler.needless(&table).is_empty());
     }
 
-    /// Whoever makes the pulse acts on the pulse settings: a provider
-    /// that makes it is held to those the images set, and one that does
-    /// not is held to none of them, a row excusing it one being
-    /// needless.
+    /// Whoever makes the pulse acts on the pulse settings, all of which
+    /// the images set for a holder to act on: a provider that makes it
+    /// is held to them, and one that does not is held to none of them,
+    /// a row excusing it one being needless.
     #[test]
     fn the_pulse_settings_are_the_pulse_makers() {
-        let set = IMAGE_SETS.common(PULSE_SETTINGS);
+        assert_eq!(IMAGE_HOLDS.common(PULSE_SETTINGS), PULSE_SETTINGS);
         let maker = Declaration {
             name: "maker",
             fills: FieldSet::EMPTY,
             acts: SettingSet::EMPTY,
             makes_pulse: true,
         };
-        assert_eq!(maker.unacted("").common(PULSE_SETTINGS), set);
+        assert_eq!(maker.unacted("").common(PULSE_SETTINGS), PULSE_SETTINGS);
         let reader = Declaration {
             name: "reader",
             makes_pulse: false,
             ..maker
         };
         assert!(reader.unacted("").common(PULSE_SETTINGS).is_empty());
-        assert_eq!(reader.unacted(""), IMAGE_SETS.without(PULSE_SETTINGS));
-        let row = "reader\tpulse_offset\tmakes no pulse\n";
-        assert_eq!(
-            reader.needless(row),
-            SettingSet::of(&[Setting::PulseOffset])
-        );
-        assert!(maker.needless("maker\tpulse_offset\t-\n").is_empty());
+        assert_eq!(reader.unacted(""), IMAGE_HOLDS.without(PULSE_SETTINGS));
+        let row = "reader\tcable_delay\tmakes no pulse\n";
+        assert_eq!(reader.needless(row), SettingSet::of(&[Setting::CableDelay]));
+        assert!(maker.needless("maker\tcable_delay\t-\n").is_empty());
     }
 
     /// The setting exceptions table as it is: every row names a
@@ -958,7 +989,7 @@ mod tests {
             assert_eq!(cells.len(), EXCEPTION_CELLS, "{cells:?}");
             let setting = Setting::of_name(cells[1]);
             assert!(
-                setting.is_some_and(|setting| IMAGE_SETS.contains(setting)),
+                setting.is_some_and(|setting| IMAGE_HOLDS.contains(setting)),
                 "{cells:?}"
             );
             assert!(!cells[2].is_empty(), "{cells:?}");

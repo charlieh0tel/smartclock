@@ -17,6 +17,7 @@ use crate::source::announce;
 use crate::source::at_tick;
 use crate::time::GpsSeconds;
 use crate::time::LeapEvent;
+use crate::time::UnixSeconds;
 use crate::units::Nanoseconds;
 use crate::units::Seconds;
 
@@ -28,6 +29,17 @@ pub enum Relabel {
     /// Tick 0 is this second and each tick the next, whatever time the
     /// source gave, or none.
     Start(GpsSeconds),
+    /// Tick 0 is this UTC second and each tick the next, whatever time
+    /// the source gave, or none: [`Self::Start`] at the GPS second that
+    /// is this UTC second under the source's own GPS less UTC, as
+    /// frozen, the offset of the first record that had one.  Until a
+    /// record has had one, `assumed` stands for it.
+    StartUtc {
+        /// The UTC second of tick 0.
+        start: UnixSeconds,
+        /// GPS less UTC until the source has given one.
+        assumed: Seconds<i8>,
+    },
     /// The source's, moved by this much.
     Shift(Seconds<i64>),
 }
@@ -163,22 +175,37 @@ impl<S: Source> Source for FakeTime<S> {
             }
             Relabel::Start(start) => {
                 self.freeze(tick, record);
-                let Some(seconds) = at_tick(start, tick) else {
+                return started(start, tick, record);
+            }
+            Relabel::StartUtc { start, assumed } => {
+                self.freeze(tick, record);
+                let Some(start) = GpsSeconds::from_utc(start, self.frozen.unwrap_or(assumed))
+                else {
                     return Presence::Silent;
                 };
-                match &mut record.time {
-                    Some(time) => time.seconds = seconds,
-                    None => {
-                        record.time = Some(GpsTime {
-                            seconds,
-                            subsecond: Nanoseconds(0),
-                        });
-                    }
-                }
+                return started(start, tick, record);
             }
         }
         Presence::Fresh
     }
+}
+
+/// Gives `record` the time of `tick` where tick 0 is `start`; silence
+/// past the end of the count.
+fn started(start: GpsSeconds, tick: Tick, record: &mut Record) -> Presence {
+    let Some(seconds) = at_tick(start, tick) else {
+        return Presence::Silent;
+    };
+    match &mut record.time {
+        Some(time) => time.seconds = seconds,
+        None => {
+            record.time = Some(GpsTime {
+                seconds,
+                subsecond: Nanoseconds(0),
+            });
+        }
+    }
+    Presence::Fresh
 }
 
 /// Announces a leap second in the records of a source that announces
@@ -673,6 +700,37 @@ mod tests {
         assert_eq!(late.record(Tick(3), &mut record), Presence::Fresh);
         assert_eq!(record.utc_offset, Some(after));
         assert_eq!(record.leap, None);
+    }
+
+    /// A UTC start is the GPS second that is that UTC second under the
+    /// source's own offset, once it has given one, and under the one
+    /// assumed until then.
+    #[test]
+    fn a_utc_start_takes_the_sources_offset() {
+        const NOON: DateTime = DateTime::new(2030, 3, 4, 12, 0, 0).unwrap();
+        static TIMELESS: Record = Record::EMPTY;
+        let relabel = Relabel::StartUtc {
+            start: NOON.to_unix(),
+            assumed: Seconds(BEFORE.0 + 1),
+        };
+        let mut record = Record::EMPTY;
+
+        let mut started = FakeTime::new(scenario(RUN, &STEPS), relabel);
+        for tick in [0, 1, 7] {
+            assert_eq!(started.record(Tick(tick), &mut record), Presence::Fresh);
+            assert_eq!(record.utc_offset, Some(BEFORE));
+            assert_eq!(
+                read(&record),
+                DateTime::new(2030, 3, 4, 12, 0, u8::try_from(tick).unwrap()).unwrap()
+            );
+        }
+
+        let mut assumed = FakeTime::new(Fixed::new(RUN, &TIMELESS), relabel);
+        assert_eq!(assumed.record(Tick(3), &mut record), Presence::Fresh);
+        assert_eq!(
+            DateTime::of(record.time.unwrap().seconds, Seconds(BEFORE.0 + 1), None).unwrap(),
+            DateTime::new(2030, 3, 4, 12, 0, 3).unwrap()
+        );
     }
 
     /// A source that steps its offset with no leap second announced, as

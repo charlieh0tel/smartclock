@@ -68,7 +68,9 @@ pub(crate) struct Cli {
     pub(crate) saved: Option<Saved>,
 
     /// Relabels the provider's time: its first second is this UTC
-    /// second (RFC 3339, such as 2027-12-31T23:58:00Z).
+    /// second (RFC 3339, such as 2027-12-31T23:58:00Z), under the
+    /// provider's own GPS less UTC, which a recording or gpsd gives in
+    /// its first record that has one; until then it is taken to be 18.
     #[arg(long, value_name = "RFC3339")]
     pub(crate) fake_start: Option<Timestamp>,
 

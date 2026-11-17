@@ -1624,7 +1624,11 @@ stands in for one.
   date, drops the source's leap second, the event and its step, and
   freezes the offset at the one in effect at the fake start, the first
   record's, whether the source announces its steps or, as a receiver
-  without `NAV-TIMELS`, gives the count alone: UTC has
+  without `NAV-TIMELS`, gives the count alone.  A fake start given in
+  UTC, as the feed's is, is the GPS second that UTC second is under
+  that frozen offset, and under an assumed one until the source has
+  given one: a recording made under 17 leap seconds starts at the UTC
+  second asked for, not one after it.  UTC has
   a leap second only where a day ends, and a real one moved by an
   arbitrary whole number of seconds lands in the middle of a day of
   the UTC the new time reads.  A leap second under a fake time is one

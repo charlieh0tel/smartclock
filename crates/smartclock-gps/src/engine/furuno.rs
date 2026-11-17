@@ -673,9 +673,12 @@ impl Body {
     }
 }
 
-/// A value of tenths as `%+0W.1f` prints it, its `+` made a `0`, as the
-/// GT-8031 gives a height (GT pp. 11 and 19): a sign, the whole part to
-/// `width` less three digits, a point and the tenth.
+/// A value of tenths as the GT-8031 gives a height in `width` characters
+/// (GT pp. 11 and 19): a negative one a `-`, the whole part to `width`
+/// less three digits, a point and the tenth; a positive one its whole
+/// part to a digit more, no sign.  So a positive value is `%+0W.1f`'s,
+/// its `+` made a `0`, while its whole part fits that, and `GGA`'s
+/// geoid separation reaches GT p. 19's 9999.9 in six characters.
 struct SignedTenths {
     tenths: i32,
     width: usize,
@@ -683,12 +686,16 @@ struct SignedTenths {
 
 impl core::fmt::Display for SignedTenths {
     fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> FmtResult {
-        let sign = if self.tenths < 0 { '-' } else { '0' };
         let magnitude = self.tenths.unsigned_abs();
         let whole = magnitude / TENTHS;
         let tenth = magnitude % TENTHS;
-        let digits = self.width - 3;
-        write!(formatter, "{sign}{whole:0digits$}.{tenth}")
+        let digits = self.width - 2;
+        if self.tenths < 0 {
+            let digits = digits - 1;
+            write!(formatter, "-{whole:0digits$}.{tenth}")
+        } else {
+            write!(formatter, "{whole:0digits$}.{tenth}")
+        }
     }
 }
 
@@ -1317,6 +1324,7 @@ impl State {
     fn gga<O: Output + ?Sized>(&self, record: &Record, out: &mut O) {
         const ALTITUDE_LEAST: i32 = -9999;
         const ALTITUDE_MOST: i32 = 40_000;
+        // The geoid separation's range in six characters (GT p. 19).
         const SEPARATION_LEAST: i32 = -9999;
         const SEPARATION_MOST: i32 = 99_999;
         let utc = self.utc(record);

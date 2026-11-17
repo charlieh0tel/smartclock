@@ -1914,6 +1914,35 @@ fn a_satellite_at_the_mask_is_tracked() {
     assert_eq!(channels, [2, 3, 0, 0, 0, 0, 0, 0]);
 }
 
+/// UT p. 6.21 and VP p. 27: a UT Plus's mask angle is 0 at power-up and
+/// after `@@Cf`, a VP's 10, and each tracks from its own.
+#[test]
+fn the_mask_angle_starts_at_the_models_default() {
+    let mut record = full();
+    record.satellites = crate::record::Satellites::EMPTY;
+    for (id, elevation) in [(1, 5), (2, 15)] {
+        record.satellites.push(
+            Satellite::new(prn(id), Degrees(elevation), Degrees(0)).tracked(DecibelHertz(40)),
+        );
+    }
+    for (identity, mask, tracked) in [
+        (&UT_PLUS_2_2, 0, [1, 2, 0, 0, 0, 0, 0, 0]),
+        (&VP_EIGHT, 10, [2, 0, 0, 0, 0, 0, 0, 0]),
+    ] {
+        let mut engine = fixing(identity);
+        assert_eq!(engine.settings().mask_angle, Degrees(mask));
+        let frames = ask(&mut engine, &record, EA_POSITION_STATUS, &[0]);
+        let data = only(&frames, EA_POSITION_STATUS);
+        let channels = data[36..68].iter().step_by(4).copied().collect::<Vec<_>>();
+        assert_eq!(channels, tracked);
+        ask(&mut engine, &record, AG_MASK_ANGLE, &[20]);
+        ask(&mut engine, &record, CF_SET_TO_DEFAULTS, &[]);
+        let frames = ask(&mut engine, &record, AG_MASK_ANGLE, &[0xff]);
+        assert_eq!(only(&frames, AG_MASK_ANGLE), [mask]);
+        assert_eq!(engine.settings().mask_angle, Degrees(mask));
+    }
+}
+
 /// The events one command made.
 fn tell(engine: &mut Engine, id: MessageId, data: &[u8]) -> Vec<Event> {
     engine
@@ -2040,14 +2069,16 @@ fn defaults() -> Settings {
 }
 
 /// [`defaults`] as `identity` has them: a UT Plus, with no `@@Ah`,
-/// tracks the eight highest in the sky (UT p. 6.18).
+/// tracks the eight highest in the sky (UT p. 6.18), from the horizon
+/// (UT p. 6.21).
 fn defaults_of(identity: &Identity) -> Settings {
-    let satellite_select = match identity.model() {
-        Model::VpSix | Model::VpEight => SatelliteSelect::BestGeometry,
-        Model::UtPlus => SatelliteSelect::HighestInSky,
+    let (satellite_select, mask_angle) = match identity.model() {
+        Model::VpSix | Model::VpEight => (SatelliteSelect::BestGeometry, Degrees(10)),
+        Model::UtPlus => (SatelliteSelect::HighestInSky, Degrees(0)),
     };
     Settings {
         satellite_select,
+        mask_angle,
         ..defaults()
     }
 }

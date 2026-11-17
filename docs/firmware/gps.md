@@ -1359,7 +1359,8 @@ specification; in short:
   UTC read alike.  A UT Plus model is always fixing, so has in effect
   the one clock, at 12:00:00 on the day GPS time starts, running,
   until a capture of one says otherwise; its `@@Ac` sets the date
-  alone.  The position `@@Ad`, `@@Ae` and `@@Af` give to
+  alone.  Its `@@Ag` mask angle is 0 at power-up and after `@@Cf`
+  (UT p. 6.21), where a VP's is 10 (VP p. 27).  The position `@@Ad`, `@@Ae` and `@@Af` give to
   start from is the one reported while the record has none (VP
   pp. 17, 21 and 25).  `@@Bc` and `@@Bd` in mode 1 are sent again in
   each second their data differs from what was last sent (VP pp. 77

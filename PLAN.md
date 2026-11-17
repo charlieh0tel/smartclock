@@ -1280,7 +1280,9 @@ stands in for one.
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
   UT Plus's only selection, which has no `@@Ah` and "will attempt to
   track the eight satellites that are highest in the sky", UT p. 6.18;
-  its `satellite_select` reads so), the
+  its `satellite_select` reads so; its mask angle starts at 0, UT
+  p. 6.21, where a VP's starts at 10, at power-up and after `@@Cf`
+  both, fixed 2026-11-16 from 10 for every model), the
   automatic switch to altitude hold above `@@Al`'s PDOP, `@@Bb` sent on
   change (compared only at the model's satellite alert computation,
   every six seconds: the middle of an M12+'s "approximately once every

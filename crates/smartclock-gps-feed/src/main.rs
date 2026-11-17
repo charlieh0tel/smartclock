@@ -21,7 +21,6 @@ use std::sync::Mutex;
 use anyhow::Context as _;
 use anyhow::Result;
 use clap::Parser as _;
-use smartclock_gps::source::Tick;
 
 use crate::cli::Cli;
 use crate::cli::ProviderSpec;
@@ -52,10 +51,7 @@ fn main() -> Result<()> {
     let clock = SystemClock::new();
     let first = first_second(&clock, phase(kind(&config.provider)));
     let Built { nest, kind } = build(&config.provider, config.fake_start, utc_second(first))?;
-    let shared = Arc::new(Mutex::new(Shared {
-        nest,
-        tick: Tick(0),
-    }));
+    let shared = Arc::new(Mutex::new(Shared::new(nest)));
     if let ProviderSpec::Gpsd(gpsd) = &config.provider {
         spawn_gpsd(
             gpsd.clone(),

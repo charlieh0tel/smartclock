@@ -33,7 +33,7 @@ Af	command	height	4	4	1	-	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-37
 Af	command	height type	8	1	1	-	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored:reported while the record has no position;held:initial_position	-	-	engine;holder	-
 Af	response	ellipsoid height	4	4	1	-	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.ellipsoid;setting.As;echo;computed	-	EllipsoidHeight	-	-
 Af	response	mean sea level height	8	4	1	-	-	VP	26	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	record.position.mean_sea_level;setting.As;echo;computed	-	MeanSeaLevelHeight	-	-
-Ag	command	mask angle	4	1	1	-	-	VP	28	-	-	-	honored;held:mask_angle	-	-	engine;holder	-
+Ag	command	mask angle	4	1	1	-	-	VP	28	z3805a-3543b,z3801a-3543,58503a-3704	-	-	honored;held:mask_angle	-	-	engine;holder	-
 Ag	response	mask angle	4	1	1	-	-	VP	28	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	reported	setting.Ag	-	-	-	-
 Ah	command	select option	4	1	1	-	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored:2, highest in sky;held:satellite_select	-	-	engine;holder	-
 Ah	response	select option	4	1	1	-	-	VP	30	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ah	-	-	-	-
@@ -47,8 +47,8 @@ Ak	command	xDOP hysteresis	4	2	1	-	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,
 Ak	response	xDOP hysteresis	4	2	1	-	-	VP	38	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ak	-	-	-	-
 Al	command	xDOP threshold	4	2	1	-	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
 Al	response	xDOP threshold	4	2	1	-	-	VP	40	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Al	-	-	-	-
-Am	command	constant	4	1	1	-	-	VP	42	-	-	-	honored	-	-	engine	0xff, with the list zero, asks
-Am	command	ignore list	5	4	1	-	-	VP	42	-	-	-	honored;given:ignore_list	-	-	engine	-
+Am	command	constant	4	1	1	-	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704	-	-	honored	-	-	engine	0xff, with the list zero, asks
+Am	command	ignore list	5	4	1	-	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704	-	-	honored;given:ignore_list	-	-	engine	-
 Am	response	constant	4	1	1	-	-	VP	42	-	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	setting.Am	-	-	-	-
 Am	response	ignore list	5	4	1	-	-	VP	42	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Am	-	-	-	-
 An	command	almanac update	4	1	1	-	-	VP	44	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	held:almanac_update	-	-	holder	-
@@ -88,7 +88,7 @@ Ax	command	epoch offset	4	2	1	-	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z38
 Ax	response	epoch offset	4	2	1	-	-	VP	65	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	setting.Ax	-	-	-	-
 Ay	command	pulse offset	4	4	1	-	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	held:pulse_offset	-	-	holder	-
 Ay	response	pulse offset	4	4	1	-	-	VP	67	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	console	setting.Ay	-	-	-	-
-Az	command	cable delay	4	4	1	-	-	VP	69	-	-	-	held:cable_delay	-	-	holder	-
+Az	command	cable delay	4	4	1	-	-	VP	69	z3805a-3543b,z3801a-3543,58503a-3704	-	-	held:cable_delay	-	-	holder	-
 Az	response	cable delay	4	4	1	-	-	VP	69	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	z3805a-3543b=reported,z3801a-3543=reported,58503a-3704=reported,z3817a-3752=control	setting.Az	-	-	-	-
 Ba	command	rate	4	1	1	-	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
 Ba	response	month	4	1	1	-	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	clock	-	Time	-	-
@@ -145,7 +145,7 @@ Bd	response	EEPROM time of almanac	14	1	1	-	-	VP	79	z3805a-3543b,z3801a-3543,585
 Bd	response	EEPROM satellites available	15	1	1	-	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held;computed	-	Almanac	-	-
 Bd	response	EEPROM satellites in almanac	16	4	1	-	-	VP	79	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.almanac.held	-	Almanac	-	-
 Bh	command	rate	4	1	1	-	-	VP	90	-	-	-	honored	-	-	engine	answered by @@Ce
-Bj	command	mode	4	1	1	-	-	VP	94	-	-	-	honored:polled only, nothing to do	-	-	engine	-
+Bj	command	mode	4	1	1	-	-	VP	94	z3805a-3543b,z3801a-3543,58503a-3704	-	-	honored:polled only, nothing to do	-	-	engine	-
 Bj	response	leap second status	4	1	1	-	-	VP	94	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.leap;computed	-	Leap	-	-
 Bk	command	rate	4	1	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	-	honored	-	-	engine	-
 Bk	response	GDOP	4	2	1	-	-	VP	96	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.geometric	-	GeometricDop	-	-
@@ -295,15 +295,15 @@ set	command	A almanac validity	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	1 or 2
 set	command	D PDOP threshold	2	1	1	-	-	GT	11	-	-	-	honored:a 2D fix above it, none 3D at 0	-	-	engine	-
 set	command	G geodetic ID	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
 set	command	H altitude	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	above mean sea level
-set	command	M elevation mask	2	1	1	-	-	GT	11	-	-	-	honored:satellites below it left out of the fix;held:mask_angle	-	-	engine;holder	-
+set	command	M elevation mask	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:satellites below it left out of the fix;held:mask_angle	-	-	engine;holder	-
 set	command	S signal mask	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
 set	command	T 1PPS correction	2	1	1	-	-	GT	11	-	-	-	held:cable_delay;held:pulse_offset	-	-	holder	t in tenths of a microsecond
-set	command	U deleted satellites	2	1	1	-	-	GT	11	-	-	-	honored:left out of the fix;given:ignore_list	-	-	engine	-
+set	command	U deleted satellites	2	1	1	-	-	GT	11	z3815a-4010	-	-	honored:left out of the fix;given:ignore_list	-	-	engine	-
 set	command	W smoothing index	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	-
 set	command	X dynamic index	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	-
 set	command	Z observation point mode	2	1	1	-	-	GT	12	z3815a-4010	-	-	honored:tps mode and the position reported;held:position_hold	-	-	engine;holder	-
 set	command	Z3 averaging time	2	1	1	-	-	GT	12	-	-	-	stored	-	-	gap	the hours after Z3
-set	command	t 1PPS correction	2	1	1	-	-	GT	12	-	-	-	held:cable_delay;held:pulse_offset	-	-	holder	negative earlier
+set	command	t 1PPS correction	2	1	1	-	-	GT	12	z3815a-4010	-	-	held:cable_delay;held:pulse_offset	-	-	holder	negative earlier
 int	command	GGA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-
 int	command	ZDA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored:kept, ZDA not sent	-	-	engine	the image does not decode ZDA
 int	command	GSA interval	2	1	1	-	-	GT	13	z3815a-4010	-	-	honored	-	-	engine	-

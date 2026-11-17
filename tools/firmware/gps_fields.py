@@ -6,7 +6,7 @@
 GPS engine of crates/smartclock-gps speaks, against what the images do:
 which bytes of each message an image's own decoders read, measured by
 running them in Unicorn, what becomes of each field read, and which
-commands its request scripts send.
+commands its request scripts and its code send.
 
     uv run -q tools/firmware/gps_fields.py [--check]
 
@@ -108,8 +108,16 @@ on each response with a command of the same bytes and the offsets of
 the response it reads are noted.  The frame's trailer, compared too,
 has no row.
 
-A command field's images are those whose scripts or lists send the
-command to set it, mode 0 or 2 (docs/firmware/gps.md, "Requests"); a
+A command field's images are those that send the command to set it,
+mode 0 or 2 (docs/firmware/gps.md, "Requests"): a step of a script or
+a list, or a request the image's code posts.  That is a call of
+gpsx_send whose code and mode are constants, found by a scan of the
+primary's instructions, or the request of a SCPI descriptor that
+names.tsv labels and whose flags send it to the GPS, which
+pll_scpi_send_to_loop posts in mode 0.  The console's gps_command_send,
+which posts whatever request the console asks for, is left out, and so
+is a post the GPS task refuses: the Z3817A's gps_request_admitted takes
+a sequence's or a setting's request only if its list has the code.  A
 query sends no field.
 
 The engine column says where crates/smartclock-gps/src/engine.rs gets
@@ -355,8 +363,8 @@ class Entry:
 
 @dataclass(frozen=True)
 class Requests:
-    """An image's message table and the IDs its scripts and lists send,
-    each with the modes it is sent in."""
+    """An image's message table and the IDs its scripts and lists send
+    and its code posts, each with the modes it is sent in."""
 
     entries: tuple[Entry, ...]
     sent: dict[str, frozenset[int]]
@@ -429,7 +437,7 @@ class Row:
 
 def requests(image: str) -> Requests:
     """An image's message table and what it sends, from dump-oncore's
-    text."""
+    text, and what its code posts (posted)."""
     entries = []
     sent: dict[str, set[int]] = {}
     for line in (ONCORE / f'{image}.txt').read_text().splitlines():
@@ -447,7 +455,105 @@ def requests(image: str) -> Requests:
         elif line.startswith(('script ', 'list ')):
             for sender, mode in re.findall(r' (\w\w)/(\d)', line):
                 sent.setdefault(sender, set()).add(int(mode))
+    by_index = {entry.index: entry.id for entry in entries}
+    for code, mode in posted(image):
+        if code in by_index:
+            sent.setdefault(by_index[code], set()).add(mode)
     return Requests(tuple(entries), {sender: frozenset(modes) for sender, modes in sent.items()})
+
+
+# How an image's code posts a request to the GPS task besides its
+# scripts' and lists' steps (gps.md, "Requests"): a call of POSTER, its
+# code a word and its mode a byte, the first two arguments pushed last;
+# and the SCPI descriptors' requests, which pll_scpi_send_to_loop posts
+# in SCPI_MODE.  A descriptor is a label of names.tsv named as
+# SCPI_DESCRIPTOR, its first byte its type: of each type that sends one,
+# where its flags word is, the request byte after it
+# (rewritten/common/types/scpi.h, scpi_setting_param.h).  It sends its
+# request when its flags have SEND_TO_GPS (rewritten/common/pllc.h).
+POSTER = 'gpsx_send'
+POSTER_ARGUMENTS = 2
+SCPI_DESCRIPTOR = re.compile(r'scpi_param_\w+')
+DESCRIPTOR_FLAGS = {0: 0x1E, 1: 0x14, 3: 0x1E}
+SEND_TO_GPS = 1
+SCPI_MODE = 0
+# The codes the GPS task takes from a sequence or a setting, where an
+# image keeps a list of them (gps_request_admitted, in the Z3817A 3752's
+# gps_requests.c); a word each, to REQUEST_NONE.
+ADMITTED = 'gps_admitted_requests'
+
+
+class Posts(record_access.Scan):
+    """record_access's scan, noting at each call of an image's POSTER
+    the values its first arguments were pushed with, None where the scan
+    does not follow one: (function, call, values)."""
+
+    def __init__(self, functions: dict[int, str], poster: int) -> None:
+        super().__init__(functions, 0, 0, {})
+        self.poster = poster
+        self.function: int | None = None
+        self.pushes: list[int | None] = []
+        self.found: list[tuple[str, int, tuple[int | None, ...]]] = []
+
+    def step(self, function: int, address: int, mnemonic: str, operands: list[str]) -> None:
+        if function != self.function:
+            self.function, self.pushes = function, []
+        pushed = None
+        if len(operands) == 2 and operands[1] == '%sp@-':
+            pushed = [self.value(operands[0])]
+        elif operands == ['%sp@-'] and mnemonic.startswith('clr'):
+            pushed = [0]
+        elif mnemonic == 'pea':
+            pushed = [None]
+        callee = None
+        if mnemonic.startswith(('jsr', 'bsr')):
+            target = record_access.ABSOLUTE.fullmatch(operands[0]) or re.fullmatch(r'%pc@\((0x[0-9a-f]+)\)', operands[0])
+            register = re.fullmatch(r'%(a\d)@', operands[0])
+            callee = int(target[1], 16) if target else self.registers.get(register[1]) if register else None
+        super().step(function, address, mnemonic, operands)
+        self.pushes += pushed or []
+        if callee is not None:
+            if callee == self.poster:
+                values = tuple(reversed(self.pushes[-POSTER_ARGUMENTS:]))
+                self.found.append((self.functions[function], address, values))
+            self.pushes = []
+
+
+def labels(image: str) -> dict[str, int]:
+    """The primary's labels by name, from names.tsv."""
+    found = {}
+    for line in (FIRMWARE / 'analysis' / image / 'names.tsv').read_text().splitlines():
+        cells = line.split('\t')
+        if line.startswith('#') or len(cells) < 3 or cells[1] != 'label' or '::' in cells[0]:
+            continue
+        found.setdefault(cells[2], int(cells[0], 16))
+    return found
+
+
+def posted(image: str) -> set[tuple[int, int]]:
+    """The requests an image's code posts, each a code and a mode: those
+    of the calls of its POSTER whose code and mode are constants, the
+    console's gps_command_send, which posts what the console asks,
+    among those left out, and those of its SCPI descriptors; each as
+    the GPS task admits it."""
+    rom = (FIRMWARE / 'images' / f'{image}.bin').read_bytes()
+    scan = Posts(record_access.primary_functions(image), names(image)[POSTER])
+    scan.run(record_access.disassemble(image), image)
+    found = {values for _, _, values in scan.found if None not in values}
+    for name, at in labels(image).items():
+        if not SCPI_DESCRIPTOR.fullmatch(name) or at >= len(rom) or rom[at] not in DESCRIPTOR_FLAGS:
+            continue
+        flags, code = struct.unpack_from('>HB', rom, at + DESCRIPTOR_FLAGS[rom[at]])
+        if flags & SEND_TO_GPS and code != REQUEST_NONE:
+            found.add((code, SCPI_MODE))
+    admitted = labels(image).get(ADMITTED)
+    if admitted is None:
+        return found
+    codes = set()
+    while (code := struct.unpack_from('>H', rom, admitted)[0]) != REQUEST_NONE:
+        codes.add(code)
+        admitted += 2
+    return {(code, mode) for code, mode in found if code in codes}
 
 
 class Machine:
@@ -1144,9 +1250,9 @@ def nmea_table(rom: bytes) -> dict[str, Sentence]:
 
 
 def nmea_sent(rom: bytes) -> set[tuple[str, str | None]]:
-    """What the image's scripts and lists send to set, mode 0 or 2: each
-    sentence by its name and, for set and int, the parameter, the
-    sentence alone for the rest."""
+    """What the image's scripts and lists send to set, mode 0 or 2, and
+    what its code posts to set (posted): each sentence by its name and,
+    for set and int, the parameter, the sentence alone for the rest."""
     def long(at: int) -> int:
         return struct.unpack_from('>I', rom, at)[0]
 
@@ -1158,7 +1264,7 @@ def nmea_sent(rom: bytes) -> set[tuple[str, str | None]]:
             break
         translations.setdefault((code, mode), (to, to_mode))
         at += NMEA_TRANSLATION
-    found = set()
+    requests = posted(NMEA_IMAGE)
     for line in (FIRMWARE / 'analysis' / NMEA_IMAGE / 'names.tsv').read_text().splitlines():
         cells = line.split('\t')
         if len(cells) < 3 or cells[1] != 'label' or not NMEA_SCRIPTS.fullmatch(cells[2]):
@@ -1167,19 +1273,20 @@ def nmea_sent(rom: bytes) -> set[tuple[str, str | None]]:
         while step := long(at):
             at += VECTOR_SIZE
             # gps_script_message's step is in RAM, a request's own.
-            if step >= len(rom):
-                continue
-            code, mode = struct.unpack_from('>HB', rom, step)
-            code, mode = translations.get((code, mode), (code, mode))
-            if mode not in SET_MODES or not NMEA_FIRST_CODE <= code < NMEA_FIRST_CODE + NMEA_CODES:
-                continue
-            descriptor = NMEA_DESCRIPTORS + (code - NMEA_FIRST_CODE) * NMEA_DESCRIPTOR
-            address = rom[long(descriptor) : rom.index(0, long(descriptor))].decode('ascii')
-            name, _, parameter = address.partition(',')
-            if name in ('set', 'int'):
-                found.add((name, parameter[:1] if name == 'set' else parameter[:3]))
-            elif parameter == '' and name != address:
-                found.add((name, None))
+            if step < len(rom):
+                requests.add(struct.unpack_from('>HB', rom, step))
+    found = set()
+    for request in requests:
+        code, mode = translations.get(request, request)
+        if mode not in SET_MODES or not NMEA_FIRST_CODE <= code < NMEA_FIRST_CODE + NMEA_CODES:
+            continue
+        descriptor = NMEA_DESCRIPTORS + (code - NMEA_FIRST_CODE) * NMEA_DESCRIPTOR
+        address = rom[long(descriptor) : rom.index(0, long(descriptor))].decode('ascii')
+        name, _, parameter = address.partition(',')
+        if name in ('set', 'int'):
+            found.add((name, parameter[:1] if name == 'set' else parameter[:3]))
+        elif parameter == '' and name != address:
+            found.add((name, None))
     return found
 
 
@@ -1336,8 +1443,8 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
 
 
 def nmea_trace(rows: list[Row]) -> tuple[Traced, set[tuple[str, str | None]], dict[str, Sentence]]:
-    """The Z3815A's Traced, its sentences' fields by index, and what its
-    scripts send.  Where a field is stored is where RAM differs after a
+    """The Z3815A's Traced, its sentences' fields by index, and what it
+    sends to set.  Where a field is stored is where RAM differs after a
     second's sentences are decoded with the field's value another, each
     of its variants, from a second decoded before; its readers are the scan's, the decoding
     functions (NMEA_DECODING) left out."""
@@ -1658,7 +1765,7 @@ def images_of(
 ) -> list[str]:
     """Sets each row's images from the images; what stops that.  A
     sentence's are the Z3815A's alone: a response field its decoders
-    read, a command field its scripts send to set, a parameter of set or
+    read, a command field it sends to set, a parameter of set or
     int by its letter or name, the first word of the row's field."""
     problems = []
     nmea_reads = reads.get(NMEA_IMAGE, {})

@@ -531,10 +531,12 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
 /// on: those a command row of the field table holds and some image
 /// sets.
 pub const IMAGE_SETS: SettingSet = SettingSet::of(&[
+    Setting::MaskAngle,
     Setting::PositionHold,
     Setting::HeldPosition,
     Setting::AltitudeHold,
     Setting::TimeBase,
+    Setting::CableDelay,
     Setting::PulseOffset,
     Setting::PulseMode,
     Setting::RaimAlgorithm,
@@ -879,9 +881,9 @@ mod tests {
         // sets, are both needless.
         let stale = table.clone() + "one\tposition_hold\tstale\n";
         assert_eq!(declaration.needless(&stale), hold);
-        assert!(!IMAGE_SETS.contains(Setting::MaskAngle));
-        let unset = SettingSet::of(&[Setting::MaskAngle]);
-        let unset_excused = table.clone() + "one\tmask_angle\t-\n";
+        assert!(!IMAGE_SETS.contains(Setting::AltitudeHoldHeight));
+        let unset = SettingSet::of(&[Setting::AltitudeHoldHeight]);
+        let unset_excused = table.clone() + "one\taltitude_hold_height\t-\n";
         assert_eq!(declaration.needless(&unset_excused), unset);
 
         // Acting on a setting no image sets is not, with the rest

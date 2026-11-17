@@ -1243,7 +1243,9 @@ stands in for one.
   it or set it, what they use it for and where the model gets it.  The
   readers are measured, each image's own decoders run in Unicorn on a
   message with the reads of its bytes noted, not read off the C, and
-  the setters come from the request scripts.  The use, decided
+  the setters come from the request scripts and lists and from the
+  requests the images' code posts, `gpsx_send`'s calls and the SCPI
+  descriptors' requests, found in the ROM.  The use, decided
   2026-11-14, is what the work list goes by: a field counts as a gap
   only where an image uses it for control or reports it, not where it
   is only copied out, kept or shown by a console word.  Where a field

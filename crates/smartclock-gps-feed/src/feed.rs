@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::PoisonError;
 use std::time::Duration;
+use std::time::Instant;
 use std::time::SystemTime;
 
 use jiff::Timestamp;
@@ -31,9 +32,13 @@ use crate::provider::complete_scene;
 /// receiver's epoch arrives some time after the second it is of, and
 /// is the next second's to take if taken at its start.
 const LIVE_PHASE: Duration = Duration::from_millis(500);
-/// How late a second may be begun before the clock is taken to have
-/// jumped, and the seconds are counted again from now.
+/// How late a second may be begun before the loop is taken to have
+/// fallen behind, and the seconds it missed are skipped.
 const LATEST_START: Duration = Duration::from_secs(2);
+/// How far the host's clock may move against the monotonic one, between
+/// two readings, before it is taken to have been stepped, and the
+/// seconds are counted again from now.
+const LARGEST_STEP: Duration = Duration::from_secs(1);
 /// How long a live provider may give nothing before it is reported.
 const SILENCE: u64 = 3;
 const NANOSECONDS_PER_MILLISECOND: u128 = 1_000_000;
@@ -41,19 +46,38 @@ const ONE_SECOND: Duration = Duration::from_secs(1);
 
 /// The time, as the feed reads it.
 pub(crate) trait Clock {
-    /// Since the Unix epoch.
+    /// Since the Unix epoch, by the host's clock, which can be stepped
+    /// either way.
     fn now(&self) -> Duration;
+
+    /// Since some fixed instant, by a clock that is never stepped.
+    fn monotonic(&self) -> Duration;
 }
 
-/// The host's clock.
+/// The host's clocks.
 #[derive(Debug)]
-pub(crate) struct SystemClock;
+pub(crate) struct SystemClock {
+    /// What [`Clock::monotonic`] counts from.
+    started: Instant,
+}
+
+impl SystemClock {
+    pub(crate) fn new() -> Self {
+        Self {
+            started: Instant::now(),
+        }
+    }
+}
 
 impl Clock for SystemClock {
     fn now(&self) -> Duration {
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or_default()
+    }
+
+    fn monotonic(&self) -> Duration {
+        self.started.elapsed()
     }
 }
 
@@ -221,6 +245,68 @@ impl Feed {
     fn poll(&mut self, now: Milliseconds<u64>, out: &mut Frames) {
         self.engine.poll(now, out);
     }
+
+    /// Passes over `seconds` ticks unstepped.
+    const fn skip(&mut self, seconds: u64) {
+        self.tick = self.tick.saturating_add(seconds);
+    }
+}
+
+/// Where the feed counts its seconds from, on the host's clock, and
+/// how that clock stood against the monotonic one when last read.
+#[derive(Debug)]
+struct Pace {
+    /// When tick 0 was, or would have been had the count always run as
+    /// it runs now.
+    origin: Duration,
+    /// How far into each second a tick is.
+    phase: Duration,
+    /// The host's clock less the monotonic one, in nanoseconds.
+    skew: i128,
+}
+
+/// The host's clock, and it less the monotonic one in nanoseconds.
+fn skew(clock: &dyn Clock) -> (Duration, i128) {
+    let now = clock.now();
+    (now, nanoseconds(now) - nanoseconds(clock.monotonic()))
+}
+
+fn nanoseconds(duration: Duration) -> i128 {
+    i128::try_from(duration.as_nanos()).unwrap_or(i128::MAX)
+}
+
+impl Pace {
+    fn new(clock: &dyn Clock, origin: Duration, phase: Duration) -> Self {
+        Self {
+            origin,
+            phase,
+            skew: skew(clock).1,
+        }
+    }
+
+    /// When tick `elapsed` is due.
+    fn due(&self, elapsed: u32) -> Duration {
+        self.origin + ONE_SECOND * elapsed
+    }
+
+    /// Reads the host's clock.  If it was stepped since it was last
+    /// read, either way, the seconds are counted again from the next
+    /// whole second, `elapsed` ticks having been counted already: a
+    /// step is neither caught up nor waited out.
+    fn now(&mut self, clock: &dyn Clock, elapsed: u32) -> Duration {
+        let (now, skew) = skew(clock);
+        let moved = skew - self.skew;
+        self.skew = skew;
+        if moved.unsigned_abs() > LARGEST_STEP.as_nanos() {
+            let way = if moved < 0 { "back" } else { "ahead" };
+            event(format_args!(
+                "the clock stepped {way} {} ms; counting seconds again from now",
+                moved.unsigned_abs() / NANOSECONDS_PER_MILLISECOND
+            ));
+            self.origin = next_second(now, self.phase).saturating_sub(ONE_SECOND * elapsed);
+        }
+        now
+    }
 }
 
 /// How far into each second a provider of `kind` is taken.
@@ -267,6 +353,10 @@ fn log_line<W: Write>(log: &mut Option<WireLog<W>>, at: Duration, direction: &st
 /// Runs `feed` against `transport` on `clock`: a second each whole
 /// second of it, `phase` in, until a recording ends or, if given,
 /// `seconds` have been stepped.
+///
+/// A step of the clock, either way, counts the seconds again from now.
+/// A loop that fell behind with the clock unstepped skips the seconds
+/// it missed, so a made-up sky's time stays the clock's.
 pub(crate) fn run<W: Write>(
     feed: &mut Feed,
     transport: &mut dyn Transport,
@@ -275,39 +365,42 @@ pub(crate) fn run<W: Write>(
     phase: Duration,
     seconds: Option<u64>,
 ) -> End {
-    let mut origin = next_second(clock.now(), phase);
+    let mut pace = Pace::new(clock, next_second(clock.now(), phase), phase);
     let mut frames = Frames::default();
     let mut inbound = Vec::new();
-    loop {
+    'seconds: loop {
         if seconds.is_some_and(|seconds| feed.tick >= seconds) {
             return End::Seconds;
         }
         let elapsed = u32::try_from(feed.tick).unwrap_or(u32::MAX);
-        let mut due = origin + ONE_SECOND * elapsed;
         loop {
-            let now = clock.now();
+            let now = pace.now(clock, elapsed);
+            let due = pace.due(elapsed);
             if now >= due {
-                if now - due > LATEST_START {
-                    event("the clock jumped; counting seconds again from now");
-                    origin = next_second(now, phase) - ONE_SECOND * elapsed;
-                    due = origin + ONE_SECOND * elapsed;
-                    continue;
+                let late = now - due;
+                if late > LATEST_START {
+                    event(format_args!(
+                        "the feed fell {} ms behind; the seconds missed are skipped",
+                        late.as_millis()
+                    ));
+                    feed.skip(late.as_secs());
+                    continue 'seconds;
                 }
                 break;
             }
             inbound.clear();
             transport.read(&mut inbound, due - now);
-            let now = clock.now();
+            let now = pace.now(clock, elapsed);
             if inbound.is_empty() {
-                feed.poll(since(origin, now), &mut frames);
+                feed.poll(since(pace.origin, now), &mut frames);
             } else {
                 log_line(log, now, "to", &inbound);
-                feed.receive(&inbound, since(origin, now), &mut frames);
+                feed.receive(&inbound, since(pace.origin, now), &mut frames);
             }
             send(&mut frames, transport, log, now);
         }
-        let now = clock.now();
-        let presence = feed.second(since(origin, now), &mut frames);
+        let now = pace.now(clock, elapsed);
+        let presence = feed.second(since(pace.origin, now), &mut frames);
         send(&mut frames, transport, log, now);
         if presence == Presence::Silent && feed.kind == Kind::Recording {
             event(format_args!(
@@ -324,6 +417,7 @@ mod tests {
     use super::Clock;
     use super::End;
     use super::Feed;
+    use super::ONE_SECOND;
     use super::WireLog;
     use super::run;
     use crate::cli::EngineSpec;
@@ -358,13 +452,34 @@ mod tests {
     use std::sync::Mutex;
     use std::time::Duration;
 
-    /// The test's clock: it moves only as the transport waits.
+    /// The test's clocks: they move only as the transport waits, or the
+    /// host's clock is stepped.
     #[derive(Clone)]
-    struct TestClock(Rc<Cell<Duration>>);
+    struct TestClock {
+        now: Rc<Cell<Duration>>,
+        monotonic: Rc<Cell<Duration>>,
+    }
+
+    impl TestClock {
+        /// Time passes.
+        fn wait(&self, wait: Duration) {
+            self.now.set(self.now.get() + wait);
+            self.monotonic.set(self.monotonic.get() + wait);
+        }
+
+        /// The host's clock is stepped, ahead or back.
+        fn step(&self, to: Duration) {
+            self.now.set(to);
+        }
+    }
 
     impl Clock for TestClock {
         fn now(&self) -> Duration {
-            self.0.get()
+            self.now.get()
+        }
+
+        fn monotonic(&self) -> Duration {
+            self.monotonic.get()
         }
     }
 
@@ -391,7 +506,7 @@ mod tests {
                 into.extend(bytes);
                 return;
             }
-            self.clock.0.set(now + timeout);
+            self.clock.wait(timeout);
         }
 
         fn write(&mut self, bytes: &[u8]) {
@@ -407,7 +522,10 @@ mod tests {
 
     fn instrument(script: BTreeMap<u64, Vec<u8>>) -> Instrument {
         Instrument {
-            clock: TestClock(Rc::new(Cell::new(START))),
+            clock: TestClock {
+                now: Rc::new(Cell::new(START)),
+                monotonic: Rc::new(Cell::new(Duration::ZERO)),
+            },
             script,
             received: BTreeMap::new(),
         }
@@ -676,39 +794,122 @@ mod tests {
         assert_eq!(times, ["115942", "115943", "115944"]);
     }
 
-    /// A clock that jumps ahead does not make the feed catch up: the
-    /// seconds are counted again from the new time.
-    #[test]
-    fn a_clock_jump_steps_once() {
-        struct Jumping(Instrument);
-        impl Transport for Jumping {
-            fn read(&mut self, into: &mut Vec<u8>, timeout: Duration) {
-                if self.0.clock.now().as_secs() == START.as_secs() + 2 {
-                    self.0
-                        .clock
-                        .0
-                        .set(self.0.clock.now() + Duration::from_secs(3600));
+    /// An instrument whose host's clock is stepped by `step`, or time
+    /// passes by it with the loop held up, once, two seconds in; and
+    /// the longest wait it was asked for.
+    struct Interrupted {
+        instrument: Instrument,
+        step: i64,
+        /// Whether the clock is stepped, not time passed.
+        stepped: bool,
+        longest: Duration,
+    }
+
+    impl Transport for Interrupted {
+        fn read(&mut self, into: &mut Vec<u8>, timeout: Duration) {
+            self.longest = self.longest.max(timeout);
+            let clock = &self.instrument.clock;
+            if self.step != 0 && clock.now().as_secs() == START.as_secs() + 2 {
+                let by = Duration::from_secs(self.step.unsigned_abs());
+                match (self.stepped, self.step > 0) {
+                    (true, true) => clock.step(clock.now() + by),
+                    (true, false) => clock.step(clock.now() - by),
+                    (false, _) => clock.wait(by),
                 }
-                self.0.read(into, timeout);
+                self.step = 0;
             }
-            fn write(&mut self, bytes: &[u8]) {
-                self.0.write(bytes);
-            }
+            self.instrument.read(into, timeout);
         }
-        let mut options = Options::DEFAULT;
-        options.saved = Some(&CONFIGURATION_58503A);
-        let mut feed = fixed(oncore(&VP_EIGHT, options));
-        let mut jumping = Jumping(instrument(BTreeMap::new()));
-        let clock = jumping.0.clock.clone();
+        fn write(&mut self, bytes: &[u8]) {
+            self.instrument.write(bytes);
+        }
+    }
+
+    /// Runs a saved engine under the made-up sky for `seconds`, its
+    /// clock interrupted as `step` and `stepped` say.
+    fn interrupted(engine: Engine, step: i64, stepped: bool, seconds: u64) -> Interrupted {
+        let mut feed = fixed(engine);
+        let mut interrupted = Interrupted {
+            instrument: instrument(BTreeMap::new()),
+            step,
+            stepped,
+            longest: Duration::ZERO,
+        };
+        let clock = interrupted.instrument.clock.clone();
         run(
             &mut feed,
-            &mut jumping,
+            &mut interrupted,
             &clock,
             &mut None::<WireLog<Vec<u8>>>,
             Duration::ZERO,
-            Some(6),
+            Some(seconds),
         );
-        // A second's frames each in a whole second of its own.
-        assert_eq!(jumping.0.received.len(), 6);
+        interrupted
+    }
+
+    fn saved() -> Engine {
+        let mut options = Options::DEFAULT;
+        options.saved = Some(&CONFIGURATION_58503A);
+        oncore(&VP_EIGHT, options)
+    }
+
+    /// A clock stepped either way does not make the feed catch up or
+    /// wait it out: the seconds are counted again from the new time,
+    /// and no wait is longer than a second.
+    #[test]
+    fn a_clock_step_either_way_steps_once() {
+        const HOUR: i64 = 3600;
+        for step in [HOUR, -HOUR] {
+            let interrupted = interrupted(saved(), step, true, 6);
+            // A second's frames each in a whole second of its own.
+            assert_eq!(interrupted.instrument.received.len(), 6, "{step}");
+            assert!(interrupted.longest <= ONE_SECOND, "{step}");
+        }
+    }
+
+    /// The UTC second of day a `GGA` gives.
+    fn gga_second(frame: &[u8]) -> u64 {
+        let field = |range: std::ops::Range<usize>| -> u64 {
+            std::str::from_utf8(&frame[range]).unwrap().parse().unwrap()
+        };
+        field(7..9) * 3600 + field(9..11) * 60 + field(11..13)
+    }
+
+    /// How far the made-up sky's UTC second is from the host's second
+    /// each `GGA` went out in.
+    fn sky_less_host(instrument: &Instrument) -> Vec<i64> {
+        const SECONDS_PER_DAY: u64 = 86_400;
+        instrument
+            .received
+            .iter()
+            .flat_map(|(second, frames)| {
+                frames
+                    .iter()
+                    .filter(|frame| sentence(frame, "GPGGA"))
+                    .map(move |frame| {
+                        i64::try_from(gga_second(frame)).unwrap()
+                            - i64::try_from(second % SECONDS_PER_DAY).unwrap()
+                    })
+            })
+            .collect()
+    }
+
+    /// A loop held up five seconds, the clock unstepped, as by a link
+    /// slow to connect, skips the seconds it missed: the made-up sky's
+    /// time does not fall behind the clock's.
+    #[test]
+    fn a_held_up_loop_keeps_the_sky_on_time() {
+        let interrupted = interrupted(
+            Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap(),
+            5,
+            false,
+            10,
+        );
+        let offsets = sky_less_host(&interrupted.instrument);
+        assert!(offsets.len() >= 5, "{offsets:?}");
+        assert!(
+            offsets.windows(2).all(|pair| pair[0] == pair[1]),
+            "{offsets:?}"
+        );
     }
 }

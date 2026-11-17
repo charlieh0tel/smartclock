@@ -48,7 +48,8 @@ pub(crate) fn event(message: impl Display) {
 fn main() -> Result<()> {
     let config = Cli::parse().configure()?;
     let engine = Engine::new(&config.spec).context("making the engine")?;
-    let now = SystemClock.now();
+    let clock = SystemClock::new();
+    let now = clock.now();
     let now = UnixSeconds::from_epoch(Seconds(i64::try_from(now.as_secs())?));
     let Built { nest, kind } = build(&config.provider, config.fake_start, now)?;
     let shared = Arc::new(Mutex::new(Shared {
@@ -75,13 +76,6 @@ fn main() -> Result<()> {
     ));
     let phase = phase(kind);
     let mut feed = Feed::new(engine, shared, kind);
-    run(
-        &mut feed,
-        transport.as_mut(),
-        &SystemClock,
-        &mut log,
-        phase,
-        None,
-    );
+    run(&mut feed, transport.as_mut(), &clock, &mut log, phase, None);
     Ok(())
 }

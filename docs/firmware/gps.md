@@ -1208,8 +1208,10 @@ specification; in short:
   value must change every field declared and no other, seen against
   the crate's `UNFILLED`, an empty record whose self-test fails, so
   that a fill of a pass shows.  The vectors' scene, the crate's
-  `source::scene`, and the u-blox crate declare theirs, and both fill all the images use but one
-  field, the u-blox crate's almanac from `RXM-SFRBX` among them.  The
+  `source::scene`, and the u-blox crate declare theirs, and both write
+  all the images use but one field, the u-blox crate's almanac from
+  `RXM-SFRBX` among them, and its Time RAIM solution as unknown, the
+  manual's value for not known, `TIM-TP` giving no RAIM result.  The
   one is the satellites Time RAIM isolated, which the Z3815A's status
   screen shows from `rrm`: the owner granted both a row for it
   (2026-11-16), the scene's sky having no bad satellite to isolate and

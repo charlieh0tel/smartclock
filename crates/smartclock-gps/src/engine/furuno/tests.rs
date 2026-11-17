@@ -546,3 +546,27 @@ fn zda_sets_the_clock_without_a_time() {
             .starts_with("$PFEC,GPtps,260313101112,1,")
     );
 }
+
+/// A height of more digits than `set,H` has (GT p. 11), one a `u32`
+/// cannot hold among them, is ignored, and so is any number too long
+/// for one.
+#[test]
+fn an_overlong_height_is_ignored() {
+    let mut engine = Engine::new(&GT_74);
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPset,H000100.5\r\n", &Record::EMPTY, &mut sent);
+    for sentence in [
+        &b"$PFEC,GPset,H+4294967296.0\r\n"[..],
+        b"$PFEC,GPset,H0000100.5\r\n",
+    ] {
+        engine.receive(sentence, &Record::EMPTY, &mut sent);
+        assert_eq!(
+            engine.settings().held_position.height.height,
+            Centimeters(10_050),
+            "{}",
+            sentence.escape_ascii()
+        );
+    }
+    assert_eq!(super::number(b"4294967295", 10), Some(u32::MAX));
+    assert_eq!(super::number(b"4294967296", 10), None);
+}

@@ -1604,7 +1604,8 @@ stands in for one.
   milliseconds and is not polled between seconds.  The Oncore-only
   options are refused with a GT-74, each saying why: `--eight-on-ea`
   (it has no `@@Ea`), `--saved` (the one configuration is a 58503A's,
-  whose engine is an Oncore) and `--deaf` (the model has no deaf mode).  The engine runs on while no instrument is connected, as an
+  whose engine is an Oncore) and `--deaf` (the model has no deaf
+  mode).  The engine runs on while no instrument is connected, as an
   engine powered with its cable out would, and its frames are dropped,
   and left out of the wire log, which has only what went.
   Its providers are gpsd's raw output of a u-blox receiver (asked for
@@ -1653,9 +1654,9 @@ stands in for one.
   10 s, then every 5 s, dropped after 3 unanswered) and, on Linux, a
   30 s limit on data unacknowledged, so a peer gone without a word, as
   a bridge powered off, is dropped within half a minute and a listener
-  takes the next connection rather than refusing it as one held.  Its scene is the
-  vectors' provider, so it is held to `source::scene::DECLARATION` and
-  the exceptions tables' rows named `scene` (named `engine vectors`
+  takes the next connection rather than refusing it as one held.  Its
+  scene is the vectors' provider, so it is held to
+  `source::scene::DECLARATION` and the exceptions tables' rows named `scene` (named `engine vectors`
   until the feed shared the provider, renamed 2026-11-15), and works
   out the Earth-centered position itself, with the same arithmetic as
   the vectors' test.  `jiff` is the workspace's 0.2, not the newest,

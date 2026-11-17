@@ -142,6 +142,15 @@ pub(crate) struct Built {
     pub(crate) kind: Kind,
 }
 
+/// What `spec` names, of the kinds of provider.
+pub(crate) const fn kind(spec: &ProviderSpec) -> Kind {
+    match spec {
+        ProviderSpec::Fixed | ProviderSpec::Leap(_) => Kind::Scene,
+        ProviderSpec::Ubx(_) => Kind::Recording,
+        ProviderSpec::Gpsd { .. } => Kind::Live,
+    }
+}
+
 /// The time `utc` as the made-up sky counts GPS time.
 fn gps(utc: UnixSeconds) -> Result<GpsSeconds> {
     GpsSeconds::from_utc(utc, UTC_OFFSET).ok_or_else(|| anyhow!("a time past GPS time's range"))
@@ -157,10 +166,10 @@ pub(crate) fn build(
     now: UnixSeconds,
 ) -> Result<Built> {
     let fake_start = fake_start.map(gps).transpose()?;
-    let (provider, kind, relabel, leap) = match spec {
+    let (provider, relabel, leap) = match spec {
         ProviderSpec::Fixed => {
             let start = fake_start.map_or_else(|| gps(now), Ok)?;
-            (scene_from(start)?, Kind::Scene, Relabel::Keep, None)
+            (scene_from(start)?, Relabel::Keep, None)
         }
         ProviderSpec::Leap(event) => {
             let start = match fake_start {
@@ -170,15 +179,14 @@ pub(crate) fn build(
                     .checked_sub(LEAP_LEAD)
                     .ok_or_else(|| anyhow!("a leap second too near GPS time's start"))?,
             };
-            (scene_from(start)?, Kind::Scene, Relabel::Keep, Some(*event))
+            (scene_from(start)?, Relabel::Keep, Some(*event))
         }
         ProviderSpec::Ubx(path) => {
             let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-            (recording(bytes), Kind::Recording, relabel(fake_start), None)
+            (recording(bytes), relabel(fake_start), None)
         }
         ProviderSpec::Gpsd { .. } => (
             Provider::Live(Box::new(Latest::new())),
-            Kind::Live,
             relabel(fake_start),
             None,
         ),
@@ -187,7 +195,7 @@ pub(crate) fn build(
     admit(&name, provider.clocking(), Driver::Paced).map_err(|refusal| anyhow!("{refusal}"))?;
     Ok(Built {
         nest: LeapSchedule::new(FakeTime::new(provider, relabel), leap),
-        kind,
+        kind: kind(spec),
     })
 }
 

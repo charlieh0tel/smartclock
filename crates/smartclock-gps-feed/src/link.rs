@@ -9,7 +9,7 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::net::TcpListener;
 use std::net::TcpStream;
-use std::net::ToSocketAddrs as _;
+use std::net::ToSocketAddrs;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
@@ -184,18 +184,23 @@ impl Dial for TcpDial {
     }
 
     fn dial(&self) -> io::Result<TcpStream> {
-        let mut last = io::Error::new(ErrorKind::NotFound, "no address");
-        for address in self.0.to_socket_addrs()? {
-            match TcpStream::connect_timeout(&address, CONNECT_TIMEOUT) {
-                Ok(stream) => {
-                    stream.set_nodelay(true)?;
-                    return Ok(stream);
-                }
-                Err(error) => last = error,
-            }
-        }
-        Err(last)
+        let stream = connect(&self.0)?;
+        stream.set_nodelay(true)?;
+        Ok(stream)
     }
+}
+
+/// Connects to `address`, trying each address it names for
+/// [`CONNECT_TIMEOUT`] in turn.
+pub(crate) fn connect(address: impl ToSocketAddrs) -> io::Result<TcpStream> {
+    let mut last = io::Error::new(ErrorKind::NotFound, "no address");
+    for address in address.to_socket_addrs()? {
+        match TcpStream::connect_timeout(&address, CONNECT_TIMEOUT) {
+            Ok(stream) => return Ok(stream),
+            Err(error) => last = error,
+        }
+    }
+    Err(last)
 }
 
 /// A serial port to open.

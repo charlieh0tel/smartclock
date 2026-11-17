@@ -30,7 +30,7 @@ use crate::provider::complete_scene;
 /// How far into each second a live provider's record is taken: a
 /// receiver's epoch arrives some time after the second it is of, and
 /// is the next second's to take if taken at its start.
-pub(crate) const LIVE_PHASE: Duration = Duration::from_millis(500);
+const LIVE_PHASE: Duration = Duration::from_millis(500);
 /// How late a second may be begun before the clock is taken to have
 /// jumped, and the seconds are counted again from now.
 const LATEST_START: Duration = Duration::from_secs(2);
@@ -220,6 +220,14 @@ impl Feed {
 
     fn poll(&mut self, now: Milliseconds<u64>, out: &mut Frames) {
         self.engine.poll(now, out);
+    }
+}
+
+/// How far into each second a provider of `kind` is taken.
+pub(crate) const fn phase(kind: Kind) -> Duration {
+    match kind {
+        Kind::Live => LIVE_PHASE,
+        Kind::Scene | Kind::Recording => Duration::ZERO,
     }
 }
 

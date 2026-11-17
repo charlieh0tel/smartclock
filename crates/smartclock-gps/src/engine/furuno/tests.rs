@@ -547,6 +547,48 @@ fn zda_sets_the_clock_without_a_time() {
     );
 }
 
+/// `ZDA`'s zone keeps its hours' sign with no hours, `-00,30` a zone of
+/// -30 minutes, local time being UTC less it (GT p. 8): `anc`'s local
+/// almanac date is 30 minutes ahead of UTC, where `+00,30` puts it 30
+/// minutes behind.
+#[test]
+fn zda_keeps_the_sign_of_no_hours() {
+    let now = record(at(2026, 10, 22, 12, 0, 0));
+    let almanac_date = |zone: &[u8]| {
+        let mut engine = Engine::new(&GT_74);
+        let mut sent = Sent::default();
+        let sentence = [
+            b"$GPZDA,120000,22,10,2026,",
+            zone,
+            b"\r\n$PFEC,GPint,anc00\r\n",
+        ]
+        .concat();
+        engine.receive(&sentence, &now, &mut sent);
+        let anc = sent.only("$PFEC,GPanc");
+        let stamp = anc.split(',').nth(2).expect("a date").as_bytes();
+        let two = |at: usize| {
+            std::str::from_utf8(&stamp[at..at + 2])
+                .expect("ASCII")
+                .parse::<u8>()
+                .expect("digits")
+        };
+        DateTime::new(
+            2000 + u16::from(two(0)),
+            two(2),
+            two(4),
+            two(6),
+            two(8),
+            two(10),
+        )
+        .expect("a date")
+        .to_unix()
+    };
+    let utc = almanac_date(b"+00,00");
+    assert_eq!(almanac_date(b"-00,30") - utc, Seconds(30 * 60));
+    assert_eq!(almanac_date(b"+00,30") - utc, Seconds(-30 * 60));
+    assert_eq!(almanac_date(b"-01,30") - utc, Seconds(90 * 60));
+}
+
 /// A height of more digits than `set,H` has (GT p. 11), one a `u32`
 /// cannot hold among them, is ignored, and so is any number too long
 /// for one.

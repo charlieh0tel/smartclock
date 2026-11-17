@@ -140,7 +140,10 @@
 //!   any talker; the image sends `GP` and [`Sentence::address`]
 //!   recognizes no other.  `ZDA` sets the clock only while the record
 //!   tells no time, as an Oncore tracking a satellite ignores the time
-//!   it is given; its local zone time always applies.
+//!   it is given; its local zone time always applies.  The zone's
+//!   minutes take its hours' sign, that of `-00` too: GT p. 8 shows the
+//!   hours as "-13 ... +00 ... +13", and `-00,30` is taken to be a zone
+//!   of -30 minutes.
 //! - **`anc`'s date is its almanac's reference time**, in local time
 //!   (GT p. 27: "Almanac Date/Time (Local Date/Time)"), the zone `ZDA`
 //!   gave taken off UTC (GT p. 8); GT p. 27 says the almanac is
@@ -509,30 +512,36 @@ const LIMIT_PER_SETTING: u16 = 10;
 /// The local zone time `ZDA` gives (GT p. 8): local time is UTC less it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Zone {
-    /// Its hours, -13 to 13.
-    hours: i8,
-    /// Its minutes, 0 to 59, of the hours' sign.
-    minutes: u8,
+    /// Its hours and minutes in minutes, of the sign its hours field
+    /// gives, `-00` among them: -13:59 to 13:59.
+    minutes: i32,
 }
 
 impl Zone {
     /// None (GT p. 5: "+0h").
-    const NONE: Self = Self {
-        hours: 0,
-        minutes: 0,
-    };
-    const HOURS_MOST: i8 = 13;
+    const NONE: Self = Self { minutes: 0 };
+    /// The most hours and minutes `ZDA` gives (GT p. 8).
+    const HOURS_MOST: u8 = 13;
+    const MINUTES_MOST: u8 = 59;
+
+    /// The zone `ZDA`'s fields 5 and 6 give: a sign and two digits of
+    /// hours, and two of minutes, the hours' sign theirs (GT p. 8).
+    fn of(hours: &[u8], minutes: &[u8]) -> Option<Self> {
+        let (&sign, hours) = hours.split_first()?;
+        let hours = digits_in(hours, 2, 0, Self::HOURS_MOST)?;
+        let minutes = digits_in(minutes, 2, 0, Self::MINUTES_MOST)?;
+        Some(Self {
+            minutes: sign_of(sign)? * (i32::from(hours) * MINUTES_PER_HOUR + i32::from(minutes)),
+        })
+    }
 
     /// How far local time is ahead of UTC: the zone, negated.
     const fn ahead(self) -> Seconds<i64> {
-        let minutes = self.minutes as i64;
-        let zone =
-            self.hours as i64 * MINUTES_PER_HOUR + if self.hours < 0 { -minutes } else { minutes };
-        Seconds(-zone * SECONDS_PER_MINUTE)
+        Seconds(-(self.minutes as i64) * SECONDS_PER_MINUTE)
     }
 }
 
-const MINUTES_PER_HOUR: i64 = 60;
+const MINUTES_PER_HOUR: i32 = 60;
 const SECONDS_PER_MINUTE: i64 = 60;
 
 /// GT p. 5's defaults: the time, 2002-01-01 00:00:00, and the estimated
@@ -1189,13 +1198,10 @@ impl State {
         let Some(date) = DateTime::new(year, month, day, hour, minute, second) else {
             return;
         };
-        let hours = signed(zone_hours, 2)
-            .and_then(|hours| i8::try_from(hours).ok())
-            .filter(|hours| hours.abs() <= Zone::HOURS_MOST);
-        let (Some(hours), Some(minutes)) = (hours, digits_in(zone_minutes, 2, 0, 59)) else {
+        let Some(zone) = Zone::of(zone_hours, zone_minutes) else {
             return;
         };
-        self.zone = Zone { hours, minutes };
+        self.zone = zone;
         if record.time.is_none() {
             let offset = record.utc_offset.unwrap_or(Seconds(0));
             if let Some(time) = GpsSeconds::from_utc(date.to_unix(), offset) {
@@ -1791,15 +1797,20 @@ fn digits_in(field: &[u8], length: usize, least: u8, most: u8) -> Option<u8> {
         .filter(|value| (least..=most).contains(value))
 }
 
+/// A sign's value, its `+` perhaps a `0`.
+const fn sign_of(sign: u8) -> Option<i32> {
+    match sign {
+        b'+' | b'0' => Some(1),
+        b'-' => Some(-1),
+        _ => None,
+    }
+}
+
 /// A sign and exactly `length` digits, its value.
 fn signed(field: &[u8], length: usize) -> Option<i32> {
     let (&sign, digits) = field.split_first()?;
     let magnitude = i32::try_from(number(digits, length)?).ok()?;
-    match sign {
-        b'+' | b'0' => Some(magnitude),
-        b'-' => Some(-magnitude),
-        _ => None,
-    }
+    Some(sign_of(sign)? * magnitude)
 }
 
 /// A height as `set,H` gives one, a sign, five digits of whole meters, a
@@ -1815,11 +1826,7 @@ fn signed_tenths(field: &[u8]) -> Option<i32> {
     let whole = i32::try_from(number(whole, WHOLE_DIGITS)?).ok()?;
     let tenth = i32::try_from(number(&[tenth], 1)?).ok()?;
     let magnitude = whole.checked_mul(10)?.checked_add(tenth)?;
-    match sign {
-        b'+' | b'0' => Some(magnitude),
-        b'-' => Some(-magnitude),
-        _ => None,
-    }
+    Some(sign_of(sign)? * magnitude)
 }
 
 /// Eight hexadecimal digits, either case, their value (GT p. 11).

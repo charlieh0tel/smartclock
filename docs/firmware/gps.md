@@ -885,7 +885,9 @@ What an engine in a Z380x or 58503A must do, from the above:
   - `Af`: the commanded height in the GPS height field for type 0 and
     the MSL field for type 1.
   - `As`: latitude, longitude and type as sent; the height within
-    2 cm.
+    2 cm.  While position hold is on, a real Oncore does not take
+    `As` (VP p. 53, UT p. 6.87) and answers with the position held,
+    and so does the engine; so it does to one out of p. 54's ranges.
   - `Cg` query (mode 2): any `@@Cg`.
 - **Answer queries** (mode 1, the query forms) with the message of the
   same ID, and polls and output requests (kind 7) with one message of

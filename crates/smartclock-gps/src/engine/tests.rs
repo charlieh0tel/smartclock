@@ -2831,3 +2831,125 @@ fn the_held_position_read_is_the_one_reported() {
     // Asking where it is does not move where it was told to start.
     assert_eq!(engine.settings().initial_position, Location::default());
 }
+
+/// A position as `@@As` carries one (VP p. 54).
+fn hold_position_data(position: Location) -> Vec<u8> {
+    [
+        &position.latitude.0.to_be_bytes()[..],
+        &position.longitude.0.to_be_bytes()[..],
+        &height_data(position.height),
+    ]
+    .concat()
+}
+
+/// VP p. 53 and UT p. 6.87: `@@As` is taken only while the position is
+/// not held; while it is, it is answered with the position held.
+#[test]
+fn the_held_position_is_not_changed_while_it_is_held() {
+    let moved = Location {
+        latitude: MilliArcSeconds(200_000_000),
+        ..MADE_UP
+    };
+    for identity in [&VP_EIGHT, &UT_PLUS_3_1] {
+        let mut engine = powered_up(identity);
+        let record = full();
+        ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(MADE_UP),
+        );
+        ask(&mut engine, &record, AT_POSITION_HOLD, &[1]);
+        let frames = ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(moved),
+        );
+        assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(MADE_UP));
+        assert_eq!(engine.settings().held_position, MADE_UP);
+        assert_eq!(
+            tell(&mut engine, AS_HOLD_POSITION, &hold_position_data(moved)),
+            []
+        );
+        ask(&mut engine, &record, AT_POSITION_HOLD, &[0]);
+        let frames = ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(moved),
+        );
+        assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(moved));
+        assert_eq!(engine.settings().held_position, moved);
+    }
+}
+
+/// VP p. 54: `@@As`'s latitude, longitude, height and height type each
+/// out of range is not taken, and the answer is the position held; each
+/// at the end of its range is.
+#[test]
+fn a_hold_position_out_of_range_is_not_taken() {
+    let height = |centimeters| Height {
+        height: Centimeters(centimeters),
+        kind: HeightKind::Ellipsoid,
+    };
+    let at = |latitude, longitude, height| Location {
+        latitude: MilliArcSeconds(latitude),
+        longitude: MilliArcSeconds(longitude),
+        height,
+    };
+    let record = full();
+    for position in [
+        at(324_000_001, 0, height(0)),
+        at(-324_000_001, 0, height(0)),
+        at(0, 648_000_001, height(0)),
+        at(0, -648_000_001, height(0)),
+        at(0, 0, height(1_800_001)),
+        at(0, 0, height(-100_001)),
+    ] {
+        let mut engine = powered_up(&VP_EIGHT);
+        ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(MADE_UP),
+        );
+        let frames = ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(position),
+        );
+        assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(MADE_UP));
+        assert_eq!(engine.settings().held_position, MADE_UP);
+    }
+    let mut engine = powered_up(&VP_EIGHT);
+    ask(
+        &mut engine,
+        &record,
+        AS_HOLD_POSITION,
+        &hold_position_data(MADE_UP),
+    );
+    let mut kind_two = hold_position_data(MADE_UP);
+    if let Some(kind) = kind_two.last_mut() {
+        *kind = 2;
+    }
+    let frames = ask(&mut engine, &record, AS_HOLD_POSITION, &kind_two);
+    assert_eq!(only(&frames, AS_HOLD_POSITION), hold_position_data(MADE_UP));
+    for position in [
+        at(324_000_000, 648_000_000, height(1_800_000)),
+        at(-324_000_000, -648_000_000, height(-100_000)),
+    ] {
+        let frames = ask(
+            &mut engine,
+            &record,
+            AS_HOLD_POSITION,
+            &hold_position_data(position),
+        );
+        assert_eq!(
+            only(&frames, AS_HOLD_POSITION),
+            hold_position_data(position)
+        );
+        assert_eq!(engine.settings().held_position, position);
+    }
+}

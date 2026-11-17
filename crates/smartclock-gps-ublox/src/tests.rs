@@ -1893,6 +1893,42 @@ fn an_almanac_holds_one_uploads_pages() {
     );
 }
 
+/// While the satellites change over to a new upload, page 25s of the
+/// old and the new come in turn: one older than the page 25 held is
+/// ignored, so the new upload's almanac stays.
+#[test]
+fn an_older_page_25_is_ignored() {
+    let health = |week| {
+        (
+            RXM_SFRBX,
+            subframe(&almanac_health(TIME_OF_ALMANAC, week, [0; 24])),
+        )
+    };
+    let (old, new) = (health(ALMANAC_WEEK - 1), health(ALMANAC_WEEK));
+    let page = (RXM_SFRBX, subframe(&almanac_page(5, 9, TIME_OF_ALMANAC, 0)));
+    let eoe = |second: u32| (NAV_EOE, eoe(NOON + 1000 * second).to_vec());
+    let messages = [
+        new.clone(),
+        page,
+        eoe(0),
+        old.clone(),
+        eoe(1),
+        new,
+        eoe(2),
+        old,
+        eoe(3),
+    ];
+    let messages: Vec<_> = messages
+        .iter()
+        .map(|(id, payload)| (*id, payload.as_slice()))
+        .collect();
+    let almanacs: Vec<_> = records(&mut Bench::near(GpsWeek::new(WEEK)), &stream(&messages))
+        .iter()
+        .map(|record| record.almanac)
+        .collect();
+    assert_eq!(almanacs, [almanac(WEEK, &[9], &[9]); 4]);
+}
+
 /// The almanac's eight bits of week are resolved to the week nearest
 /// the last epoch's, or before any epoch has a time, nearest the week
 /// an assembler was made to resolve near; with neither there is no

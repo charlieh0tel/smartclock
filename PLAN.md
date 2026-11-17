@@ -1273,14 +1273,15 @@ stands in for one.
   `FieldSet`, `Declaration`), and its tests hold the declaration to
   `IMAGE_USES`, which the check writes from the table's used rows, to
   `docs/firmware/gps-field-exceptions.tsv`, the owner's alone to add
-  to, and to what a fill really changes.  Both providers here fill all
-  the images use but the satellites Time RAIM isolated, which the
+  to, and to what a fill really changes.  Both providers here write
+  all the images use but the satellites Time RAIM isolated, which the
   Z3815A's status screen shows from `rrm` and for which the owner
   granted each a row (2026-11-16): the self-test as a pass, the almanac
   (the u-blox crate's from `RXM-SFRBX`), and
   the Time RAIM result from the scene's sky and from a u-blox
-  receiver's `TIM-TP`, whose solution is always unknown, `TIM-TP`
-  giving no RAIM result or alarm.  Every field of a response
+  receiver's `TIM-TP`.  The u-blox crate reports that result's
+  solution as unknown, `TIM-TP` giving no RAIM result or alarm, so
+  only the ability is its receiver's.  Every field of a response
   is now the record's, the model's state or the manual's value for not
   known, a channel's URA of 63 the one such value; `RECORD_BYTES_MAX`
   went from 640 to 704 for it.  A command is one of three classes, the
@@ -1482,10 +1483,12 @@ stands in for one.
   the engine reports none visible and a bad almanac.  It gathers them
   across epochs in fixed state, and a record has the almanac once
   subframe 5, page 25 has given its time and week, holding the
-  satellites whose page is of that time.  A page 25 of another time or
-  week drops the pages gathered before it, so one upload's pages are
-  never put with another's that has the same time: a page carries no
-  week of its own.  The crate decodes the rest
+  satellites whose page is of that time.  A page 25 of a later time
+  or week drops the pages gathered before it, so one upload's pages
+  are never put with another's that has the same time: a page carries
+  no week of its own.  One of an earlier time or week, from a
+  satellite not yet changed over to the new upload, is ignored, so
+  the almanac does not come and go through a changeover.  The crate decodes the rest
   of that data for a caller that wants it (below).
   - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
     receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`

@@ -38,8 +38,19 @@ struct Reference {
     week: u8,
 }
 
+impl Reference {
+    /// Whether it is of an upload before `other`'s: an earlier week, or
+    /// the same week and an earlier time.  The weeks' eight bits wrap
+    /// at [`ALMANAC_WEEKS`], so their difference is taken signed: two
+    /// uploads are far less than 128 weeks apart.
+    fn before(self, other: Self) -> bool {
+        let weeks = self.week.wrapping_sub(other.week).cast_signed();
+        weeks < 0 || (weeks == 0 && self.time_of_almanac < other.time_of_almanac)
+    }
+}
+
 /// The pages of an almanac gathered so far, each the last broadcast,
-/// all since subframe 5, page 25 last gave another time or week.
+/// all since subframe 5, page 25 last gave a later time or week.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Gathered {
     /// Each satellite's page, satellite 1 first; `None` for one not yet
@@ -82,7 +93,12 @@ impl Gathered {
                     time_of_almanac: page.time_of_almanac.raw,
                     week: page.week,
                 };
-                // Another upload: a page's own time does not tell its
+                // An older upload's, from a satellite not yet changed
+                // over to the one held.
+                if self.reference.is_some_and(|held| reference.before(held)) {
+                    return;
+                }
+                // A newer upload: a page's own time does not tell its
                 // week, so the pages before this one are not its.
                 if self.reference.is_some_and(|held| held != reference) {
                     *self = Self::EMPTY;

@@ -585,6 +585,22 @@ fn rxm_sfrbx_gives_a_gps_subframe() {
         };
         assert_eq!(message.gps_words(), None, "{system} {count}");
     }
+    // Of the second version, only L1 C/A's, sigId 0: a GPS message of
+    // ten words on another signal is no LNAV subframe.  The first
+    // version has no sigId, its byte 2 reserved, and is taken.
+    for (version, signal, taken) in [(2, 0, true), (2, 3, false), (2, 4, false), (1, 3, true)] {
+        let mut bytes = sfrbx(0, &words);
+        bytes[2] = signal;
+        bytes[6] = version;
+        let Some(Message::RxmSfrbx(message)) = decode(RXM_SFRBX, &bytes) else {
+            panic!();
+        };
+        assert_eq!(
+            message.gps_words().is_some(),
+            taken,
+            "version {version}, sigId {signal}"
+        );
+    }
 }
 
 #[test]

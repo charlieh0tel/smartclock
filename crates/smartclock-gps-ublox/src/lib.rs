@@ -153,7 +153,8 @@
 //!   the message giving no RAIM result or alarm: a receiver alarming
 //!   on a bad satellite may still have its pulse locked.  No satellite
 //!   is given as isolated, and isolation is never claimed.
-//! - **The almanac** is gathered from the GPS subframes of `RXM-SFRBX`,
+//! - **The almanac** is gathered from the GPS L1 C/A subframes of
+//!   `RXM-SFRBX` ([`RxmSfrbx::gps_words`](rxm::RxmSfrbx::gps_words)),
 //!   decoded by [`subframe`], across epochs, each page the last one
 //!   broadcast.  A record has it from the first epoch's end after
 //!   subframe 5, page 25 has given its time and week: it holds the

@@ -26,6 +26,12 @@ pub(crate) const SFRBX_WORD: usize = 4;
 /// Where in `RXM-SFRBX`'s header its count of words, `numWords`, is.
 pub(crate) const SFRBX_COUNT: usize = 4;
 
+/// The first version of `RXM-SFRBX` whose byte 2 is `sigId` (section
+/// 32.18.7, pp. 419-420); before it the byte is reserved.
+const SFRBX_SIGNALED: u8 = 2;
+/// `sigId` of GPS L1 C/A (appendix A).
+const SIGNAL_GPS_L1_CA: u8 = 0;
+
 /// `RXM-RAWX`'s `recStat` bits.
 const RAWX_LEAP_KNOWN: u32 = 0;
 const RAWX_CLOCK_RESET: u32 = 1;
@@ -229,14 +235,18 @@ impl<'a> RxmSfrbx<'a> {
 
     /// A GPS L1 C/A subframe's ten words, for
     /// [`Subframe::decode`](crate::subframe::Subframe::decode): `None`
-    /// unless the satellite is a GPS one and there are ten words.
-    /// The receiver sends a subframe only once its parity checks have
-    /// passed, with the data bits it had to invert inverted (section
-    /// 10.1, p. 30), and of GPS gives only L1 C/A's (section 10.9,
-    /// p. 34).
+    /// unless the satellite is a GPS one, the signal L1 C/A and there
+    /// are ten words.  The receiver sends a subframe only once its
+    /// parity checks have passed, with the data bits it had to invert
+    /// inverted (section 10.1, p. 30).  A u-blox M8 gives of GPS only
+    /// L1 C/A's (section 10.9, p. 34), so a message of the first
+    /// version, which has no `sigId`, is taken as L1 C/A; of the
+    /// second, a `sigId` of another signal is not, a receiver that
+    /// tracks more signals sending their messages through it too.
     #[must_use]
     pub fn gps_words(&self) -> Option<Words> {
         let words: &[[u8; SFRBX_WORD]; WORDS] = self.words.as_chunks().0.try_into().ok()?;
-        (self.system == SYSTEM_GPS).then(|| Words::new(words.map(u32::from_le_bytes)))
+        let l1_ca = self.version < SFRBX_SIGNALED || self.signal == SIGNAL_GPS_L1_CA;
+        (self.system == SYSTEM_GPS && l1_ca).then(|| Words::new(words.map(u32::from_le_bytes)))
     }
 }

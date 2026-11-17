@@ -1542,7 +1542,9 @@ stands in for one.
     decode live here as one `no_std` source shared by board and host).
     `RXM-SFRBX` gives a GPS L1 C/A subframe's ten words with parity
     checked and inversion undone by the receiver, so the decoder reads
-    the data bits as they are.  It decodes subframes 1 to 3 (clock,
+    the data bits as they are.  Only L1 C/A's are taken: a message
+    whose `sigId` names another signal, as from a receiver that tracks
+    L2C, is not an LNAV subframe.  It decodes subframes 1 to 3 (clock,
     health, ephemeris) and the pages of 4 and 5 a timing receiver
     uses: each satellite's almanac, the almanac's time, week and
     health, each satellite's configuration, and the ionosphere and

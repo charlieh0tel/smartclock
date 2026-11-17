@@ -4,7 +4,9 @@
 //! which [`Deframer`](crate::oncore::Deframer) follows: what does not
 //! turn out to be a command is dropped a byte at a time, and a command
 //! is looked for from each byte after, so a whole command straight
-//! after the start of a broken one is still taken.
+//! after the start of a broken one is still taken, and so is each
+//! whole command within the length the broken one's ID gives, with
+//! the bytes after it kept.
 
 use crate::oncore::HEADER;
 use crate::oncore::MAX_COMMAND;
@@ -40,8 +42,8 @@ impl Command {
 enum Examined {
     /// The start of a command.
     Incomplete,
-    /// A command.
-    Complete(Command),
+    /// A command, and its length.
+    Complete(Command, usize),
     /// Not a command from their first byte.
     Bad,
 }
@@ -49,8 +51,9 @@ enum Examined {
 /// Finds commands in a stream of bytes.
 #[derive(Debug)]
 pub(super) struct Framer {
-    /// The first `filled` are the bytes of a command not yet whole,
-    /// from its `@`.
+    /// The first `filled` are the bytes not yet taken: a command not
+    /// yet whole, from its `@`, or, after a broken one, the bytes that
+    /// may still hold commands.
     pending: [u8; MAX_COMMAND],
     /// How many they are.
     filled: usize,
@@ -99,16 +102,21 @@ impl Framer {
             return Examined::Incomplete;
         }
         let body = &pending[HEADER..length - TRAILER];
-        if pending[length - TRAILER] != checksum(id, body) || pending[length - END.len()..] != END {
+        if pending[length - TRAILER] != checksum(id, body)
+            || pending[length - END.len()..length] != END
+        {
             return Examined::Bad;
         }
         let mut data = [0; MAX_COMMAND - OVERHEAD];
         data[..body.len()].copy_from_slice(body);
-        Examined::Complete(Command {
-            id,
-            data,
-            length: body.len(),
-        })
+        Examined::Complete(
+            Command {
+                id,
+                data,
+                length: body.len(),
+            },
+            length,
+        )
     }
 }
 
@@ -120,8 +128,9 @@ impl Iterator for Framer {
         loop {
             match self.examine() {
                 Examined::Incomplete => return None,
-                Examined::Complete(command) => {
-                    self.filled = 0;
+                Examined::Complete(command, length) => {
+                    self.pending.copy_within(length..self.filled, 0);
+                    self.filled -= length;
                     return Some(command);
                 }
                 Examined::Bad => self.drop_first(),

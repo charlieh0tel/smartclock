@@ -522,7 +522,8 @@ the Z3805A 3543B, whose decompiled `pll_normal` (`0x448fc`, gcc's
 build of it agreeing with the image in the harness) gives the same
 law term for term, below, and the 58503A 3704, whose `pll_normal`
 (`0x4495a`) does too.  What
-does differ is where τ and G come from.  Read on 2026-10-09.  The
+does differ is where τ and G come from.  Read on 2026-10-09, the
+Z3805A 1.01.03 on 2026-11-16.  The
 table is made from `loop-constants.json`, which
 `docs/pages/loop.html`'s "By model" table is made from too (`make
 loop-constants`).  The addresses after a value are where the image
@@ -540,6 +541,7 @@ after "by" are the code that chooses.
 | 58503A 3633 | 700 s (`0x305ae`) | 150.0 present, not traced | +6.25 × 10⁻¹³ (`0x476bc`) | not traced |
 | 58503A 3704 | 700 s (`0x30840`) | 150 s (`0x475e2`, `0x441ea`) | +6.25 × 10⁻¹³ (`0x477dc`) | 350 s (`0x441b0`) |
 | 58503B 1.01.04 | 700 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x407b4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | −1.25 × 10⁻¹² (`0x40dfc`) or +6.25 × 10⁻¹³ (`0x40e08`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` | not traced |
+| Z3805A 1.01.03 | 1000 s (`0x323a4`), settable: `:DIAGnostic:ROSCillator:LTIMe:MAX` | 150 s (`0x323a4`), settable: `:DIAGnostic:ROSCillator:LTIMe:INIT` | +6.25 × 10⁻¹³ (`0x329ec`) or +9.238 × 10⁻¹³ (`0x329f8`), by oscillator type, `:DIAGnostic:ROSCillator:TYPE` (`0x3277a`) | 500 s, half of τ (`0x44990`) |
 <!-- end loop_constants.py -->
 
 **The update, compared.**  Each image's `pll_normal` and fit
@@ -577,7 +579,7 @@ routine compares equal across images and a different one does not.
   (`z3817a-3752.md`, "The update law").
 
 The τ block has the 25-byte layout above in every image but the
-58503B, whose block (ROM `0x407b4`, copied to `0x1028b8` at
+58503B and the Z3805A 1.01.03 (below), the 58503B's block (ROM `0x407b4`, copied to `0x1028b8` at
 `0x22d6e`) has 29 bytes: the startup constant at +0x14 and τ at +0x18.
 The Z3817A 3752's is laid out so too (ROM `0x41450`, copied to
 `0x1023b4`; `z3817a-3752.md`, "The loop's constants").
@@ -595,6 +597,34 @@ entries are filled: G −1.25 × 10⁻¹², the Z3816A's, with limits
 ±10⁻¹¹, and +6.25 × 10⁻¹³, the 58503A's; the type selects which.  In both the 58503B and the Z3815A the cell holding G is also
 `:DIAGnostic:ROSCillator:EFControl:ASLOPe`'s, so G can be read and set
 over SCPI within its limits (`../scpi/undocumented.md`).
+
+The Z3805A 1.01.03, the 58503B's code with the Z3815A's Furuno side
+(`z3805a-1.01.03.md`), sets τ and G the 58503B's way.  Its 29-byte
+block (ROM `0x323a4`, copied to `0x10291a` at `0x12d3e`) holds the
+startup constant, 150 s, at +0x14 and τ, 1000 s, the Z3805A 3543B's,
+at +0x18.  `system_defaults_init` copies it on every start, warm or
+cold, and nothing restores it from the preserved region, so the ROM's
+values are in force after any reset.  The same two parameters write
+them, `:LTIMe:INIT` (`0x10292e`, 10 to 1000 s) and `:LTIMe:MAX`
+(`0x102932`, 10 to 10000 s), whose done hooks keep the start at or
+below the maximum (`0x463a2`, `0x46414`); neither descriptor
+(`0x35c2e`, `0x35c6a`) marks its value saved, and the time constant in
+force is at `0x1032ec`.  G comes from a table of two 12-byte entries
+at `0x329ec`, indexed by the oscillator type at `0x102788`
+(`efc_calibration_defaults`, `0x3277a`), which
+`:DIAGnostic:ROSCillator:TYPE` sets to 0 or 1 (`oscillator_type_most`,
+`0x32852`) and an erased or bad calibration block reads as 0:
++6.25 × 10⁻¹³, the 58503A's and the Z3805A 3543B's, with limits
+10⁻¹⁵ and 10⁻¹¹, and +9.238 × 10⁻¹³, which no other image here holds,
+with limits ±10⁻¹¹.  That is `:ASLOPe`'s default; the loop takes G
+from `:ASLOPe`'s cell (`0x102780`) as it starts (`0x48094`), so an
+`:ASLOPe` the calibration block holds, or one an EFC calibration
+measures, stands in for the type's.  Holdover recovery restarts the
+ramp at the startup constant after a holdover longer than half of τ,
+taken as an integer and shifted right once (`0x44990`), or with the
+interval past 500 ns: 500 s at τ's default.  Its `pll_normal`
+(`0x4520c`) eases the aging term in as the 58503B's does
+(`z3805a-1.01.03.md`, "The link list").
 
 **The gain's second term and the measured uncertainty, Z3815A and
 58503B only.**  Beside G (A, `ASLOPe`) these two carry a second

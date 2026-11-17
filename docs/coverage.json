@@ -124,7 +124,6 @@
       "gps_channels": "6, 8 or 12 by the model (`gps_channel_count_from_model`, `0x5279a`)",
       "rewrite": "docs/firmware/z3805a-1.01.03.md",
       "cells": {
-        "loop": "not-yet",
         "gps": {
           "evidence": [{"file": "docs/firmware/z3805a-1.01.03.md", "contains": "MODEL # FURUNO GT-80"},
                        {"file": "docs/firmware/gps.md", "section": "Which engines each image accepts"},

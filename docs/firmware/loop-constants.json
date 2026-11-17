@@ -162,6 +162,34 @@
         "by": {"text": "by oscillator type, `:DIAGnostic:ROSCillator:TYPE`", "page": "by `TYPE`*"}
       },
       "recovery": null
+    },
+    {
+      "image": "z3805a-1.01.03",
+      "model": "Z3805A",
+      "firmware": "1.01.03",
+      "tau": {
+        "values": [
+          {"value": 1000, "rom": [{"at": "0x323a4", "kind": "block", "offset": "0x18"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:MAX`", "page": "settable: `LTIMe:MAX`*"}
+      },
+      "startup": {
+        "values": [
+          {"value": 150, "rom": [{"at": "0x323a4", "kind": "block", "offset": "0x14"}]}
+        ],
+        "by": {"text": "settable: `:DIAGnostic:ROSCillator:LTIMe:INIT`", "page": "from `LTIMe:INIT`*"}
+      },
+      "gain": {
+        "values": [
+          {"value": 6.25e-13, "rom": [{"at": "0x329ec", "kind": "float"}]},
+          {"value": 9.238e-13, "rom": [{"at": "0x329f8", "kind": "float"}]}
+        ],
+        "by": {"text": "by oscillator type, `:DIAGnostic:ROSCillator:TYPE`", "cite": ["0x3277a"], "page": "by `TYPE`*"}
+      },
+      "recovery": {
+        "values": [{"value": 500}],
+        "by": {"text": "half of τ", "cite": ["0x44990"]}
+      }
     }
   ]
 }

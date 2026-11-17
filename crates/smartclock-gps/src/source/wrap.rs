@@ -46,6 +46,10 @@ pub enum Relabel {
 /// at the fake start, tick 0: a record whose leap second has passed
 /// since then has that step taken back out of its offset.  The source's
 /// time at tick 0 is taken to be a record's time less its tick.  A
+/// source that steps its offset with no leap second announced, as a
+/// receiver that gives the count alone, has the step taken out too:
+/// every record is given the offset of the first that had one, so for
+/// a driver that starts at tick 0, the offset at the fake start.  A
 /// scenario's [`TimeStep`](crate::source::scenario::Change::TimeStep)
 /// is the other thing, an engine's clock gone wrong under a leap second
 /// that stays where it is.
@@ -67,6 +71,9 @@ pub struct FakeTime<S> {
     relabel: Relabel,
     /// Records a leap second of the source's was dropped from.
     dropped: u32,
+    /// GPS less UTC as frozen: the first record's that had one, with
+    /// any leap second of the source's since the fake start taken out.
+    frozen: Option<Seconds<i8>>,
 }
 
 impl<S> FakeTime<S> {
@@ -77,6 +84,7 @@ impl<S> FakeTime<S> {
             inner,
             relabel,
             dropped: 0,
+            frozen: None,
         }
     }
 
@@ -88,11 +96,22 @@ impl<S> FakeTime<S> {
         self.dropped
     }
 
-    /// Takes the source's leap second out of the record of `tick`, and
-    /// its step out of the offset if it has passed since tick 0.  This
-    /// is done before the time is changed: the event is in the source's
-    /// time.
+    /// Takes the source's leap second out of the record of `tick`, its
+    /// step out of the offset if it has passed since tick 0, and any
+    /// other step since the first record with an offset.  This is done
+    /// before the time is changed: the event is in the source's time.
     fn freeze(&mut self, tick: Tick, record: &mut Record) {
+        self.unannounce(tick, record);
+        match (self.frozen, record.utc_offset) {
+            (Some(frozen), Some(_)) => record.utc_offset = Some(frozen),
+            (None, Some(offset)) => self.frozen = Some(offset),
+            (_, None) => {}
+        }
+    }
+
+    /// Takes the source's leap second out of the record of `tick`, and
+    /// its step out of the offset if it has passed since tick 0.
+    fn unannounce(&mut self, tick: Tick, record: &mut Record) {
         let Some(event) = record.leap.take() else {
             return;
         };
@@ -654,6 +673,33 @@ mod tests {
         assert_eq!(late.record(Tick(3), &mut record), Presence::Fresh);
         assert_eq!(record.utc_offset, Some(after));
         assert_eq!(record.leap, None);
+    }
+
+    /// A source that steps its offset with no leap second announced, as
+    /// a receiver that gives the count alone, has the step frozen out
+    /// too: no second reads twice.
+    #[test]
+    fn fake_time_freezes_an_unannounced_step_of_the_offset() {
+        const FAKE: GpsSeconds = GpsSeconds::from_utc(
+            DateTime::new(2020, 3, 4, 12, 0, 0).unwrap().to_unix(),
+            BEFORE,
+        )
+        .unwrap();
+        static STEPPED: [Step; 1] = [Step {
+            from: Tick(LEAP_TICK),
+            change: Change::UtcOffset(Some(Seconds(BEFORE.0 + 1))),
+        }];
+        let mut started = FakeTime::new(scenario(RUN, &STEPPED), Relabel::Start(FAKE));
+        let mut record = Record::EMPTY;
+        for tick in 0..=LEAP_TICK + 5 {
+            assert_eq!(started.record(Tick(tick), &mut record), Presence::Fresh);
+            assert_eq!(record.utc_offset, Some(BEFORE), "{tick}");
+            assert_eq!(
+                read(&record),
+                DateTime::new(2020, 3, 4, 12, 0, u8::try_from(tick).unwrap()).unwrap()
+            );
+        }
+        assert_eq!(started.dropped(), 0);
     }
 
     /// The source's leap second is dropped whole: the event, and with

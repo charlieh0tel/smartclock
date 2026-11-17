@@ -1668,7 +1668,9 @@ stands in for one.
   step, an engine's clock gone wrong, leaves the leap second where it
   is.  The wrapper that relabels time, a sky moved whole to another
   date, drops the source's leap second, the event and its step, and
-  freezes the offset at the one in effect at the fake start: UTC has
+  freezes the offset at the one in effect at the fake start, the first
+  record's, whether the source announces its steps or, as a receiver
+  without `NAV-TIMELS`, gives the count alone: UTC has
   a leap second only where a day ends, and a real one moved by an
   arbitrary whole number of seconds lands in the middle of a day of
   the UTC the new time reads.  A leap second under a fake time is one

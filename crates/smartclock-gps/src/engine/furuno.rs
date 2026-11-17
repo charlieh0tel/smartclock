@@ -168,8 +168,9 @@
 //!   in control mode 0, always in mode 1, and in modes 2 and 3 once the
 //!   almanac and the offset to UTC are held, with a satellite used, two
 //!   in mode 3 in fixed observation point mode, and, in estimated
-//!   observation point mode, a fix made since power-up; mode 3 drops it
-//!   at a Time RAIM alarm.
+//!   observation point mode, a first fix made since power-up, one of
+//!   four satellites or more usable with a PDOP under 6; mode 3 drops
+//!   it at a Time RAIM alarm.
 //! - **`clr`** restarts the engine as a power-up would (GT p. 10): mode
 //!   1 puts every parameter of `set`, the position and, while the record
 //!   tells no time, the clock back to their defaults, and the intervals,
@@ -596,6 +597,10 @@ const SAWTOOTH_MOST: i8 = 14;
 /// Satellites a fix needs: 3D, 2D (as an Oncore's, [module](super)).
 const SATELLITES_3D: usize = 4;
 const SATELLITES_2D: usize = 3;
+/// Satellites the first fix needs, and the PDOP in tenths it must be
+/// under (GT p. 47, (2)-1).
+const FIRST_FIX_SATELLITES: usize = 4;
+const FIRST_FIX_PDOP: u16 = 60;
 /// Satellites Time RAIM needs to detect a bad one, and to isolate one
 /// (GT p. 47).
 const RAIM_DETECTS: usize = 2;
@@ -873,7 +878,8 @@ struct State {
     longitude: MilliArcSeconds,
     /// The leap second last announced, past or pending.
     leap: Option<LeapEvent>,
-    /// Whether it has made a fix since power-up.
+    /// Whether it has made its first fix since power-up, which the 1 PPS
+    /// waits for in estimated observation point mode (GT p. 47).
     fixed: bool,
     /// The time of the last fix, which `RMC` goes on giving (GT p. 25).
     last_fix: Option<GpsSeconds>,
@@ -965,8 +971,10 @@ impl State {
             self.leap = record.leap;
         }
         if matches!(self.fix(record), Fix::TwoD | Fix::ThreeD) {
-            self.fixed = true;
             self.last_fix = Some(self.clock);
+        }
+        if self.first_fix(record) {
+            self.fixed = true;
         }
         for periodic in PERIODIC {
             let interval = self.intervals[periodic.index()];
@@ -1290,6 +1298,16 @@ impl State {
             Fix::ThreeD | Fix::TimeOnly | Fix::TwoD if used >= SATELLITES_2D => Fix::TwoD,
             _ => Fix::None,
         }
+    }
+
+    /// Whether the record's fix is a first fix: four satellites or more
+    /// usable for it, and their PDOP under 6 (GT p. 47, (2)-1).
+    fn first_fix(&self, record: &Record) -> bool {
+        matches!(self.fix(record), Fix::TwoD | Fix::ThreeD)
+            && self.used(record).count() >= FIRST_FIX_SATELLITES
+            && record
+                .dops
+                .is_some_and(|dops| dops.position.0 < FIRST_FIX_PDOP)
     }
 
     /// The position `GGA` and `RMC` report: the one entered in fixed

@@ -64,23 +64,19 @@ impl Framer {
         }
     }
 
-    /// Takes a byte, and returns the command it ends, if any.
-    pub(super) fn push(&mut self, byte: u8) -> Option<Command> {
+    /// Takes a byte.  The commands it ends are then the framer's, as an
+    /// [`Iterator`], to be taken before the next byte.
+    pub(super) fn push(&mut self, byte: u8) {
+        if self.filled == self.pending.len() {
+            self.drop_first();
+        }
         self.pending[self.filled] = byte;
         self.filled += 1;
-        loop {
-            match self.examine() {
-                Examined::Incomplete => return None,
-                Examined::Complete(command) => {
-                    self.filled = 0;
-                    return Some(command);
-                }
-                Examined::Bad => {
-                    self.pending.copy_within(1..self.filled, 0);
-                    self.filled -= 1;
-                }
-            }
-        }
+    }
+
+    fn drop_first(&mut self) {
+        self.pending.copy_within(1..self.filled, 0);
+        self.filled -= 1;
     }
 
     fn examine(&self) -> Examined {
@@ -113,5 +109,23 @@ impl Framer {
             data,
             length: body.len(),
         })
+    }
+}
+
+impl Iterator for Framer {
+    type Item = Command;
+
+    /// The next command in the bytes taken, if any.
+    fn next(&mut self) -> Option<Command> {
+        loop {
+            match self.examine() {
+                Examined::Incomplete => return None,
+                Examined::Complete(command) => {
+                    self.filled = 0;
+                    return Some(command);
+                }
+                Examined::Bad => self.drop_first(),
+            }
+        }
     }
 }

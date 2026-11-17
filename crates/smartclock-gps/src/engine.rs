@@ -872,7 +872,7 @@ impl State {
     const fn starting(model: Model) -> Self {
         Self {
             fixing: matches!(model, Model::UtPlus),
-            store: Store::DEFAULT,
+            store: Store::starting(model),
             assignments: [0; CHANNELS_MOST],
             rates: [Rates {
                 status: Rate(0),
@@ -1171,19 +1171,21 @@ impl Engine {
             self.counting = time.seconds;
             self.follow();
         }
-        bytes
-            .iter()
-            .fold(Events::NONE, |events, byte| match self.framer.push(*byte) {
-                Some(command) if self.takes(command.id) => {
+        let mut events = Events::NONE;
+        for byte in bytes {
+            self.framer.push(*byte);
+            while let Some(command) = self.framer.next() {
+                if self.takes(command.id) {
                     let before = self.settings();
                     self.answer(command.id, command.data(), record, now, out);
-                    events.and(Events::of(
+                    events = events.and(Events::of(
                         command.id == CF_SET_TO_DEFAULTS,
                         before.changed(&self.settings()),
-                    ))
+                    ));
                 }
-                _ => events,
-            })
+            }
+        }
+        events
     }
 
     /// Whether this Oncore takes a command at all: none if it is deaf,

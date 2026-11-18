@@ -1952,7 +1952,15 @@ specification; in short:
   has: a record knows neither the limit nor the mask, the ignore
   list and the idle mode that say which satellites the model tracks.
   Else the solution is the record's, and what can be done the less of
-  the record's and the model's.
+  the record's and the model's.  The model checks no time solution
+  itself: a record with no result gives the solution unknown and
+  neither detection nor isolation possible, in `@@Bn` and `@@En` as
+  in `rrm`, the model's count of the satellites tracked being a bound
+  on a record's result and not a result.  An image's `raim_monitor`
+  is then inactive ("Time RAIM").  The 1PPS control mode 3, the pulse
+  on only while Time RAIM confirms the time solution (VP p. 102),
+  which no image sets, has no pulse on a solution unknown:
+  `Engine::pulsing` and the pulse status of `@@Bn` and `@@En` are off.
 - **A self-test tells the record's faults.**  A record names the parts
   a self-test would fail and the channels whose correlation would, and
   the model sets the bits the message has for them: `@@Ca`'s (VP
@@ -2006,7 +2014,8 @@ specification; in short:
   fix mode besides.  So with all Time RAIM's setup (`@@Bn` and
   `@@En`, VP pp. 104 and 140), `raim_algorithm` and
   `raim_alarm_limit` beside `pulse_mode`: the model reports the
-  solution unknown with the algorithm off and what can be done by the
+  solution unknown with the algorithm off and what can be done, of
+  what a record's result says can be, by the
   limit and the satellites tracked (VP pp. 103, 105 and 106), and
   whether a receiver checks its time solution, and against what
   limit, is its holder's to set.  Two engine fields are in the `Settings` all the

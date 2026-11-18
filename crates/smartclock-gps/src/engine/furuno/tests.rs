@@ -567,6 +567,27 @@ fn rrm_gives_the_satellites_isolated() {
     );
 }
 
+/// `rrm` (GT p. 40) with no Time RAIM result in the record: the 1PPS
+/// output result unknown and neither detection nor isolation, in fixed
+/// observation point mode with the algorithm on as with it off.
+#[test]
+fn rrm_without_a_result_is_unknown() {
+    const UNKNOWN: &str = "$PFEC,GPrrm,2,2,00,00,00,00,+000,";
+    let mut engine = Engine::new(&GT_74);
+    let mut now = record(at(2026, 10, 22, 12, 0, 0));
+    now.derived.raim = None;
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPint,rrm00\r\n", &now, &mut sent);
+    assert!(sent.only("$PFEC,GPrrm").starts_with(UNKNOWN));
+    let mut sent = Sent::default();
+    engine.receive(
+        b"$PFEC,GPset,Z2\r\n$PFEC,GPrrs,1,100,3\r\n$PFEC,GPint,rrm00\r\n",
+        &now,
+        &mut sent,
+    );
+    assert!(sent.only("$PFEC,GPrrm").starts_with(UNKNOWN));
+}
+
 /// `RMC` gives the speed in knots, the course and the magnetic
 /// variation (GT p. 25), and its checksum.
 #[test]

@@ -1589,6 +1589,89 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     assert_eq!(traim(&mut engine, &confirmed), [0, 0, 1, 1]);
 }
 
+/// VP pp. 105 and 106, 141 and 142: the solution status and the Time
+/// RAIM status `@@Bn` and `@@En` give for each result a record can
+/// carry.  The engine checks no time solution itself, so a record
+/// with no result has the solution unknown and neither detection nor
+/// isolation possible, Time RAIM on with satellites enough or not.
+#[test]
+fn a_time_raim_status_claims_no_more_than_the_record() {
+    /// Time RAIM off, each second, its alarm limit 1 us.
+    const TRAIM_OFF_EACH_SECOND: [u8; 15] = [1, 0, 0, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const OK: u8 = 0;
+    const ALARM: u8 = 1;
+    const UNKNOWN: u8 = 2;
+    const ISOLATION: u8 = 0;
+    const DETECTION: u8 = 1;
+    const NEITHER: u8 = 2;
+    let found = |solution| Some(Raim::new(solution, RaimAbility::Isolation));
+    // A record's result, the setup, and the two statuses out of
+    // position hold and in it.
+    let cases = [
+        (
+            None,
+            TRAIM_EACH_SECOND,
+            [UNKNOWN, NEITHER],
+            [UNKNOWN, NEITHER],
+        ),
+        (
+            found(RaimSolution::Unknown),
+            TRAIM_EACH_SECOND,
+            [UNKNOWN, DETECTION],
+            [UNKNOWN, ISOLATION],
+        ),
+        (
+            found(RaimSolution::Ok),
+            TRAIM_EACH_SECOND,
+            [OK, DETECTION],
+            [OK, ISOLATION],
+        ),
+        (
+            found(RaimSolution::Alarm),
+            TRAIM_EACH_SECOND,
+            [ALARM, DETECTION],
+            [ALARM, ISOLATION],
+        ),
+        (
+            None,
+            TRAIM_OFF_EACH_SECOND,
+            [UNKNOWN, NEITHER],
+            [UNKNOWN, NEITHER],
+        ),
+        (
+            found(RaimSolution::Ok),
+            TRAIM_OFF_EACH_SECOND,
+            [UNKNOWN, DETECTION],
+            [UNKNOWN, ISOLATION],
+        ),
+    ];
+    for (identity, message) in [
+        (&VP_SIX, BN_TIME_RAIM),
+        (&VP_EIGHT, BN_TIME_RAIM),
+        (&VP_EIGHT, EN_TIME_RAIM),
+        (&UT_PLUS_2_2, EN_TIME_RAIM),
+    ] {
+        for hold in [false, true] {
+            let mut engine = fixing(identity);
+            ask(&mut engine, &full(), AT_POSITION_HOLD, &[u8::from(hold)]);
+            for (index, (result, setup, moving, holding)) in cases.into_iter().enumerate() {
+                let mut record = full();
+                record.derived.raim = result;
+                let frames = ask(&mut engine, &record, message, &setup);
+                let data = only(&frames, message);
+                // The pulse is on in control mode 1 whatever the
+                // solution.
+                assert_eq!(data[15], 1);
+                assert_eq!(
+                    data[17..19],
+                    if hold { holding } else { moving },
+                    "{identity:?}, hold {hold}, case {index}"
+                );
+            }
+        }
+    }
+}
+
 /// VP p. 102: the engine tracks for its pulse while fixing, with the
 /// antenna heard, a satellite at or above the mask and not ignored.
 #[test]
@@ -1639,6 +1722,12 @@ fn pulsing_follows_the_pulse_mode() {
     let record = full();
     let mut unheard = full();
     unheard.antenna = Antenna::Open;
+    // No Time RAIM result, and one that could not tell: neither
+    // confirms the time solution, so mode 3 has no pulse.
+    let mut unchecked = full();
+    unchecked.derived.raim = None;
+    let mut unknown = full();
+    unknown.derived.raim = Some(Raim::new(RaimSolution::Unknown, RaimAbility::Isolation));
     // Polled, Time RAIM on or off at 1 us, and a 1PPS control mode.
     let setup = |on: u8, mode: u8| [0, on, 0, 10, mode, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     let cases = [
@@ -1649,6 +1738,10 @@ fn pulsing_follows_the_pulse_mode() {
         (1, 3, &record, true),
         (0, 3, &record, false),
         (1, 3, &unheard, false),
+        (1, 3, &unchecked, false),
+        (1, 3, &unknown, false),
+        (1, 1, &unchecked, true),
+        (1, 2, &unchecked, true),
     ];
     let mut engine = fixing(&VP_EIGHT);
     for (on, mode, record, pulsing) in cases {

@@ -1058,9 +1058,11 @@ impl Engine {
     /// mode ([`Settings::pulse_mode`]; `@@Bn`, VP p. 102): never,
     /// always, while [tracking](Self::tracking), or while Time RAIM
     /// confirms the time solution's error within the alarm limit, its
-    /// solution status OK (VP p. 105).  It is the pulse status its Time
-    /// RAIM message reports (VP p. 104), for whoever makes the pulse to
-    /// gate it by.
+    /// solution status OK (VP p. 105).  A record with no Time RAIM
+    /// result, or one whose solution is unknown, confirms nothing, so
+    /// in that last mode there is then no pulse.  It is the pulse
+    /// status its Time RAIM message reports (VP p. 104), for whoever
+    /// makes the pulse to gate it by.
     #[must_use]
     pub fn pulsing(&self, record: &Record) -> bool {
         let family = self.family();
@@ -2276,18 +2278,26 @@ impl Engine {
 
     /// What Time RAIM reports with `tracked` satellites: the record's
     /// result while the algorithm is on, as far as the engine's own
-    /// goes, else the engine's own.  Off, with the alarm limit too low
-    /// or with too few satellites tracked, the solution is unknown (VP
-    /// p. 105) and nothing is isolated, whatever the record has: it
-    /// knows of neither the limit nor which satellites the engine was
-    /// set to track.  Out of position hold, it can only detect (UT
-    /// p. 6.93).
+    /// goes.  The engine checks no time solution itself: a record
+    /// with no result has the solution unknown (VP p. 105) and neither
+    /// detection nor isolation possible (VP p. 106), the engine's own
+    /// count being a bound on a record's result, not a result.  Off,
+    /// with the alarm limit too low or with too few satellites
+    /// tracked, the solution is unknown (VP p. 105) and nothing is
+    /// isolated, whatever the record has: it knows of neither the
+    /// limit nor which satellites the engine was set to track.  Out of
+    /// position hold, it can only detect (UT p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
         let holding = self.state.store.holding();
         let on = self.state.traim.algorithm;
         let able = self.traim_ability(tracked);
-        match record.derived.raim.filter(|_| on && able != TRAIM_NEITHER) {
-            Some(raim) => TraimResult {
+        match record.derived.raim {
+            None => TraimResult {
+                solution: TRAIM_SOLUTION_UNKNOWN,
+                ability: TRAIM_NEITHER,
+                isolated: PrnSet::EMPTY,
+            },
+            Some(raim) if on && able != TRAIM_NEITHER => TraimResult {
                 solution: match raim.solution {
                     RaimSolution::Ok => TRAIM_SOLUTION_OK,
                     RaimSolution::Alarm => TRAIM_SOLUTION_ALARM,
@@ -2306,12 +2316,8 @@ impl Engine {
                     PrnSet::EMPTY
                 },
             },
-            None => TraimResult {
-                solution: if on && able != TRAIM_NEITHER {
-                    TRAIM_SOLUTION_OK
-                } else {
-                    TRAIM_SOLUTION_UNKNOWN
-                },
+            Some(_) => TraimResult {
+                solution: TRAIM_SOLUTION_UNKNOWN,
                 ability: able,
                 isolated: PrnSet::EMPTY,
             },

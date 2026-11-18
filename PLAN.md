@@ -1228,7 +1228,15 @@ stands in for one.
   corrections `@@Ce` puts out and a Time RAIM result arrive in that
   block, and the model only formats them.  Absent, each gives the
   bytes the model sent before it existed, so a caller without them
-  changes nothing.  The model sends a correction set at its own time
+  changes nothing, but for the Time RAIM result: without one the
+  model had sent the solution as OK, and what could be done by its
+  own count of the satellites tracked, with Time RAIM on and
+  satellites enough, a check nobody had made.  It now sends the
+  solution as unknown and neither detection nor isolation as possible
+  (VP pp. 105 and 106), as the Furuno model always has in `rrm`; an
+  image's `raim_monitor` is then inactive, with no alarm and no
+  holdover, and with the 1PPS control mode at 3, which no image sets,
+  the model has no pulse.  The model sends a correction set at its own time
   however old; whoever fills the record clears a stale one.  A set has
   a slot for each of eight channels and a `@@Ce` carries six, so an
   eight-channel VP whose record fills the seventh or eighth sends a

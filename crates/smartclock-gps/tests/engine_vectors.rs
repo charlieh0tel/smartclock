@@ -43,6 +43,7 @@ use smartclock_gps::engine::saved::ChannelCount;
 use smartclock_gps::engine::saved::SavedConfiguration;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::Position;
+use smartclock_gps::record::ReceiverMode;
 use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::UNFILLED;
@@ -282,8 +283,9 @@ const HELD: Position = fake_receiver::position(
 );
 
 /// A fake receiver acts on the two settings it declares: with the
-/// position held, its record is at the position to hold and its fix of
-/// time alone; a position to hold changes nothing until it is held.
+/// position held, its record is at the position to hold, its fix of
+/// time alone and its receiver holding; a position to hold changes
+/// nothing until it is held.
 #[test]
 fn a_fake_receiver_holds_the_position_it_is_told_to() {
     let head = declared_head();
@@ -297,6 +299,7 @@ fn a_fake_receiver_holds_the_position_it_is_told_to() {
     let now = Milliseconds(MILLISECONDS_PER_SECOND);
     let free = receiver.record(1, true, &engine.settings());
     assert_eq!(free.fix, Fix::ThreeD);
+    assert_eq!(free.receiver_mode, ReceiverMode::Navigating);
     assert_ne!(free.position, Some(HELD));
 
     engine.receive(&HOLD_AT, &free, now, &mut lines);
@@ -305,12 +308,14 @@ fn a_fake_receiver_holds_the_position_it_is_told_to() {
     engine.receive(&HOLD, &free, now, &mut lines);
     let held = receiver.record(1, true, &engine.settings());
     assert_eq!(held.fix, Fix::TimeOnly);
+    assert_eq!(held.receiver_mode, ReceiverMode::Holding);
     assert_eq!(held.position, Some(HELD));
     assert_eq!(held.derived.ecef, Some(ecef(HELD)));
     assert_eq!(
         changed(&free, &held),
         FieldSet::of(&[
             RecordField::Fix,
+            RecordField::ReceiverMode,
             RecordField::Latitude,
             RecordField::Longitude,
             RecordField::EllipsoidHeight,

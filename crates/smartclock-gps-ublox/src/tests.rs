@@ -52,6 +52,7 @@ use smartclock_gps::record::Position;
 use smartclock_gps::record::Raim;
 use smartclock_gps::record::RaimAbility;
 use smartclock_gps::record::RaimSolution;
+use smartclock_gps::record::ReceiverMode;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::SelfTest;
 use smartclock_gps::record::Tracking;
@@ -1460,6 +1461,78 @@ fn a_time_only_fix_has_no_dops() {
     };
     assert_eq!(record.fix, Fix::ThreeD);
     assert_eq!(record.dops.map(|dops| dops.position), Some(Tenths(1_000)));
+}
+
+/// The receiver's mode is position hold from a time-only fix and
+/// navigating from a fix of its position, kept through epochs with no
+/// fix from satellites or no `NAV-PVT`, and unknown before any and after
+/// a reset.
+#[test]
+fn the_receivers_mode_is_kept_through_a_loss_of_its_fix() {
+    const NO_FIX: u8 = 0;
+    const DEAD_RECKONING: u8 = 1;
+    const TWO_D: u8 = 2;
+    const THREE_D: u8 = 3;
+    const TIME_ONLY: u8 = 5;
+    let second = |index: u32| NOON + index * 1000;
+    let solved = |index: u32, fix_type: u8, flags: u8| {
+        stream(&[
+            (
+                NAV_PVT,
+                &Pvt {
+                    time_of_week: second(index),
+                    fix_type,
+                    flags,
+                    ..PVT
+                }
+                .payload(),
+            ),
+            (NAV_EOE, &eoe(second(index))),
+        ])
+    };
+    let unsolved = |index: u32| stream(&[(NAV_EOE, &eoe(second(index)))]);
+    let bytes = [
+        unsolved(0),
+        solved(1, TIME_ONLY, 0x01),
+        solved(2, NO_FIX, 0x00),
+        solved(3, DEAD_RECKONING, 0x00),
+        unsolved(4),
+        // A time-only fix outside the masks still tells the mode.
+        solved(5, TIME_ONLY, 0x00),
+        solved(6, THREE_D, 0x01),
+        solved(7, NO_FIX, 0x00),
+        solved(8, TIME_ONLY, 0x01),
+        solved(9, TWO_D, 0x01),
+    ]
+    .concat();
+    let mut assembler = Bench::new();
+    let modes: Vec<ReceiverMode> = records(&mut assembler, &bytes)
+        .iter()
+        .map(|record| record.receiver_mode)
+        .collect();
+    assert_eq!(
+        modes,
+        [
+            ReceiverMode::Unknown,
+            ReceiverMode::Holding,
+            ReceiverMode::Holding,
+            ReceiverMode::Holding,
+            ReceiverMode::Holding,
+            ReceiverMode::Holding,
+            ReceiverMode::Navigating,
+            ReceiverMode::Navigating,
+            ReceiverMode::Holding,
+            ReceiverMode::Navigating,
+        ]
+    );
+
+    let mut assembler = Bench::new();
+    let held = records(&mut assembler, &solved(0, TIME_ONLY, 0x01));
+    assert_eq!(held[0].receiver_mode, ReceiverMode::Holding);
+    assert_eq!(held[0].fix, Fix::TimeOnly);
+    assembler.reset();
+    let after = records(&mut assembler, &solved(1, NO_FIX, 0x00));
+    assert_eq!(after[0].receiver_mode, ReceiverMode::Unknown);
 }
 
 #[test]

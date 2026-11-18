@@ -1401,6 +1401,15 @@ stands in for one.
   rows for the pulse offset and the control mode went.  Where the holder puts
   out a receiver's pulse, the receiver makes it and the holder shifts
   it; where a pulse is timed from records, what times it acts.
+- **A record carries the receiver's mode** (`Record::receiver_mode`:
+  navigating, holding or unknown), apart from its fix, decided
+  2026-11-17: a receiver's fix goes to none when reception drops while
+  its position hold does not, so a mode read from a time-only fix would
+  seem to release the hold with every loss of the sky, and a recording
+  need carry no time-only fix at all.  The u-blox crate takes it from
+  `NAV-PVT`'s `fixType`, holding at 5 and navigating at 2 to 4, and
+  keeps it through the epochs with no fix; the fake receiver's is the
+  one the engine's settings give, as its fix is.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
   UT Plus's only selection, which has no `@@Ah` and "will attempt to

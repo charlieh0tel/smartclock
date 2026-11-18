@@ -4,12 +4,14 @@
 //!
 //! Eight satellites, all tracked and used, a 3D fix at the place, its
 //! DOPs, a time solution's spread, an almanac of the eight, the antenna
-//! connected, a self-test that passes and Time RAIM's result for such a
-//! sky.  [`sky`] is the record less its time; a [`Fixed`] gives it each
-//! second, and a leap second comes from a scenario's row or a
-//! [`LeapSchedule`].  What commands set that the fake receiver acts
-//! on, position hold and the satellites its fix leaves out, [`act`]
-//! does to a record.
+//! connected, a self-test that passes, Time RAIM's result for such a
+//! sky and a receiver that navigates.  [`sky`] is the record less its
+//! time; a [`Fixed`] gives it each second, and a leap second comes from
+//! a scenario's row or a [`LeapSchedule`].  What commands set that the
+//! fake receiver acts on, position hold and the satellites its fix
+//! leaves out, [`act`] does to a record: its receiver holds its
+//! position when told to and navigates otherwise, so its mode is always
+//! the one the engine's settings give.
 //!
 //! The position in Earth-centered coordinates is left to whoever holds
 //! the fake receiver, being arithmetic this crate does not do
@@ -32,6 +34,7 @@ use crate::record::Position;
 use crate::record::Raim;
 use crate::record::RaimAbility;
 use crate::record::RaimSolution;
+use crate::record::ReceiverMode;
 use crate::record::Record;
 use crate::record::Satellite;
 use crate::record::SelfTest;
@@ -132,6 +135,7 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::Ecef,
         RecordField::RaimSolution,
         RecordField::RaimAbility,
+        RecordField::ReceiverMode,
     ]),
     acts: SettingSet::of(&[
         Setting::MaskAngle,
@@ -179,6 +183,7 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
     let mut record = Record::EMPTY;
     record.utc_offset = Some(offset);
     record.fix = Fix::ThreeD;
+    record.receiver_mode = ReceiverMode::Navigating;
     record.position = Some(place);
     record.dops = Some(DOPS);
     record.timing = Some(timing);
@@ -204,7 +209,7 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
     record
 }
 
-/// Acts on `settings`: in position hold the receiver takes the
+/// Acts on `settings`: in position hold the receiver holds the
 /// position it was given for its own and solves for time alone (VP
 /// pp. 56 and 73), and its fix leaves out the satellites below the mask
 /// angle and those it is told to ignore ([`Settings::leave_out`]).  The
@@ -213,6 +218,7 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
 pub fn act(record: &mut Record, settings: &Settings) {
     if settings.position_hold {
         record.fix = Fix::TimeOnly;
+        record.receiver_mode = ReceiverMode::Holding;
         record.position = Some(located(settings.held_position));
     }
     settings.leave_out(record);

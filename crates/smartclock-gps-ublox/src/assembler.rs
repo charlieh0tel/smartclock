@@ -12,6 +12,7 @@ use smartclock_gps::record::Ecef;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Raim;
+use smartclock_gps::record::ReceiverMode;
 use smartclock_gps::record::Record;
 use smartclock_gps::record::Satellites;
 use smartclock_gps::record::SelfTest;
@@ -152,6 +153,7 @@ pub const DECLARATION: Declaration = Declaration {
         RecordField::SelfTest,
         RecordField::Ecef,
         RecordField::RaimAbility,
+        RecordField::ReceiverMode,
     ]),
     acts: SettingSet::of(&[Setting::MaskAngle, Setting::IgnoreList]),
     makes_pulse: false,
@@ -209,6 +211,9 @@ struct Assembly {
     antenna: Antenna,
     /// The Time RAIM result, as `TIM-TP` last gave it.
     raim: Option<Raim>,
+    /// The receiver's mode, as the last `NAV-PVT` that told it gave
+    /// it.
+    mode: ReceiverMode,
     /// The sky the last `NAV-SAT` gave.
     sky: Option<Sky>,
     /// The epochs with a fix and no `NAV-SAT` of their own since the
@@ -255,6 +260,7 @@ impl<const N: usize> Assembler<N> {
                 epoch: Epoch::EMPTY,
                 antenna: Antenna::Unknown,
                 raim: None,
+                mode: ReceiverMode::Unknown,
                 sky: None,
                 lost_skies: 0,
                 announced: None,
@@ -344,6 +350,10 @@ impl Assembly {
         // The receiver that sent the epoch runs, and tells of no fault.
         record.self_test = SelfTest::PASS;
         record.derived.raim = self.raim;
+        if let Some(mode) = epoch.solution.and_then(|solution| solution.receiver_mode()) {
+            self.mode = mode;
+        }
+        record.receiver_mode = self.mode;
         let solution = epoch
             .solution
             .filter(|solution| solution.fix() != Fix::None);

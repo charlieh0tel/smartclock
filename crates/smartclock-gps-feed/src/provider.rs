@@ -440,6 +440,7 @@ pub(crate) mod tests {
     use smartclock_gps::engine::settings::Settings;
     use smartclock_gps::oncore;
     use smartclock_gps::record::Fix;
+    use smartclock_gps::record::ReceiverMode;
     use smartclock_gps::record::Record;
     use smartclock_gps::record::field::Declaration;
     use smartclock_gps::record::field::IMAGE_SETS;
@@ -951,7 +952,9 @@ pub(crate) mod tests {
                 Setting::PositionHold,
                 oncore::AT_POSITION_HOLD,
                 vec![1],
-                |record| record.fix == Fix::TimeOnly,
+                |record| {
+                    record.fix == Fix::TimeOnly && record.receiver_mode == ReceiverMode::Holding
+                },
             ),
         ];
         let driven = cases

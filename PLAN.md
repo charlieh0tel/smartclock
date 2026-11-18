@@ -1872,6 +1872,15 @@ stands in for one.
   each image's PRN 32 alias (10 in the 58503A 3704, 12 in the later
   images) and must report the alias's PRN as ambiguous, since both
   PRNs now fly.
+- **The feed from any receiver gpsd has:** a second gpsd provider for
+  `smartclock-gps-feed`, reading gpsd's own JSON reports (`TPV`, `SKY`)
+  where today's asks for a u-blox receiver's raw output, so that the
+  feed works with any receiver gpsd supports.  The engine keeps its own
+  survey and position hold on it, as it has with gpsd now.  To settle:
+  which fields each kind of receiver fills in, pairing a `TPV` with its
+  `SKY`, leaving out satellites that are not GPS, and what stands in
+  for the receiver's own time integrity.  The raw provider stays, as
+  the test of the u-blox path against a live receiver.
 - **Firmware C:** when a Unicorn release has #2420 (bug 1), bump the
   pin, drop the probe and set `BUG_1.expected` to fixed; likewise bug 2.
   Give the firmware routines their file's prefix, as the hand-written

@@ -240,6 +240,36 @@ fn a_placeholder_reads_as_absent_rather_than_as_text() {
 }
 
 #[test]
+fn the_z3815a_screen_reads_correctly() {
+    // A Z3815A U-4010.0-A screen: C/N column, GPS time scale, survey.
+    let s = screen::parse(&fixture("z3815a-4010-01.txt"));
+    assert_eq!(
+        s.mode.as_deref(),
+        Some("Locked to GPS: stabilizing frequency")
+    );
+    assert_eq!(s.tracking, Some(6));
+    assert_eq!(s.not_tracking, Some(2));
+    assert_eq!(s.time_interval.as_deref(), Some("-3.0 ns"));
+    assert_eq!(s.hold_threshold.as_deref(), Some("1.000 us"));
+    assert_eq!(s.time_scale.as_deref(), Some("GPS"));
+    assert_eq!(s.sync_status.as_deref(), Some("Synchronized to UTC"));
+    assert_eq!(s.survey_percent, Some(18.8));
+}
+
+#[test]
+fn the_z3815as_labeled_predict_placeholder_reads_as_absent() {
+    // The Z3815A prints "Predict: --" while locked, with a colon the
+    // other models do not print; it must not become the text ": --".
+    let text = fixture("z3815a-4010-01.txt");
+    assert_eq!(screen::parse(&text).holdover_predict, None);
+    let predicted = text.replace("Predict: --", "Predict: 432.0 us/initial 24 hrs");
+    assert_eq!(
+        screen::parse(&predicted).holdover_predict.as_deref(),
+        Some("432.0 us/initial 24 hrs")
+    );
+}
+
+#[test]
 fn a_suspect_time_is_flagged_and_not_folded_into_the_clock() {
     // 58503b-01 prints "UTC 12:00:00[?] 01 Jan 1996" at power-up.
     let s = screen::parse(&fixture("58503b-01.txt"));

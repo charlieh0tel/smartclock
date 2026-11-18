@@ -1,0 +1,23 @@
+[ Active ] --------------------- GPSR 2 Status --------------------------------
+SYNCHRONIZATION ............................ [ Outputs Valid/Reduced Accuracy ]
+SmartClock Mode ___________________________   Reference Outputs _______________
+>> Locked to GPS: stabilizing frequency       TFOM     3             FFOM     1
+   Recovery                                   1PPS TI -3.0 ns relative to GPS
+   Holdover                                   HOLD THR 1.000 us
+   Power-up                                   Holdover Uncertainty ____________
+                                              Predict: --
+ACQUISITION ................................................ [ GPS 1PPS Valid ]
+Tracking: 6 ____   Not Tracking: 2 ________   Time ____________________________
+PRN  El  Az  C/N   PRN  El  Az                GPS      16:35:21     18 Nov 2026
+  3  78 281   44     6   8 319                GPS 1PPS Synchronized to UTC
+  4  51 306   42     9   5 160                ANT DLY  0 ns
+ 16  29 133   38                              Position ________________________
+ 26  40  91   40                              MODE     Survey:   18.8% complete
+ 28  17 214   37
+ 31  41  46   43                              AVG LAT  N  37:19:32.100
+                                              AVG LON  W 121:59:52.200
+                                              AVG HGT           +55.00 m  (MSL)
+ELEV MASK 10 deg
+HEALTH MONITOR ......................................................... [ OK ]
+Self Test: OK    Int Pwr: OK   Oven Pwr: OK   OCXO: OK   EFC: OK   GPS Rcv: OK
+Alarms:    (none)

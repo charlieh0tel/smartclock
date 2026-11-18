@@ -123,14 +123,14 @@
 //!   satellites' ten bits (section 9.9.1, p. 29) unless the assembler
 //!   was made with a week to resolve it near
 //!   ([`Assembler::near`](assembler::Assembler::near)).
-//! - **Time mode.**  A timing receiver whose position is fixed, known
-//!   or surveyed, calculates only the time (section 25.1, p. 85), and
+//! - **Position hold.**  A timing receiver whose position is fixed,
+//!   known or surveyed, calculates only the time (section 25.1, p. 85), and
 //!   `NAV-PVT` gives the time-only fix
 //!   ([`Fix::TimeOnly`](smartclock_gps::record::Fix::TimeOnly)).  Its
 //!   `NAV-DOP` then gives `pDOP`, `hDOP` and `vDOP` as 9999, the most
 //!   the field holds, and only `gDOP` and `tDOP` carry values: so a
-//!   NEO-M8T of timing firmware 1.10 sends in every epoch of time
-//!   mode, though the document says nothing of it.  Those are not the
+//!   NEO-M8T of timing firmware 1.10 sends in every epoch of position
+//!   hold, though the document says nothing of it.  Those are not the
 //!   geometry of a position, and a record of a time-only fix has no
 //!   DOPs.
 //! - **The leap second.**  GPS less UTC is `NAV-TIMELS`'s `currLs`, or

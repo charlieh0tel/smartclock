@@ -846,7 +846,9 @@ pub struct Derived {
     pub xdops: Option<XdopTable>,
     /// The pseudorange corrections this receiver puts out.
     pub corrections: Option<Corrections>,
-    /// Time RAIM's result.
+    /// Time RAIM's result.  An engine checks no time solution itself:
+    /// with none, it reports the solution as unknown and neither
+    /// detection nor isolation as possible.
     pub raim: Option<Raim>,
     /// What to add to a true heading for a magnetic one, by a model of
     /// the Earth's field (VP pp. 95 and 97).

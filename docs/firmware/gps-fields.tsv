@@ -184,8 +184,8 @@ Bn	response	next pulse minutes	17	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a
 Bn	response	next pulse seconds	18	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	clock	-	Time	-	-
 Bn	response	pulse status	19	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	computed	-	-	-	-
 Bn	response	pulse sync	20	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	setting.Aw	-	-	-	-
-Bn	response	solution status	21	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	-	RaimSolution	-	-
-Bn	response	RAIM status	22	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	-	RaimAbility	-	-
+Bn	response	solution status	21	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	2	RaimSolution	-	-
+Bn	response	RAIM status	22	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	2	RaimAbility	-	-
 Bn	response	sigma	23	2	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sigma	-	Sigma	-	-
 Bn	response	sawtooth	25	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-	Sawtooth	-	-
 Bn	response	channel satellite	26	1	6	5	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.prn	-	Satellites	-	-
@@ -271,8 +271,8 @@ En	response	next pulse minutes	17	1	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752
 En	response	next pulse seconds	18	1	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752	-	stored	clock;fixed:not used on a UT Plus	-	Time	-	-
 En	response	pulse status	19	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	console	computed	-	-	-	-
 En	response	pulse sync	20	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	console	setting.Aw	-	-	-	-
-En	response	solution status	21	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	-	RaimSolution	-	-
-En	response	RAIM status	22	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	-	RaimAbility	-	-
+En	response	solution status	21	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	2	RaimSolution	-	-
+En	response	RAIM status	22	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	2	RaimAbility	-	-
 En	response	sigma	23	2	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sigma	-	Sigma	-	-
 En	response	sawtooth	25	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-	Sawtooth	-	-
 En	response	channel satellite	26	1	8	5	-	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.prn	-	Satellites	-	-

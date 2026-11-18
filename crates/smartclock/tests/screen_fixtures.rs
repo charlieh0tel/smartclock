@@ -9,6 +9,7 @@ use std::path::Path;
 use std::path::PathBuf;
 
 use smartclock::screen;
+use smartclock::screen::CardState;
 
 fn fixture(name: &str) -> String {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -254,6 +255,50 @@ fn the_z3815a_screen_reads_correctly() {
     assert_eq!(s.time_scale.as_deref(), Some("GPS"));
     assert_eq!(s.sync_status.as_deref(), Some("Synchronized to UTC"));
     assert_eq!(s.survey_percent, Some(18.8));
+}
+
+#[test]
+fn the_z3815as_heading_gives_its_card_state() {
+    let text = fixture("z3815a-4010-01.txt");
+    assert_eq!(screen::parse(&text).card_state, Some(CardState::Active));
+    // The image's other headings, each padded to the same width
+    // (SCREEN_CARD_LINES in the rewritten z3815a-4010 screen.c), and
+    // the dashes it prints for a state it has no word for.
+    for (heading, state) in [
+        ("[ Standby ] -", Some(CardState::Standby)),
+        ("[ Unlocked ] ", Some(CardState::Unlocked)),
+        ("[ Blocked ] -", Some(CardState::Blocked)),
+        ("[ ALARM ] ---", Some(CardState::Alarm)),
+        ("-------------", None),
+    ] {
+        let swapped = text.replacen("[ Active ] --", heading, 1);
+        assert_eq!(screen::parse(&swapped).card_state, state, "{heading:?}");
+    }
+    assert_eq!(CardState::Alarm.to_string(), "ALARM");
+    assert_eq!(CardState::Standby.to_string(), "Standby");
+    // The JSON names the variant, which the status page keys its pills
+    // on, not the word the screen prints.
+    let json = serde_json::to_string(&CardState::Alarm).expect("serialize");
+    assert_eq!(json, r#""Alarm""#);
+}
+
+#[test]
+fn no_other_model_has_a_card_state_and_serializes_it_as_null() {
+    for (name, text) in all_fixtures() {
+        if name.starts_with("z3815a") {
+            continue;
+        }
+        let s = screen::parse(&text);
+        assert_eq!(s.card_state, None, "{name}");
+        let json = serde_json::to_string(&s).expect("serialize");
+        assert!(json.contains(r#""card_state":null"#), "{name}: {json}");
+        // A screen from a daemon that predates the field reads as one
+        // with no card state.
+        let older = json.replace(r#""card_state":null,"#, "");
+        assert_ne!(older, json, "{name}");
+        let read: screen::Screen = serde_json::from_str(&older).expect("deserialize");
+        assert_eq!(read, s, "{name}");
+    }
 }
 
 #[test]

@@ -88,6 +88,23 @@ function fit() {
 // daemon was already doing.
 const READ_TIMEOUT = 20000;
 
+// A Z3815A's card state, which only its screen carries, as a pill's
+// class and the word the screen prints.  A standby card is as normal as
+// an active one, so it is plain rather than a warning.
+const CARD_PILLS = {
+  Active: ["live", "Active"],
+  Standby: ["", "Standby"],
+  Unlocked: ["stale", "Unlocked"],
+  Blocked: ["stale", "Blocked"],
+  Alarm: ["down", "ALARM"],
+};
+
+// The card state's pill, or "" for a screen with none.
+function cardPill(state) {
+  const [kind, word] = CARD_PILLS[state] ?? [];
+  return word ? ` <span class="pill ${kind}">card ${esc(word)}</span>` : "";
+}
+
 content({
   daemon: true,
   every: LIVE_PERIOD,
@@ -114,6 +131,7 @@ content({
       fit();
       $("state").innerHTML =
         `<span class="pill ok">read at ${esc(new Date().toLocaleTimeString())}</span>` +
+        cardPill(s.screen.card_state) +
         (s.screen.satellites_suspect
           ? ` <span class="pill stale">the table disagrees with its own counts</span>`
           : "");

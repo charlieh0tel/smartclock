@@ -274,7 +274,20 @@ so the leap field can carry `+` or `-`.
 
 ## The Z3815A
 
-The Z3815A 4010's screen labels the holdover prediction with a colon
+The Z3815A 4010's heading opens with the card state, chosen by the
+output state the snapshot copies (`SCREEN_CARD_LINES` and the heading's
+print in `third_party/firmware/rewritten/z3815a-4010/screen.c`;
+`firmware/loop.md`, "The Z3815A's extra stage"):
+
+    [ Active ] --        [ Standby ] -        [ Unlocked ]
+    [ Blocked ] -        [ ALARM ] ---        -------------
+
+each followed by `------------------- GPSR `, `1` or `2`, and
+` Status ----`.  The dashes alone are the table's terminator, for a
+state with no word.  The scraper reads the bracket as the screen's
+`card_state`.
+
+Its screen labels the holdover prediction with a colon
 the others lack, and prints `--` there while it has none
 (`third_party/firmware/rewritten/z3815a-4010/screen.c`, the
 `Predict: %s` print):

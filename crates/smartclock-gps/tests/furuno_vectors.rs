@@ -23,9 +23,9 @@
 mod common;
 
 use common::EXCEPTIONS;
+use common::FakeReceiver;
 use common::Head;
 use common::SETTING_EXCEPTIONS;
-use common::Scene;
 use common::WRITE;
 use common::WRITE_VARIABLE;
 use common::ecef;
@@ -38,8 +38,8 @@ use smartclock_gps::engine::furuno::GT_74_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::furuno::Identity;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::Record;
-use smartclock_gps::source::scene;
-use smartclock_gps::source::scene::DECLARATION;
+use smartclock_gps::source::fake_receiver;
+use smartclock_gps::source::fake_receiver::DECLARATION;
 use smartclock_gps::units::Centimeters;
 use smartclock_gps::units::MilliArcSeconds;
 use std::collections::BTreeMap;
@@ -138,7 +138,7 @@ fn run(text: &str) -> String {
     }
     assert_eq!(head.field("format"), FORMAT);
 
-    let scene = Scene::new(&head);
+    let receiver = FakeReceiver::new(&head);
     let known_from = u64::try_from(head.number("known-from")).expect("a second");
     let mut engine = Engine::new(identity(&head));
     let mut antenna = head.field("antenna") == "on";
@@ -146,7 +146,7 @@ fn run(text: &str) -> String {
         if second < known_from {
             Record::EMPTY
         } else {
-            scene.record(second, antenna, &engine.settings())
+            receiver.record(second, antenna, &engine.settings())
         }
     };
     let mut lines = Lines {
@@ -188,12 +188,12 @@ fn vectors() -> Vec<PathBuf> {
     paths
 }
 
-/// The vectors' scene under the Furuno engine is the Oncore vectors'
-/// provider, held to the same declaration and the same exceptions; and
+/// The vectors' fake receiver under the Furuno engine is the Oncore
+/// vectors' provider, held to the same declaration and the same exceptions; and
 /// in position hold, set by the GT-74's sentences, its record is at the
 /// position entered.
 #[test]
-fn the_scene_is_the_one_declared() {
+fn the_fake_receiver_is_the_one_declared() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
     assert!(DECLARATION.shortfall(&exceptions).is_empty());
@@ -204,13 +204,13 @@ fn the_scene_is_the_one_declared() {
 
     let path = root.join("tests/vectors/furuno/gt-74-hold.txt");
     let head = Head::of(&fs::read_to_string(path).expect("a vector"));
-    let scene = Scene::new(&head);
+    let receiver = FakeReceiver::new(&head);
     let mut engine = Engine::new(identity(&head));
     let mut lines = Lines {
         text: String::new(),
         second: 1,
     };
-    let free = scene.record(1, true, &engine.settings());
+    let free = receiver.record(1, true, &engine.settings());
     for sentence in [
         "$PFEC,GPset,Z2",
         "$GPGLL,1000.0000,N,02000.0000,E,,",
@@ -218,8 +218,8 @@ fn the_scene_is_the_one_declared() {
     ] {
         engine.receive(&bytes("to", sentence), &free, &mut lines);
     }
-    let held = scene.record(1, true, &engine.settings());
-    let place = scene::position(
+    let held = receiver.record(1, true, &engine.settings());
+    let place = fake_receiver::position(
         MilliArcSeconds(36_000_000),
         MilliArcSeconds(72_000_000),
         Centimeters(10_000),

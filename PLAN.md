@@ -1259,7 +1259,7 @@ stands in for one.
   back, second by second, which `make check-engine-vectors` and the
   crate's tests replay against the model byte for byte;
   `tests/vectors/furuno/` holds the Furuno model's, as text, under the
-  same scene.
+  same fake receiver.
   `make engine-vectors` rewrites the answers from the model, for
   review as a diff, when a change to them is meant.  Their sky is made
   up, and their position is the one the firmware's own script sets
@@ -1312,8 +1312,8 @@ stands in for one.
   Z3815A's status screen shows from `rrm` and for which the owner
   granted each a row (2026-11-16): the self-test as a pass, the almanac
   (the u-blox crate's from `RXM-SFRBX`), and
-  the Time RAIM result from the scene's sky and from a u-blox
-  receiver's `TIM-TP`.  The u-blox crate fills of that result only
+  the Time RAIM result from the fake receiver's sky and from a
+  u-blox receiver's `TIM-TP`.  The u-blox crate fills of that result only
   the ability: it reports the solution as unknown, `TIM-TP` giving no
   RAIM result or alarm, and the owner granted it a row for the
   solution too (2026-11-16).  A solution of unknown is taken as none
@@ -1336,15 +1336,15 @@ stands in for one.
   the owner's to grant, and that no row is for a setting it acts on
   or one not of `IMAGE_HOLDS`.  It may act on more than the images
   set: only a row can be needless.
-  The scene acts on position hold and the position to hold, and both
-  it and the u-blox crate on the mask angle and the satellites to
+  The fake receiver acts on position hold and the position to hold,
+  and both it and the u-blox crate on the mask angle and the satellites to
   ignore, decided 2026-11-16 in place of rows for them: a record they
   make leaves out of its fix, marking them not used, the satellites
   below the mask and those ignored (`Settings::leave_out`), as a
   receiver set so would, the u-blox crate on its own records without
   configuring its receiver.  Each has a row for the rest, Time RAIM's
-  algorithm and alarm limit among them: the scene gives one Time RAIM
-  result and checks no time solution, and the u-blox crate reports
+  algorithm and alarm limit among them: the fake receiver gives one
+  Time RAIM result and checks no time solution, and the u-blox crate reports
   its receiver's own.  The pulse settings, the cable delay, the pulse
   offset and the 1PPS control mode (`PULSE_SETTINGS`), change only the
   1 PPS (VP pp. 66, 68 and 102), and a record carries no pulse:
@@ -1356,8 +1356,8 @@ stands in for one.
   `Declaration` says whether its provider makes the pulse
   (`makes_pulse`); one that does is held to them, one that does not to
   none of them, with no row for them, a row for one being needless.
-  Neither the scene nor the u-blox crate makes one, so their rows for
-  the pulse offset and the control mode went.  Where the holder puts
+  Neither the fake receiver nor the u-blox crate makes one, so their
+  rows for the pulse offset and the control mode went.  Where the holder puts
   out a receiver's pulse, the receiver makes it and the holder shifts
   it; where a pulse is timed from records, what times it acts.
 - **Settings change what the model sends only as far as the recorded
@@ -1518,9 +1518,9 @@ stands in for one.
   receiver's output (below).  Wrappers relabel a source's time, announce a
   leap second or silence it for a while, and nest by value.  The sky
   the engine's recorded exchanges are under is the crate's
-  (`source::scene`), not the test's, so a tool can put an engine
+  (`source::fake_receiver`), not the test's, so a tool can put an engine
   under the same provider, held to the same declaration and the same
-  rows of the exceptions tables, which name it `scene`; the position in Earth-centered
+  rows of the exceptions tables, which name it `fake receiver`; the position in Earth-centered
   coordinates stays its holder's to work out.
 - **A u-blox receiver is a source, in a crate of its own**
   (`smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
@@ -1687,8 +1687,8 @@ stands in for one.
   Its providers are gpsd's raw output of a u-blox receiver (asked for
   with `?WATCH` and `"raw":2`, a request to gpsd alone; nothing is sent
   to the receiver), a UBX recording, read whole and played an epoch a
-  second, and the vectors' scene, fixed or with a leap second, inside
-  the wrappers that relabel time and announce a leap second.
+  second, and the vectors' fake receiver, fixed or with a leap second,
+  inside the wrappers that relabel time and announce a leap second.
   gpsd's output is of the one device a `"device"` names, given after
   the address (`gpsd:HOST[:PORT]/dev/ttyACM0`), or else of every
   device gpsd has, merged into one assembler, which is then to be one
@@ -1742,8 +1742,8 @@ stands in for one.
   30 s limit on data unacknowledged, so a peer gone without a word, as
   a bridge powered off, is dropped within half a minute and a listener
   takes the next connection rather than refusing it as one held.  Its
-  scene is the vectors' provider, so it is held to
-  `source::scene::DECLARATION` and the exceptions tables' rows named `scene` (named `engine vectors`
+  fake receiver is the vectors' provider, so it is held to
+  `source::fake_receiver::DECLARATION` and the exceptions tables' rows named `fake receiver` (named `engine vectors`
   until the feed shared the provider, renamed 2026-11-15), and works
   out the Earth-centered position itself, with the same arithmetic as
   the vectors' test.  `jiff` is the workspace's 0.2, not the newest,

@@ -16,10 +16,10 @@ use smartclock_gps::source::Presence;
 use smartclock_gps::source::Source;
 use smartclock_gps::source::Tick;
 use smartclock_gps::source::admit;
+use smartclock_gps::source::fake_receiver;
 use smartclock_gps::source::replay::Assemble;
 use smartclock_gps::source::replay::Replay;
 use smartclock_gps::source::scenario::Fixed;
-use smartclock_gps::source::scene;
 use smartclock_gps::source::wrap::FakeTime;
 use smartclock_gps::source::wrap::LeapSchedule;
 use smartclock_gps::source::wrap::Relabel;
@@ -55,8 +55,8 @@ pub(crate) const GPSD_PORT: u16 = 2947;
 pub(crate) const GPSD_SILENCE: Duration = Duration::from_secs(10);
 /// GPS less UTC since the end of 2016, which the made-up sky carries.
 pub(crate) const UTC_OFFSET: Seconds<i8> = Seconds(18);
-/// How long before its leap second a `leap:` sky starts, unless a fake
-/// start says otherwise.
+/// How long before its leap second a `fake:leap=` sky starts, unless a
+/// fake start says otherwise.
 const LEAP_LEAD: Seconds<i64> = Seconds(60);
 /// How much of gpsd's stream is read at once.
 const GPSD_CHUNK: usize = 4096;
@@ -69,7 +69,7 @@ type Ubx = Assembler<{ nav_sat_length(u8::MAX as usize) }>;
 #[derive(Debug, Clone)]
 pub(crate) enum Provider {
     /// The made-up sky, with or without a leap second.
-    Scene(Fixed<'static>),
+    FakeReceiver(Fixed<'static>),
     /// A UBX recording, an epoch a tick, boxed for its assembler's
     /// buffer.
     Recording(Box<Replay<&'static [u8], Ubx>>),
@@ -80,7 +80,7 @@ pub(crate) enum Provider {
 impl Source for Provider {
     fn clocking(&self) -> Clocking {
         match self {
-            Self::Scene(fixed) => fixed.clocking(),
+            Self::FakeReceiver(fixed) => fixed.clocking(),
             Self::Recording(replay) => replay.clocking(),
             Self::Live(latest) => latest.clocking(),
         }
@@ -88,7 +88,7 @@ impl Source for Provider {
 
     fn record(&mut self, tick: Tick, record: &mut Record) -> Presence {
         match self {
-            Self::Scene(fixed) => fixed.record(tick, record),
+            Self::FakeReceiver(fixed) => fixed.record(tick, record),
             Self::Recording(replay) => replay.record(tick, record),
             Self::Live(latest) => latest.record(tick, record),
         }
@@ -125,7 +125,7 @@ impl Shared {
     pub(crate) const fn latest(&self) -> Option<&Latest> {
         match self.nest.inner().inner() {
             Provider::Live(latest) => Some(&**latest),
-            Provider::Scene(_) | Provider::Recording(_) => None,
+            Provider::FakeReceiver(_) | Provider::Recording(_) => None,
         }
     }
 
@@ -148,7 +148,7 @@ impl Shared {
 pub(crate) enum Kind {
     /// The made-up sky, which acts on position hold and leaves the
     /// Earth-centered position to its holder.
-    Scene,
+    FakeReceiver,
     /// A recording, which ends.
     Recording,
     /// gpsd, read by a thread of its own.
@@ -165,7 +165,7 @@ pub(crate) struct Built {
 /// What `spec` names, of the kinds of provider.
 pub(crate) const fn kind(spec: &ProviderSpec) -> Kind {
     match spec {
-        ProviderSpec::Fixed | ProviderSpec::Leap(_) => Kind::Scene,
+        ProviderSpec::Fake | ProviderSpec::FakeLeap(_) => Kind::FakeReceiver,
         ProviderSpec::Ubx(_) => Kind::Recording,
         ProviderSpec::Gpsd(_) => Kind::Live,
     }
@@ -191,11 +191,11 @@ pub(crate) fn build(
     now: UnixSeconds,
 ) -> Result<Built> {
     let (provider, relabel, leap) = match spec {
-        ProviderSpec::Fixed => {
+        ProviderSpec::Fake => {
             let start = gps(fake_start.unwrap_or(now))?;
-            (scene_from(start)?, Relabel::Keep, None)
+            (fake_receiver_from(start)?, Relabel::Keep, None)
         }
-        ProviderSpec::Leap(event) => {
+        ProviderSpec::FakeLeap(event) => {
             let start = match fake_start.map(gps).transpose()? {
                 Some(start) => start,
                 None => event
@@ -203,7 +203,7 @@ pub(crate) fn build(
                     .checked_sub(LEAP_LEAD)
                     .ok_or_else(|| anyhow!("a leap second too near GPS time's start"))?,
             };
-            (scene_from(start)?, Relabel::Keep, Some(*event))
+            (fake_receiver_from(start)?, Relabel::Keep, Some(*event))
         }
         ProviderSpec::Ubx(path) => {
             let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
@@ -236,12 +236,16 @@ const fn relabel(fake_start: Option<UnixSeconds>) -> Relabel {
 
 /// The made-up sky, its first second `start`.  The sky is built once
 /// and lives as long as the program.
-fn scene_from(start: GpsSeconds) -> Result<Provider> {
+fn fake_receiver_from(start: GpsSeconds) -> Result<Provider> {
     let week = start
         .week()
         .ok_or_else(|| anyhow!("a start before GPS time's"))?;
-    let sky: &'static Record = Box::leak(Box::new(scene::sky(scene::PLACE, UTC_OFFSET, week)));
-    Ok(Provider::Scene(Fixed::new(start, sky)))
+    let sky: &'static Record = Box::leak(Box::new(fake_receiver::sky(
+        fake_receiver::PLACE,
+        UTC_OFFSET,
+        week,
+    )));
+    Ok(Provider::FakeReceiver(Fixed::new(start, sky)))
 }
 
 /// A UBX recording, which lives as long as the program.
@@ -250,9 +254,9 @@ pub(crate) fn recording(bytes: Vec<u8>) -> Provider {
 }
 
 /// Completes a record of the made-up sky: acts on the engine's settings
-/// ([`scene::act`]), and works out the Earth-centered position.
-pub(crate) fn complete_scene(record: &mut Record, settings: &Settings) {
-    scene::act(record, settings);
+/// ([`fake_receiver::act`]), and works out the Earth-centered position.
+pub(crate) fn complete_fake_receiver(record: &mut Record, settings: &Settings) {
+    fake_receiver::act(record, settings);
     record.derived.ecef = record.position.map(ecef);
 }
 
@@ -419,7 +423,7 @@ pub(crate) mod tests {
     use super::UTC_OFFSET;
     use super::Ubx;
     use super::build;
-    use super::complete_scene;
+    use super::complete_fake_receiver;
     use super::recording;
     use super::spawn_gpsd;
     use super::watch;
@@ -445,9 +449,9 @@ pub(crate) mod tests {
     use smartclock_gps::source::Presence;
     use smartclock_gps::source::Source;
     use smartclock_gps::source::Tick;
+    use smartclock_gps::source::fake_receiver;
+    use smartclock_gps::source::fake_receiver::DECLARATION as FAKE_RECEIVER;
     use smartclock_gps::source::replay::Assemble as _;
-    use smartclock_gps::source::scene;
-    use smartclock_gps::source::scene::DECLARATION as SCENE;
     use smartclock_gps::source::wrap::FakeTime;
     use smartclock_gps::source::wrap::LeapSchedule;
     use smartclock_gps::source::wrap::Relabel;
@@ -654,21 +658,21 @@ pub(crate) mod tests {
     }
 
     /// The made-up sky starts at the driver's second, or at the fake
-    /// start; a `leap:` sky a minute before its leap second, which it
-    /// announces.
+    /// start; a `fake:leap=` sky a minute before its leap second, which
+    /// it announces.
     #[test]
-    fn the_scene_starts_where_it_is_told() {
+    fn the_fake_receiver_starts_where_it_is_told() {
         let now = DateTime::new(2026, 11, 15, 12, 0, 0).unwrap().to_unix();
         let at_now = GpsSeconds::from_utc(now, Seconds(18)).unwrap();
         let mut record = Record::EMPTY;
 
-        let Built { mut nest, kind } = build(&ProviderSpec::Fixed, None, now).unwrap();
-        assert_eq!(kind, Kind::Scene);
+        let Built { mut nest, kind } = build(&ProviderSpec::Fake, None, now).unwrap();
+        assert_eq!(kind, Kind::FakeReceiver);
         assert_eq!(nest.record(Tick(5), &mut record), Presence::Fresh);
         assert_eq!(record.time.unwrap().seconds, at_now + Seconds(5));
 
         let fake = DateTime::new(2030, 6, 1, 0, 0, 0).unwrap().to_unix();
-        let Built { mut nest, .. } = build(&ProviderSpec::Fixed, Some(fake), now).unwrap();
+        let Built { mut nest, .. } = build(&ProviderSpec::Fake, Some(fake), now).unwrap();
         assert_eq!(nest.record(Tick(0), &mut record), Presence::Fresh);
         assert_eq!(
             record.time.unwrap().seconds,
@@ -677,7 +681,7 @@ pub(crate) mod tests {
 
         let midnight = DateTime::new(2028, 1, 1, 0, 0, 0).unwrap().to_unix();
         let leap = LeapEvent::at_day_end(midnight, Seconds(18), LeapChange::Insert).unwrap();
-        let Built { mut nest, .. } = build(&ProviderSpec::Leap(leap), None, now).unwrap();
+        let Built { mut nest, .. } = build(&ProviderSpec::FakeLeap(leap), None, now).unwrap();
         assert_eq!(nest.record(Tick(59), &mut record), Presence::Fresh);
         assert_eq!(record.time.unwrap().seconds, leap.at - Seconds(1));
         assert_eq!(record.leap, Some(leap));
@@ -690,32 +694,32 @@ pub(crate) mod tests {
     /// declares and nothing else, all the images use; it acts on the
     /// settings it declares and is excused the rest, none for nothing.
     #[test]
-    fn the_scene_fills_what_it_declares() {
+    fn the_fake_receiver_fills_what_it_declares() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let exceptions =
             std::fs::read_to_string(root.join("../../docs/firmware/gps-field-exceptions.tsv"))
                 .unwrap();
-        let shortfall = SCENE.shortfall(&exceptions);
+        let shortfall = FAKE_RECEIVER.shortfall(&exceptions);
         assert!(shortfall.is_empty(), "shortfall: {shortfall:?}");
         let exceptions =
             std::fs::read_to_string(root.join("../../docs/firmware/gps-setting-exceptions.tsv"))
                 .unwrap();
-        let unacted = SCENE.unacted(&exceptions);
+        let unacted = FAKE_RECEIVER.unacted(&exceptions);
         assert!(unacted.is_empty(), "unacted: {unacted:?}");
-        let needless = SCENE.needless(&exceptions);
+        let needless = FAKE_RECEIVER.needless(&exceptions);
         assert!(needless.is_empty(), "needless: {needless:?}");
 
         let now = DateTime::new(2027, 12, 31, 23, 0, 0).unwrap().to_unix();
         let midnight = DateTime::new(2028, 1, 1, 0, 0, 0).unwrap().to_unix();
         let leap = LeapEvent::at_day_end(midnight, Seconds(18), LeapChange::Insert).unwrap();
-        let Built { mut nest, .. } = build(&ProviderSpec::Leap(leap), None, now).unwrap();
+        let Built { mut nest, .. } = build(&ProviderSpec::FakeLeap(leap), None, now).unwrap();
         let engine = Engine::new(&VP_EIGHT, Options::DEFAULT).unwrap();
         let mut record = UNFILLED;
         assert_eq!(nest.record(Tick(0), &mut record), Presence::Fresh);
-        complete_scene(&mut record, &engine.settings());
-        let undeclared = SCENE.undeclared(&UNFILLED, &record);
+        complete_fake_receiver(&mut record, &engine.settings());
+        let undeclared = FAKE_RECEIVER.undeclared(&UNFILLED, &record);
         assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
-        let unshown = SCENE.unshown(changed(&UNFILLED, &record));
+        let unshown = FAKE_RECEIVER.unshown(changed(&UNFILLED, &record));
         assert!(unshown.is_empty(), "unshown: {unshown:?}");
     }
 
@@ -891,8 +895,8 @@ pub(crate) mod tests {
     fn each_setting_the_images_set_reaches_the_providers() {
         /// The mask angle the engine is set to, in degrees.
         const MASK: i8 = 20;
-        /// A satellite of the scene's sky to ignore, and `@@Am`'s data
-        /// for it: the constant byte, then the mask, bit 0 satellite 1
+        /// A satellite of the fake receiver's sky to ignore, and `@@Am`'s
+        /// data for it: the constant byte, then the mask, bit 0 satellite 1
         /// (VP p. 42).
         const IGNORED: u8 = 3;
         const IGNORE_DATA: [u8; 5] = [0, 0, 0, 0, 1 << (IGNORED - 1)];
@@ -953,8 +957,11 @@ pub(crate) mod tests {
         let driven = cases
             .iter()
             .fold(SettingSet::EMPTY, |set, case| set.with(case.0));
-        let providers: [(Declaration, Act); 2] = [(SCENE, complete_scene), (UBLOX, assembler::act)];
-        let sky = scene::sky(scene::PLACE, UTC_OFFSET, GpsWeek::new(WEEK));
+        let providers: [(Declaration, Act); 2] = [
+            (FAKE_RECEIVER, complete_fake_receiver),
+            (UBLOX, assembler::act),
+        ];
+        let sky = fake_receiver::sky(fake_receiver::PLACE, UTC_OFFSET, GpsWeek::new(WEEK));
         for (declaration, act) in providers {
             let undriven: Vec<Setting> = IMAGE_SETS
                 .iter()

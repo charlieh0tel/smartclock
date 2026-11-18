@@ -30,7 +30,7 @@ use crate::record::Timing;
 use crate::record::URA_MAX;
 use crate::record::Ura;
 use crate::record::Velocity;
-use crate::source::scene;
+use crate::source::fake_receiver;
 use crate::time::DateTime;
 use crate::time::GpsSeconds;
 use crate::time::LeapChange;
@@ -205,9 +205,9 @@ fn at(year: u16, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> GpsSec
     GpsSeconds::from_utc(date.to_unix(), OFFSET).expect("a GPS second")
 }
 
-/// The scene's record at `time`.
+/// The fake receiver's record at `time`.
 fn record(time: GpsSeconds) -> Record {
-    let mut record = scene::sky(scene::PLACE, OFFSET, time.week().expect("a week"));
+    let mut record = fake_receiver::sky(fake_receiver::PLACE, OFFSET, time.week().expect("a week"));
     record.time = Some(GpsTime {
         seconds: time,
         subsecond: Nanoseconds(0),

@@ -1918,14 +1918,15 @@ specification; in short:
   to add to; a fill from data made to give every field a
   value must change every field declared and no other, seen against
   the crate's `UNFILLED`, an empty record whose self-test fails, so
-  that a fill of a pass shows.  The vectors' scene, the crate's
-  `source::scene`, and the u-blox crate declare theirs, and both fill
-  all the images use but one field, the u-blox crate's almanac from
+  that a fill of a pass shows.  The vectors' fake receiver, the
+  crate's `source::fake_receiver`, and the u-blox crate declare
+  theirs, and both fill all the images use but one field, the u-blox
+  crate's almanac from
   `RXM-SFRBX` among them, and the u-blox crate the Time RAIM solution
   as well.  The one is the satellites Time RAIM isolated, which the
   Z3815A's status screen shows from `rrm`: the owner granted both a
-  row for it (2026-11-16), the scene's sky having no bad satellite to
-  isolate and `TIM-TP` not saying which a receiver removed.  The
+  row for it (2026-11-16), the fake receiver's sky having no bad
+  satellite to isolate and `TIM-TP` not saying which a receiver removed.  The
   u-blox crate writes the solution as unknown, the manual's value for
   not known, `TIM-TP` giving no RAIM result or alarm, and the owner
   granted it a row for that too (2026-11-16).  A solution of unknown
@@ -1936,8 +1937,8 @@ specification; in short:
   `Declaration::shortfall`, `Declaration::unacted` and
   `Declaration::needless`, and
   shows its fills against the same `UNFILLED`.  Both fill the self-test as a pass, neither having a
-  part to fail.  The scene's Time RAIM result is its sky's: eight
-  satellites, the solution good and a bad one isolable, and with the
+  part to fail.  The fake receiver's Time RAIM result is its sky's:
+  eight satellites, the solution good and a bad one isolable, and with the
   antenna off unknown and neither.  The u-blox crate's is `TIM-TP`'s
   `raim` (UBX-13003221 R28, p. 433), which says only whether the
   receiver's (T)RAIM is active; what a record makes of that is the
@@ -2034,10 +2035,10 @@ specification; in short:
   than the images set; that needs no row and fails nothing.  A row
   names a setting by its field of the `Settings`, and is the owner's
   to grant.  The
-  vectors' scene acts on position hold and the position to hold: held,
-  its record is at that position with a fix of time alone (VP pp. 56
-  and 73).  It and the u-blox crate act on the mask angle and the
-  satellites to ignore: their records mark not used the satellites
+  vectors' fake receiver acts on position hold and the position to
+  hold: held, its record is at that position with a fix of time alone
+  (VP pp. 56 and 73).  It and the u-blox crate act on the mask angle
+  and the satellites to ignore: their records mark not used the satellites
   below the mask, at or above it being within it as the model takes
   it, and those ignored (`Settings::leave_out`; VP pp. 28 and 42),
   their fix and DOPs left as their source has them.  Whoever makes the
@@ -2052,11 +2053,11 @@ specification; in short:
   model's rule and does not copy it.  A `Declaration` says whether its provider
   makes the pulse; one that does is held to them, one that does not
   to none of them, and a row excusing it one is needless.  Neither the
-  scene nor the u-blox crate makes a pulse, a record carrying none:
-  where the holder puts out a receiver's pulse, the receiver makes it
+  fake receiver nor the u-blox crate makes a pulse, a record carrying
+  none: where the holder puts out a receiver's pulse, the receiver makes it
   and the holder shifts it, and where a pulse is timed from records,
-  what times it acts.  The scene is excused the rest, having no
-  search, choice of satellites or 2D fix for them to change, and for
+  what times it acts.  The fake receiver is excused the rest, having
+  no search, choice of satellites or 2D fix for them to change, and for
   Time RAIM one result, the same every second, with no time solution
   checked.  The u-blox crate is excused the rest: each would be a
   configuration sent to the receiver, and the crate only reads one,

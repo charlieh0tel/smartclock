@@ -2159,7 +2159,7 @@ hand (`workflow_dispatch`), a job of its own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-status-register`, `check-chip-selects`,
-`check-loop-trace`, `check-loop-constants`, `check-gps-fields`, `check-magic-numbers`, `check-comment-addresses`,
+`check-loop-trace`, `check-loop-constants`, `check-loop-gain`, `check-gps-fields`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-plain-names`, `check-rom-pointers` and
 `check-alone`, both without `IMAGE`, the second compiling each
 hand-written `.c` of every image's export alone after the export's
@@ -2225,7 +2225,11 @@ reads each τ, startup constant, G and holdover-recovery threshold
 that `loop-constants.json` cites from its image, and fails if they
 disagree, or if the tables made from that file in `loop.md` and
 `docs/pages/loop.html` are not what it gives
-(`tools/firmware/loop_constants.py`).  `check-gps-fields` runs each
+(`tools/firmware/loop_constants.py`).  `check-loop-gain` does the same
+for where each image's G comes from and whether the EEPROM's
+calibration block can change it, `loop-gain.json`, and decodes every
+EEPROM in `third_party/firmware/images/eeprom/` by its unit's image's
+rules for the tables' last column (`tools/firmware/loop_gain.py`).  `check-gps-fields` runs each
 Oncore image's own message decoders in Unicorn, notes the bytes of
 each message they read and where they store them, scans the image for
 the functions that read them there, and fails if `gps-fields.tsv`, the

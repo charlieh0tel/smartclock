@@ -124,6 +124,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-loop-constants
         if: ${{ !cancelled() }}
+      - run: make check-loop-gain
+        if: ${{ !cancelled() }}
       - run: make check-gps-fields
         if: ${{ !cancelled() }}
       # The FPGA decoder against XACT's test designs, in node (web.yml's

@@ -58,7 +58,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
-	check-status-register check-gps-fields gps-fields
+	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -290,6 +290,19 @@ check-loop-constants:
 
 loop-constants:
 	python3 $(ROOT)/tools/firmware/loop_constants.py --write
+
+# Fail if docs/firmware/loop-gain.json, where each image's G comes from
+# and whether its EEPROM's calibration block can change it, disagrees
+# with the images where it cites them, or if the tables made from it and
+# from every EEPROM in third_party/firmware/images/eeprom/, decoded by
+# its unit's image, between markers in docs/firmware/loop.md and
+# docs/pages/loop.html are not what they give; loop-gain rewrites the
+# tables.
+check-loop-gain:
+	python3 $(ROOT)/tools/firmware/loop_gain.py
+
+loop-gain:
+	python3 $(ROOT)/tools/firmware/loop_gain.py --write
 
 # Fail if docs/firmware/gps-fields.tsv, the fields of every message the
 # GPS engine model speaks, does not tile each message, if its images,

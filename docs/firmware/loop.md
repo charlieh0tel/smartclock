@@ -499,7 +499,8 @@ in the image -- every other form of the address was searched for --
 and only bit 8 is examined.  So it is an input port the processor reads once, when the
 loop task starts; what drives bit 8 -- a link, a switch, or a signal
 from the oscillator or DAC board -- is on the board, not in the image.
-In the Z3801A the address is only inside chip select 5's 64 KiB
+Nothing the EEPROM holds changes it ("G and the calibration block",
+below).  In the Z3801A the address is only inside chip select 5's 64 KiB
 window, with the latch and the FPGA (`restart.md`, "The chip
 selects"), and its image never reads it.  What the sign of G stands
 for was not traced.
@@ -724,15 +725,66 @@ one locking its oscillator to the other's; its console words
 stage or the card states.
 
 The Z3815A reads the word at `0x302000` as the Z3816A does, but bit 12
-where the Z3816A reads bit 8, and with it chooses τ as well as G.  A
-second routine stores −2.125 × 10⁻¹² unconditionally (`0x50c14`);
-which runs when was not traced.
+where the Z3816A reads bit 8, and with it chooses τ as well as G, in
+two places.  `efc_calibration_defaults` (`0x45038`) gives `:ASLOPe`
+(`0x1023c8`) +1.2 × 10⁻¹² with the bit set and −2.125 × 10⁻¹² with it
+clear, and `:BSLOPe` (`0x1023cc`) 0, and a valid calibration block's A
+and B stand in for them (`efc_calibration_read`, `0x4506c`).  Then
+`pll_init` (`0x50b4c`) tests the bit again (`0x50bf2`): set, it makes τ
+1000 s; clear, it makes τ 500 s (`0x50c0c`), clears `:BSLOPe`
+(`0x50c14`), stores −2.125 × 10⁻¹² in `:ASLOPe` (`0x50c1c`) and clears
+`efc_compensation` (`0x1021da`, `0x50c24`).  `system_init` reads the
+block first (`0x22d4e`) and runs `pll_init` on every start that loads
+the defaults (`0x22e8a`, `0x22eb8`), and `pll_restart` runs it at each
+restart of the loop (`0x50c46`); only a warm start that restores the
+preserved region skips it.  So with bit 12 set a stored calibration
+stands in for the defaults, and with it clear it counts only from such
+a warm start to the loop's next restart.  The loop takes G from
+`:ASLOPe` as `pllp_task` starts (`0x50dd4`) and then as A + B·u² at the
+EFC in force u (`efc_gain_from_calibration`, `0x52872`).
 
 Channel names differ.  The `Oscillator current` table of "s, the
 oscillator current" is in the Z3816A, Z3815A and 58503B; the Z3801A,
 Z3805A and 58503A 3633 name `Double oven` instead, and 3704 neither.
 The console word `xcal` is in the Z3816A only, and its `tempco = `
 message in all but the Z3815A and 58503B.
+
+### G and the calibration block
+
+The calibration block is the EEPROM's 64 bytes at `0x400080`, its
+first word a checksum, the byte sum of the other 62 bytes over its
+complement, its floats big-endian IEEE singles.  In the Z3816A,
+Z3801A, Z3805A 3543B and 58503A 3704 it holds the TC (`+0x2`) and the
+time offset (`+0x6`), and in the Z3816A and 3704 a word at `+0xa`, the
+3704's 1PPS cable delay: nothing of G's.  The Z3815A, 58503B, Z3805A
+1.01.03 and Z3817A add an EFC calibration, DADC (`+0xc`), A (`+0x10`,
+`:ASLOPe`) and B (`+0x14`, `:BSLOPe`), and the last three an
+oscillator type or kind, the byte at `+0x1c` (the EEPROM's
+`0x40009c`).  The table is made from `loop-gain.json` and the EEPROMs
+in `third_party/firmware/images/eeprom/`, each decoded by its unit's
+image's rules, and `make check-loop-gain`
+(`tools/firmware/loop_gain.py`) reads every address after a value or
+a clause from its image, decodes every EEPROM afresh, and fails if
+this table or `docs/pages/loop.html`'s "G and the EEPROM" is not what
+they give (`make loop-gain` rewrites both).  u is the EFC in DAC
+counts, 0 to 2²⁰.
+
+<!-- loop_gain.py evidence -->
+| Image | G comes from | Can the EEPROM change it? | The EEPROMs held |
+| ----- | ------------ | ------------------------- | ---------------- |
+| Z3816A 4001 | Bit 8 of the word at `0x302000`, read once as the loop starts (`0x4b14c`): set −1.25 × 10⁻¹², clear −2.125 × 10⁻¹² | No: G goes to the gain setter as an immediate (`0x4b166`); the block holds the TC, the time offset and a word at `+0xa`, nothing of G's (`0x4045c`) | None held |
+| Z3815A 4010 | Bit 12 of the word at `0x302000`, which picks τ too (`0x45038`): set +1.2 × 10⁻¹², τ 1000 s; clear −2.125 × 10⁻¹², τ 500 s; then A + B·u² at the EFC in force u (`0x52872`) | With bit 12 set: a valid block's A and B stand in for the defaults (`0x4506c`), but with bit 12 clear `pll_init` (`0x50b4c`) reads the bit again (`0x50bf2`), sets τ to 500 s (`0x50c0c`), clears B (`0x50c14`), sets A to −2.125 × 10⁻¹² (`0x50c1c`) and clears `efc_compensation` (`0x50c24`); it runs after the block is read (`0x22d4e`), on every start that loads the defaults (`0x22e8a`, `0x22eb8`) and at each restart of the loop (`0x50c46`); only a warm start that restores the preserved region skips it, until the loop restarts | None held |
+| Z3801A 3543 | A constant, +6.25 × 10⁻¹³ (`0x475be`) | No: the block holds the TC and the time offset alone (`0x2fb14`), written only by those two parameters' done hooks (`0x2fb56`) | [`z3801a-3542A01548-eeprom.bin`](../../third_party/firmware/images/eeprom/z3801a-3542A01548-eeprom.bin): block erased; G +6.25 × 10⁻¹³, the image's |
+| Z3805A 3543B | A constant, +6.25 × 10⁻¹³ (`0x475f4`) | No: the block holds the TC and the time offset alone (`0x30c1e`), written only by those two parameters' done hooks (`0x30c60`) | [`z3805a-3625A01487-eeprom.bin`](../../third_party/firmware/images/eeprom/z3805a-3625A01487-eeprom.bin): block erased; G +6.25 × 10⁻¹³, the image's |
+| 58503A 3704 | A constant, +6.25 × 10⁻¹³ (`0x477dc`) | No: the block holds the TC, the time offset and the 1PPS cable delay alone (`0x30ba8`), written only by those parameters' done hooks (`0x30b24`) | [`58503a-3710A01056-eeprom.bin`](../../third_party/firmware/images/eeprom/58503a-3710A01056-eeprom.bin): block valid: TC −33.65, time offset 0, cable delay 0; G +6.25 × 10⁻¹³, the image's |
+| 58503B 1.01.04 | The oscillator type's entry in the table at `0x40dfc` (`0x40b8a`): type 0 −1.25 × 10⁻¹², type 1 +6.25 × 10⁻¹³ | Yes: a valid block's A replaces the type's as the loop starts (`0x4c91e`); its B is never applied.  The type is the block's byte at `+0x1c`, 0 if erased or past 1 (`0x40c62`, `0x40c66`); the EFC part is valid when the checksum holds (`0x40cf0`), none of DADC, A and B has all of bits `0xe8000000` set (`0x40baa`, `0x40e14`), A is not 0, and the type byte is the type or erased (`0x40bf4`) | [`58503b-L00000-eeprom.bin`](../../third_party/firmware/images/eeprom/58503b-L00000-eeprom.bin): block valid, type 0, A −6.684 × 10⁻¹³: G −6.684 × 10⁻¹³ in place of the type's −1.25 × 10⁻¹² |
+| Z3805A 1.01.03 | The 58503B's code, the type's entry in the table at `0x329ec` (`0x3277a`): type 0 +6.25 × 10⁻¹³, type 1 +9.238 × 10⁻¹³ | Yes: as in the 58503B, a valid block's A (`0x3279a`) replaces the type's as the loop starts (`0x48094`) | None held |
+| Z3817A 3752 | The oscillator kind, the block's byte at `+0x1c`, EEPROM `0x40009c`, 0 when erased or the block bad (`0x418ec`, `0x41910`): kind 0 A +5 × 10⁻¹³ and B +3.3 × 10⁻²⁴, τ 1000 s; any other A −2.125 × 10⁻¹² and B 0, τ 500 s for kind 1 (`0x417fa`); G = A + B·u² at the EFC in force u, each block (`0x4d76c`) | Yes: a valid block's A and B replace the defaults, valid as in the 58503B (`0x41834`, `0x41a18`) | [`z3817a-3832A03064-eeprom.bin`](../../third_party/firmware/images/eeprom/z3817a-3832A03064-eeprom.bin): block valid, kind 0, A +4.828 × 10⁻¹³ and B +1.941 × 10⁻²⁴: G +4.828 × 10⁻¹³ at EFC 0 and +1.016 × 10⁻¹² at u = 2¹⁹, where the defaults give +5 × 10⁻¹³ and +1.407 × 10⁻¹²; τ 1000 s |
+<!-- end loop_gain.py -->
+
+Of the EEPROMs held, the Z3817A's and the 58503B's carry an EFC
+calibration; their bytes do not say whether a calibration measured it
+or `:ASLOPe` and `:BSLOPe` set it.
 
 ### The update in the Z3805A 3543B
 
@@ -813,7 +865,9 @@ but for their constants: `make check-loop-constants`
 G and holdover-recovery threshold that `loop-constants.json` cites,
 in every image, from the image, and fails if one differs or if the
 "In every image" table here or `docs/pages/loop.html`'s "By model"
-table is not what that file gives.  The page's a, slowest pole and
+table is not what that file gives; `make check-loop-gain`
+(`tools/firmware/loop_gain.py`) does the same for "G and the
+calibration block" and decodes every EEPROM held afresh.  The page's a, slowest pole and
 startup ramp it computes from each τ, as the tests above do.
 
 ## The soft-float arithmetic and its constants

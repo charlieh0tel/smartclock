@@ -82,7 +82,7 @@
     {
       "key": "daemon",
       "heading": "Daemon support",
-      "about": "the dialect the daemon and its clients speak to the model, chosen from its `*IDN?` ([[crates/smartclock/src/device.rs]]), and for the Z3817A that its command lists are audited against a receiver (`complete` in [[crates/smartclock/commands.toml]]); [[README.md|The hardware]] says which models have been tested on a bench",
+      "about": "the dialect the daemon and its clients speak to the model, chosen from its `*IDN?` ([[crates/smartclock/src/device.rs]]), and for the Z3817A that its command lists are audited against a receiver (`complete` in [[crates/smartclock/commands.toml]]); [[README.md|The hardware]] says which models have been tested",
       "text": "{dialect} dialect",
       "evidence": [{"dialect": "{model}", "is": "{dialect}"}],
       "link": {"path": "README.md", "section": "The hardware"}

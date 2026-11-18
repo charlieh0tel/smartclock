@@ -114,7 +114,7 @@ in SCPI.
 | Z3801A | yes | Different response formats; its 3543 firmware in C |
 | Z3805A | yes | Answers as the Z3801A; its 3543B firmware in C |
 | Z3817A | yes | Answers as the Z3801A, less the stubs its 3752 firmware answers -113; its time reference inputs logged |
-| 58503B | no; may work | Firmware studied |
+| 58503B | yes | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
 | Z3816A | no; may work | Firmware studied |
 | Z3815A | no; may work | Firmware studied; Furuno GPS engine |

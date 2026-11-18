@@ -286,10 +286,10 @@ loop-trace:
 # docs/firmware/loop.md and docs/pages/loop.html are not what it gives;
 # loop-constants rewrites the tables.
 check-loop-constants:
-	python3 -I $(ROOT)/tools/firmware/loop_constants.py
+	python3 $(ROOT)/tools/firmware/loop_constants.py
 
 loop-constants:
-	python3 -I $(ROOT)/tools/firmware/loop_constants.py --write
+	python3 $(ROOT)/tools/firmware/loop_constants.py --write
 
 # Fail if docs/firmware/gps-fields.tsv, the fields of every message the
 # GPS engine model speaks, does not tile each message, if its images,

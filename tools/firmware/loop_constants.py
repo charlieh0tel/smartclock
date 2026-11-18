@@ -23,12 +23,10 @@ The data, one JSON object:
 
 A quantity is {values, by}: values, the choices the image has, each
 {value, rom, traced}; by, what chooses among them or sets it,
-{text, cite, page}.  rom lists where the image holds the value, each
-{at, kind, offset}: kind block, a float at offset from at, the start of
-the ROM block of defaults the tables cite; immediate, the operand of a
-move.l #imm (M68000PRM, MOVE: size bits 10, source mode 7 register 4,
-in the opcode word before it); float, a float at at.  Each is read from
-the image and must be the value.  traced false marks a value present in
+{text, cite, page}.  rom lists the places the image holds the value
+(tools/firmware/loop_tables.py), for τ's block the start of the ROM
+block of defaults the tables cite.  Each is read from the image and
+must be the value.  traced false marks a value present in
 the image whose setter was not traced.  by's text is Markdown, cite the
 addresses loop.md gives after it, page the page's text where it differs.
 
@@ -49,33 +47,21 @@ drift.
 """
 
 import argparse
-import html
 import json
 import math
-import pathlib
-import re
-import struct
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+from loop_tables import ROOT, Markers, code, image, number, place_fault, power
+
 DATA = ROOT / 'docs/firmware/loop-constants.json'
-IMAGES = ROOT / 'third_party/firmware/images'
 EVIDENCE = ROOT / 'docs/firmware/loop.md'
 PAGE = ROOT / 'docs/pages/loop.html'
 SCRIPT = 'tools/firmware/loop_constants.py'
+MARKERS = Markers('loop_constants.py')
 # an image's quantities, in loop.md's columns' order
 QUANTITIES = ('tau', 'startup', 'gain', 'recovery')
 # loop.md's cell for a quantity not traced
 UNTRACED = 'not traced'
-
-MARKER = re.compile(r'^([ \t]*)<!-- loop_constants\.py (evidence|page) -->\n.*?^[ \t]*<!-- end loop_constants\.py -->$',
-                    re.M | re.S)
-
-# move.l #imm,<ea>: the size bits and the source field of its opcode
-MOVE_SIZE_MASK = 0xf000
-MOVE_LONG = 0x2000
-SOURCE_MASK = 0x003f
-SOURCE_IMMEDIATE = 0x003c
 
 # what the page rounds the slowest pole's and the ramp's seconds to
 POLE_ROUNDING = 10
@@ -85,55 +71,18 @@ RAMP_ROUNDING = 100
 ROOT_SEED = complex(0.4, 0.9)
 ROOT_PASSES = 500
 
-SUPERSCRIPTS = str.maketrans('-0123456789', '⁻⁰¹²³⁴⁵⁶⁷⁸⁹')
-MINUS = '−'
-
-
-def number(value):
-    """A time or a coefficient as the tables write it: 500, 0.0595."""
-    return '%g' % value
-
-
-def power(value):
-    """A gain, signed, as N × 10ⁿ."""
-    mantissa, exponent = ('%e' % abs(value)).split('e')
-    mantissa = mantissa.rstrip('0').rstrip('.')
-    sign = MINUS if value < 0 else '+'
-    return '%s%s × 10%s' % (sign, mantissa, str(int(exponent)).translate(SUPERSCRIPTS))
-
-
-def code(text):
-    """Markdown's backticks as the page's <code>."""
-    return re.sub(r'`([^`]*)`', r'<code>\1</code>', html.escape(text, quote=False))
-
-
-def float_at(rom, at):
-    return struct.unpack('>f', rom[at:at + 4])[0]
-
-
 def check_rom(data):
     """Each value against where its image holds it; the faults found."""
     faults = []
     for entry in data['images']:
-        rom = (IMAGES / (entry['image'] + '.bin')).read_bytes()
+        rom = image(entry['image'])
         for name in QUANTITIES:
             for choice in (entry[name] or {'values': []})['values']:
                 for place in choice.get('rom', []):
-                    at = int(place['at'], 16)
-                    where = '%s %s %s at %s' % (entry['image'], name, number(choice['value']), place['at'])
-                    if place['kind'] == 'block':
-                        at += int(place['offset'], 16)
-                    elif place['kind'] == 'immediate':
-                        opcode = struct.unpack('>H', rom[at - 2:at])[0]
-                        if opcode & MOVE_SIZE_MASK != MOVE_LONG or opcode & SOURCE_MASK != SOURCE_IMMEDIATE:
-                            faults.append('%s: no move.l #imm (opcode %#06x)' % (where, opcode))
-                            continue
-                    elif place['kind'] != 'float':
-                        faults.append('%s: no kind %r' % (where, place['kind']))
-                        continue
-                    found = float_at(rom, at)
-                    if not math.isclose(found, choice['value'], rel_tol=1e-6):
-                        faults.append('%s: the image holds %g' % (where, found))
+                    fault = place_fault(rom, place, choice['value'])
+                    if fault:
+                        faults.append('%s %s %s at %s: %s'
+                                      % (entry['image'], name, number(choice['value']), place['at'], fault))
     return faults
 
 
@@ -276,15 +225,6 @@ def page_table(data):
     return lines
 
 
-def rewrite(text, tables):
-    def replace(match):
-        indent, which = match.group(1), match.group(2)
-        body = [indent + line if line else line for line in tables[which]]
-        return '\n'.join(['%s<!-- loop_constants.py %s -->' % (indent, which), *body,
-                          '%s<!-- end loop_constants.py -->' % indent])
-    return MARKER.sub(replace, text)
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--write', action='store_true', help='rewrite the tables in the documents')
@@ -294,18 +234,7 @@ def main():
     for fault in faults:
         print('%s: %s' % (SCRIPT, fault))
     tables = {'evidence': evidence_table(data), 'page': page_table(data)}
-    drifted = []
-    for path, which in ((EVIDENCE, 'evidence'), (PAGE, 'page')):
-        current = path.read_text()
-        if len(MARKER.findall(current)) != 1 or MARKER.search(current).group(2) != which:
-            sys.exit('%s: %s has no one loop_constants.py %s block' % (SCRIPT, path.relative_to(ROOT), which))
-        text = rewrite(current, tables)
-        if text == current:
-            continue
-        if arguments.write:
-            path.write_text(text)
-        else:
-            drifted.append(str(path.relative_to(ROOT)))
+    drifted = MARKERS.update({EVIDENCE: 'evidence', PAGE: 'page'}, tables, arguments.write)
     if drifted:
         print('%s: not what %s gives: %s; make loop-constants rewrites them'
               % (SCRIPT, DATA.relative_to(ROOT), ', '.join(drifted)))

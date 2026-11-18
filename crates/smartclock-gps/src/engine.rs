@@ -1627,6 +1627,13 @@ impl Engine {
         })
     }
 
+    /// Whether the position status and Time RAIM report the position
+    /// held, as `@@At` set it.  [`Self::place`] goes by the command
+    /// alone.
+    fn holds(&self) -> bool {
+        self.state.store.holding()
+    }
+
     /// The position reported: the one held, when holding, else the
     /// record's, and while it has none, the one `@@Ad`, `@@Ae` and
     /// `@@Af` gave to start from (VP pp. 17 and 25).
@@ -1848,7 +1855,7 @@ impl Engine {
         let position = record.dops.map_or(0, |dops| dops.position.0);
         let horizontal = record.dops.map_or(0, |dops| dops.horizontal.0);
         let three_d = position <= self.state.store.xdop_threshold();
-        match (self.state.store.holding(), tracked, record.fix) {
+        match (self.holds(), tracked, record.fix) {
             (true, _, _) | (false, _, Fix::None) => NONE,
             (false, _, Fix::Propagated) => Solution {
                 status: STATUS_POSITION_PROPAGATE,
@@ -2270,7 +2277,7 @@ impl Engine {
     fn traim_ability(&self, tracked: usize) -> u8 {
         let limit = self.state.traim.alarm_limit;
         match TRAIM_NEEDS.iter().find(|need| limit >= need.from) {
-            Some(need) if tracked >= need.isolate && self.state.store.holding() => TRAIM_ISOLATION,
+            Some(need) if tracked >= need.isolate && self.holds() => TRAIM_ISOLATION,
             Some(need) if tracked >= need.detect => TRAIM_DETECTION,
             _ => TRAIM_NEITHER,
         }
@@ -2288,7 +2295,7 @@ impl Engine {
     /// limit nor which satellites the engine was set to track.  Out of
     /// position hold, it can only detect (UT p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
-        let holding = self.state.store.holding();
+        let holding = self.holds();
         let on = self.state.traim.algorithm;
         let able = self.traim_ability(tracked);
         match record.derived.raim {

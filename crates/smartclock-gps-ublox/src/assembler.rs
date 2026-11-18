@@ -352,8 +352,8 @@ impl Assembly {
             record.fix = solution.fix();
             record.position = solution.position();
             record.velocity = Some(solution.velocity());
-            // In time mode the receiver solves for no position, and
-            // gives its DOPs as placeholders ("Time mode" in the
+            // In position hold the receiver solves for no position, and
+            // gives its DOPs as placeholders ("Position hold" in the
             // crate's documentation).
             record.dops = epoch.dops.filter(|_| solution.fix() != Fix::TimeOnly);
             record.derived.ecef = epoch.ecef.filter(|_| record.position.is_some());

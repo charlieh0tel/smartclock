@@ -1336,10 +1336,17 @@ impl State {
         })
     }
 
+    /// Whether `tps`, the fix, the 1 PPS and Time RAIM go by the
+    /// position held: fixed observation point mode, as `set,Z` set it.
+    /// [`Self::reported`] goes by the command alone.
+    fn holds(&self) -> bool {
+        self.parameters.holding()
+    }
+
     /// The fix it reports: none in fixed observation point mode, and only
     /// with the satellites a fix needs, 2D above `D`'s PDOP (GT p. 11).
     fn fix(&self, record: &Record) -> Fix {
-        if self.parameters.holding() {
+        if self.holds() {
             return Fix::None;
         }
         let used = self.used(record).count();
@@ -1675,7 +1682,7 @@ impl State {
     /// ("Assumptions").
     fn pulse(&self, record: &Record) -> bool {
         let used = self.used(record).count();
-        let holding = self.parameters.holding();
+        let holding = self.holds();
         let ready =
             record.time.is_some() && record.utc_offset.is_some() && record.almanac.is_some();
         match self.traim.pulse {
@@ -1706,11 +1713,7 @@ impl State {
             ),
             (Some(_), Some(_)) => (UTC, self.utc(record)),
         };
-        let mode = if self.parameters.holding() {
-            FIXED
-        } else {
-            ESTIMATED
-        };
+        let mode = if self.holds() { FIXED } else { ESTIMATED };
         let mut body = Body::new("PFEC,GPtps");
         body.field(format_args!("{}", Stamp(present)));
         body.field(format_args!("{standard}"));
@@ -1774,7 +1777,7 @@ impl State {
         let Some(result) = record.derived.raim else {
             return NONE;
         };
-        if !self.traim.on || !self.parameters.holding() {
+        if !self.traim.on || !self.holds() {
             return NONE;
         }
         let ability = match (can, result.ability) {

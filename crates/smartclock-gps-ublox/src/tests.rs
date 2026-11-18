@@ -1427,15 +1427,15 @@ fn no_time_without_a_fix() {
     assert_eq!(record.satellites.len(), 1);
 }
 
-/// In time mode a NEO-M8T gives `pDOP`, `hDOP` and `vDOP` as 9999 and
+/// In position hold a NEO-M8T gives `pDOP`, `hDOP` and `vDOP` as 9999 and
 /// only `gDOP` and `tDOP`: the time-only fix has the time and the
 /// position, and no DOPs.  A 3D fix's are kept.
 #[test]
 fn a_time_only_fix_has_no_dops() {
-    let time_mode = Pvt { fix_type: 5, ..PVT };
+    let holding = Pvt { fix_type: 5, ..PVT };
     let placeholders = dop(NOON, [32, 9_999, 32, 9_999, 9_999]);
     let bytes = stream(&[
-        (NAV_PVT, &time_mode.payload()),
+        (NAV_PVT, &holding.payload()),
         (NAV_TIMEGPS, &time_gps(NOON, 0, WEEK.cast_signed(), 17, 7)),
         (NAV_DOP, &placeholders),
         (NAV_EOE, &eoe(NOON)),

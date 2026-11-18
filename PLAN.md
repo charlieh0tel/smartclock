@@ -1612,7 +1612,7 @@ stands in for one.
     which the record then says.  Time RAIM needs nothing of the kind:
     it is `TIM-TP`'s, kept from the last one already.
   - *A time-only fix has no DOPs* (owner, 2026-11-16).  A timing
-    receiver in time mode gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`
+    receiver in position hold gives `NAV-DOP`'s `pDOP`, `hDOP` and `vDOP`
     as 9999, placeholders for a position it does not solve for; passed
     on, they made the engine report a 2D fix of poor geometry, and a
     `SmartClock` that surveys its position (58503B, Z3816A) never

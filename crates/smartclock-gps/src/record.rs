@@ -86,6 +86,21 @@ pub enum Fix {
     Propagated,
 }
 
+/// What a receiver does with its position, whatever its fix: solves
+/// for it, or holds it and solves for time alone (VP p. 56; VP p. 73,
+/// receiver status bit 3; `tps`'s mode, GT p. 36).  A receiver that
+/// holds its position holds it still when it loses its satellites and
+/// its fix.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReceiverMode {
+    /// Not known.
+    Unknown,
+    /// It solves for its position.
+    Navigating,
+    /// It holds its position.
+    Holding,
+}
+
 /// One thing an engine's self-test tries (`@@Ca`, VP pp. 107-108;
 /// `@@Fa`, VP pp. 142-143 and UT pp. 6.42-6.43).  Each engine has a bit
 /// for those it tries.  A VP has two for its RAM and two for its ROM,
@@ -893,6 +908,10 @@ pub struct Record {
     pub leap: Option<LeapEvent>,
     /// The kind of fix.
     pub fix: Fix,
+    /// What the receiver does with its position, as the receiver tells
+    /// it.  [`ReceiverMode::Unknown`] from whoever fills the record
+    /// cannot tell.
+    pub receiver_mode: ReceiverMode,
     /// Whether the fix is corrected by a differential reference (VP
     /// p. 73, receiver status bit 2; UT p. 6.20).
     pub differential: bool,
@@ -926,6 +945,7 @@ impl Record {
         utc_offset: None,
         leap: None,
         fix: Fix::None,
+        receiver_mode: ReceiverMode::Unknown,
         differential: false,
         differential_age: None,
         position: None,

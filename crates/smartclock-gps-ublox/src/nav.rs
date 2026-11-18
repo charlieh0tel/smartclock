@@ -7,6 +7,7 @@ use smartclock_gps::record::Ecef;
 use smartclock_gps::record::Fix;
 use smartclock_gps::record::Health;
 use smartclock_gps::record::Position;
+use smartclock_gps::record::ReceiverMode;
 use smartclock_gps::record::Satellite;
 use smartclock_gps::record::Satellites;
 use smartclock_gps::record::Tracking;
@@ -341,6 +342,22 @@ impl NavPvt {
             FixType::ThreeD | FixType::WithDeadReckoning => Fix::ThreeD,
             FixType::TimeOnly => Fix::TimeOnly,
             FixType::None | FixType::DeadReckoning | FixType::Other(_) => Fix::None,
+        }
+    }
+
+    /// What `fixType` tells of the receiver's mode, whatever
+    /// `gnssFixOK`: position hold at 5, the time-only fix of a receiver
+    /// whose position is fixed (section 25.1, p. 85); navigating at 2 to
+    /// 4, a fix of its position.  `None` at 0, 1 or a value the document
+    /// does not give: no fix from satellites tells nothing of the mode.
+    #[must_use]
+    pub const fn receiver_mode(&self) -> Option<ReceiverMode> {
+        match self.fix_type {
+            FixType::TimeOnly => Some(ReceiverMode::Holding),
+            FixType::TwoD | FixType::ThreeD | FixType::WithDeadReckoning => {
+                Some(ReceiverMode::Navigating)
+            }
+            FixType::None | FixType::DeadReckoning | FixType::Other(_) => None,
         }
     }
 

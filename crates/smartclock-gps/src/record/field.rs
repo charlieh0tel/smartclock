@@ -147,11 +147,13 @@ pub enum RecordField {
     VelocityAxes,
     /// The inside of the solution.
     Solver,
+    /// [`Record::receiver_mode`].
+    ReceiverMode,
 }
 
 impl RecordField {
     /// Every field, in the order of their bits in a [`FieldSet`].
-    pub const ALL: [Self; 44] = [
+    pub const ALL: [Self; 45] = [
         Self::Time,
         Self::Subsecond,
         Self::UtcOffset,
@@ -196,6 +198,7 @@ impl RecordField {
         Self::MagneticVariation,
         Self::VelocityAxes,
         Self::Solver,
+        Self::ReceiverMode,
     ];
 
     /// Where it is in a [`Record`], as the field table's engine column
@@ -248,6 +251,7 @@ impl RecordField {
             Self::MagneticVariation => "derived.magnetic_variation",
             Self::VelocityAxes => "derived.velocity",
             Self::Solver => "derived.solver",
+            Self::ReceiverMode => "receiver_mode",
         }
     }
 
@@ -390,6 +394,7 @@ impl RecordField {
             }
             Self::VelocityAxes => one.derived.velocity != other.derived.velocity,
             Self::Solver => one.derived.solver != other.derived.solver,
+            Self::ReceiverMode => one.receiver_mode != other.receiver_mode,
         }
     }
 }
@@ -754,6 +759,7 @@ mod tests {
     use crate::record::Raim;
     use crate::record::RaimAbility;
     use crate::record::RaimSolution;
+    use crate::record::ReceiverMode;
     use crate::record::Record;
     use crate::record::Satellite;
     use crate::units::DecibelHertz;
@@ -821,6 +827,21 @@ mod tests {
             changed(&before, &record),
             FieldSet::of(&[RecordField::SatelliteSignal, RecordField::SatelliteHealth])
         );
+    }
+
+    /// The receiver's mode is a field of its own, apart from the fix:
+    /// one that holds its position with no fix shows the mode alone.
+    #[test]
+    fn the_receivers_mode_is_seen_apart_from_the_fix() {
+        let mut record = Record::EMPTY;
+        record.receiver_mode = ReceiverMode::Holding;
+        assert_eq!(
+            changed(&Record::EMPTY, &record),
+            FieldSet::of(&[RecordField::ReceiverMode])
+        );
+        let before = record;
+        record.fix = Fix::TimeOnly;
+        assert_eq!(changed(&before, &record), FieldSet::of(&[RecordField::Fix]));
     }
 
     /// A RAIM status whose solution is not known gives its ability and

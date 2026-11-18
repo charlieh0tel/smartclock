@@ -2046,7 +2046,11 @@ specification; in short:
   to grant.  The
   vectors' fake receiver acts on position hold and the position to
   hold: held, its record is at that position with a fix of time alone
-  (VP pp. 56 and 73).  It and the u-blox crate act on the mask angle
+  and its receiver holding (VP pp. 56 and 73).  A record carries the
+  receiver's mode, navigating, holding or unknown, apart from its fix
+  (`Record::receiver_mode`): the fake receiver's is the one the
+  engine's settings give, and the u-blox crate's is `NAV-PVT`'s, kept
+  through a loss of the fix.  It and the u-blox crate act on the mask angle
   and the satellites to ignore: their records mark not used the satellites
   below the mask, at or above it being within it as the model takes
   it, and those ignored (`Settings::leave_out`; VP pp. 28 and 42),

@@ -133,6 +133,16 @@
 //!   hold, though the document says nothing of it.  Those are not the
 //!   geometry of a position, and a record of a time-only fix has no
 //!   DOPs.
+//! - **The receiver's mode** is position hold from the `NAV-PVT` whose
+//!   `fixType` is 5, the time-only fix, and navigating from one of a
+//!   2D or 3D fix ([`NavPvt::receiver_mode`](nav::NavPvt::receiver_mode)),
+//!   and is kept through the epochs whose `NAV-PVT` gives no fix from
+//!   satellites, or that have none: position hold is the receiver's
+//!   configuration (section 25.1, p. 85), which losing its satellites
+//!   does not change.  Unknown until a `NAV-PVT` tells it, and again after
+//!   [`reset`](smartclock_gps::source::replay::Assemble::reset).  So a
+//!   receiver that leaves position hold with no fix is taken to hold
+//!   until its next fix.
 //! - **The leap second.**  GPS less UTC is `NAV-TIMELS`'s `currLs`, or
 //!   `NAV-TIMEGPS`'s `leapS` from a receiver that sends no `NAV-TIMELS`.
 //!   A leap second is `NAV-TIMELS`'s while its countdown is above zero,

@@ -37,6 +37,7 @@ use smartclock_gps::engine::furuno::GT_74_PULSE_EARLY;
 use smartclock_gps::engine::furuno::GT_74_WITHOUT_TIME_RAIM;
 use smartclock_gps::engine::furuno::Identity;
 use smartclock_gps::record::Fix;
+use smartclock_gps::record::ReceiverMode;
 use smartclock_gps::record::Record;
 use smartclock_gps::source::fake_receiver;
 use smartclock_gps::source::fake_receiver::DECLARATION;
@@ -225,7 +226,9 @@ fn the_fake_receiver_is_the_one_declared() {
         Centimeters(10_000),
     );
     assert_eq!(free.fix, Fix::ThreeD);
+    assert_eq!(free.receiver_mode, ReceiverMode::Navigating);
     assert_eq!(held.fix, Fix::TimeOnly);
+    assert_eq!(held.receiver_mode, ReceiverMode::Holding);
     assert_eq!(held.position, Some(place));
     assert_eq!(held.derived.ecef, Some(ecef(place)));
 }

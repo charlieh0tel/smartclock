@@ -191,7 +191,8 @@ fn prn(id: u8) -> Prn {
     Prn::new(id).expect("a satellite")
 }
 
-/// A record with everything in it, five satellites tracked.
+/// A record with everything in it, five satellites tracked, and a
+/// Time RAIM result that finds nothing wrong.
 fn full() -> Record {
     let mut record = Record::EMPTY;
     record.time = Some(GpsTime {
@@ -226,6 +227,7 @@ fn full() -> Record {
         y: Centimeters(-2),
         z: Centimeters(3),
     });
+    record.derived.raim = Some(Raim::new(RaimSolution::Ok, RaimAbility::Isolation));
     for (id, elevation, signal) in [
         (3, 78, 44),
         (4, 51, 42),

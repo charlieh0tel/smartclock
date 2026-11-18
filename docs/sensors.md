@@ -143,16 +143,13 @@ read every 10 s measured 408 MB, about 0.4 MB a day per sensor.
   read failed or is older than three read periods.
 - **CLI.**  `smartclock-cli sensors` lists sensors and their latest
   readings.
-- **TUI.**  Current values in the header, and in the history view a
-  pane per quantity below the receiver's, a line per sensor, read from
-  the log the service names.
 - **Absent.**  With no sensor log, pages show no sensor charts and say
   nothing; with no socket, no live values.  The exporter reports
   `smartclock_sensord_up 0` once it has seen the service.
 
 The web view takes `--sensor-log` and `--sensord`
 (`SMARTCLOCK_WEB_SENSOR_LOG`, `SMARTCLOCK_WEB_SENSORD`), defaulting to
-the paths above; the exporter, the TUI and `smartclock-cli sensors` take
+the paths above; the exporter and `smartclock-cli sensors` take
 `--sensord`.
 
 ## Sensors

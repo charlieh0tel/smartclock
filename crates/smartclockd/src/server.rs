@@ -47,8 +47,8 @@ use crate::inbox::Note;
 /// next snapshot.  With the receiver's link down there is no next
 /// snapshot, so every client that came and went during an outage kept
 /// its slot, and the web view's once-a-second connections filled all
-/// sixteen within seconds -- refusing the monitor and the command line
-/// at exactly the moment they were wanted.
+/// sixteen within seconds -- refusing the command line at exactly the
+/// moment it was wanted.
 const HANGUP_CHECK: Duration = Duration::from_secs(1);
 
 /// What a client is permitted to do.

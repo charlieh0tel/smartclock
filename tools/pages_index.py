@@ -171,7 +171,7 @@ DOCUMENTS = (
     (f"{REPOSITORY}#readme", "README", "What the project is, its programs, and how to run them."),
     (f"{TREE}/docs/firmware", "Firmware notes", "The firmware images read: the loop, the 1 PPS, GPS, pForth, the rewrite."),
     (f"{BLOB}/docs/tooling.md", "Tooling", "The tools that read the firmware, FPGAs and board, and check what is written."),
-    (f"{BLOB}/docs/monitoring.md", "Monitoring", "The daemon, the monitor, the browser view and the exporter, and running them."),
+    (f"{BLOB}/docs/monitoring.md", "Monitoring", "The daemon, the browser view and the exporter, and running them."),
 )
 
 # The hero's drawing: the HP 58503A's front panel, in hundredths of an

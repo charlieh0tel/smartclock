@@ -1,9 +1,9 @@
 # Monitoring
 
 The programs that watch a receiver: a logging daemon and its clients,
-a terminal monitor, a browser view and a Prometheus exporter.  Each
-line names a program and links the document that describes it; the
-tools that take the firmware apart are in [`tooling.md`](tooling.md).
+a browser view and a Prometheus exporter.  Each line names a program
+and links the document that describes it; the tools that take the
+firmware apart are in [`tooling.md`](tooling.md).
 [`running.md`](running.md) covers installing, configuring and running
 them; the top [`README.md`](../README.md#running-it) shows them run by
 hand.
@@ -13,7 +13,6 @@ hand.
 | Program | What it is |
 | ------- | ---------- |
 | `smartclockd` | holds the serial port, logs to SQLite, serves clients over a Unix socket and, if asked, TCP ([`running.md`](running.md)) |
-| `smartclockmon` | terminal monitor: dashboard, history graphs, journal, status screen and stability ([`views.md`](views.md#the-monitor)) |
 | `smartclock-web` | browser view: live state, zoomable history, the status screen, stability, receivers compared, measures correlated, and a kiosk screen for an unattended display ([`views.md`](views.md#the-browser)) |
 | `smartclock-exporter` | Prometheus metrics for every receiver, from the daemons' readings ([`views.md`](views.md#the-exporter)) |
 | `smartclock-sensord` | logs room temperature, humidity and pressure from hwmon, IIO and TEMPer USB sticks ([`sensors.md`](sensors.md)) |

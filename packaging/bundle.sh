@@ -11,8 +11,8 @@ readme=$2
 commit=$3
 
 mkdir -p "$dir"
-for program in smartclockd smartclock-cli smartclockmon smartclock-web \
-               smartclock-exporter smartclock-sim smartclock-sensord; do
+for program in smartclockd smartclock-cli smartclock-web smartclock-exporter \
+               smartclock-sim smartclock-sensord; do
     for built in "target/release/$program" "target/release/$program.exe"; do
         if [ -f "$built" ]; then
             cp "$built" "$dir/"

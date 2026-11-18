@@ -3,9 +3,10 @@
 HP / Symmetricom SmartClock GPS receivers taken apart -- their firmware,
 disciplining loop and boards -- and the tools that monitor them: a Rust
 library for talking to them over serial, a logging daemon that runs as
-a system service, a TUI, and browser and Prometheus views.  A GUI is
-not planned.  This file records the decisions that are not obvious,
-each with its reason, and the open work with no other home.
+a system service, and browser and Prometheus views.  The terminal
+monitor is dropped and a GUI is not planned.  This file records the
+decisions that are not obvious, each with its reason, and the open
+work with no other home.
 `README.md` says what the project is, `docs/running.md` how it is
 deployed.
 
@@ -28,8 +29,8 @@ deployed.
 ## Architecture
 
 The crates are listed in `docs/monitoring.md`.  `smartclock-log`
-holds the log's schema and every query that reads it, so the daemon,
-monitor and web view cannot drift apart.  The library, bottom up:
+holds the log's schema and every query that reads it, so the daemon
+and web view cannot drift apart.  The library, bottom up:
 
 1. `transport` -- `Transport`: serial, TCP, replay, tee.
 2. `session` -- framing: prompts, echo, timeouts, error queue drain;
@@ -45,7 +46,8 @@ monitor and web view cannot drift apart.  The library, bottom up:
 ### The daemon owns the port
 
 `smartclockd` holds the serial port open, so every other component is
-its client and multi-day history does not depend on a TUI being up.
+its client and multi-day history does not depend on any client being
+up.
 One `DeviceTask` thread owns the `Session` and issues every command: an
 interleaved command's half-read prompt desynchronizes every later read.
 `Session` moves into that thread at construction, so a second writer is
@@ -116,11 +118,12 @@ cannot be talked into the command.  A command containing `;`, a control
 character or non-ASCII is refused before classification, since a query
 chained to a setter would classify as a query.  Argument ranges sit in
 the table beside the class, so the table, not the typed `Control` API,
-is the safety boundary.  The TUI's raw console bypasses the table and
-has its own flag, `--allow-raw`.  A reply reports what the device said,
-not that the operation finished (a survey acks in milliseconds).  Every
-non-poll command is audited in the log, so one file answers "what did I
-do to it, and what did EFC do afterwards".
+is the safety boundary.  SCPI the table does not know is passed
+through only under a flag of its own, `--allow-raw`.  A reply reports
+what the device said, not that the operation finished (a survey acks
+in milliseconds).  Every non-poll command is audited in the log, so
+one file answers "what did I do to it, and what did EFC do
+afterwards".
 
 ### The command table is data
 
@@ -346,6 +349,35 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   of its y axis change.
 - Exporter metrics are not renamed and their labels not changed.
 
+### No terminal monitor
+
+The ratatui terminal monitor, `smartclockmon`, is dropped (owner,
+2026-11-18).  The daemon, the browser views, the exporter, the CLI and
+the library stay.  What went with it, which nothing else does:
+
+- A live view with no daemon.  `smartclockmon --device` polled the
+  receiver in its own process and recorded nothing; now a receiver
+  without a daemon is reached only by one-shot `smartclock-cli`
+  commands, and the browser views need a daemon or its logs.
+- A view of a Z3817A's reference status.  The daemon still asks
+  `:DIAGnostic:REFerence:STATus?` and logs it; no view shows it ("A
+  Z3817A's reference in a view", under Next).
+- The status screen read into the live view: the hold threshold, the
+  time and its scale, the 1 PPS status, the survey, the health report
+  cut to what is wrong, each with its age, and the mode's detail and
+  reference ("stabilizing frequency", "Locked to Ext").  The browser's
+  `/status` shows the screen as sent but takes none of these into its
+  strip.  The scraper's fields stay in the library and on the socket.
+- A client needing only a terminal.  The browser's charts load their
+  library from a CDN, so a host with no internet has no charts.
+
+Its command line was one SCPI command at a time through the daemon,
+which `smartclock-cli --daemon ... query` does.  The Debian package
+that carried it keeps its name, `smartclockmon`, with the daemon, web
+view, exporter and sensor service in it; dropping a program from a
+package needs no `Breaks` or `Replaces`, and an upgrade removes
+`/usr/bin/smartclockmon`.
+
 ### systemd and packaging
 
 - `Type=exec`: the daemon retries with no receiver attached, so no
@@ -361,7 +393,7 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   different code never shares a version (dpkg treats reinstalling one
   as a no-op).
 - Two packages: `smartclock-utils` (CLI, simulator) and `smartclockmon`
-  (daemon, monitors, exporter, sensor service), because the CLI is
+  (daemon, web view, exporter, sensor service), because the CLI is
   wanted on machines that will never log a receiver.  They depend on
   each other's exact version, not `>=`: they share the socket protocol
   and the command table, and nothing tests one version against another.
@@ -1815,12 +1847,13 @@ stands in for one.
 - **Compacting old logs**, perhaps into Parquet.  The logs grow without
   bound.
 - **Bench work:** the open items in `docs/hardware-investigations.md`.
-- **A Z3817A's reference beyond the monitor:** the daemon logs
-  `:DIAGnostic:REFerence:STATus?` and the monitor shows it, but the
-  browser's status strip and the exporter, which names each metric it
-  exports, do not.  Its lists leave out the predicted visible count,
-  which the bench unit declined on every pass, until the reason is
-  known; asked again, it would give the browser's not-tracking series.
+- **A Z3817A's reference in a view:** the daemon logs
+  `:DIAGnostic:REFerence:STATus?`, but no view shows it since the
+  terminal monitor was dropped: not the browser's status strip, and not
+  the exporter, which names each metric it exports.  Its lists leave
+  out the predicted visible count, which the bench unit declined on
+  every pass, until the reason is known; asked again, it would give
+  the browser's not-tracking series.
 - **Editing notes from the web view**, through the daemon socket.
   Needs POST bodies in `smartclock-http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.
@@ -1877,7 +1910,7 @@ stands in for one.
      ellipsoid height and converted with the engine's own separation
      (`docs/firmware/gps.md`, "Requests").
 
-4. **Whether acknowledging from the monitor is wanted.**  Reading an
+4. **Whether acknowledging from a client is wanted.**  Reading an
    event register clears the alarm: right for a deliberate
    acknowledgment, wrong on a timer.  Nothing needs it yet.
 

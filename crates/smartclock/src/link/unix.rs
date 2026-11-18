@@ -42,7 +42,7 @@ pub(super) fn bind(socket: &Path) -> io::Result<UnixListener> {
     // Socket permissions are the whole of the authorization model, so
     // they are set rather than inherited from whatever umask the
     // service happened to start with.  Group access is deliberate: it
-    // is how an unprivileged operator runs the monitor.
+    // is how an unprivileged operator reaches the daemon.
     std::fs::set_permissions(socket, std::fs::Permissions::from_mode(0o660))?;
     Ok(listener)
 }

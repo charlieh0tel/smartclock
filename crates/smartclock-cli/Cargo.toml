@@ -46,7 +46,7 @@ Command-line tools for HP / Symmetricom SmartClock GPS time and \
 frequency reference receivers, spoken to over RS-232: smartclock-cli \
 for queries, diagnostics, transcripts, ROM, EEPROM and firmware work, \
 directly or through a smartclockd daemon, and smartclock-sim, a \
-simulated receiver.  The daemon and monitors are in smartclockmon."""
+simulated receiver.  The daemon and web view are in smartclockmon."""
 section = "utils"
 priority = "optional"
 depends = "$auto"

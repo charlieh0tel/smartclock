@@ -4,7 +4,7 @@
 //! ([`crate::protocol`]), with requests and a version of their own.  The
 //! service sends nothing unasked.  Here rather than in the service so
 //! that its clients -- the exporter, the web view, the command line
-//! tool, the monitor -- share one definition with it.
+//! tool -- share one definition with it.
 
 use jiff::Timestamp;
 use serde::Deserialize;

@@ -141,7 +141,7 @@ pub const TABLES: &str = r#"
     -- every poll, which answers "what was it at 14:02" but
     -- makes "when did it change" a scan.  These rows are the
     -- changes alone, which is what anyone reading a history
-    -- actually wants and what the monitor and the browser show.
+    -- actually wants and what the browser shows.
     --
     -- The register itself is read with *STB?, which is real
     -- time and non-destructive.  The event registers behind it

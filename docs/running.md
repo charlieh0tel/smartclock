@@ -7,7 +7,7 @@ There are two Debian packages, of one version, built from one tree:
 | Package | Programs | For |
 | - | - | - |
 | `smartclock-utils` | `smartclock-cli`, `smartclock-sim` | a receiver on the bench, a flash or ROM read, a daemon on another host; no service, no user |
-| `smartclockmon` | `smartclockd`, `smartclockmon`, `smartclock-web`, `smartclock-exporter`, `smartclock-sensord` | a host that logs a receiver: the units, their `/etc/default` files and the `smartclockd` user |
+| `smartclockmon` | `smartclockd`, `smartclock-web`, `smartclock-exporter`, `smartclock-sensord` | a host that logs a receiver: the units, their `/etc/default` files and the `smartclockd` user |
 
 `smartclockmon` requires `smartclock-utils` of exactly its own
 version, so installing it installs both, and the two upgrade together.
@@ -17,7 +17,7 @@ TEMPer sticks; without it the service reads only hwmon and IIO sensors
 
     sudo apt install ./smartclock-utils_<version>_amd64.deb      # the tools alone
     sudo apt install ./smartclock-utils_<version>_amd64.deb \
-                     ./smartclockmon_<version>_amd64.deb         # the daemon and monitors too
+                     ./smartclockmon_<version>_amd64.deb         # the daemon and web view too
 
 From the APT repository, `sudo apt install smartclockmon` brings
 `smartclock-utils` along.
@@ -53,7 +53,7 @@ The instance name is a path under `/dev` with `/` written as `-`;
 `systemd-escape` does the rest.
 
 The socket is mode 0660, group `smartclockd`, so only members of that
-group reach the daemon with `smartclockmon` and `smartclock-cli`.
+group reach the daemon with `smartclock-cli`.
 Group membership is the entire authorization model: anyone who can
 open the socket may issue whatever the daemon is configured to allow.
 
@@ -69,7 +69,7 @@ drop-in.  `smartclock-sensord` takes the same flag,
 Check the install:
 
     systemctl status smartclockd@ttyUSB0
-    smartclockmon --daemon /run/smartclockd/ttyUSB0/socket
+    smartclock-cli --daemon /run/smartclockd/ttyUSB0/socket diagnose
     sudo -u smartclockd ls /var/lib/smartclockd/
     sudo -u smartclockd sqlite3 /var/lib/smartclockd/<model>-<serial>.sqlite \
         "select count(*), max(at) from snapshot;"
@@ -98,12 +98,11 @@ opens it:
 
 Then install the new package.  An upgrade restarts every running
 instance, and the web view, sensor service and exporter; an instance
-stopped as above stays stopped until you start it.  The readers,
-`smartclock-web` and `smartclockmon`, open a log of any schema since
-12, the first with integer timestamps; an older one they
-refuse, saying which service to start once to convert it.  Converting
-takes a few seconds per log, during which the receiver is not read, and
-leaves the file smaller.  The same holds for the sensor log and
+stopped as above stays stopped until you start it.  The reader,
+`smartclock-web`, opens a log of any schema since 12, the first with
+integer timestamps; an older one it refuses, saying which service to
+start once to convert it.  Converting takes a few seconds per log,
+during which the receiver is not read, and leaves the file smaller.  The same holds for the sensor log and
 `smartclock-sensord`, whose first schema with integer timestamps is 2.
 
 Up to 1.6.11, one package, `smartclockmon`, carried every program but
@@ -145,8 +144,8 @@ state, leaves its field empty and the rest of the poll read.  The
 session reads the refusal's entry to explain it, so the drain never
 sees it; instead each code a receiver gives each query is written to
 the log's `receiver_error` table once, with the query in its `scpi`
-column, and said in the journal.  The monitor and the browser's
-journals list the row without the query.
+column, and said in the journal.  The browser's journal lists the
+row without the query.
 
 When it found the receiver only by probing other line settings, it
 first empties the error queue, where the probe's garbled bytes sit as
@@ -177,9 +176,9 @@ when started with `--allow-control`.  Reading an event register clears
 it (`097-59551-02` 5-46), and presumably the alarm that summarizes it;
 the manual says that only of `*CLS` (5-40 to 5-41).  The daemon
 watches the same state through `*STB?`, which changes nothing, so the
-alarm stays lit until cleared at the instrument.  The monitor's header
-and the browser's status strip show what the daemon recorded, so
-clearing the lamp loses no history.
+alarm stays lit until cleared at the instrument.  The browser's status
+strip shows what the daemon recorded, so clearing the lamp loses no
+history.
 
 ### Time Reset at a GPS week boundary
 
@@ -328,9 +327,8 @@ the oscillator's serial -- goes into its log through the daemon:
     smartclock-cli --daemon ... fact ocxo.model 10811-60159
 
 Both are filed under the receiver attached now; nothing is sent to it.
-Notes show in the journal of the web view and the monitor, and as
-dashed lines across the web view's charts, with the text beside the
-pointer on a line; clicking a note in the web journal shows an hour
+Notes show in the web view's journal, and as dashed lines across its
+charts, with the text beside the pointer on a line; clicking a note in the web journal shows an hour
 either side of it; current facts head
 `diagnose` and sit under the web view's history.
 A fact keeps its history, so a replaced part's old value stays, and
@@ -345,7 +343,7 @@ A second port is a second instance:
 
     sudo systemctl enable --now smartclockd@ttyUSB1
 
-    smartclockmon --daemon /run/smartclockd/ttyUSB1/socket
+    smartclock-cli --daemon /run/smartclockd/ttyUSB1/socket diagnose
 
 A Z3801A's port is fixed at seven data bits and odd parity
 (`097-z3801-01` 1-8 and 2-10); the daemon opens 8N1 by default.  A
@@ -360,9 +358,9 @@ queue, on every start:
     [Service]
     Environment=SMARTCLOCKD_FRAMING=7O1
 
-`smartclockmon` and `smartclock-cli` take `--framing 7O1` for direct
-mode and probe the same way.  `smartclock-cli read-memory` (and
-`read-flash`, `read-eeprom`, `read-registers`), whose port may already
+`smartclock-cli` takes `--framing 7O1` for direct mode and probes the
+same way.  `smartclock-cli read-memory` (and `read-flash`,
+`read-eeprom`, `read-registers`), whose port may already
 be at the debug console, probes by sending an empty line and taking either prompt,
 SCPI's or the console's.
 
@@ -434,7 +432,7 @@ installer and no service: the programs run from a console.
 
 Windows has no Unix sockets, so the daemon listens on TCP alone,
 `127.0.0.1:9978` unless given `--listen`, and refuses `--socket`.  The
-monitor, exporter and web view ask `tcp://127.0.0.1:9978` unless given
+exporter and web view ask `tcp://127.0.0.1:9978` unless given
 `--daemon`; the exporter and web view refuse `--run-dir`.  A second
 receiver needs a daemon on a port of its own, and the collectors told
 both:

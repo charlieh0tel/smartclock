@@ -15,7 +15,6 @@ members = [
     "crates/smartclock-sim",
     "crates/smartclock-web",
     "crates/smartclockd",
-    "crates/smartclockmon",
 ]
 resolver = "3"
 

@@ -76,8 +76,8 @@ impl Default for Cadence {
 /// A slower tier's value is carried in every snapshot, and every logged
 /// row, until that tier reads again.  Past this many of its intervals
 /// without a read the tier is failing, and the value carried is not a
-/// measurement.  The log's readers, the monitor's live panes and the
-/// exporter all judge by this.
+/// measurement.  The log's readers and the exporter both judge by
+/// this.
 pub const STALE_AFTER_INTERVALS: f64 = 3.0;
 
 impl Cadence {

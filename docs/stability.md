@@ -1,10 +1,10 @@
 # Stability
 
-How the browser's stability page and the monitor compute their curves
-from the logged 1 PPS interval, what checks them, and what was
-measured.  The decisions are in `PLAN.md`, "Allan deviation is
-computed over segments, not over a series"; `docs/views.md` says what
-the views show.
+How the browser's stability page computes its curves from the logged
+1 PPS interval, what checks them, and what was measured.  The
+decisions are in `PLAN.md`, "Allan deviation is computed over
+segments, not over a series"; `docs/views.md` says what the views
+show.
 
 `:SYNChronization:TINTerval?` is a phase reading: "the time difference
 between the 1-pps signal from the GPS engine to a similar signal
@@ -187,8 +187,7 @@ Hilferty's, within 0.4 % of scipy's from two degrees of freedom up and
 `autocorr_noise_id`, `edf_greenhall` and `confidence_interval` on the
 reference record, and edf and noise identification on every power law
 from white PM to random walk FM, at lengths reaching each branch and
-refusal of Greenhall's algorithm.  The TUI draws no band: ratatui has
-no fill.
+refusal of Greenhall's algorithm.
 
 `:DIAGnostic:PTIMe:TINTerval?`, the latest one-second reading, would
 extend the curves below 10 s and is not polled: it costs a query a

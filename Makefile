@@ -102,23 +102,20 @@ test-web:
 	cd $(WEB_TESTS) && npm test
 
 # The README's screenshots, into docs/images.  Give a running web view
-# or a directory of logs, and a command running the terminal monitor
-# for its screenshot; the status page is shot from the simulator.  See
-# tools/screenshots.mjs.  Needs `make web-deps` once.  The README's
+# or a directory of logs; the status page is shot from the simulator.
+# See tools/screenshots.mjs.  Needs `make web-deps` once.  The README's
 # were taken from read-only copies of the logs
 # (`sqlite3 -readonly LOG "VACUUM INTO 'COPY'"`): the compare and
 # correlation pages from one bench's three receivers and its sensor log,
-# the live and stability pages from one receiver's current log, and the
-# terminal monitor against a simulator's daemon:
+# and the live and stability pages from one receiver's current log:
 #   make screenshots SHOTS_FROM="--log-dir BENCH --receiver 3710A01056 \
 #     --span 86400 --stability-span 604800 --against sensor:temperature:ambient \
 #     --only web-compare.png --only web-compare-stability.png \
-#     --only web-correlation.png --only web-correlation-page.png" \
-#     SHOTS_TUI="smartclockmon --daemon SIM_SOCKET"
+#     --only web-correlation.png --only web-correlation-page.png"
 #   node tools/screenshots.mjs --log-dir CURRENT --receiver 3710A01056 \
 #     --span 86400 --stability-span 604800 --only web-live.png --only web-stability.png
 screenshots:
-	node tools/screenshots.mjs --sim $(SHOTS_FROM) $(if $(SHOTS_TUI),--tui '$(SHOTS_TUI)')
+	node tools/screenshots.mjs --sim $(SHOTS_FROM)
 
 # The API documentation, with a rustdoc warning -- a link to nothing,
 # or from public documentation to a private item -- an error.

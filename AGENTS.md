@@ -2,9 +2,10 @@
 
 ## Project
 
-Rust library, logging daemon, and TUI for HP / Symmetricom SmartClock
-GPS time and frequency receivers, over RS-232.  See `README.md` for what
-the project is, `PLAN.md` for architecture, decisions and open work.
+Rust library, logging daemon, and browser views for HP / Symmetricom
+SmartClock GPS time and frequency receivers, over RS-232.  See
+`README.md` for what the project is, `PLAN.md` for architecture,
+decisions and open work.
 
 - `PLAN.md` records why things are the way they are.  Read it before
   proposing architectural changes, and update it when a decision
@@ -102,13 +103,9 @@ here, where they go stale unnoticed.
   script might parse: logs, CLI output, error messages.  Ask before
   using Unicode there.
 - Output meant for a person to read is the exception, and Unicode is
-  fine in it with no ASCII fallback.  That covers the TUI -- box
-  drawing, block elements, braille -- and the browser views, where a
-  chart axis says the thing it means: tau, sigma, degrees, micro.
-  One fallback existed and was dropped: ratatui draws chart axes with
-  box-drawing glyphs a caller cannot replace, so the mode could never
-  have been complete, and a fallback that is wrong in the one place it
-  is needed is worse than none.
+  fine in it with no ASCII fallback.  That covers the browser views,
+  where a chart axis says the thing it means: tau, sigma, degrees,
+  micro.
 - Prefer consistency above most other concerns.
 - Do not add trivial, obvious or redundant comments.
 - Be DRY.

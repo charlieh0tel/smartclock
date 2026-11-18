@@ -2,7 +2,7 @@
 **/*.rs.bk
 *.pdb
 
-# Local run artifacts: captured device transcripts and TUI logs.
+# Local run artifacts: captured device transcripts and logs.
 # Golden fixtures live in tests/fixtures/ and are tracked.
 /captures
 /logs

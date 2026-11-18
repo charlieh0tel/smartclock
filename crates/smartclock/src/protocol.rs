@@ -1,8 +1,8 @@
 //! The client protocol: newline-delimited JSON over a local socket.
 //!
 //! In the library rather than in the daemon because more than one
-//! program speaks it: the daemon serves it, and the monitor and the
-//! command line tool both talk to it.
+//! program speaks it: the daemon serves it, and the web view, the
+//! exporter and the command line tool talk to it.
 //!
 //! Debuggable with `socat`, and not tied to Rust on either end.  The
 //! stream is multiplexed -- snapshots arrive unsolicited while replies

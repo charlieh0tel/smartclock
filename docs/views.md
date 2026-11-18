@@ -1,26 +1,7 @@
 # The views
 
-What the monitor, the browser pages and the exporter show, and why.
+What the browser pages and the exporter show, and why.
 `running.md` covers installing and configuring them.
-
-## The monitor
-
-In the monitor, `g` or Tab cycles the views, `l` jumps to the journal,
-`w` cycles the graph span, `r` the receiver when the log holds more
-than one, `c` or `:` opens a command line, `q` quits, and Ctrl-C quits
-from anywhere, the command line included.  The journal is what
-the receiver has recorded about itself -- its diagnostic log, its
-error queue and its alarm changes -- and the notes written about it
-(`docs/running.md`, "Notes and facts"); the browser view shows it too.
-
-`smartclockmon --device ...` talks to the receiver directly, which
-needs the daemon stopped and records no history; the header says so.
-
-The header ends with the host's sensors and their current readings,
-from `smartclock-sensord` (`--sensord`), or `--` for one that
-has stopped reading.  The history view adds a pane per sensor quantity
-below the receiver's three, a line per sensor, from the log the service
-says it keeps.
 
 ## Dates
 
@@ -33,40 +14,31 @@ against the host clock.
 
 ## A Z3817A's reference
 
-A Z3817A's dashboard adds two lines under the date: the reference
-input it has selected and the pulse it expects there (`TIMEREF2, 1
-PPS`), and whether the pulse, the VALID record and the GPS record are
-arriving, in yellow when the pulse or the VALID record is not.  They
-come from `:DIAGnostic:REFerence:STATus?` on the medium tier, which
-no other model is asked, and are logged in the `reference_*` columns.
-The browser views and the exporter do not show them yet.
+A Z3817A is asked `:DIAGnostic:REFerence:STATus?` on the medium
+tier, which no other model is asked: the reference input it has
+selected and the pulse it expects there (`TIMEREF2, 1 PPS`), and
+whether the pulse, the VALID record and the GPS record are arriving.
+The daemon logs the answer in the `reference_*` columns.  No view
+shows it: the terminal monitor did until it was dropped (`PLAN.md`,
+"No terminal monitor"), and the browser views and the exporter do not
+yet.
 
 ## The status screen
 
-The status view, in the monitor and at `/status` in the browser,
-shows the receiver's `:SYSTem:STATus?` screen as sent, beside the
-satellites scraped from it, which the browser draws as a sky plot.
-The screen is read, through the socket op `status`, while the view is
-open, and by the daemon every `--sky` seconds (300 by default) to keep
-the satellite table in the log: a read costs about 1.5 s of a 19200
-link, four times a whole one-second poll, and no tier polls it.  The
-satellite counts are queried directly, on the medium tier.
-
-The monitor's dashboard shows what only the screen says -- the hold
-threshold, the time and its scale, the 1 PPS status, the survey, the
-receiver's own health report -- from the last screen read, each with
-its age, and forgets it when the link drops.  With the status view
-closed, that read is the daemon's own for its log, every `--sky`
-seconds, five minutes by default.  The mode's detail ("stabilizing
-frequency") comes only from a screen read within the last three
-medium-tier intervals, so a stale explanation never labels a fresh
-state.
+The status page, `/status` in the browser, shows the receiver's
+`:SYSTem:STATus?` screen as sent, beside the satellites scraped from
+it, drawn as a sky plot.  The screen is read, through the socket op
+`status`, while the page is open, and by the daemon every `--sky`
+seconds (300 by default) to keep the satellite table in the log: a
+read costs about 1.5 s of a 19200 link, four times a whole one-second
+poll, and no tier polls it.  The satellite counts are queried
+directly, on the medium tier.
 
 ## Stability
 
-Stability is its own view in both, `/adev` in the browser: the
-modified Allan deviation, the time deviation, the maximum time
-interval error and the overlapping Allan deviation of the interval
+Stability is its own page, `/adev` in the browser: the modified
+Allan deviation, the time deviation, the maximum time interval error
+and the overlapping Allan deviation of the interval
 between the 1 PPS from the GPS receiver and a 1 PPS divided down from
 the OCXO, on log axes.  The modified form leads because the receiver's
 reading is already a ten-second mean, the innermost block of that
@@ -91,9 +63,10 @@ start-up excluded.  `PLAN.md` has the decisions behind it.
 
 ## The browser
 
-The browser view is read-only and is not the monitor in a window: it
-draws what a terminal cannot, mainly history that can be dragged to
-zoom, and the polar sky plot.
+The browser view is read-only.  Its journal is what the receiver has
+recorded about itself -- its diagnostic log, its error queue and its
+alarm changes -- and the notes written about it (`docs/running.md`,
+"Notes and facts").
 
 Any number of series can be stacked, and they share a time axis by
 construction: one request buckets them all in the same pass, so their

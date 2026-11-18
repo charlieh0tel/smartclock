@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SmartClock Disciplining Loop</title>
-<meta name="description" content="The SmartClock disciplining loop as a block diagram, with its update law, constants and closed-loop poles, and the FFOM its start-up gives.">
+<meta name="description" content="The SmartClock disciplining loop as a block diagram, with its update law, constants and closed-loop poles, where each image's gain comes from and what the EEPROMs held make it, and the FFOM its start-up gives.">
 <meta name="smartclock-group" content="firmware">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -162,6 +162,26 @@ th code{text-transform:none;letter-spacing:0}
   </table></div>
   <!-- end loop_constants.py -->
   <p class="note">* Undocumented, under <code>:DIAGnostic:ROSCillator</code>; <code>LTIMe:INIT</code> defaults to 150 s. τ is each image's ROM default, used after a power-up. The Z3817A's oscillator kind picks τ and G as pairs: 1000 s with +5 × 10⁻¹³ for kind 0, 500 s with −2.125 × 10⁻¹² for kind 1; its row takes the 1PPS's ten readings a block. The startup ramp's 150 s is traced in the Z3816A, Z3801A, Z3805A 3543B and 1.01.03, 58503A 3704, 58503B and Z3817A; the other images hold the value. The Z3801A, Z3805A 3543B and 58503A run the Z3816A's update; the Z3815A, 58503B, Z3805A 1.01.03 and Z3817A ease the aging term in (below). What the bits of the word at <code>0x302000</code> read is untraced. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#in-every-image">In every image</a>.</p>
+
+  <h3 id="g-and-the-eeprom">G and the EEPROM</h3>
+  <p>Every image keeps a 64-byte calibration block in the EEPROM at <code>0x400080</code>, checksummed. In the older images it holds the TC and the time offset, nothing of G's; the newer add an EFC calibration, A and B, the gain at EFC u being A + B·u², and some an oscillator type. Whether that block can change G, and what the EEPROMs held make it, each decoded by its unit's image:</p>
+  <!-- loop_gain.py page -->
+  <div class="wide" data-scroll="x"><table class="models">
+    <colgroup><col style="width:13%"><col style="width:29%"><col style="width:29%"><col style="width:29%"></colgroup>
+    <thead><tr><th>Firmware</th><th>G comes from</th><th>Can the EEPROM change it?</th><th>The EEPROMs held</th></tr></thead>
+    <tbody>
+      <tr><td>Z3816A 4001</td><td>Bit 8 of the word at <code>0x302000</code>, read once as the loop starts: set −1.25 × 10⁻¹², clear −2.125 × 10⁻¹²</td><td>No: G goes to the gain setter as an immediate; the block holds the TC, the time offset and a word at <code>+0xa</code>, nothing of G's</td><td>None held</td></tr>
+      <tr><td>Z3815A 4010</td><td>Bit 12 of the word at <code>0x302000</code>, which picks τ too: set +1.2 × 10⁻¹², τ 1000 s; clear −2.125 × 10⁻¹², τ 500 s; then A + B·u² at the EFC in force u</td><td>With bit 12 set: a valid block's A and B stand in for the defaults; with bit 12 clear, <code>pll_init</code> sets τ to 500 s, A to −2.125 × 10⁻¹² and B to 0 after the block is read, on every start that loads the defaults and at each restart of the loop</td><td>None held</td></tr>
+      <tr><td>Z3801A 3543</td><td>A constant, +6.25 × 10⁻¹³</td><td>No: the block holds the TC and the time offset alone, written only by those two parameters' done hooks</td><td><a href="https://github.com/charlieh0tel/smartclock/blob/main/third_party/firmware/images/eeprom/z3801a-3542A01548-eeprom.bin"><code>z3801a-3542A01548-eeprom.bin</code></a>: block erased; G +6.25 × 10⁻¹³, the image's</td></tr>
+      <tr><td>Z3805A 3543B</td><td>A constant, +6.25 × 10⁻¹³</td><td>No: the block holds the TC and the time offset alone, written only by those two parameters' done hooks</td><td><a href="https://github.com/charlieh0tel/smartclock/blob/main/third_party/firmware/images/eeprom/z3805a-3625A01487-eeprom.bin"><code>z3805a-3625A01487-eeprom.bin</code></a>: block erased; G +6.25 × 10⁻¹³, the image's</td></tr>
+      <tr><td>58503A 3704</td><td>A constant, +6.25 × 10⁻¹³</td><td>No: the block holds the TC, the time offset and the 1PPS cable delay alone, written only by those parameters' done hooks</td><td><a href="https://github.com/charlieh0tel/smartclock/blob/main/third_party/firmware/images/eeprom/58503a-3710A01056-eeprom.bin"><code>58503a-3710A01056-eeprom.bin</code></a>: block valid: TC −33.65, time offset 0, cable delay 0; G +6.25 × 10⁻¹³, the image's</td></tr>
+      <tr><td>58503B 1.01.04</td><td>The oscillator type's entry in the table at <code>0x40dfc</code>: type 0 −1.25 × 10⁻¹², type 1 +6.25 × 10⁻¹³</td><td>Yes: a valid block's A replaces the type's as the loop starts; its B is never applied.  Valid: the checksum holds, none of DADC, A and B is erased, A is not 0, and the block's type byte, which sets the type, is the type or erased</td><td><a href="https://github.com/charlieh0tel/smartclock/blob/main/third_party/firmware/images/eeprom/58503b-L00000-eeprom.bin"><code>58503b-L00000-eeprom.bin</code></a>: block valid, type 0, A −6.684 × 10⁻¹³: G −6.684 × 10⁻¹³ in place of the type's −1.25 × 10⁻¹²</td></tr>
+      <tr><td>Z3805A 1.01.03</td><td>The 58503B's code, the type's entry in the table at <code>0x329ec</code>: type 0 +6.25 × 10⁻¹³, type 1 +9.238 × 10⁻¹³</td><td>Yes: as in the 58503B, a valid block's A replaces the type's as the loop starts</td><td>None held</td></tr>
+      <tr><td>Z3817A 3752</td><td>The oscillator kind, the block's byte at <code>+0x1c</code>, EEPROM <code>0x40009c</code>, 0 when erased or the block bad: kind 0 A +5 × 10⁻¹³ and B +3.3 × 10⁻²⁴, τ 1000 s; any other A −2.125 × 10⁻¹² and B 0, τ 500 s for kind 1; G = A + B·u² at the EFC in force u, each block</td><td>Yes: a valid block's A and B replace the defaults, valid as in the 58503B</td><td><a href="https://github.com/charlieh0tel/smartclock/blob/main/third_party/firmware/images/eeprom/z3817a-3832A03064-eeprom.bin"><code>z3817a-3832A03064-eeprom.bin</code></a>: block valid, kind 0, A +4.828 × 10⁻¹³ and B +1.941 × 10⁻²⁴: G +4.828 × 10⁻¹³ at EFC 0 and +1.016 × 10⁻¹² at u = 2¹⁹, where the defaults give +5 × 10⁻¹³ and +1.407 × 10⁻¹²; τ 1000 s</td></tr>
+    </tbody>
+  </table></div>
+  <!-- end loop_gain.py -->
+  <p class="note">u is the EFC in DAC counts, 0 to 2²⁰. Of the EEPROMs held, the Z3817A's and the 58503B's carry an EFC calibration; their bytes do not say whether a calibration measured it or someone set it over SCPI. Evidence: <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/loop.md#g-and-the-calibration-block">G and the calibration block</a>; <code>make check-loop-gain</code> decodes every EEPROM afresh and reads each address loop.md cites from its image.</p>
 </section>
 
 <section id="what-kind-of-loop-that-is">

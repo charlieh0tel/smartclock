@@ -308,7 +308,8 @@ check-pages: pages
 # Unicorn's recorded bugs, the function check's reading of the status
 # register against its tests, every image's chip-select tables, the
 # hand-written C's magic numbers and ROM pointers, the loop's traces and
-# its constants by model (docs/firmware/loop-constants.json), the GPS
+# its constants by model (docs/firmware/loop-constants.json) and where
+# each image's G comes from (docs/firmware/loop-gain.json), the GPS
 # engine's message fields against what the images read, use and send
 # (docs/firmware/gps-fields.tsv), the
 # images' shared C, rewritten/common/, the functions' names, none an
@@ -323,7 +324,7 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 	check-seed-names seed-names check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
-	check-loop-constants loop-constants record-access report-link check-status-register \
+	check-loop-constants loop-constants check-loop-gain loop-gain record-access report-link check-status-register \
 	check-gps-fields gps-fields
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):

@@ -1,5 +1,5 @@
 # Fields a receiver's image uses that a provider of records is excused from filling (docs/firmware/gps.md, "The fields").  A row is the project owner's to add, and no one else's.  The rows are for the providers this repository carries: a provider kept elsewhere keeps a table of its own and gives its text to `Declaration::shortfall`.
 provider	field	reason
-scene	derived.raim.isolated	its sky has no bad satellite, so Time RAIM isolates none and a fill shows nothing
+fake receiver	derived.raim.isolated	its sky has no bad satellite, so Time RAIM isolates none and a fill shows nothing
 u-blox	derived.raim.isolated	TIM-TP says only whether the receiver's (T)RAIM is active, not which satellites it removed
 u-blox	derived.raim.solution	TIM-TP gives no RAIM result or alarm, so the solution is always unknown

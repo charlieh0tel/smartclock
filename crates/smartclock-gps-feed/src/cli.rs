@@ -43,9 +43,12 @@ pub(crate) struct Cli {
     /// (a u-blox receiver's raw output through gpsd: of the device
     /// DEVICE names, a path such as /dev/ttyACM0, or else of every
     /// device gpsd has, merged), `ubx:FILE` (a raw
-    /// UBX recording, such as `gpspipe -R` writes), `fixed` (a made-up
-    /// sky over a fixed place) or `leap:MIDNIGHT[,insert|,remove]` (that
-    /// sky, with a leap second ending the UTC day before MIDNIGHT).
+    /// UBX recording, such as `gpspipe -R` writes), `fake` (the fake
+    /// receiver: a made-up sky over a fixed place) or
+    /// `fake:leap=MIDNIGHT[,insert|,remove]` (the same, with a leap
+    /// second ending the UTC day before MIDNIGHT).  `fixed` and
+    /// `leap:MIDNIGHT[,insert|,remove]` are older spellings of the last
+    /// two.
     #[arg(value_name = "PROVIDER")]
     pub(crate) provider: ProviderSpec,
 
@@ -184,10 +187,10 @@ pub(crate) enum ProviderSpec {
     Gpsd(GpsdSpec),
     /// A raw UBX recording.
     Ubx(PathBuf),
-    /// The made-up sky.
-    Fixed,
-    /// The made-up sky with a leap second.
-    Leap(LeapEvent),
+    /// The fake receiver: the made-up sky.
+    Fake,
+    /// The fake receiver with a leap second.
+    FakeLeap(LeapEvent),
 }
 
 /// gpsd at a host and port, and the device of its that is read.
@@ -218,8 +221,14 @@ impl fmt::Display for GpsdSpec {
 /// What a provider is called on the command line, before its colon.
 const GPSD: &str = "gpsd";
 const UBX: &str = "ubx";
-const FIXED: &str = "fixed";
+const FAKE: &str = "fake";
+/// What the fake receiver's leap second is called after the colon,
+/// before its `=`.
 const LEAP: &str = "leap";
+/// What the fake receiver was called before it had the name, and its
+/// leap second as a provider of its own: both still taken.
+const OLD_FAKE: &str = "fixed";
+const OLD_FAKE_LEAP: &str = "leap";
 /// What follows a leap second's midnight to say which way it goes.
 const INSERT: &str = "insert";
 const REMOVE: &str = "remove";
@@ -233,12 +242,18 @@ impl FromStr for ProviderSpec {
             None => (text, None),
         };
         match (kind, rest) {
-            (FIXED, None) => Ok(Self::Fixed),
+            (FAKE | OLD_FAKE, None) => Ok(Self::Fake),
+            (FAKE, Some(option)) => match option.split_once('=') {
+                Some((LEAP, leap)) => leap_event(leap).map(Self::FakeLeap),
+                _ => bail!(
+                    "no fake receiver \"{option}\": give {FAKE} or {FAKE}:{LEAP}=MIDNIGHT[,{INSERT}|,{REMOVE}]"
+                ),
+            },
             (GPSD, Some(address)) if !address.is_empty() => gpsd(address).map(Self::Gpsd),
             (UBX, Some(path)) if !path.is_empty() => Ok(Self::Ubx(PathBuf::from(path))),
-            (LEAP, Some(leap)) => leap_event(leap).map(Self::Leap),
+            (OLD_FAKE_LEAP, Some(leap)) => leap_event(leap).map(Self::FakeLeap),
             _ => bail!(
-                "no provider \"{text}\": give gpsd:HOST[:PORT][DEVICE], ubx:FILE, fixed or leap:MIDNIGHT[,insert|,remove]"
+                "no provider \"{text}\": give gpsd:HOST[:PORT][DEVICE], ubx:FILE, fake or fake:leap=MIDNIGHT[,insert|,remove]"
             ),
         }
     }
@@ -249,8 +264,8 @@ impl fmt::Display for ProviderSpec {
         match self {
             Self::Gpsd(gpsd) => write!(formatter, "{GPSD}:{gpsd}"),
             Self::Ubx(path) => write!(formatter, "{UBX}:{}", path.display()),
-            Self::Fixed => write!(formatter, "{FIXED}"),
-            Self::Leap(event) => write!(formatter, "{LEAP} ({:?})", event.change),
+            Self::Fake => write!(formatter, "{FAKE}"),
+            Self::FakeLeap(event) => write!(formatter, "{FAKE}:{LEAP} ({:?})", event.change),
         }
     }
 }
@@ -521,7 +536,7 @@ mod tests {
             assert!(config.fake_start.is_some());
         }
         let config = parse(&[
-            "leap:2028-01-01T00:00:00Z",
+            "fake:leap=2028-01-01T00:00:00Z",
             "--engine",
             "gt-74",
             "--connect",
@@ -540,7 +555,7 @@ mod tests {
             (&["--saved", "58503a"], "engine is an Oncore"),
             (&["--deaf"], "no deaf mode"),
         ] {
-            let arguments: Vec<&str> = ["fixed", "--engine", "gt-74", "--connect", "a:1"]
+            let arguments: Vec<&str> = ["fake", "--engine", "gt-74", "--connect", "a:1"]
                 .iter()
                 .chain(option)
                 .copied()
@@ -549,7 +564,7 @@ mod tests {
             assert!(refusal.contains(why), "{refusal}");
         }
         let refusal = parse(&[
-            "fixed",
+            "fake",
             "--engine",
             "vp-six",
             "--eight-on-ea",
@@ -610,23 +625,26 @@ mod tests {
             provider("ubx:capture.ubx").unwrap(),
             ProviderSpec::Ubx(PathBuf::from("capture.ubx"))
         );
-        assert_eq!(provider("fixed").unwrap(), ProviderSpec::Fixed);
+        assert_eq!(provider("fake").unwrap(), ProviderSpec::Fake);
 
         let midnight = DateTime::new(2028, 1, 1, 0, 0, 0).unwrap().to_unix();
         let inserted = GpsSeconds::from_utc(midnight, Seconds(18)).unwrap();
+        let insert = ProviderSpec::FakeLeap(LeapEvent {
+            at: inserted,
+            change: LeapChange::Insert,
+        });
+        let remove = ProviderSpec::FakeLeap(LeapEvent {
+            at: inserted - Seconds(1),
+            change: LeapChange::Remove,
+        });
+        assert_eq!(provider("fake:leap=2028-01-01T00:00:00Z").unwrap(), insert);
         assert_eq!(
-            provider("leap:2028-01-01T00:00:00Z").unwrap(),
-            ProviderSpec::Leap(LeapEvent {
-                at: inserted,
-                change: LeapChange::Insert,
-            })
+            provider("fake:leap=2028-01-01T00:00:00Z,insert").unwrap(),
+            insert
         );
         assert_eq!(
-            provider("leap:2028-01-01T00:00:00Z,remove").unwrap(),
-            ProviderSpec::Leap(LeapEvent {
-                at: inserted - Seconds(1),
-                change: LeapChange::Remove,
-            })
+            provider("fake:leap=2028-01-01T00:00:00Z,remove").unwrap(),
+            remove
         );
 
         for bad in [
@@ -637,7 +655,17 @@ mod tests {
             "gpsd:apu-0/",
             "gpsd:apu-0/dev/a\"b",
             "ubx:",
+            "fake:",
+            "fake:x",
+            "fake:leap",
+            "fake:leap=",
+            "fake:leap:2028-01-01T00:00:00Z",
+            "fake:leap=2028-01-01T00:00:01Z",
+            "fake:leap=2028-01-01T00:00:00Z,sideways",
+            "fake:leap=tomorrow",
             "fixed:x",
+            "fixed:leap=2028-01-01T00:00:00Z",
+            "leap",
             "leap:2028-01-01T00:00:01Z",
             "leap:2028-01-01T00:00:00Z,sideways",
             "leap:tomorrow",
@@ -647,10 +675,38 @@ mod tests {
         }
     }
 
+    /// The fake receiver's older spellings, from before it had the
+    /// name, are still taken, and mean what the new ones do.
+    #[test]
+    fn the_fake_receivers_old_spellings_still_work() {
+        assert_eq!(provider("fixed").unwrap(), provider("fake").unwrap());
+        for change in ["", ",insert", ",remove"] {
+            let midnight = format!("2028-01-01T00:00:00Z{change}");
+            let old = provider(&format!("leap:{midnight}")).unwrap();
+            assert!(matches!(old, ProviderSpec::FakeLeap(_)), "{change}");
+            assert_eq!(
+                old,
+                provider(&format!("fake:leap={midnight}")).unwrap(),
+                "{change}"
+            );
+        }
+        let parsed = parse(&["fixed", "--engine", "vp-six", "--connect", "a:1"]).unwrap();
+        assert_eq!(parsed.provider, ProviderSpec::Fake);
+        let parsed = parse(&[
+            "leap:2028-01-01T00:00:00Z",
+            "--engine",
+            "vp-six",
+            "--connect",
+            "a:1",
+        ])
+        .unwrap();
+        assert!(matches!(parsed.provider, ProviderSpec::FakeLeap(_)));
+    }
+
     #[test]
     fn the_command_line_configures_the_engine_and_transport() {
         let config = parse(&[
-            "fixed",
+            "fake",
             "--engine",
             "vp-six",
             "--eight-on-ea",
@@ -717,9 +773,9 @@ mod tests {
     fn the_command_line_refuses_what_cannot_be() {
         for bad in [
             // No transport, and two.
-            &["fixed", "--engine", "vp-six"][..],
+            &["fake", "--engine", "vp-six"][..],
             &[
-                "fixed",
+                "fake",
                 "--engine",
                 "vp-six",
                 "--connect",
@@ -728,11 +784,11 @@ mod tests {
                 "b:2",
             ],
             // No engine, and one there is not.
-            &["fixed", "--connect", "a:1"],
-            &["fixed", "--engine", "vp-nine", "--connect", "a:1"],
+            &["fake", "--connect", "a:1"],
+            &["fake", "--engine", "vp-nine", "--connect", "a:1"],
             // Eight channels on @@Ea from eight, or to six.
             &[
-                "fixed",
+                "fake",
                 "--engine",
                 "vp-eight",
                 "--eight-on-ea",
@@ -741,7 +797,7 @@ mod tests {
                 "a:1",
             ],
             &[
-                "fixed",
+                "fake",
                 "--engine",
                 "vp-six",
                 "--eight-on-ea",
@@ -751,7 +807,7 @@ mod tests {
             ],
             // A start that is not a whole second.
             &[
-                "fixed",
+                "fake",
                 "--engine",
                 "vp-six",
                 "--fake-start",
@@ -760,7 +816,7 @@ mod tests {
                 "a:1",
             ],
             &[
-                "fixed",
+                "fake",
                 "--engine",
                 "vp-six",
                 "--saved",

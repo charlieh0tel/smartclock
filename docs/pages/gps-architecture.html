@@ -142,8 +142,8 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
 
       <rect class="bx" x="780" y="56" width="340" height="66" rx="4"/>
       <text class="t" x="794" y="76">A place and a clock</text>
-      <text class="s" x="794" y="94"><tspan class="k">fixed</tspan>: a sky over a fixed place</text>
-      <text class="s" x="794" y="111"><tspan class="k">leap:MIDNIGHT</tspan>: one with a leap second</text>
+      <text class="s" x="794" y="94"><tspan class="k">fake</tspan>: a sky over a fixed place</text>
+      <text class="s" x="794" y="111"><tspan class="k">fake:leap=MIDNIGHT</tspan>: one with a leap second</text>
 
       <line class="ln" x1="120" y1="122" x2="120" y2="154" marker-end="url(#ah)"/>
       <text class="m" x="112" y="142" text-anchor="end">UBX</text>
@@ -176,12 +176,12 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <rect class="ours" x="780" y="154" width="340" height="164" rx="4"/>
       <text class="t" x="794" y="176"><tspan class="k">smartclock-gps</tspan>, source: the sky</text>
       <text class="u" x="794" y="192">built by const fn; a table can stay in flash</text>
-      <text class="s" x="794" y="212"><tspan class="k">scene</tspan>; <tspan class="k">scenario</tspan>: Fixed, Scenario</text>
+      <text class="s" x="794" y="212"><tspan class="k">fake_receiver</tspan>; <tspan class="k">scenario</tspan>: Fixed, Scenario</text>
       <text class="s" x="794" y="229"><tspan class="k">wrap</tspan>: FakeTime, LeapSchedule</text>
       <text class="s" x="794" y="246">(FakeTime wraps any provider)</text>
-      <text class="s" x="794" y="270">the scene is the provider: it acts on the</text>
-      <text class="s" x="794" y="287">mask angle, position hold, held position</text>
-      <text class="s" x="794" y="304">and ignore list; makes no pulse</text>
+      <text class="s" x="794" y="270">the fake receiver is the provider: it acts</text>
+      <text class="s" x="794" y="287">on the mask angle, position hold, held</text>
+      <text class="s" x="794" y="304">position and ignore list; makes no pulse</text>
 
       <line class="ln" x1="120" y1="318" x2="120" y2="352" marker-end="url(#ah)"/>
       <text class="m" x="112" y="339" text-anchor="end">record</text>
@@ -296,9 +296,9 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <rect class="bx" x="720" y="40" width="400" height="110" rx="4"/>
       <text class="t" x="734" y="62">The provider: the settings it declares (acts)</text>
       <text class="s" x="734" y="82">board: what its Declaration says; Assembler: mask,</text>
-      <text class="s" x="734" y="99">ignore list; scene: mask, hold, held position, ignore</text>
-      <text class="s" x="734" y="116">held to IMAGE_HOLDS, less PULSE_SETTINGS if it</text>
-      <text class="s" x="734" y="133">makes no pulse; a gap is an exceptions row</text>
+      <text class="s" x="734" y="99">ignore list; fake receiver: mask, hold, held position,</text>
+      <text class="s" x="734" y="116">ignore; held to IMAGE_HOLDS, less PULSE_SETTINGS</text>
+      <text class="s" x="734" y="133">if it makes no pulse; a gap is an exceptions row</text>
 
       <rect class="bx" x="720" y="170" width="400" height="100" rx="4"/>
       <text class="t" x="734" y="192">The pulse maker: PULSE_SETTINGS</text>
@@ -319,7 +319,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <tr><td>Engine, Furuno</td><td><code>smartclock-gps</code>, <code>engine::furuno</code>: the Z3815A's GT-74, on NMEA sentences, giving the same settings and events where its sentences mean the same; driven today by <code>smartclock-gps-feed</code> (<code>--engine gt-74</code>, behind any provider)</td></tr>
       <tr><td>Saved configuration</td><td><code>smartclock-gps</code>, <code>engine::saved</code>: <code>SavedConfiguration</code>, and <code>CONFIGURATION_58503A</code> built in</td></tr>
       <tr><td>Record</td><td><code>smartclock-gps</code>, <code>record</code>; <code>record::field</code>: the field table (<code>RecordField</code>), what the images use and set (<code>IMAGE_USES</code>, <code>IMAGE_SETS</code>, <code>IMAGE_HOLDS</code>), the <code>PULSE_SETTINGS</code>, and a provider's <code>Declaration</code></td></tr>
-      <tr><td>Made-up sky</td><td><code>smartclock-gps</code>, <code>source</code>: <code>source::scene</code>, <code>source::scenario</code> (<code>Fixed</code>, <code>Scenario</code>), <code>source::wrap</code> (<code>FakeTime</code>, <code>LeapSchedule</code>), <code>source::replay</code> (<code>Replay</code>, for a recording)</td></tr>
+      <tr><td>Made-up sky</td><td><code>smartclock-gps</code>, <code>source</code>: <code>source::fake_receiver</code>, <code>source::scenario</code> (<code>Fixed</code>, <code>Scenario</code>), <code>source::wrap</code> (<code>FakeTime</code>, <code>LeapSchedule</code>), <code>source::replay</code> (<code>Replay</code>, for a recording)</td></tr>
       <tr><td>UBX parser</td><td><code>smartclock-gps-ublox</code>: <code>frame</code> (<code>Deframer</code>, and <code>Streamer</code> for a caller that takes a long message a block at a time), the message decoders (<code>message</code>, <code>nav</code>, <code>rxm</code>, <code>tim</code>, <code>mon</code>, <code>ack</code>) and <code>subframe</code>, the GPS subframes decoded</td></tr>
       <tr><td>u-blox provider</td><td><code>smartclock-gps-ublox</code>, <code>assembler</code>: <code>Assembler</code>, its <code>DECLARATION</code> and <code>act</code></td></tr>
       <tr><td>Host feed</td><td><code>smartclock-gps-feed</code>: providers (<code>provider</code>), the Oncore or GT-74 engine (<code>engine</code>), transports (<code>link</code>), the paced loop (<code>feed</code>)</td></tr>

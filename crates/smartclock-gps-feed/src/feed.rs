@@ -28,7 +28,7 @@ use crate::event;
 use crate::link::Transport;
 use crate::provider::Kind;
 use crate::provider::Shared;
-use crate::provider::complete_scene;
+use crate::provider::complete_fake_receiver;
 
 /// How far into each second a live provider's record is taken: a
 /// receiver's epoch arrives some time after the second it is of, and
@@ -184,8 +184,8 @@ impl Feed {
             presence
         };
         if presence == Presence::Fresh {
-            if self.kind == Kind::Scene {
-                complete_scene(&mut record, &self.engine.settings());
+            if self.kind == Kind::FakeReceiver {
+                complete_fake_receiver(&mut record, &self.engine.settings());
             } else {
                 assembler::act(&mut record, &self.engine.settings());
             }
@@ -377,7 +377,7 @@ impl Pace {
 pub(crate) fn phase(kind: Kind, engine: &Engine) -> Duration {
     engine.sentences_after_pulse().unwrap_or(match kind {
         Kind::Live => LIVE_PHASE,
-        Kind::Scene | Kind::Recording => Duration::ZERO,
+        Kind::FakeReceiver | Kind::Recording => Duration::ZERO,
     })
 }
 
@@ -642,7 +642,7 @@ mod tests {
     fn fixed(engine: Engine) -> Feed {
         let clock = instrument(BTreeMap::new()).clock;
         let now = utc_second(first_second(&clock, Duration::ZERO));
-        let Built { nest, kind } = build(&ProviderSpec::Fixed, None, now).unwrap();
+        let Built { nest, kind } = build(&ProviderSpec::Fake, None, now).unwrap();
         Feed::new(engine, Arc::new(Mutex::new(Shared::new(nest))), kind)
     }
 
@@ -886,7 +886,7 @@ mod tests {
     #[test]
     fn a_furuno_engine_sends_at_its_intervals_and_answers() {
         let engine = Engine::new(&EngineSpec::Furuno(&GT_74)).unwrap();
-        let phase = phase(Kind::Scene, &engine);
+        let phase = phase(Kind::FakeReceiver, &engine);
         assert_eq!(phase, Duration::from_millis(500));
         let mut feed = fixed(engine);
         let asked = START.as_secs() + 2;

@@ -1,21 +1,21 @@
 # Settings a receiver's image sets for a holder to act on (`IMAGE_HOLDS`) that a provider of records is excused from acting on (docs/firmware/gps.md, "The fields").  A provider's test holds that each setting it is held to is one it acts on or one of its rows here, and that no row is for a setting it acts on or one it is not held to; it may act on more than the images set.  A provider that makes no pulse is held to none of the pulse settings (`PULSE_SETTINGS`: the cable delay, the pulse offset and the 1PPS control mode), whose maker in its setup acts on them, and has no row for them.  A row is the project owner's to grant.  The rows are for the providers this repository carries: a provider kept elsewhere keeps a table of its own and gives its text to `Declaration::unacted` and `Declaration::needless`.
 provider	setting	reason
-scene	altitude_hold	its fix is 3D under a sky of eight, never the 2D one an altitude is held for
-scene	time_base	a record carries GPS time and its offset from UTC whatever the base, and a scene has no pulse to put on either
-scene	raim_algorithm	a scene gives one Time RAIM result, the same every second, and checks no time solution to turn on or off
-scene	raim_alarm_limit	a scene gives one Time RAIM result, the same every second, and has no error in its time to hold to a limit
-scene	application	a scene stays where its head puts it and searches for nothing
-scene	initial_position	a scene has its position from the first second and searches for nothing
-scene	satellite_select	a scene tracks its whole sky and chooses among no satellites
-scene	manual_satellites	a scene tracks its whole sky and chooses among no satellites
-scene	xdop_hysteresis	a scene has one set of satellites and never changes to another
-scene	almanac_update	a scene has one almanac and receives no other
-scene	atmospheric_correction	a scene measures no ranges to correct
-scene	fix_algorithm	a scene is given its position and computes no fix
-scene	epoch_offset	a scene makes a record on the second and measures at no epoch
-scene	hdop_threshold	its fix is 3D under a sky of eight, never a 2D one to give up
-scene	correction_thresholds	a scene has no differential corrections
-scene	output_format	the vectors are of the binary format alone
+fake receiver	altitude_hold	its fix is 3D under a sky of eight, never the 2D one an altitude is held for
+fake receiver	time_base	a record carries GPS time and its offset from UTC whatever the base, and a fake receiver has no pulse to put on either
+fake receiver	raim_algorithm	a fake receiver gives one Time RAIM result, the same every second, and checks no time solution to turn on or off
+fake receiver	raim_alarm_limit	a fake receiver gives one Time RAIM result, the same every second, and has no error in its time to hold to a limit
+fake receiver	application	a fake receiver stays where its head puts it and searches for nothing
+fake receiver	initial_position	a fake receiver has its position from the first second and searches for nothing
+fake receiver	satellite_select	a fake receiver tracks its whole sky and chooses among no satellites
+fake receiver	manual_satellites	a fake receiver tracks its whole sky and chooses among no satellites
+fake receiver	xdop_hysteresis	a fake receiver has one set of satellites and never changes to another
+fake receiver	almanac_update	a fake receiver has one almanac and receives no other
+fake receiver	atmospheric_correction	a fake receiver measures no ranges to correct
+fake receiver	fix_algorithm	a fake receiver is given its position and computes no fix
+fake receiver	epoch_offset	a fake receiver makes a record on the second and measures at no epoch
+fake receiver	hdop_threshold	its fix is 3D under a sky of eight, never a 2D one to give up
+fake receiver	correction_thresholds	a fake receiver has no differential corrections
+fake receiver	output_format	the vectors are of the binary format alone
 u-blox	position_hold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	held_position	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none
 u-blox	altitude_hold	it would be a configuration sent to the receiver, and the crate reads a receiver's messages and sends it none

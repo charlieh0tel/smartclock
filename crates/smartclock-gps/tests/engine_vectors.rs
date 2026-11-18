@@ -22,9 +22,9 @@
 mod common;
 
 use common::EXCEPTIONS;
+use common::FakeReceiver;
 use common::Head;
 use common::SETTING_EXCEPTIONS;
-use common::Scene;
 use common::WRITE;
 use common::WRITE_VARIABLE;
 use common::ecef;
@@ -47,8 +47,8 @@ use smartclock_gps::record::field::FieldSet;
 use smartclock_gps::record::field::RecordField;
 use smartclock_gps::record::field::UNFILLED;
 use smartclock_gps::record::field::changed;
-use smartclock_gps::source::scene;
-use smartclock_gps::source::scene::DECLARATION;
+use smartclock_gps::source::fake_receiver;
+use smartclock_gps::source::fake_receiver::DECLARATION;
 use smartclock_gps::units::Centimeters;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
@@ -76,8 +76,8 @@ fn hex(bytes: &[u8]) -> String {
     })
 }
 
-/// The vector whose scene is held to [`DECLARATION`]: one with a leap second
-/// announced.
+/// The vector whose fake receiver is held to [`DECLARATION`]: one with
+/// a leap second announced.
 const DECLARED_BY: &str = "vp-eight-leap.txt";
 
 /// The configuration a vector's head names `status-every-other-second`,
@@ -179,7 +179,7 @@ fn run(text: &str) -> String {
     }
     assert_eq!(head.field("format"), FORMAT);
 
-    let scene = Scene::new(&head);
+    let receiver = FakeReceiver::new(&head);
     let mut engine =
         Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
     let mut antenna = head.field("antenna") == "on";
@@ -193,7 +193,7 @@ fn run(text: &str) -> String {
     while second < last || engine.deadline().is_some() {
         second += 1;
         lines.second = second;
-        let record = scene.record(second, antenna, &engine.settings());
+        let record = receiver.record(second, antenna, &engine.settings());
         engine.second(
             &record,
             Milliseconds(second * MILLISECONDS_PER_SECOND),
@@ -208,7 +208,7 @@ fn run(text: &str) -> String {
                         writeln!(lines.text, "{second} {kind} {}", hex(bytes))
                             .expect("a string takes it");
                     }
-                    let record = scene.record(second, antenna, &engine.settings());
+                    let record = receiver.record(second, antenna, &engine.settings());
                     for (_, bytes) in run {
                         engine.receive(bytes, &record, now, &mut lines);
                     }
@@ -234,7 +234,7 @@ fn vectors() -> Vec<PathBuf> {
     paths
 }
 
-/// The head of the vector a scene is held to.
+/// The head of the vector a fake receiver is held to.
 fn declared_head() -> Head {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let text =
@@ -242,11 +242,11 @@ fn declared_head() -> Head {
     Head::of(&text)
 }
 
-/// A scene fills what it declares and nothing else, and all the
+/// A fake receiver fills what it declares and nothing else, and all the
 /// images use.  Of the settings the images set, it acts on those it
 /// declares and is excused the rest, none for nothing.
 #[test]
-fn a_scene_fills_what_it_declares() {
+fn a_fake_receiver_fills_what_it_declares() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let exceptions = fs::read_to_string(root.join(EXCEPTIONS)).expect("the exceptions table");
     let shortfall = DECLARATION.shortfall(&exceptions);
@@ -260,7 +260,7 @@ fn a_scene_fills_what_it_declares() {
 
     let head = declared_head();
     let engine = Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
-    let record = Scene::new(&head).record(1, true, &engine.settings());
+    let record = FakeReceiver::new(&head).record(1, true, &engine.settings());
     let undeclared = DECLARATION.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
     let unshown = DECLARATION.unshown(changed(&UNFILLED, &record));
@@ -275,19 +275,19 @@ const HOLD_AT: [u8; 20] = [
 ];
 const HOLD: [u8; 8] = [0x40, 0x40, 0x41, 0x74, 0x01, 0x34, 0x0d, 0x0a];
 /// Where that is.
-const HELD: Position = scene::position(
+const HELD: Position = fake_receiver::position(
     MilliArcSeconds(36_000_000),
     MilliArcSeconds(72_000_000),
     Centimeters(10_000),
 );
 
-/// A scene acts on the two settings it declares: with the position
-/// held, its record is at the position to hold and its fix of time
-/// alone; a position to hold changes nothing until it is held.
+/// A fake receiver acts on the two settings it declares: with the
+/// position held, its record is at the position to hold and its fix of
+/// time alone; a position to hold changes nothing until it is held.
 #[test]
-fn a_scene_holds_the_position_it_is_told_to() {
+fn a_fake_receiver_holds_the_position_it_is_told_to() {
     let head = declared_head();
-    let scene = Scene::new(&head);
+    let receiver = FakeReceiver::new(&head);
     let mut engine =
         Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
     let mut lines = Lines {
@@ -295,15 +295,15 @@ fn a_scene_holds_the_position_it_is_told_to() {
         second: 1,
     };
     let now = Milliseconds(MILLISECONDS_PER_SECOND);
-    let free = scene.record(1, true, &engine.settings());
+    let free = receiver.record(1, true, &engine.settings());
     assert_eq!(free.fix, Fix::ThreeD);
     assert_ne!(free.position, Some(HELD));
 
     engine.receive(&HOLD_AT, &free, now, &mut lines);
-    assert_eq!(scene.record(1, true, &engine.settings()), free);
+    assert_eq!(receiver.record(1, true, &engine.settings()), free);
 
     engine.receive(&HOLD, &free, now, &mut lines);
-    let held = scene.record(1, true, &engine.settings());
+    let held = receiver.record(1, true, &engine.settings());
     assert_eq!(held.fix, Fix::TimeOnly);
     assert_eq!(held.position, Some(HELD));
     assert_eq!(held.derived.ecef, Some(ecef(HELD)));

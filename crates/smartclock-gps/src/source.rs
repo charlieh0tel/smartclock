@@ -6,7 +6,8 @@
 //! one ([`scenario::Scenario`]), a recording ([`replay::Replay`]), or
 //! whatever a receiver on the bench last said ([`Latest`]).  The
 //! wrappers of [`wrap`] alter another source's records on their way
-//! past.  [`scene`] is a made-up sky for the first two to give.
+//! past.  [`fake_receiver`] is a made-up sky for the first two to
+//! give.
 //!
 //! The tool's clock drives every source.  A source keeps no clock and
 //! is not asked the time: its driver calls [`Source::record`] with the
@@ -39,9 +40,9 @@ use crate::time::LeapEvent;
 use crate::units::Seconds;
 use thiserror::Error;
 
+pub mod fake_receiver;
 pub mod replay;
 pub mod scenario;
-pub mod scene;
 pub mod wrap;
 
 /// A second of the driver's clock: whole seconds since the driver

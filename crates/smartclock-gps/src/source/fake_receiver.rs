@@ -1,18 +1,18 @@
-//! A made-up sky over a place: the scene the engine's recorded
-//! exchanges are under (`tests/vectors/engine`), for any tool that puts
-//! an engine under one.
+//! A made-up sky over a place: the fake receiver the engine's
+//! recorded exchanges are under (`tests/vectors/engine`), for any tool
+//! that puts an engine under one.
 //!
 //! Eight satellites, all tracked and used, a 3D fix at the place, its
 //! DOPs, a time solution's spread, an almanac of the eight, the antenna
 //! connected, a self-test that passes and Time RAIM's result for such a
 //! sky.  [`sky`] is the record less its time; a [`Fixed`] gives it each
 //! second, and a leap second comes from a scenario's row or a
-//! [`LeapSchedule`].  What commands set that the scene acts on,
-//! position hold and the satellites its fix leaves out, [`act`] does to
-//! a record.
+//! [`LeapSchedule`].  What commands set that the fake receiver acts
+//! on, position hold and the satellites its fix leaves out, [`act`]
+//! does to a record.
 //!
 //! The position in Earth-centered coordinates is left to whoever holds
-//! the scene, being arithmetic this crate does not do
+//! the fake receiver, being arithmetic this crate does not do
 //! ([`Derived`](crate::record::Derived)); [`DECLARATION`] counts it
 //! filled, since every holder here works it out.
 //!
@@ -93,15 +93,15 @@ pub const PLACE: Position = position(
     Centimeters(5500),
 );
 
-/// What the scene fills of a record, with the position in
+/// What the fake receiver fills of a record, with the position in
 /// Earth-centered coordinates its holder works out, and the settings
 /// it acts on ([`act`]): in position hold its receiver is where it was
 /// told it is, and its fix leaves out the satellites below the mask and
 /// those ignored.  It makes no pulse, so whoever times one from its
 /// records acts on the pulse settings.  The exceptions tables name it
-/// `scene`, for the vectors and the host feed alike.
+/// `fake receiver`, for the vectors and the host feed alike.
 pub const DECLARATION: Declaration = Declaration {
-    name: "scene",
+    name: "fake receiver",
     fills: FieldSet::of(&[
         RecordField::Time,
         RecordField::UtcOffset,
@@ -170,7 +170,7 @@ pub const fn located(location: Location) -> Position {
     position(location.latitude, location.longitude, mean_sea_level)
 }
 
-/// The scene's record at `place`, less its time: GPS less UTC
+/// The fake receiver's record at `place`, less its time: GPS less UTC
 /// `offset`, no leap second and the almanac of `week`.
 #[must_use]
 pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record {
@@ -182,7 +182,7 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
     record.position = Some(place);
     record.dops = Some(DOPS);
     record.timing = Some(timing);
-    // A scene's engine has no part that fails.
+    // A fake receiver's engine has no part that fails.
     record.self_test = SelfTest::PASS;
     record.antenna = Antenna::Connected;
     record.derived.raim = Some(RAIM);
@@ -191,7 +191,7 @@ pub const fn sky(place: Position, offset: Seconds<i8>, week: GpsWeek) -> Record 
     while index < SATELLITES.len() {
         let (id, elevation, azimuth, signal, doppler) = SATELLITES[index];
         let Some(prn) = Prn::new(id) else {
-            panic!("a satellite of the scene is no satellite");
+            panic!("a satellite of the fake receiver is no satellite");
         };
         let mut satellite =
             Satellite::new(prn, Degrees(elevation), Degrees(azimuth)).tracked(DecibelHertz(signal));

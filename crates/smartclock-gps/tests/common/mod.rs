@@ -1,13 +1,13 @@
-//! What the engines' test vectors share: a vector's head, the scene a
-//! vector runs under and the Earth-centered position its provider works
-//! out.
+//! What the engines' test vectors share: a vector's head, the fake
+//! receiver a vector runs under and the Earth-centered position its
+//! provider works out.
 
 use smartclock_gps::engine::settings::Settings;
 use smartclock_gps::record::Ecef;
 use smartclock_gps::record::GpsTime;
 use smartclock_gps::record::Position;
 use smartclock_gps::record::Record;
-use smartclock_gps::source::scene;
+use smartclock_gps::source::fake_receiver;
 use smartclock_gps::time::DateTime;
 use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::LeapChange;
@@ -119,7 +119,7 @@ pub(crate) fn ecef(position: Position) -> Ecef {
 }
 
 /// What does not change through a vector.
-pub(crate) struct Scene {
+pub(crate) struct FakeReceiver {
     /// The GPS second before the first.
     start: GpsSeconds,
     /// GPS less UTC before any leap.
@@ -130,7 +130,7 @@ pub(crate) struct Scene {
     record: Record,
 }
 
-impl Scene {
+impl FakeReceiver {
     pub(crate) fn new(head: &Head) -> Self {
         let offset = i8::try_from(head.number("leap-seconds")).expect("an offset");
         let gps = |time: DateTime| GpsSeconds::from_utc(time.to_unix(), Seconds(offset));
@@ -139,13 +139,13 @@ impl Scene {
             at: gps(time).expect("a GPS time"),
             change: LeapChange::Insert,
         });
-        let place = scene::position(
+        let place = fake_receiver::position(
             MilliArcSeconds(head.number("latitude-mas")),
             MilliArcSeconds(head.number("longitude-mas")),
             Centimeters(head.number("height-msl-cm")),
         );
         let week = start.week().expect("a week of GPS time");
-        let mut record = scene::sky(place, Seconds(offset), week);
+        let mut record = fake_receiver::sky(place, Seconds(offset), week);
         record.leap = leap;
         Self {
             start,
@@ -170,10 +170,10 @@ impl Scene {
             subsecond: Nanoseconds(0),
         });
         record.utc_offset = Some(offset);
-        scene::act(&mut record, settings);
+        fake_receiver::act(&mut record, settings);
         record.derived.ecef = record.position.map(ecef);
         if !antenna {
-            scene::unplug(&mut record);
+            fake_receiver::unplug(&mut record);
         }
         record
     }

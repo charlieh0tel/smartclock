@@ -33,6 +33,10 @@ seconds (300 by default) to keep the satellite table in the log: a
 read costs about 1.5 s of a 19200 link, four times a whole one-second
 poll, and no tier polls it.  The satellite counts are queried
 directly, on the medium tier.
+A Z3815A's screen opens with its card state, `Active`, `Standby`,
+`Unlocked`, `Blocked` or `ALARM`; the scraper serves it as the
+screen's `card_state`, null for every other model, and the status
+page adds it to the pills above the screen.
 
 ## Stability
 

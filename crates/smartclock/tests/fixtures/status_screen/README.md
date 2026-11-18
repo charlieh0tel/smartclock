@@ -45,6 +45,8 @@ sends.
 `z3815a-4010-01.txt` is a Z3815A U-4010.0-A status screen, locked and
 surveying.  It differs from the others:
 
+- The heading opens with the card state, `[ Active ]`, and names
+  `GPSR 2` where the others say `Receiver Status`.
 - The tracked group's signal column is headed `C/N`.
 - The time is on the GPS scale, `GPS      16:35:21`.
 - The prediction reads `Predict: --`, with a colon, while there is

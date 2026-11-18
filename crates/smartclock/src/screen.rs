@@ -10,6 +10,8 @@
 //! the signal column `SS` and pads headings with underscores; the
 //! manuals head it `C/N` and pad with spaces, over a narrower screen.
 
+use std::fmt;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -27,6 +29,9 @@ use crate::types::Tfom;
 /// display rather than fail the parse.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Screen {
+    /// The Z3815A's card state, from the bracket that opens its
+    /// heading.  Absent on every other model, whose heading has none.
+    pub card_state: Option<CardState>,
     /// The bracketed text on the SYNCHRONIZATION line.
     pub synchronization: Option<String>,
     /// The mode marked with `>>`.
@@ -97,6 +102,66 @@ pub struct Screen {
     pub position_label: Option<String>,
 }
 
+/// The state of a Z3815A, which is built to work as one of two cards,
+/// the standby one locking its oscillator to the active one's.
+///
+/// Its screen opens with one of these in brackets, as in `[ Active ]
+/// --------------------- GPSR 2 Status ---`, or with dashes for a state
+/// it has no word for (`docs/firmware/loop.md`, "The Z3815A's extra
+/// stage"; `SCREEN_CARD_LINES` in
+/// `third_party/firmware/rewritten/z3815a-4010/screen.c`).  The image
+/// picks it from its output status, in the order the variants'
+/// comments give (`output_state_get` in `monitors.c` there).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CardState {
+    /// The active card.  Second: an alarm masks it.
+    Active,
+    /// The standby card.  Third.
+    Standby,
+    /// None of the others: what is left after the four.
+    Unlocked,
+    /// Blocked or extracted, and not unlocked.  Fourth.
+    Blocked,
+    /// The output alarm.  Tested first, so it masks every other.
+    Alarm,
+}
+
+impl CardState {
+    /// Each state with the word the screen prints for it.
+    const WORDS: [(Self, &'static str); 5] = [
+        (Self::Active, "Active"),
+        (Self::Standby, "Standby"),
+        (Self::Unlocked, "Unlocked"),
+        (Self::Blocked, "Blocked"),
+        (Self::Alarm, "ALARM"),
+    ];
+
+    /// The state the screen's heading names, from the first line
+    /// carrying `GPSR`, the Z3815A's heading.
+    fn from_heading(lines: &[&str]) -> Option<Self> {
+        let line = lines.iter().find(|l| l.contains("GPSR"))?;
+        let (head, _) = line.split_once("GPSR")?;
+        let start = head.find('[')?;
+        let end = head[start..].find(']')? + start;
+        let word = collapse(&head[start + 1..end]);
+        Self::WORDS
+            .into_iter()
+            .find(|(_, w)| *w == word)
+            .map(|(state, _)| state)
+    }
+}
+
+impl fmt::Display for CardState {
+    /// The word the screen prints.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let word = Self::WORDS
+            .into_iter()
+            .find(|(state, _)| state == self)
+            .map_or("", |(_, w)| w);
+        f.write_str(word)
+    }
+}
+
 /// Parse a status screen.
 pub fn parse(screen: &str) -> Screen {
     // Underscores are decorative fill on firmware 3704-C.  Flattening
@@ -110,6 +175,7 @@ pub fn parse(screen: &str) -> Screen {
     let boundary = panel_column(&lines);
     let mut out = Screen {
         text: screen.to_owned(),
+        card_state: CardState::from_heading(&lines),
         synchronization: bracketed(&lines, "SYNCHRONIZATION"),
         acquisition: bracketed(&lines, "ACQUISITION"),
         health: bracketed(&lines, "HEALTH MONITOR"),

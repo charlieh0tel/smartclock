@@ -213,45 +213,6 @@ Without a receiver, use the simulator; every tool takes
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
-### A GPS engine on a host
-
-`smartclock-gps-feed` stands in for a receiver's GPS engine: it runs
-an engine model of `smartclock-gps` on a host, paced to real time --
-an Oncore (`vp-six`, `vp-eight`, `vp-eight-without-time-raim`,
-`ut-plus-2.2`, `ut-plus-3.1`), speaking Oncore binary, or the Z3815A's
-Furuno GT-74 (`gt-74`, `gt-74-without-time-raim`,
-`gt-74-pulse-early`), speaking NMEA with Furuno's `$PFEC` sentences --
-to a `SmartClock`'s engine port, through a serial-to-TCP bridge
-(`--connect`), as a TCP server (`--listen`) or on a serial port at
-9600 8N1, either family's line (`--serial`).  Each second's record
-comes from gpsd's raw output of a u-blox receiver, a raw UBX
-recording, or a made-up sky, fixed or with a leap second.  The 1 PPS
-is not carried.
-
-    smartclock-gps-feed gpsd:gpshost --engine vp-eight --connect bridge:2001
-    smartclock-gps-feed ubx:capture.ubx --engine ut-plus-3.1 --serial /dev/ttyUSB0
-    smartclock-gps-feed fixed --engine vp-eight --saved 58503a --deaf --listen 0.0.0.0:4001
-    smartclock-gps-feed leap:2028-01-01T00:00:00Z --engine vp-six --eight-on-ea vp-eight \
-        --connect bridge:2001 --log wire.log
-    smartclock-gps-feed gpsd:gpshost --engine gt-74 --connect bridge:2002
-
-gpsd's provider reads one device of gpsd's when its path follows the
-address, as in `gpsd:gpshost/dev/ttyACM0` or
-`gpsd:gpshost:2947/dev/ttyACM0`; without one, gpsd merges the raw
-output of every device it has, so it should have one receiver only.
-
-`--eight-on-ea`, `--saved` and `--deaf` are an Oncore's alone, and
-refused with a GT-74.  A GT-74's sentences go out half a second into
-each second and give the next second, the one its pulse marks, as a
-GT-8031's do.  `--fake-start RFC3339` relabels any provider's
-time: its first second reads as that UTC second under the provider's
-own GPS less UTC, which a recording or gpsd gives in its first record
-that has one (until then it is taken to be 18, the made-up sky's), and
-GPS less UTC stays at it.  `smartclock-gps-feed --help` has the rest,
-and `PLAN.md` the design.
-How the feed, the engine and the u-blox crate fit together is drawn in
-[the GPS support architecture](https://charlieh0tel.github.io/smartclock/gps-architecture.html).
-
 ## Development
 
 `make ci` runs CI's Rust checks: formatting, clippy, the tests, the

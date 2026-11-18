@@ -21,7 +21,7 @@ hand.
 | `smartclock-cli note`, `fact` | writes a note or a fact to the log of a daemon's receiver ([`running.md`](running.md#notes-and-facts)) |
 | `smartclock-cli sensors` | lists the host's sensors and their latest readings ([`sensors.md`](sensors.md)) |
 | `smartclock-sim` | a simulated receiver, in process for tests and over TCP for the real daemon ([`README.md`](../README.md#running-it)) |
-| `smartclock-gps-feed` | runs a `smartclock-gps` engine on a host and speaks Oncore binary, or the Z3815A's Furuno NMEA, to a `SmartClock`'s engine port, from gpsd, a UBX recording or a made-up sky ([`README.md`](../README.md#a-gps-engine-on-a-host)) |
+| `smartclock-gps-feed` | runs a `smartclock-gps` engine on a host and speaks Oncore binary, or the Z3815A's Furuno NMEA, to a `SmartClock`'s engine port, from gpsd, a UBX recording or a made-up sky (`smartclock-gps-feed --help`) |
 
 `smartclock-cli`'s commands that read the firmware or program a
 receiver are in [`tooling.md`](tooling.md).

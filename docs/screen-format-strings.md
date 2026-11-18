@@ -272,6 +272,20 @@ so the leap field can carry `+` or `-`.
 
     HEWLETT-PACKARD,%s,%s,%s-%c
 
+## The Z3815A
+
+The Z3815A 4010's screen labels the holdover prediction with a colon
+the others lack, and prints `--` there while it has none
+(`third_party/firmware/rewritten/z3815a-4010/screen.c`, the
+`Predict: %s` print):
+
+    Predict: %s          the prediction and "/initial 24 hrs"
+    Predict: --          no prediction
+
+The scraper takes `Predict:` and `Predict` alike, and `--` as absent.
+`crates/smartclock/tests/fixtures/status_screen/z3815a-4010-01.txt`
+is a screen from this image.
+
 ## In every image
 
 Each string this file quoted on 2026-10-09 was looked for in every

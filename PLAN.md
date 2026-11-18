@@ -298,7 +298,8 @@ carry their heading column so a blank cell differs from a missing one.
 The table is checked against the screen's tracked and untracked counts,
 and a disagreeing table is still shown, flagged, which makes
 misreadings visible without predicting their shape.  Goldens come from
-`097-59551-02` chapter 3 and `097-58503-13`.
+`097-59551-02` chapter 3, `097-58503-13`, a 58503A 3704-C capture and
+a Z3815A U-4010.0-A screen.
 
 ### Allan deviation is computed over segments, not over a series
 

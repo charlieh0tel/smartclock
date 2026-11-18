@@ -1,8 +1,8 @@
 # Status screen fixtures
 
 Sample `:SYSTem:STATus?` screens, used as goldens for the scraper:
-transcriptions from the vendor manuals, and one capture from hardware
-(below).
+transcriptions from the vendor manuals, one capture from hardware and
+a Z3815A screen (below).
 
 - `58503a-*` from `097-59551-02` chapter 3.
 - `58503b-*` from `097-58503-13` and `097-58503-12`.
@@ -39,3 +39,14 @@ Between them the manual samples cover:
 Both sets stay: the manual samples cover states the unit was not in,
 such as survey and power-up, and the capture is what firmware 3704-C
 sends.
+
+## Z3815A
+
+`z3815a-4010-01.txt` is a Z3815A U-4010.0-A status screen, locked and
+surveying.  It differs from the others:
+
+- The tracked group's signal column is headed `C/N`.
+- The time is on the GPS scale, `GPS      16:35:21`.
+- The prediction reads `Predict: --`, with a colon, while there is
+  none.
+- The screen carries no trailing newline.

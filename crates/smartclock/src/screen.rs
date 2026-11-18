@@ -73,7 +73,8 @@ pub struct Screen {
     pub time_interval: Option<String>,
     /// `HOLD THR` as printed, or absent when the screen shows `Off`.
     pub hold_threshold: Option<String>,
-    /// The predicted 24 hour holdover uncertainty as printed.
+    /// The predicted 24 hour holdover uncertainty as printed, or absent
+    /// when the screen shows `--`.
     pub holdover_predict: Option<String>,
     /// The screen as the receiver sent it, for showing verbatim.
     ///
@@ -166,7 +167,8 @@ pub fn parse(screen: &str) -> Screen {
 /// The firmware's format strings, recovered in
 /// `docs/screen-format-strings.md`, enumerate what each of these can
 /// hold.  Several print a placeholder instead of a value: `1PPS TI --`,
-/// `HOLD THR  Off`, `Predict --`, `--:--:--` and `-- --- ----`.  Those
+/// `HOLD THR  Off`, `Predict --` (`Predict: --` on the Z3815A),
+/// `--:--:--` and `-- --- ----`.  Those
 /// become absent rather than being carried around as strings that look
 /// like data.
 fn panel_fields(lines: &[&str], boundary: usize, out: &mut Screen) {
@@ -190,7 +192,10 @@ fn panel_fields(lines: &[&str], boundary: usize, out: &mut Screen) {
             out.hold_threshold = (!absent(&value)).then_some(value);
         }
         if let Some(rest) = panel.trim_start().strip_prefix("Predict") {
-            let value = collapse(rest);
+            // The Z3815A labels it `Predict:` where the others print
+            // `Predict` and spaces.
+            let rest = rest.trim_start();
+            let value = collapse(rest.strip_prefix(':').unwrap_or(rest));
             out.holdover_predict = (!absent(&value)).then_some(value);
         }
         parse_time_line(panel, &mut *out, absent);

@@ -115,9 +115,13 @@ in SCPI.
 | Z3805A | yes | Answers as the Z3801A; its 3543B firmware in C |
 | Z3817A | yes | Answers as the Z3801A, less the stubs its 3752 firmware answers -113; its time reference inputs logged |
 | 58503B | yes | Firmware studied |
+| Z3816A | yes[^z3816a] | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
-| Z3816A | no; may work | Firmware studied |
 | Z3815A | no; may work | Firmware studied; Furuno GPS engine |
+
+[^z3816a]: Its one serial port also carries its time code, on from
+    power-up.  With the time code turned off
+    (`:PTIMe:TCODe:CONTinuous OFF`), the tools work as with the others.
 
 The tools choose a dialect from `*IDN?`: the 58503A's for the
 58503A/B and 59551A, the Z3801A's for the others

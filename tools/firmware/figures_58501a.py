@@ -6,16 +6,20 @@
 reading of the 58501A's image and EEPROM, the 58503A images and the
 FPGA bitstreams held, and the SHA-256s third_party/NOTICE gives them.
 
-    uv run -q tools/firmware/figures_58501a.py --viewer VIEWER_HTML_DIR
+    uv run -q tools/firmware/figures_58501a.py --viewer VIEWER_HTML_DIR --cli SMARTCLOCK_CLI
 
 Each figure is computed here, put into the sentence that quotes it, and
 the sentence must be in the document exactly once, its whitespace
 folded; the table of the pins the 58501A's and the 58503A's FPGA
-designs configure differently, between its marker comments, is
-generated and must match.  It also holds the code the document reads
+designs configure differently and the table of the diagnostic words
+the 58501A's and the 58503A 3704's pForth consoles share and do not,
+each between its marker comments, are generated and must match.  It also holds the code the document reads
 to the bytes it cites.  VIEWER_HTML_DIR is the XC3000 viewer's html/
 folder at the pinned commit (tools/fpga/decoder.mk), which
 tools/fpga/iobdump.js reads; `make check-58501a-figures` clones it.
+SMARTCLOCK_CLI is the built smartclock-cli, whose dump-pforth reads
+the pForth words of this image and of every production image; `make
+check-58501a-figures` builds it.
 Exits nonzero on any difference.
 """
 
@@ -112,6 +116,50 @@ CODE = [
     (0x6a58, '2f390007fffc'),       # bank 2's
     (0x4060a, '207c00304000'),      # fpga_write: 0x304000 plus the register
     (0xf8fe, '267c0000dead'),       # the readback mask, five bytes in
+    (0x8ffe, '487900009d22'),       # adc_temp: pea its label
+    (0x9020, '487900009d34'),       # adc_5v
+    (0x9042, '487900009d45'),       # adc_p15v
+    (0x9064, '487900009d58'),       # adc_m15v
+    (0x9086, '487900009d6b'),       # adc_oven
+    (0x90a8, '487900009d76'),       # adc_doven
+    (0x9178, '23ef00040010167a4e75'),  # run_diag: its argument to 0x10167a
+    (0x91f0, '7064'),               # prog_freq_out: 100,
+    (0x91f6, '0c810000012c'),       # 300
+    (0x91fe, '0c8100000258'),       # or 600,
+    (0x9206, '33c1001014e2'),       # stored at 0x1014e2
+    (0x9218, '707f'),               # delay_freq_out: no more than 127,
+    (0x9224, '7081'),               # no less than -127,
+    (0x9230, '1081'),               # the byte to 0x1014e5 (a0),
+    (0x9232, '13fc0001001014e4'),   # and 1 to 0x1014e4
+    (0x9240, '13c0001014e04e75'),   # johann: its byte to 0x1014e0
+    (0x9534, '13c0001012d8'),       # vt_pos_hold: its byte to 0x1012d8,
+    (0x953a, '4eb90001734a'),       # then the configuration block's writer
+]
+
+# The diagnostic words the document reads, at the code addresses
+# dump-pforth gives them.
+READ_WORDS = {
+    'adc_temp': 0x8fee,
+    'adc_5v': 0x9010,
+    'adc_p15v': 0x9032,
+    'adc_m15v': 0x9054,
+    'adc_oven': 0x9076,
+    'adc_doven': 0x9098,
+    'run_diag': 0x9178,
+    'prog_freq_out': 0x91ec,
+    'delay_freq_out': 0x920e,
+    'johann': 0x923c,
+    'vt_pos_hold': 0x9530,
+}
+
+# The labels the adc_ words print, where each word's pea points.
+LABELS = [
+    (0x9d22, b'Temperature: %f\r\n'),
+    (0x9d34, b'5V reading: %f\r\n'),
+    (0x9d45, b'+15V reading: %f\r\n'),
+    (0x9d58, b'-15V reading: %f\r\n'),
+    (0x9d6b, b'Oven: %f\r\n'),
+    (0x9d76, b'Double oven: %f\r\n'),
 ]
 
 NUMBERS = {3: 'three', 6: 'six'}
@@ -216,7 +264,30 @@ def check_chip_selects(image, document):
                   f'CSPAR0, `{here:#06x}` here and `{there:#06x}` there.')
 
 
-def check_pforth(document):
+def dump_pforth(cli, path):
+    """smartclock-cli dump-pforth's words for an image: each table's names."""
+    run = subprocess.run([str(cli), 'dump-pforth', str(path)], capture_output=True, text=True)
+    if run.returncode != 0:
+        fault(f'dump-pforth {path.name} failed: {run.stderr.strip()}')
+        return None
+    tables = {}
+    for line in run.stdout.splitlines():
+        table, name, code = line.split(' ')
+        tables.setdefault(table, {})[name] = int(code, 16)
+    return tables
+
+
+def image_name(path):
+    """A production image's name as the documents give it: 58503a-3633 is 58503A 3633."""
+    model, revision = path.stem.split('-', 1)
+    return f'{model.upper()} {revision.upper()}'
+
+
+def words(names):
+    return ', '.join(f'`{name}`' for name in sorted(names))
+
+
+def check_pforth(document, cli):
     ours = pforth_words.image_words(IMAGE)
     theirs = pforth_words.image_words(IMAGE_3704)
 
@@ -227,15 +298,54 @@ def check_pforth(document):
         fault('the pForth kernel\'s words are not the 3704\'s')
     document.need('Its kernel\'s words, read as `tools/firmware/pforth_words.py` reads them, are '
                   'the 58503A 3704\'s, the same names in the same order.')
-    ours_diag, theirs_diag = set(names(ours, 'diagnostic')), set(names(theirs, 'diagnostic'))
-    missing = ['loop_time', 'pll_rep', 'pr_time_raim']
-    added = ['adc_oven', 'log_rd', 'run_diag']
-    if not all(name in theirs_diag - ours_diag for name in missing):
-        fault(f'not all of {missing} are the 3704\'s alone')
-    if not all(name in ours_diag - theirs_diag for name in added):
-        fault(f'not all of {added} are the 58501A\'s alone')
-    document.need("3704's `loop_time`, `pll_rep` and `pr_time_raim` are not among them, and words "
-                  'such as `adc_oven`, `log_rd` and `run_diag` are.')
+
+    dumped = dump_pforth(cli, IMAGE)
+    production = {path: dump_pforth(cli, path) for path in sorted(IMAGES.glob('*.bin'))}
+    if dumped is None or None in production.values():
+        return
+    dumped_3704 = production[IMAGE_3704]
+    if set(dumped['kernel']) != set(dumped_3704['kernel']):
+        fault('dump-pforth\'s kernel words are not the 3704\'s')
+    if set(dumped['diagnostic']) != set(names(ours, 'diagnostic')):
+        fault('dump-pforth and pforth_words.py read different diagnostic words')
+    ours_diag, theirs_diag = set(dumped['diagnostic']), set(dumped_3704['diagnostic'])
+    shared, alone, lacking = ours_diag & theirs_diag, ours_diag - theirs_diag, theirs_diag - ours_diag
+    elsewhere = {name for name in alone
+                 if any(name in tables['diagnostic'] for tables in production.values())}
+    holding = [path for path, tables in production.items() if elsewhere & set(tables['diagnostic'])]
+    if any(not elsewhere <= set(production[path]['diagnostic']) for path in holding):
+        fault('the 58501A\'s words found elsewhere are not all in the same images')
+    holders = [image_name(path) for path in holding]
+    if not all(name.startswith('adc_') for name in elsewhere):
+        fault(f'not all of {sorted(elsewhere)} are adc_ words')
+    everywhere = {name for name in lacking
+                  if all(name in tables['diagnostic'] for tables in production.values())}
+    named = ['loop_time', 'pll_rep', 'pr_time_raim']
+    if not set(named) <= everywhere:
+        fault(f'not all of {named} are in every production image and not the 58501A\'s')
+    document.need(f'{len(dumped["kernel"])} kernel words and {len(ours_diag)} diagnostic words, where '
+                  f'the 58503A 3704 has {len(dumped_3704["kernel"])} and {len(theirs_diag)}.')
+    document.need(f'Its diagnostic words are another set: {len(shared)} are the 3704\'s too, '
+                  f'{len(alone)} are the 58501A\'s alone and {len(lacking)} the 3704\'s alone.  Of '
+                  f'the {len(alone)}, {NUMBERS[len(elsewhere)]} of the `adc_` words are words the '
+                  f'{listing(holders)} have too, and {len(alone - elsewhere)} are in no production '
+                  f'image held; of the {len(lacking)}, {len(everywhere)} are in every production '
+                  'image held, `loop_time`, `pll_rep` and `pr_time_raim` among them.')
+    rows = ['| Diagnostic words | Count | Names |', '| --- | --- | --- |']
+    rows += [f'| {what} | {len(group)} | {words(group)} |' for what, group in (
+        ('The 58501A\'s and the 3704\'s', shared),
+        (f'The 58501A\'s, not the 3704\'s, and the {listing(holders)}\'s', elsewhere),
+        ('The 58501A\'s, in no production image', alone - elsewhere),
+        ('The 3704\'s, not the 58501A\'s, and every production image\'s', everywhere),
+        ('The 3704\'s, not the 58501A\'s, and some production images\'', lacking - everywhere))]
+    table = ('<!-- figures_58501a.py pforth -->\n' + '\n'.join(rows)
+             + '\n<!-- end figures_58501a.py pforth -->')
+    if document.raw.count(table) != 1:
+        fault(f'{DOCUMENT.relative_to(ROOT)}: the pForth word table is not dump-pforth\'s:\n{table}')
+
+    for name, code in READ_WORDS.items():
+        if dumped['diagnostic'].get(name) != code:
+            fault(f'dump-pforth does not put {name} at {code:#x}')
 
 
 def listing(items):
@@ -382,6 +492,9 @@ def check_code(image):
         expected = bytes.fromhex(text)
         if image[address:address + len(expected)] != expected:
             fault(f'{IMAGE.name}: not {text} at {address:#x}')
+    for address, text in LABELS:
+        if image[address:address + len(text) + 1] != text + b'\0':
+            fault(f'{IMAGE.name}: {text!r} not at {address:#x}')
 
 
 def check_notice():
@@ -394,12 +507,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     parser.add_argument('--viewer', type=pathlib.Path, required=True,
                         help="the XC3000 viewer's html folder, at the pinned commit")
+    parser.add_argument('--cli', type=pathlib.Path, required=True,
+                        help='the smartclock-cli binary, for dump-pforth')
     arguments = parser.parse_args()
     image, eeprom = IMAGE.read_bytes(), EEPROM.read_bytes()
     document = Document(DOCUMENT)
     check_rom(image, document)
     check_chip_selects(image, document)
-    check_pforth(document)
+    check_pforth(document, arguments.cli)
     check_oncore(image, document)
     check_fpga(image, document, arguments.viewer)
     check_eeprom(eeprom, image, document)

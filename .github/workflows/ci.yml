@@ -66,6 +66,38 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: make doc
 
+  prototype-58501a:
+    # The figures docs/firmware/58501a.md quotes: `make
+    # check-58501a-figures`.  A job of its own, apart from firmware.yml,
+    # which builds no Rust, because it builds smartclock-cli for
+    # dump-pforth; and it decodes the FPGA pins in node (web.yml's pin),
+    # with the viewer the target clones at its pinned commit, and reads
+    # the images with tools/firmware/figures_58501a.py, whose Capstone
+    # `uv run` installs from the script's inline metadata.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # serialport needs libudev.  The compiler is the one
+      # rust-toolchain.toml names, which rustup installs on the first
+      # cargo call.
+      - run: sudo apt-get update && sudo apt-get install -y libudev-dev
+      # The pin rust-ci.yml carries.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      # firmware.yml's pin.
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.13.2"
+          enable-cache: true
+          cache-dependency-glob: "tools/firmware/figures_58501a.py"
+      - run: node --version && uv --version
+      - run: make check-58501a-figures
+
   attribution:
     # No commit credits an AI assistant (AGENTS.md).  The check the
     # commit-msg hook makes, over the whole history, for a commit made

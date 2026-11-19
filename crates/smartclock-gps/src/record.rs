@@ -910,7 +910,9 @@ pub struct Record {
     pub fix: Fix,
     /// What the receiver does with its position, as the receiver tells
     /// it.  [`ReceiverMode::Unknown`] from whoever fills the record
-    /// cannot tell.
+    /// cannot tell.  An engine reports position hold by it only from a
+    /// source whose receiver is commanded
+    /// ([`ReceiverControl`](crate::engine::ReceiverControl)).
     pub receiver_mode: ReceiverMode,
     /// Whether the fix is corrected by a differential reference (VP
     /// p. 73, receiver status bit 2; UT p. 6.20).

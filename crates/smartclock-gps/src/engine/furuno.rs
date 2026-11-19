@@ -131,6 +131,12 @@
 //!   `GGA` and listed in `GSA` all the same: the image puts `GSA`'s on
 //!   its channels, as available for position, and has no other list of
 //!   those in use (`nmea_gsa_commit`).
+//! - **Position hold by the rule of [the Oncore model's](super)**: `ssd`
+//!   gives `Z` as `set,Z` or `clr` 1 set it.  From a source whose
+//!   receiver is not commanded, `tps`'s mode, the fix, the 1 PPS and
+//!   Time RAIM go by that setting; from one whose receiver is commanded
+//!   ([`Engine::with_receiver`]), by the record's receiver, at the
+//!   record's position.
 //! - **One position entered**, by `GLL` (GT p. 6) and `set,H` (GT
 //!   p. 11): where the GT-8031 starts looking from (GT p. 6, "Set initial
 //!   position") and, in fixed observation point mode, where it is (GT
@@ -219,6 +225,7 @@ use core::fmt::Result as FmtResult;
 use core::fmt::Write;
 
 use crate::engine::Output;
+use crate::engine::ReceiverControl;
 use crate::engine::event::Events;
 use crate::engine::reaches_mask;
 use crate::engine::settings::Height;
@@ -837,6 +844,16 @@ impl Engine {
         }
     }
 
+    /// This engine with the source of its records commanding its
+    /// receiver or not, which decides what its status reports of
+    /// position hold ([module](self)); one made by [`Engine::new`]'s
+    /// is not commanded.
+    #[must_use]
+    pub const fn with_receiver(mut self, receiver: ReceiverControl) -> Self {
+        self.state.receiver = receiver;
+        self
+    }
+
     /// Which GT-74 it is.
     #[must_use]
     pub const fn identity(&self) -> &'static Identity {
@@ -935,6 +952,9 @@ struct State {
     fixed: bool,
     /// The time of the last fix, which `RMC` goes on giving (GT p. 25).
     last_fix: Option<GpsSeconds>,
+    /// Whether the source of its records commands its receiver
+    /// ([`Engine::with_receiver`]).
+    receiver: ReceiverControl,
 }
 
 impl State {
@@ -960,6 +980,7 @@ impl State {
             leap: None,
             fixed: false,
             last_fix: None,
+            receiver: ReceiverControl::Uncommanded,
         }
     }
 
@@ -1337,16 +1358,17 @@ impl State {
     }
 
     /// Whether `tps`, the fix, the 1 PPS and Time RAIM go by the
-    /// position held: fixed observation point mode, as `set,Z` set it.
-    /// [`Self::reported`] goes by the command alone.
-    fn holds(&self) -> bool {
-        self.parameters.holding()
+    /// position held: fixed observation point mode, as `set,Z` set it,
+    /// or from a source whose receiver is commanded, as the record's
+    /// receiver does ([`ReceiverControl`]).
+    fn holds(&self, record: &Record) -> bool {
+        self.receiver.holds(self.parameters.holding(), record)
     }
 
     /// The fix it reports: none in fixed observation point mode, and only
     /// with the satellites a fix needs, 2D above `D`'s PDOP (GT p. 11).
     fn fix(&self, record: &Record) -> Fix {
-        if self.holds() {
+        if self.holds(record) {
             return Fix::None;
         }
         let used = self.used(record).count();
@@ -1372,18 +1394,20 @@ impl State {
 
     /// The position `GGA` and `RMC` report: the one entered in fixed
     /// observation point mode or while the record has none, else the
-    /// record's.
+    /// record's; from a source whose receiver is commanded, the
+    /// record's while it has one, the receiver holding where it holds.
     fn reported(&self, record: &Record) -> Reported {
         let separation = record.position.map_or(Centimeters(0), |position| {
             Centimeters(position.ellipsoid.0 - position.mean_sea_level.0)
         });
+        let commanded = self.receiver == ReceiverControl::Commanded;
         match record.position {
             Some(Position {
                 latitude,
                 longitude,
                 mean_sea_level,
                 ..
-            }) if !self.parameters.holding() => Reported {
+            }) if commanded || !self.parameters.holding() => Reported {
                 latitude,
                 longitude,
                 mean_sea_level,
@@ -1682,7 +1706,7 @@ impl State {
     /// ("Assumptions").
     fn pulse(&self, record: &Record) -> bool {
         let used = self.used(record).count();
-        let holding = self.holds();
+        let holding = self.holds(record);
         let ready =
             record.time.is_some() && record.utc_offset.is_some() && record.almanac.is_some();
         match self.traim.pulse {
@@ -1713,7 +1737,7 @@ impl State {
             ),
             (Some(_), Some(_)) => (UTC, self.utc(record)),
         };
-        let mode = if self.holds() { FIXED } else { ESTIMATED };
+        let mode = if self.holds(record) { FIXED } else { ESTIMATED };
         let mut body = Body::new("PFEC,GPtps");
         body.field(format_args!("{}", Stamp(present)));
         body.field(format_args!("{standard}"));
@@ -1777,7 +1801,7 @@ impl State {
         let Some(result) = record.derived.raim else {
             return NONE;
         };
-        if !self.traim.on || !self.holds() {
+        if !self.traim.on || !self.holds(record) {
             return NONE;
         }
         let ability = match (can, result.ability) {

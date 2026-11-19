@@ -11,6 +11,7 @@ use super::GT_74;
 use super::GT_74_WITHOUT_TIME_RAIM;
 use super::Identity;
 use crate::engine::Output;
+use crate::engine::ReceiverControl;
 use crate::engine::event::Event;
 use crate::engine::settings::Height;
 use crate::engine::settings::HeightKind;
@@ -21,10 +22,12 @@ use crate::engine::settings::SettingSet;
 use crate::record::Antenna;
 use crate::record::Fault;
 use crate::record::FaultSet;
+use crate::record::Fix;
 use crate::record::GpsTime;
 use crate::record::Raim;
 use crate::record::RaimAbility;
 use crate::record::RaimSolution;
+use crate::record::ReceiverMode;
 use crate::record::Record;
 use crate::record::Timing;
 use crate::record::URA_MAX;
@@ -525,6 +528,118 @@ fn tps_gives_the_time_standard() {
         sent.only("$PFEC,GPtps"),
         "$PFEC,GPtps,261022120018,2,0,1,000000000000,00,00,000000000000,2441,388818"
     );
+}
+
+/// `tps`'s mode, `GSA`'s, `GGA`'s quality and the latitude it gives, of
+/// what `record` makes `engine` send.
+fn modes(engine: &mut Engine, record: &Record) -> (String, String, String, String) {
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPint,tps00,GSA00,GGA00\r\n", record, &mut sent);
+    let field = |start: &str, index: usize| {
+        sent.only(start)
+            .split(',')
+            .nth(index)
+            .expect("the field")
+            .to_string()
+    };
+    (
+        field("$PFEC,GPtps", 5),
+        field("$GPGSA", 2),
+        field("$GPGGA", 6),
+        field("$GPGGA", 2),
+    )
+}
+
+/// The observation point mode `ssd` gives.
+fn mode_set(engine: &mut Engine, record: &Record) -> String {
+    let mut sent = Sent::default();
+    engine.receive(b"$PFEC,GPsrq\r\n", record, &mut sent);
+    sent.only("$PFEC,GPssd")
+        .split(',')
+        .find(|field| field.starts_with('Z'))
+        .expect("the mode")
+        .to_string()
+}
+
+/// The fake receiver's latitude, and the one [`ENTER`] enters.
+const FOUND: &str = "3719.5350";
+const ENTERED: &str = "1000.0000";
+const ENTER: &[u8] = b"$GPGLL,1000.0000,N,02000.0000,E,,\r\n";
+
+/// The record of [`record`] with its receiver in `mode`: in position
+/// hold, with a fix of time alone.
+fn in_mode(mode: ReceiverMode) -> Record {
+    let mut record = record(at(2026, 10, 22, 12, 0, 0));
+    record.receiver_mode = mode;
+    if mode == ReceiverMode::Holding {
+        record.fix = Fix::TimeOnly;
+    }
+    record
+}
+
+/// `modes` held at `latitude`, and fixing in 3D there.
+fn held(latitude: &str) -> (String, String, String, String) {
+    ("2".into(), "1".into(), "0".into(), latitude.into())
+}
+fn fixed(latitude: &str) -> (String, String, String, String) {
+    ("1".into(), "3".into(), "1".into(), latitude.into())
+}
+
+/// From a source whose receiver is commanded, `tps`'s mode, the fix and
+/// `GGA` hold the position only while the record's receiver does, one
+/// whose mode is not known navigating, at the record's position,
+/// whatever `set,Z`, `clr` 1 or `GLL` set; `ssd` gives the command
+/// alone.
+#[test]
+fn a_commanded_receiver_tps_holds_as_the_receiver_does() {
+    let holding = in_mode(ReceiverMode::Holding);
+    let navigating = in_mode(ReceiverMode::Navigating);
+    let unknown = in_mode(ReceiverMode::Unknown);
+    let commanded = || Engine::new(&GT_74).with_receiver(ReceiverControl::Commanded);
+    let mut sent = Sent::default();
+
+    // Never commanded, its receiver found holding.
+    let mut engine = commanded();
+    assert_eq!(modes(&mut engine, &holding), held(FOUND));
+    assert_eq!(mode_set(&mut engine, &holding), "Z1");
+
+    let mut engine = commanded();
+    engine.receive(ENTER, &navigating, &mut sent);
+    engine.receive(b"$PFEC,GPset,Z2\r\n", &navigating, &mut sent);
+    assert_eq!(mode_set(&mut engine, &navigating), "Z2");
+    assert!(engine.settings().position_hold);
+    assert_eq!(modes(&mut engine, &navigating), fixed(FOUND));
+    assert_eq!(modes(&mut engine, &holding), held(FOUND));
+    assert_eq!(modes(&mut engine, &unknown), fixed(FOUND));
+
+    engine.receive(b"$PFEC,GPset,Z1\r\n", &holding, &mut sent);
+    assert_eq!(mode_set(&mut engine, &holding), "Z1");
+    assert_eq!(modes(&mut engine, &holding), held(FOUND));
+    assert_eq!(modes(&mut engine, &navigating), fixed(FOUND));
+
+    engine.receive(b"$PFEC,GPset,Z2\r\n", &holding, &mut sent);
+    // `clr` 1 puts the mode back to estimated (GT p. 10).
+    engine.receive(b"$PFEC,GPclr,1\r\n", &holding, &mut sent);
+    assert_eq!(mode_set(&mut engine, &holding), "Z1");
+    assert!(!engine.settings().position_hold);
+    assert_eq!(modes(&mut engine, &holding), held(FOUND));
+    assert_eq!(modes(&mut engine, &navigating), fixed(FOUND));
+    assert_eq!(modes(&mut engine, &unknown), fixed(FOUND));
+}
+
+/// From a source whose receiver is not commanded, `tps`'s mode, the fix
+/// and `GGA` hold the position as `set,Z` set it, at the position `GLL`
+/// entered, whatever the record's receiver does.
+#[test]
+fn an_uncommanded_receiver_tps_holds_as_set() {
+    let holding = in_mode(ReceiverMode::Holding);
+    let navigating = in_mode(ReceiverMode::Navigating);
+    let mut engine = Engine::new(&GT_74);
+    let mut sent = Sent::default();
+    assert_eq!(modes(&mut engine, &holding), fixed(FOUND));
+    engine.receive(ENTER, &holding, &mut sent);
+    engine.receive(b"$PFEC,GPset,Z2\r\n", &holding, &mut sent);
+    assert_eq!(modes(&mut engine, &navigating), held(ENTERED));
 }
 
 /// `rrm` gives up to four isolated satellites and the sawtooth within

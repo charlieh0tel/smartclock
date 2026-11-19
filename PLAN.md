@@ -1410,6 +1410,24 @@ stands in for one.
   `NAV-PVT`'s `fixType`, holding at 5 and navigating at 2 to 4, and
   keeps it through the epochs with no fix; the fake receiver's is the
   one the engine's settings give, as its fix is.
+- **Position hold is reported by whether the source commands its
+  receiver** (owner, 2026-11-18), in both models, by a switch set when
+  the engine is made (`ReceiverControl`: an Oncore's
+  `Options::receiver`, a GT-74's `with_receiver`), off by default.  A
+  setting's answer is always the image's command, which the images
+  check.  From a source whose receiver is not commanded (gpsd listened
+  to, a recording, the fake receiver) the status (the Oncore's
+  receiver status, DOP and Time RAIM ability, the GT-74's `tps` mode,
+  fix, 1 PPS and Time RAIM) holds as the settings do, at the position
+  commanded, and the record's mode decides nothing.  From one whose
+  receiver is commanded, its owner passing the image's commands on to
+  the receiver, the status holds if and only if the record's receiver
+  does, one not known navigating, at the record's position: a hold is
+  shown only once the receiver takes it, and `@@At` 0, `@@Cf`,
+  `set,Z` 1 or `clr` 1 putting it off only once the receiver
+  navigates.  The feed turns it on for no source it has: gpsd is only
+  listened to.  Showing a commanded source's command instead would show
+  the image a hold its receiver had not taken.
 - **Settings change what the model sends only as far as the recorded
   exchanges allow.**  Highest-in-the-sky selection (`@@Ah` 2, and a
   UT Plus's only selection, which has no `@@Ah` and "will attempt to

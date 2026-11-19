@@ -935,6 +935,28 @@ What an engine in a Z380x or 58503A must do, from the above:
   time advancing, and at least one channel with a satellite in mode 8,
   available for position (p. 72), for the reference to qualify
   ("Channel mode and signal strength").
+- **Report position hold by the source.**  The `@@At` answer is always
+  the firmware's command.  The receiver status (p. 73: the 3D fix bit,
+  which the survey averages by, `oncore_position_message`, and the
+  acquiring or position hold bit, which only the console shows), its
+  DOP and Time RAIM's ability to isolate (p. 106) go, from a source
+  whose receiver is not commanded (one listened to, a recording, the
+  fake receiver), by `@@At` as set, at `@@As`'s position.  From a
+  source whose receiver is commanded, its owner passing the image's
+  commands on to it, they go by the receiver's own mode
+  (`Record::receiver_mode`), one not known navigating, at the
+  receiver's position: a hold commanded is shown once the receiver
+  holds, and `@@At` 0 or `@@Cf`, which puts position hold off, once it
+  navigates (`ReceiverControl`, set when the engine is made).  A
+  time-only fix the status does not hold for is a 3D one.  The GT-74
+  model goes by the same rule with `set,Z` and `clr` 1 for its `tps`
+  mode, fix, 1 PPS and Time RAIM.  From a commanded source its `GGA`
+  gives the receiver's position, and the Z3815A and the Z3805A 1.01.03
+  check a `GLL` by `GGA`'s latitude and longitude, each within 12 mas,
+  while `tps` says the position is held (`gps_nmea_match_gll`); a
+  receiver holding further from it than that fails the `GLL` after
+  three tries and sets the command monitor's failure
+  (`gps_task_wait`, `rewritten/z3815a-4010/gps_task.c`).
 - **List `@@Bb`'s satellites in the order of their IDs**, lowest
   first.  The manual gives no order (pp. 74-75), but the firmware
   finds a satellite in the `@@Bb` it keeps by bisecting on the ID
@@ -2050,7 +2072,9 @@ specification; in short:
   receiver's mode, navigating, holding or unknown, apart from its fix
   (`Record::receiver_mode`): the fake receiver's is the one the
   engine's settings give, and the u-blox crate's is `NAV-PVT`'s, kept
-  through a loss of the fix.  It and the u-blox crate act on the mask angle
+  through a loss of the fix.  An engine reports position hold by it
+  only from a source whose receiver is commanded ("Report position
+  hold by the source").  It and the u-blox crate act on the mask angle
   and the satellites to ignore: their records mark not used the satellites
   below the mask, at or above it being within it as the model takes
   it, and those ignored (`Settings::leave_out`; VP pp. 28 and 42),
@@ -2281,7 +2305,7 @@ every command field, with who acts on it.
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |
-| `$PFEC,GPset` | H altitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$PFEC,GPset` | H altitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported with no position, or in fixed mode from a source whose receiver is not commanded; `held_position`; `initial_position` |
 | `$PFEC,GPset` | M elevation mask | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: satellites below it left out of the fix; `mask_angle` |
 | `$PFEC,GPset` | S signal mask | none | gap | stored |
 | `$PFEC,GPset` | T 1PPS correction | none | holder | `cable_delay`; `pulse_offset` |
@@ -2312,10 +2336,10 @@ every command field, with who acts on it.
 | `$GPZDA` | year | z3815a-4010, z3805a-1.01.03 | engine | honored: while the record tells no time |
 | `$GPZDA` | zone hours | z3815a-4010, z3805a-1.01.03 | engine | honored: anc in local time |
 | `$GPZDA` | zone minutes | z3815a-4010, z3805a-1.01.03 | engine | honored: anc in local time |
-| `$GPGLL` | latitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | north or south | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | longitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
-| `$GPGLL` | east or west | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported in fixed mode or with no position; `held_position`; `initial_position` |
+| `$GPGLL` | latitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported with no position, or in fixed mode from a source whose receiver is not commanded; `held_position`; `initial_position` |
+| `$GPGLL` | north or south | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported with no position, or in fixed mode from a source whose receiver is not commanded; `held_position`; `initial_position` |
+| `$GPGLL` | longitude | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported with no position, or in fixed mode from a source whose receiver is not commanded; `held_position`; `initial_position` |
+| `$GPGLL` | east or west | z3815a-4010, z3805a-1.01.03 | engine, holder | honored: reported with no position, or in fixed mode from a source whose receiver is not commanded; `held_position`; `initial_position` |
 | `$GPGLL` | null | z3815a-4010, z3805a-1.01.03 | engine | honored: null, any entry ignored |
 <!-- end gps_fields.py -->
 

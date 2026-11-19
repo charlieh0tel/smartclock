@@ -104,7 +104,7 @@ Ba	response	ellipsoid height	23	4	1	-	-	VP	71	z3805a-3543b,z3801a-3543,58503a-37
 Ba	response	mean sea level height	27	4	1	-	-	VP	71	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.position.mean_sea_level;setting.As	-	MeanSeaLevelHeight	-	-
 Ba	response	speed	31	2	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.velocity.speed	-	Speed	-	-
 Ba	response	heading	33	2	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	record.velocity.heading	-	Heading	-	-
-Ba	response	DOP	35	2	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-	-
+Ba	response	DOP	35	2	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed	-	PositionDop;HorizontalDop;ReceiverMode	-	-
 Ba	response	DOP type	37	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	z3805a-3543b=console,z3801a-3543=console,58503a-3704=stored,z3817a-3752=stored	computed	-	-	-	-
 Ba	response	visible satellites	38	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites;computed	-	Satellites	-	-
 Ba	response	tracked satellites	39	1	1	-	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-	SatelliteTracking	-	-
@@ -112,12 +112,12 @@ Ba	response	channel satellite	40	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3
 Ba	response	channel tracking mode	41	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	-	-
 Ba	response	channel signal strength	42	1	6	4	-	VP	72	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-	-
 Ba	response	channel status flags	43	1	6	4	-	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.used;record.satellites.flags;record.satellites.health	-	SatelliteUsed;SatelliteHealth;SatelliteFlags	-	-
-Ba	response	receiver status position propagate	64	1	1	-	7	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-	-
-Ba	response	receiver status poor geometry	64	1	1	-	6	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-	-
-Ba	response	receiver status 3D fix	64	1	1	-	5	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ba	response	receiver status 2D fix	64	1	1	-	4	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ba	response	receiver status acquiring or position hold	64	1	1	-	3	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ba	response	receiver status differential	64	1	1	-	2	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.differential;computed	-	Fix;Differential	-	-
+Ba	response	receiver status position propagate	64	1	1	-	7	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.receiver_mode:from a source whose receiver is commanded	-	Fix;ReceiverMode	-	-
+Ba	response	receiver status poor geometry	64	1	1	-	6	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed	-	PositionDop;HorizontalDop;ReceiverMode	-	-
+Ba	response	receiver status 3D fix	64	1	1	-	5	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ba	response	receiver status 2D fix	64	1	1	-	4	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ba	response	receiver status acquiring or position hold	64	1	1	-	3	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ba	response	receiver status differential	64	1	1	-	2	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.fix;record.differential;record.receiver_mode:from a source whose receiver is commanded;computed	-	Fix;Differential;ReceiverMode	-	-
 Ba	response	receiver status insufficient visible satellites	64	1	1	-	1	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites;record.almanac;state;computed	-	Satellites;Almanac	-	-
 Ba	response	receiver status bad almanac	64	1	1	-	0	VP	73	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.almanac	-	Almanac	-	-
 Bb	command	mode	4	1	1	-	-	VP	75	z3805a-3543b,z3801a-3543,58503a-3704	-	-	honored	-	-	engine	-
@@ -185,7 +185,7 @@ Bn	response	next pulse seconds	18	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a
 Bn	response	pulse status	19	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	computed	-	-	-	-
 Bn	response	pulse sync	20	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	setting.Aw	-	-	-	-
 Bn	response	solution status	21	1	1	-	-	VP	105	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	2	RaimSolution	-	-
-Bn	response	RAIM status	22	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	2	RaimAbility	-	-
+Bn	response	RAIM status	22	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;record.receiver_mode:from a source whose receiver is commanded;computed	2	RaimAbility;ReceiverMode	-	-
 Bn	response	sigma	23	2	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sigma	-	Sigma	-	-
 Bn	response	sawtooth	25	1	1	-	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-	Sawtooth	-	-
 Bn	response	channel satellite	26	1	6	5	-	VP	106	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	-	console	record.satellites.prn	-	Satellites	-	-
@@ -219,20 +219,20 @@ Ea	response	ellipsoid height	23	4	1	-	-	VP	125	58503a-3704,z3817a-3752	-	58503a-
 Ea	response	mean sea level height	27	4	1	-	-	VP,UT	125,6.19	58503a-3704,z3817a-3752	-	control	record.position.mean_sea_level;setting.As;fixed:not used on a UT Plus	-	MeanSeaLevelHeight	-	-
 Ea	response	speed	31	2	1	-	-	VP	126	58503a-3704,z3817a-3752	-	stored	record.velocity.speed	-	Speed	-	-
 Ea	response	heading	33	2	1	-	-	VP	126	58503a-3704,z3817a-3752	-	stored	record.velocity.heading	-	Heading	-	-
-Ea	response	DOP	35	2	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-	-
+Ea	response	DOP	35	2	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed	-	PositionDop;HorizontalDop;ReceiverMode	-	-
 Ea	response	DOP type	37	1	1	-	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	stored	computed;record.antenna	-	Antenna	-	a UT Plus adds its antenna sense bits
 Ea	response	visible satellites	38	1	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites;computed	-	Satellites	-	-
 Ea	response	tracked satellites	39	1	1	-	-	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites.tracking;computed	-	SatelliteTracking	-	-
 Ea	response	channel satellite	40	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.prn	-	Satellites	-	-
 Ea	response	channel tracking mode	41	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	control	record.satellites.tracking	-	SatelliteTracking	-	-
 Ea	response	channel signal strength	42	1	8	4	-	VP	126	58503a-3704,z3817a-3752	-	reported	record.satellites.signal	-	SatelliteSignal	-	-
-Ea	response	channel status flags	43	1	8	4	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;record.satellites.flags;record.satellites.health;computed	-	SatelliteUsed;SatelliteHealth;SatelliteFlags	-	a UT Plus adds the used for time bit
-Ea	response	receiver status position propagate	72	1	1	-	7	VP	126	58503a-3704,z3817a-3752	-	console	record.fix	-	Fix	-	-
-Ea	response	receiver status poor geometry	72	1	1	-	6	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;computed	-	PositionDop;HorizontalDop	-	-
-Ea	response	receiver status 3D fix	72	1	1	-	5	VP	126	58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ea	response	receiver status 2D fix	72	1	1	-	4	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ea	response	receiver status acquiring or position hold	72	1	1	-	3	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;state;computed	-	Fix;PositionDop;HorizontalDop	-	-
-Ea	response	receiver status differential	72	1	1	-	2	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.differential;computed	-	Fix;Differential	-	-
+Ea	response	channel status flags	43	1	8	4	-	VP,UT	126,6.20	58503a-3704,z3817a-3752	-	console	record.satellites.used;record.satellites.flags;record.satellites.health;record.receiver_mode:from a source whose receiver is commanded;computed	-	SatelliteUsed;SatelliteHealth;SatelliteFlags;ReceiverMode	-	a UT Plus adds the used for time bit
+Ea	response	receiver status position propagate	72	1	1	-	7	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.receiver_mode:from a source whose receiver is commanded	-	Fix;ReceiverMode	-	-
+Ea	response	receiver status poor geometry	72	1	1	-	6	VP	126	58503a-3704,z3817a-3752	-	console	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed	-	PositionDop;HorizontalDop;ReceiverMode	-	-
+Ea	response	receiver status 3D fix	72	1	1	-	5	VP	126	58503a-3704,z3817a-3752	-	control	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ea	response	receiver status 2D fix	72	1	1	-	4	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ea	response	receiver status acquiring or position hold	72	1	1	-	3	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;state;computed	-	Fix;PositionDop;HorizontalDop;ReceiverMode	-	-
+Ea	response	receiver status differential	72	1	1	-	2	VP	126	58503a-3704,z3817a-3752	-	console	record.fix;record.differential;record.receiver_mode:from a source whose receiver is commanded;computed	-	Fix;Differential;ReceiverMode	-	-
 Ea	response	receiver status insufficient visible satellites	72	1	1	-	1	VP	126	58503a-3704,z3817a-3752	-	console	record.satellites;record.almanac;state;computed	-	Satellites;Almanac	-	-
 Ea	response	receiver status bad almanac	72	1	1	-	0	VP	126	58503a-3704,z3817a-3752	-	console	record.almanac	-	Almanac	-	-
 Ek	command	rate	4	1	1	-	-	VP	135	58503a-3704	-	-	honored	-	-	engine	-
@@ -272,7 +272,7 @@ En	response	next pulse seconds	18	1	1	-	-	VP,UT	141,6.95	58503a-3704,z3817a-3752
 En	response	pulse status	19	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	console	computed	-	-	-	-
 En	response	pulse sync	20	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	console	setting.Aw	-	-	-	-
 En	response	solution status	21	1	1	-	-	VP	141	58503a-3704,z3817a-3752	-	control	record.derived.raim.solution;computed	2	RaimSolution	-	-
-En	response	RAIM status	22	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;computed	2	RaimAbility	-	-
+En	response	RAIM status	22	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	control	record.derived.raim.ability;record.receiver_mode:from a source whose receiver is commanded;computed	2	RaimAbility;ReceiverMode	-	-
 En	response	sigma	23	2	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sigma	-	Sigma	-	-
 En	response	sawtooth	25	1	1	-	-	VP	142	58503a-3704,z3817a-3752	-	console	record.timing.sawtooth	-	Sawtooth	-	-
 En	response	channel satellite	26	1	8	5	-	VP	142	58503a-3704,z3817a-3752	-	console	record.satellites.prn	-	Satellites	-	-
@@ -294,7 +294,7 @@ Ta	response	values	4	5	1	-	-	-	-	-	-	-	setting.Ta	-	-	-	in no manual here
 set	command	A almanac validity	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	1 or 2
 set	command	D PDOP threshold	2	1	1	-	-	GT	11	-	-	-	honored:a 2D fix above it, none 3D at 0	-	-	engine	-
 set	command	G geodetic ID	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
-set	command	H altitude	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	above mean sea level
+set	command	H altitude	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	above mean sea level
 set	command	M elevation mask	2	1	1	-	-	GT	11	z3815a-4010,z3805a-1.01.03	-	-	honored:satellites below it left out of the fix;held:mask_angle	-	-	engine;holder	-
 set	command	S signal mask	2	1	1	-	-	GT	11	-	-	-	stored	-	-	gap	-
 set	command	T 1PPS correction	2	1	1	-	-	GT	11	-	-	-	held:cable_delay;held:pulse_offset	-	-	holder	t in tenths of a microsecond
@@ -325,19 +325,19 @@ ZDA	command	month	3	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while th
 ZDA	command	year	4	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:while the record tells no time	-	-	engine	-
 ZDA	command	zone hours	5	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:anc in local time	-	-	engine	-
 ZDA	command	zone minutes	6	1	1	-	-	GT	8	z3815a-4010,z3805a-1.01.03	-	-	honored:anc in local time	-	-	engine	-
-GLL	command	latitude	1	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	north or south	2	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	longitude	3	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
-GLL	command	east or west	4	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported in fixed mode or with no position;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	latitude	1	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	north or south	2	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	longitude	3	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	-
+GLL	command	east or west	4	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	-
 GLL	command	null	5	1	3	1	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:null, any entry ignored	-	-	engine	-
 GGA	response	UTC	1	1	1	-	-	GT	19	-	z3815a-4010,z3805a-1.01.03	-	clock	-	Time	-	-
 GGA	response	latitude	2	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 GGA	response	north or south	3	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 GGA	response	longitude	4	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
 GGA	response	east or west	5	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
-GGA	response	quality	6	1	1	-	-	GT	19	-	-	-	record.fix;computed:by the satellites used and the mode	-	Fix	-	-
+GGA	response	quality	6	1	1	-	-	GT	19	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:by the satellites used and the mode	-	Fix;ReceiverMode	-	-
 GGA	response	satellites used	7	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	console	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	-
-GGA	response	DOP	8	1	1	-	-	GT	19	-	-	-	record.dops.position;record.dops.horizontal;computed:PDOP 3D, HDOP 2D	00.00	PositionDop;HorizontalDop	-	-
+GGA	response	DOP	8	1	1	-	-	GT	19	-	-	-	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed:PDOP 3D, HDOP 2D	00.00	PositionDop;HorizontalDop;ReceiverMode	-	-
 GGA	response	altitude	9	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.mean_sea_level;state:the height entered, held or with none	-	MeanSeaLevelHeight	-	-
 GGA	response	altitude unit	10	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
 GGA	response	geoid altitude	11	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.ellipsoid;record.position.mean_sea_level	-	EllipsoidHeight;MeanSeaLevelHeight	-	-
@@ -345,7 +345,7 @@ GGA	response	geoid altitude unit	12	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
 GGA	response	DGPS data time	13	1	1	-	-	GT	19	-	-	-	fixed:null, no DGPS mode	-	-	-	-
 GGA	response	DGPS station	14	1	1	-	-	GT	19	-	-	-	fixed:null, no DGPS mode	-	-	-	-
 GSA	response	operational mode	1	1	1	-	-	GT	22	-	-	-	setting.set:D	-	-	-	-
-GSA	response	mode	2	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	control	record.fix;computed:by the satellites used and the mode	-	Fix	-	-
+GSA	response	mode	2	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	control	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:by the satellites used and the mode	-	Fix;ReceiverMode	-	-
 GSA	response	satellite used	3	1	12	1	-	GT	22	z3815a-4010,z3805a-1.01.03	-	z3815a-4010=reported,z3805a-1.01.03=control	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	null for none
 GSA	response	PDOP	15	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	console	record.dops.position	00.00	PositionDop	-	-
 GSA	response	HDOP	16	1	1	-	-	GT	22	z3815a-4010,z3805a-1.01.03	-	stored	record.dops.horizontal	00.00	HorizontalDop	-	-
@@ -358,7 +358,7 @@ GSV	response	elevation	5	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	rec
 GSV	response	azimuth	6	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.azimuth	-	SatelliteAzimuth	-	-
 GSV	response	SNR	7	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.signal;record.antenna	-	SatelliteSignal;Antenna	-	00 with no signal
 RMC	response	UTC	1	1	1	-	-	GT	25	-	-	-	state:the last fix;clock	-	Time	-	null before a fix
-RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;computed	-	Fix	-	-
+RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed	-	Fix;ReceiverMode	-	-
 RMC	response	latitude	3	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 RMC	response	north or south	4	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 RMC	response	longitude	5	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
@@ -390,17 +390,17 @@ ssd	response	Z observation point mode	13	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.0
 ssd	response	t 1PPS correction	14	1	1	-	-	GT	32	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	reported	setting.set	-	-	-	-
 tps	response	present date and time	2	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
 tps	response	time standard	3	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.time.seconds;record.utc_offset;computed	-	Time;UtcOffset	-	1 RTC, 2 GPS, 3 UTC
-tps	response	1PPS availability	4	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.time.seconds;record.utc_offset;record.almanac;record.satellites.used;record.derived.raim.solution;setting.rrs;setting.set:Z;computed	-	Time;UtcOffset;SatelliteUsed;Almanac;RaimSolution	-	-
-tps	response	mode	5	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	setting.set:Z	-	-	-	-
+tps	response	1PPS availability	4	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.time.seconds;record.utc_offset;record.almanac;record.satellites.used;record.derived.raim.solution;record.receiver_mode:from a source whose receiver is commanded;setting.rrs;setting.set:Z;computed	-	Time;UtcOffset;SatelliteUsed;Almanac;RaimSolution;ReceiverMode	-	-
+tps	response	mode	5	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.receiver_mode:from a source whose receiver is commanded;setting.set:Z	-	ReceiverMode	-	-
 tps	response	leap second date and time	6	1	1	-	-	GT	36	z3815a-4010,z3805a-1.01.03	-	control	record.leap;record.utc_offset;state:the leap second last announced	000000000000	UtcOffset;Leap	-	-
 tps	response	leap second	7	1	1	-	-	GT	37	z3815a-4010,z3805a-1.01.03	-	control	record.leap;record.utc_offset;state:the leap second last announced	00	UtcOffset;Leap	-	-
 tps	response	UTC-GPS offset	8	1	1	-	-	GT	37	z3815a-4010,z3805a-1.01.03	-	control	record.utc_offset	00	UtcOffset	-	-
 tps	response	UTC parameter date and time	9	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	stored	record.almanac;record.utc_offset	000000000000	UtcOffset;Almanac	-	-
 tps	response	GPS week	10	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
 tps	response	GPS seconds	11	1	1	-	-	GT	38	z3815a-4010,z3805a-1.01.03	-	control	clock	-	Time	-	-
-rrm	response	1PPS output result	2	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.solution;setting.rrs;setting.set:Z;computed	2	RaimSolution	-	-
-rrm	response	TRAIM status	3	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.ability;record.satellites.used;setting.rrs;setting.set:Z;computed	2	SatelliteUsed;RaimAbility	-	-
-rrm	response	deleted satellite	4	1	4	1	-	GT	40	z3815a-4010,z3805a-1.01.03	-	reported	record.derived.raim.isolated	-	RaimIsolated	-	00 for none; GT has one and three reserved
+rrm	response	1PPS output result	2	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.solution;record.receiver_mode:from a source whose receiver is commanded;setting.rrs;setting.set:Z;computed	2	RaimSolution;ReceiverMode	-	-
+rrm	response	TRAIM status	3	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	control	record.derived.raim.ability;record.satellites.used;record.receiver_mode:from a source whose receiver is commanded;setting.rrs;setting.set:Z;computed	2	SatelliteUsed;RaimAbility;ReceiverMode	-	-
+rrm	response	deleted satellite	4	1	4	1	-	GT	40	z3815a-4010,z3805a-1.01.03	-	reported	record.derived.raim.isolated;record.receiver_mode:from a source whose receiver is commanded	-	RaimIsolated;ReceiverMode	-	00 for none; GT has one and three reserved
 rrm	response	reserved	8	1	1	-	-	GT	40	-	-	-	constant:the specification example, +000	-	-	-	-
 rrm	response	sawtooth	9	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	-	console	record.timing.sawtooth	-	Sawtooth	-	-15 to +14 ns
 rsd	response	TRAIM switch	2	1	1	-	-	GT	40	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	setting.rrs	-	-	-	-

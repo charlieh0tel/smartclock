@@ -532,6 +532,7 @@ pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::RaimSolution,
     RecordField::RaimAbility,
     RecordField::RaimIsolated,
+    RecordField::ReceiverMode,
 ]);
 
 /// The settings a receiver's image sets: those a command row of the

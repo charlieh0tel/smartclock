@@ -30,3 +30,9 @@ derived from the vendor images.
 | Z3816A 4001 | `z3816a-4001.bin` | `z3816a-4001/` | `z3816a-4001/` | `z3816a-4001/` |
 | Z3817A 3752 | `z3817a-3752.bin` | `z3817a-3752/` | `z3817a-3752/` | `z3817a-3752/` |
 | Z3805A 1.01.03 | `z3805a-1.01.03.bin` | `z3805a-1.01.03/` | `z3805a-1.01.03/` | `z3805a-1.01.03/` |
+
+Other material: `images/58501a-prototype/` holds a unit that is not a
+production model, apart so that no check over `images/*.bin` takes
+it: the 58501A, an early prototype relative of the 58503A, its image
+and EEPROM
+([`docs/firmware/58501a.md`](../../docs/firmware/58501a.md)).

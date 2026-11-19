@@ -703,7 +703,12 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   files sat side by side.  Keeping `decompiled/`, `rewritten/` and
   `analysis/` under `third_party/`, though they are derived from the
   vendor images rather than vendor material, is deliberate: they are
-  about those images and inseparable from them.
+  about those images and inseparable from them.  A unit that is not a
+  production model, the contributed 58501A, goes under
+  `images/58501a-prototype/`, its photos under
+  `docs/images/58501a-prototype/`, with a document of its own and no
+  row in any table of the models, so that no tool or check over the
+  production images takes it and no exception is needed.
 - **A second image is ported by copying the first's work**, not by
   sharing it from the start: the 58503A's `rewritten/` and
   `smartclock.h` began as copies of the Z3805A's, seeded from

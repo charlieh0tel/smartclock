@@ -136,6 +136,8 @@ jobs:
           node-version: 22
       - run: node --version && make check-fpga-decoder
         if: ${{ !cancelled() }}
+      - run: make check-58501a-figures
+        if: ${{ !cancelled() }}
       # Each FPGA image's decode, netlist, structure and fast simulation
       # against tools/fpga/ref, and the explainer and detail pages built
       # (docs/firmware/fpga-comparison.md, "Reproduce"); the long runs,

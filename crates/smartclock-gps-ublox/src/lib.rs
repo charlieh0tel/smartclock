@@ -16,7 +16,9 @@
 //! revision's, the page as printed.  The framing and the decoders are
 //! `smartclock-ubx`'s.  Where a record holds what a decoded message
 //! says, a trait of [`record`] gives it in the record's units, as
-//! [`NavPvtRecord::fix`](record::NavPvtRecord::fix) does.
+//! [`NavPvtRecord::fix`](record::NavPvtRecord::fix) does, and a
+//! value's own mapping is a function there, as
+//! [`satellite_health`](record::satellite_health) is.
 //!
 //! # From messages to a record
 //!

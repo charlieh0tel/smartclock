@@ -150,6 +150,10 @@ seven Oncore images' message tables and request scripts in `oncore/`.
 - [Modules](modules.md)
 - [The firmware's own faults](quirks.md)
 
+Other material: [the 58501A](58501a.md), an early prototype
+relative of the 58503A contributed by its owner, apart from the
+images above.
+
 ## Summary
 
 - The reported interval is the mean of ten one-second readings, a

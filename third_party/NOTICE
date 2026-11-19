@@ -2,9 +2,9 @@ Third-party material
 ====================
 
 The material listed under the headings below -- AMD, Fairchild,
-Furuno, Hewlett-Packard, the firmware images, Microchip, Motorola, the
-Z3801A owner's description, NIST, Philips, Texas Instruments and
-Xilinx -- is
+Furuno, Hewlett-Packard, the firmware images, the 58501A prototype,
+Microchip, Motorola, the Z3801A owner's description, NIST, Philips,
+Texas Instruments and Xilinx -- is
 not part of this project, and the project's license does not apply to
 any of it.  Each document is the property of its copyright
 holder.  They are included for reference because they are the
@@ -406,6 +406,40 @@ the 58503A 3633's, `0x1309c` in the 3704's, `0x12eee` in the Z3805A
 `0x2307c` in the 58503B's).  The letter
 that follows it in a real answer, as in 3704-C, is read from RAM and is
 not in the image.
+
+The 58501A prototype
+--------------------
+
+In `firmware/images/58501a-prototype/`, apart from the production
+images above (`docs/firmware/58501a.md`).  An early prototype
+relative of the 58503A, panel "ERICSSON", GE, "58XXXA PRECISION
+REFERENCE CLOCKS", which answers *IDN? with
+HEWLETT-PACKARD,58501A,0,Fiji_EGE.  Its owner, Steve, VE7FM
+<steve@ve7fm.com>, read its chips and EEPROM and posted them, with his
+photos of the unit, to the EEVblog forum in 2016
+(forum handle TheSteve), in the topic "Prototype HP/Agilent GPS based
+refererence clocks generator",
+www.eevblog.com/forum/testgear/prototype-hpagilent-gps-based-refererence-clocks-generator/,
+and gave his permission by email in November 2026: "You're more then
+welcome to add the firmware to the site, and any other details
+regarding the unit that you like, such as the pics."
+
+  58501a-fiji_ege.bin        58501A firmware, revision Fiji_EGE (the
+                             string at 0x1e80).  Copyright
+                             Hewlett-Packard 1993.  Joined from his four
+                             chip dumps, U2-MSB1, U17-LSB1, U1-MSB2 and
+                             U16-LSB2, as the 58503A's are, the MSB part
+                             on the even bytes and pair 1 the low half.
+                             Its lane sums hold.  512 KB from address 0;
+                             SHA-256 fc5c55b5...5b595a7a.
+  58501a-eeprom.bin          its 28C64 EEPROM, 8 KB, exactly as dumped,
+                             the fixed position its settings hold
+                             included.  SHA-256 827de63a...45d057ba.
+
+His eight photos of the unit, in `docs/images/58501a-prototype/`, are
+his, not the project's, and the project's license does not apply to
+them either; their EXIF blocks are removed, their image data
+unchanged.
 
 Microchip / Atmel
 -----------------

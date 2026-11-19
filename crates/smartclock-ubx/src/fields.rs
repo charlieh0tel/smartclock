@@ -65,6 +65,34 @@ impl Writer<'_> {
     pub(crate) fn bytes(&mut self, offset: usize, field: &[u8]) {
         self.0[offset..offset + field.len()].copy_from_slice(field);
     }
+
+    pub(crate) fn u8(&mut self, offset: usize, value: u8) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn i8(&mut self, offset: usize, value: i8) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn u16(&mut self, offset: usize, value: u16) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn i16(&mut self, offset: usize, value: i16) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn u32(&mut self, offset: usize, value: u32) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn i32(&mut self, offset: usize, value: i32) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
+
+    pub(crate) fn u64(&mut self, offset: usize, value: u64) {
+        self.bytes(offset, &value.to_le_bytes());
+    }
 }
 
 /// `width` bits of `value` from bit `shift` up: a bit field of an `X`

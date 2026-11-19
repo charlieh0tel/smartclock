@@ -15,6 +15,8 @@ use crate::frame::checksum;
 use crate::frame::encode;
 use crate::message::ACK_ACK;
 use crate::message::ACK_NAK;
+use crate::message::CFG_TMODE2;
+use crate::message::CFG_TP5;
 use crate::message::MESSAGES;
 use crate::message::MON_HW;
 use crate::message::Message;
@@ -302,13 +304,15 @@ fn every_message_has_its_documented_length() {
         (ACK_NAK, 2),
         (MON_HW, 60),
         (TIM_TP, 16),
+        (CFG_TMODE2, 28),
+        (CFG_TP5, 32),
     ] {
         let own = payload_length(id).unwrap();
         assert!(own.allows(length), "{id}");
         assert!(!own.allows(length + 1), "{id}");
         assert!(!own.allows(length - 1), "{id}");
     }
-    assert_eq!(MESSAGES.len(), 15);
+    assert_eq!(MESSAGES.len(), 17);
     assert_eq!(rxm_rawx_length(20), 656);
     assert_eq!(payload_length(MessageId::new(0x01, 0x03)), None);
     assert_eq!(nav_sat_length(32), 392);
@@ -583,6 +587,7 @@ fn a_payload_off_its_length_is_not_decoded() {
     let lengths = MESSAGES.map(|(id, length)| match length {
         PayloadLength::Fixed(own) => (id, own),
         PayloadLength::Blocks { header, .. } => (id, header),
+        PayloadLength::Polled { answer, .. } => (id, answer),
     });
     let bytes = vec![0; lengths.iter().map(|&(_, own)| own).max().unwrap() + 1];
     for (id, own) in lengths {
@@ -595,4 +600,5 @@ fn a_payload_off_its_length_is_not_decoded() {
 }
 
 mod decoders;
+mod encoders;
 mod streaming;

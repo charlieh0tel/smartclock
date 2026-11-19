@@ -1,7 +1,12 @@
-//! The messages this crate decodes: their IDs, their payloads'
-//! lengths, and a frame decoded.
+//! The messages' IDs, the lengths of those this crate decodes, and a
+//! frame decoded.
 
 use crate::ack::Ack;
+use crate::cfg::CfgTmode2;
+use crate::cfg::CfgTp5;
+use crate::cfg::TMODE2_LENGTH;
+use crate::cfg::TP5_LENGTH;
+use crate::cfg::TP5_POLL_LENGTH;
 use crate::fields::Fields;
 use crate::frame::Block;
 use crate::frame::Frame;
@@ -41,13 +46,29 @@ const CLASS_NAV: u8 = 0x01;
 const CLASS_RXM: u8 = 0x02;
 /// The acknowledgments' class.
 const CLASS_ACK: u8 = 0x05;
+/// The configuration class.
+const CLASS_CFG: u8 = 0x06;
 /// The monitoring class.
 const CLASS_MON: u8 = 0x0a;
 /// The timing class.
 const CLASS_TIM: u8 = 0x0d;
+/// The multiple GNSS assistance class.
+const CLASS_MGA: u8 = 0x13;
 
 /// `gnssId` for GPS (appendix A, p. 446).
 pub const SYSTEM_GPS: u8 = 0;
+/// `gnssId` for SBAS.
+pub const SYSTEM_SBAS: u8 = 1;
+/// `gnssId` for Galileo.
+pub const SYSTEM_GALILEO: u8 = 2;
+/// `gnssId` for `BeiDou`.
+pub const SYSTEM_BEIDOU: u8 = 3;
+/// `gnssId` for IMES.
+pub const SYSTEM_IMES: u8 = 4;
+/// `gnssId` for QZSS.
+pub const SYSTEM_QZSS: u8 = 5;
+/// `gnssId` for GLONASS.
+pub const SYSTEM_GLONASS: u8 = 6;
 
 /// `UBX-NAV-POSECEF`, the position in Earth-centered coordinates
 /// (section 32.17.15, p. 374).
@@ -79,6 +100,38 @@ pub const RXM_RAWX: MessageId = MessageId::new(CLASS_RXM, 0x15);
 pub const ACK_NAK: MessageId = MessageId::new(CLASS_ACK, 0x00);
 /// `UBX-ACK-ACK`, a message acknowledged (section 32.8.1, p. 179).
 pub const ACK_ACK: MessageId = MessageId::new(CLASS_ACK, 0x01);
+/// `UBX-CFG-PRT`, a port's configuration (section 32.10.25, p. 243).
+pub const CFG_PRT: MessageId = MessageId::new(CLASS_CFG, 0x00);
+/// `UBX-CFG-MSG`, a message's rate (section 32.10.18, p. 215).
+pub const CFG_MSG: MessageId = MessageId::new(CLASS_CFG, 0x01);
+/// `UBX-CFG-DAT`, the datum (section 32.10.4, p. 195).
+pub const CFG_DAT: MessageId = MessageId::new(CLASS_CFG, 0x06);
+/// `UBX-CFG-RATE`, the measurement and navigation rates (section
+/// 32.10.27, p. 254).
+pub const CFG_RATE: MessageId = MessageId::new(CLASS_CFG, 0x08);
+/// `UBX-CFG-CFG`, a configuration cleared, saved or loaded (section
+/// 32.10.3, p. 193).
+pub const CFG_CFG: MessageId = MessageId::new(CLASS_CFG, 0x09);
+/// `UBX-CFG-RXM`, the receiver manager's power mode (section 32.10.30,
+/// p. 258).
+pub const CFG_RXM: MessageId = MessageId::new(CLASS_CFG, 0x11);
+/// `UBX-CFG-ANT`, the antenna supervisor (section 32.10.1, p. 191).
+pub const CFG_ANT: MessageId = MessageId::new(CLASS_CFG, 0x13);
+/// `UBX-CFG-NAVX5`, the navigation engine's expert settings (section
+/// 32.10.20, p. 219).
+pub const CFG_NAVX5: MessageId = MessageId::new(CLASS_CFG, 0x23);
+/// `UBX-CFG-NAV5`, the navigation engine's settings (section 32.10.19,
+/// p. 216).
+pub const CFG_NAV5: MessageId = MessageId::new(CLASS_CFG, 0x24);
+/// `UBX-CFG-TP5`, a time pulse's settings (section 32.10.38, p. 270).
+pub const CFG_TP5: MessageId = MessageId::new(CLASS_CFG, 0x31);
+/// `UBX-CFG-TMODE2`, the time mode (section 32.10.36, p. 266).
+pub const CFG_TMODE2: MessageId = MessageId::new(CLASS_CFG, 0x3d);
+/// `UBX-CFG-GNSS`, the systems tracked (section 32.10.13, p. 207).
+pub const CFG_GNSS: MessageId = MessageId::new(CLASS_CFG, 0x3e);
+/// `UBX-MGA-INI`, initial assistance, of which `type` says which
+/// (section 32.15.9, p. 328).
+pub const MGA_INI: MessageId = MessageId::new(CLASS_MGA, 0x40);
 /// `UBX-MON-HW`, the hardware's status (section 32.16.4, p. 342).
 pub const MON_HW: MessageId = MessageId::new(CLASS_MON, 0x09);
 /// `UBX-TIM-TP`, the next time pulse (section 32.20.8, p. 432).
@@ -104,12 +157,22 @@ pub enum PayloadLength {
         /// Where in the header the count of blocks is.
         count: usize,
     },
+    /// A configuration message: `answer` bytes as the receiver sends
+    /// it, or a poll request for it of no more than `request` bytes
+    /// (section 32.5.2, p. 172), which is not decoded.
+    Polled {
+        /// The message's own length.
+        answer: usize,
+        /// The longest poll request's.
+        request: usize,
+    },
 }
 
 impl PayloadLength {
     /// Whether a payload may be `length` bytes: a fixed message's own,
-    /// or a header and a whole number of blocks, no more than its
-    /// header's one-byte count can give.
+    /// a header and a whole number of blocks, no more than its
+    /// header's one-byte count can give, or a polled message's own or a
+    /// poll request's.
     #[must_use]
     pub const fn allows(self, length: usize) -> bool {
         match self {
@@ -119,13 +182,24 @@ impl PayloadLength {
                     && (length - header).is_multiple_of(block)
                     && (length - header) / block <= BLOCKS_MAX
             }
+            Self::Polled { answer, request } => length == answer || length <= request,
+        }
+    }
+
+    /// Whether a payload of `length` bytes is decoded: one it
+    /// [`allows`](Self::allows) and not a poll request.
+    #[must_use]
+    pub const fn decodes(self, length: usize) -> bool {
+        match self {
+            Self::Polled { answer, .. } => length == answer,
+            Self::Fixed(_) | Self::Blocks { .. } => self.allows(length),
         }
     }
 }
 
 /// The messages this crate decodes, each with its payload's length as
 /// its section's "Message Structure" gives it.
-pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
+pub const MESSAGES: [(MessageId, PayloadLength); 17] = [
     (NAV_POSECEF, PayloadLength::Fixed(20)),
     (NAV_DOP, PayloadLength::Fixed(18)),
     (NAV_PVT, PayloadLength::Fixed(92)),
@@ -162,6 +236,20 @@ pub const MESSAGES: [(MessageId, PayloadLength); 15] = [
     (ACK_ACK, PayloadLength::Fixed(2)),
     (MON_HW, PayloadLength::Fixed(60)),
     (TIM_TP, PayloadLength::Fixed(16)),
+    (
+        CFG_TMODE2,
+        PayloadLength::Polled {
+            answer: TMODE2_LENGTH,
+            request: 0,
+        },
+    ),
+    (
+        CFG_TP5,
+        PayloadLength::Polled {
+            answer: TP5_LENGTH,
+            request: TP5_POLL_LENGTH,
+        },
+    ),
 ];
 
 /// The length of a message's payload, `None` for one not in
@@ -202,7 +290,7 @@ pub(crate) fn streamed_layout(id: MessageId) -> Option<Layout> {
             block,
             count,
         }),
-        PayloadLength::Fixed(_) => None,
+        PayloadLength::Fixed(_) | PayloadLength::Polled { .. } => None,
     }
 }
 
@@ -305,14 +393,19 @@ pub enum Message<'a> {
     MonHw(MonHw),
     /// `UBX-TIM-TP`.
     TimTp(TimTp),
+    /// `UBX-CFG-TMODE2`, the answer to its poll.
+    CfgTmode2(CfgTmode2),
+    /// `UBX-CFG-TP5`, the answer to its poll.
+    CfgTp5(CfgTp5),
 }
 
 impl<'a> Message<'a> {
     /// What a frame says.  `None` for a message not in [`MESSAGES`] or
-    /// not of a length it may have; for a `NAV-SAT`, `RXM-RAWX` or
-    /// `RXM-SFRBX` whose count of blocks is not the one its length
-    /// gives; and for a `NAV-SAT` or `NAV-TIMELS` of a version other
-    /// than the document's.
+    /// not of a length it may have, or a poll request; for a `NAV-SAT`,
+    /// `RXM-RAWX` or `RXM-SFRBX` whose count of blocks is not the one
+    /// its length gives; for a `NAV-SAT` or `NAV-TIMELS` of a version
+    /// other than the document's; and for a `CFG-TP5` of a version
+    /// other than 1.
     #[must_use]
     pub fn parse(frame: Frame<'a>) -> Option<Self> {
         Self::parse_payload(frame.id(), frame.payload())
@@ -323,7 +416,7 @@ impl<'a> Message<'a> {
     /// `None` as for [`Message::parse`], whose checks it makes.
     #[must_use]
     pub fn parse_payload(id: MessageId, payload: &'a [u8]) -> Option<Self> {
-        if !payload_length(id)?.allows(payload.len()) {
+        if !payload_length(id)?.decodes(payload.len()) {
             return None;
         }
         let fields = Fields(payload);
@@ -345,6 +438,8 @@ impl<'a> Message<'a> {
             ACK_ACK => Self::AckAck(Ack::parse(fields)),
             MON_HW => Self::MonHw(MonHw::parse(fields)),
             TIM_TP => Self::TimTp(TimTp::parse(fields)),
+            CFG_TMODE2 => Self::CfgTmode2(CfgTmode2::parse(fields)),
+            CFG_TP5 => Self::CfgTp5(CfgTp5::parse(fields)?),
             _ => return None,
         })
     }
@@ -368,7 +463,9 @@ impl<'a> Message<'a> {
             | Self::AckNak(_)
             | Self::AckAck(_)
             | Self::MonHw(_)
-            | Self::TimTp(_) => None,
+            | Self::TimTp(_)
+            | Self::CfgTmode2(_)
+            | Self::CfgTp5(_) => None,
         }
     }
 }

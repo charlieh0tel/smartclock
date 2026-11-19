@@ -347,7 +347,9 @@ impl Assembly {
             | Message::AckNak(_)
             | Message::AckAck(_)
             | Message::MonHw(_)
-            | Message::TimTp(_) => {}
+            | Message::TimTp(_)
+            | Message::CfgTmode2(_)
+            | Message::CfgTp5(_) => {}
         }
         other
     }

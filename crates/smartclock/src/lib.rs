@@ -12,6 +12,7 @@ pub mod console;
 pub mod control;
 pub mod defaults;
 pub mod device;
+pub mod discipline;
 pub mod error;
 pub mod link;
 pub mod matrix;

@@ -1,23 +1,21 @@
 //! The dynamics `docs/pages/loop.html` states for the disciplining loop --
 //! its closed-loop poles, the slow pole's time constant, the overshoot
-//! -- recomputed from the update law in `docs/firmware/loop.md`, so a
-//! figure on the page cannot drift from the arithmetic behind it.
+//! -- recomputed from the update law in `docs/firmware/loop.md`, as
+//! `smartclock::discipline` runs it, so a figure on the page cannot
+//! drift from the arithmetic behind it.
 
 use std::fs;
 
+use smartclock::discipline::BLOCK_SECONDS;
+use smartclock::discipline::ClosedLoop;
+use smartclock::discipline::FILTER_SCALE;
+use smartclock::discipline::update_matrix;
+
 /// Seconds between updates.
-const PERIOD: f64 = 10.0;
+const PERIOD: f64 = BLOCK_SECONDS as f64;
 
-/// Seconds between the counter's readings, ten of which an update
-/// averages.
-const READING: f64 = 1.0;
-
-/// How far the ten readings' mean lags the last of them, in seconds of
-/// the EFC held since the last update: x̄ = x + `LAG`·G·u.
-const LAG: f64 = (PERIOD - READING) / 2.0;
-
-/// The prefilter's numerator: a = `PREFILTER` / τ.
-const PREFILTER: f64 = 29.75;
+/// The prefilter's numerator: a = `FILTER_SCALE` / τ.
+const PREFILTER: f64 = FILTER_SCALE;
 
 /// The loop time constants the page's by-model table holds, seconds.
 const TAUS: [f64; 3] = [500.0, 700.0, 1000.0];
@@ -93,37 +91,10 @@ fn cubic_roots(b: f64, c: f64, d: f64) -> [Complex; 3] {
     roots
 }
 
-/// One update as a matrix on the state (phase error, filtered error,
-/// integrator), with G taken as 1 since it cancels: f ← (1 − a)·f + a·x̄,
-/// x̄ = x + `LAG`·u with u the last update's K·f + I, I ← I + 10·k·f,
-/// u = K·f + I, and the oscillator moves the phase, x = `t_OCXO − t_GPS`,
-/// by −10·u over the ten seconds.  The counter read and the DAC write
-/// are taken as immediate.
-fn update(tau: f64) -> [[f64; 3]; 3] {
-    let a = PREFILTER / tau;
-    let proportional = 1.0 / tau;
-    let integral = 1.0 / (4.0 * tau * tau);
-    let filter = [a, 1.0 - a + a * LAG * proportional, a * LAG];
-    let integrator = [
-        PERIOD * integral * filter[0],
-        PERIOD * integral * filter[1],
-        1.0 + PERIOD * integral * filter[2],
-    ];
-    let drive: Vec<f64> = (0..3)
-        .map(|i| proportional * filter[i] + integrator[i])
-        .collect();
-    let phase = [
-        1.0 - PERIOD * drive[0],
-        -PERIOD * drive[1],
-        -PERIOD * drive[2],
-    ];
-    [phase, filter, integrator]
-}
-
 /// The update's poles, mapped to the s-plane and scaled by τ, slowest
 /// first.
 fn poles(tau: f64) -> Vec<Complex> {
-    let m = update(tau);
+    let m = update_matrix(tau);
     let trace = m[0][0] + m[1][1] + m[2][2];
     let minors = m[0][0] * m[1][1] - m[0][1] * m[1][0] + m[0][0] * m[2][2] - m[0][2] * m[2][0]
         + m[1][1] * m[2][2]
@@ -142,15 +113,17 @@ fn poles(tau: f64) -> Vec<Complex> {
     out
 }
 
-/// The phase error after each update, from a unit error at rest.
+/// The phase error at the end of the block each update steers, from a
+/// unit error at rest.
 fn step(tau: f64) -> Vec<f64> {
-    let m = update(tau);
-    let mut state = [1.0, 0.0, 0.0];
-    (0..STEPS)
+    let mut closed = ClosedLoop::new(1.0, tau, 1.0, 0.0, 0.0);
+    closed.phase = 1.0;
+    (0..=STEPS)
         .map(|_| {
-            state = [0, 1, 2].map(|row| (0..3).map(|col| m[row][col] * state[col]).sum());
-            state[0]
+            closed.block(&[]);
+            closed.phase
         })
+        .skip(1)
         .collect()
 }
 

@@ -17,6 +17,20 @@ use std::collections::HashMap;
 use std::fs;
 use std::ops::Range;
 
+use smartclock::discipline::BLOCK_SECONDS;
+use smartclock::discipline::ClosedLoop;
+use smartclock::discipline::EFC_TOP;
+use smartclock::discipline::ENTRY_SECONDS;
+use smartclock::discipline::FILTER_SCALE;
+use smartclock::discipline::Gains;
+use smartclock::discipline::INTEGRAL_SCALE;
+use smartclock::discipline::Real;
+use smartclock::discipline::STEP_LIMIT;
+use smartclock::discipline::Steering;
+use smartclock::discipline::aging_slope;
+use smartclock::discipline::step_limit;
+use smartclock::discipline::update_matrix;
+
 /// The repository's root, from this crate's directory.
 const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../..");
 
@@ -640,25 +654,13 @@ impl Law {
         1.0 / self.gain
     }
 
-    fn gains(self, tau: f32) -> Gains {
-        Gains {
-            proportional: self.reciprocal() / tau,
-            integral: self.reciprocal() / tau / tau / self.integral_scale,
-            filter_weight: self.filter / tau,
-        }
+    fn gains(self, tau: f32) -> Gains<f32> {
+        Gains::new(self.gain, tau)
     }
 
     fn step_limit(self) -> f32 {
-        self.step_numerator / self.gain.abs()
+        step_limit(self.gain)
     }
-}
-
-/// K, k and a for a time constant.
-#[derive(Clone, Copy)]
-struct Gains {
-    proportional: f32,
-    integral: f32,
-    filter_weight: f32,
 }
 
 /// What a replay leaves out or changes, to show the firmware does what
@@ -681,9 +683,7 @@ struct Loop {
     setpoint: f32,
     temperature_coefficient: f32,
     threshold: f32,
-    filtered: f32,
-    integral: f32,
-    base: f32,
+    steering: Steering<f32>,
     efc: f32,
     sum: f32,
     last: f32,
@@ -695,7 +695,7 @@ struct Loop {
     tau: f32,
     state: u8,
     blocks: i32,
-    normal_gains: Gains,
+    normal_gains: Gains<f32>,
     result: u8,
 }
 
@@ -714,9 +714,7 @@ impl Loop {
             setpoint: trace.constant(scenario, "ti_setpoint"),
             temperature_coefficient: trace.constant(scenario, "tc_coefficient"),
             threshold: trace.constant(scenario, "threshold"),
-            filtered: 0.0,
-            integral: 0.0,
-            base: 0.0,
+            steering: Steering::new(0.0),
             efc: trace.constant(scenario, "first_efc"),
             sum: 0.0,
             last: 0.0,
@@ -788,15 +786,11 @@ impl Loop {
         clippy::cast_precision_loss,
         reason = "the firmware converts the uptime to a float"
     )]
-    fn steer(&mut self, gains: Gains, row: &Row) {
+    fn steer(&mut self, gains: Gains<f32>, row: &Row) {
         let law = self.law;
         let error = self.sum - self.setpoint;
-        self.filtered = (1.0 - gains.filter_weight) * self.filtered + gains.filter_weight * error;
-        let limit = law.step_limit();
-        let slope = (row.fit_c * law.entry / row.uptime as f32 + row.fit_b).clamp(-limit, limit);
-        self.integral +=
-            (slope / gains.integral / law.entry + self.filtered) * gains.integral * law.block;
-        let efc = gains.proportional * self.filtered + self.base + self.integral;
+        let slope = aging_slope(row.fit_b, row.fit_c, row.uptime as f32, law.gain);
+        let efc = self.steering.steer(gains, error, slope);
         self.efc = (efc + self.temperature_coefficient * row.current).clamp(0.0, law.efc_top);
     }
 
@@ -804,14 +798,13 @@ impl Loop {
     /// `previous`: I + (1/G)·f·(1/previous − 1/τ).
     fn rescale(&mut self, previous: f32) {
         if self.variant != Variant::NoRescale {
-            self.integral +=
-                self.law.reciprocal() * self.filtered * (1.0 / previous + -1.0 / self.tau);
+            self.steering.rescale(self.law.gain, previous, self.tau);
         }
     }
 
     fn entry(&mut self, row: &Row) {
-        self.integral = 0.0;
-        self.base = self.efc - self.temperature_coefficient * row.current;
+        self.steering.integral = 0.0;
+        self.steering.base = self.efc - self.temperature_coefficient * row.current;
         self.clear_block();
     }
 
@@ -825,7 +818,7 @@ impl Loop {
     fn startup(&mut self, row: &Row) {
         let law = self.law;
         if !row.same_stage {
-            self.filtered = 0.0;
+            self.steering.filtered = 0.0;
             self.entry(row);
             self.blocks = 0;
             self.state = STARTUP_SETTLING;
@@ -923,9 +916,9 @@ fn replay(receiver: &'static Receiver, variant: Variant) -> Result<usize, String
         {
             state.step(row);
             let pairs = [
-                ("f", state.filtered, row.ti_filtered, 1e-16),
-                ("I", state.integral, row.integral, 1e-3),
-                ("B", state.base, row.efc_base, 1e-2),
+                ("f", state.steering.filtered, row.ti_filtered, 1e-16),
+                ("I", state.steering.integral, row.integral, 1e-3),
+                ("B", state.steering.base, row.efc_base, 1e-2),
                 ("u", state.efc, row.efc, 1e-2),
                 ("startup's τ", state.tau, row.loop_time_constant, 0.0),
             ];
@@ -967,6 +960,27 @@ fn replay(receiver: &'static Receiver, variant: Variant) -> Result<usize, String
         }
     }
     Ok(checked)
+}
+
+#[test]
+fn the_library_s_law_is_the_evidence_s() {
+    let evidence = read("docs/firmware/loop.md");
+    for receiver in &RECEIVERS {
+        let law = Law::from_evidence(&evidence, receiver);
+        for (name, documented, library) in [
+            ("a's numerator", law.filter, FILTER_SCALE),
+            ("k's factor", law.integral_scale, INTEGRAL_SCALE),
+            ("the block", law.block, f64::from(BLOCK_SECONDS)),
+            ("the aging fit's window", law.entry, ENTRY_SECONDS),
+            ("M's numerator", law.step_numerator, STEP_LIMIT),
+            ("the EFC's top", law.efc_top, EFC_TOP),
+        ] {
+            assert!(
+                close(documented, Real::from_f64(library), 0.0),
+                "{name}: {documented:e} in loop.md, {library:e} in smartclock::discipline"
+            );
+        }
+    }
 }
 
 #[test]
@@ -1111,32 +1125,9 @@ impl Complex {
     }
 }
 
-/// The update the firmware runs, closed around an oscillator that
-/// turns an EFC of u into a phase change of −G·u a second, applied
-/// from the second after the update: a matrix on (phase at the update,
-/// f, I), with G taken as 1 since it cancels.  The block's readings are
-/// X − j·u for j from 1 to 10, so their mean is X − 5.5·u.
-fn update(law: Law, tau: f64) -> [[f64; 3]; 3] {
-    let block = f64::from(law.block);
-    let a = f64::from(law.filter) / tau;
-    let proportional = 1.0 / tau;
-    let integral = 1.0 / (f64::from(law.integral_scale) * tau * tau);
-    let held = (block + 1.0) / 2.0;
-    let u = [0.0, proportional, 1.0];
-    let mean = [1.0 - held * u[0], -held * u[1], -held * u[2]];
-    let filter = [a * mean[0], (1.0 - a) + a * mean[1], a * mean[2]];
-    let integrator = [
-        block * integral * filter[0],
-        block * integral * filter[1],
-        1.0 + block * integral * filter[2],
-    ];
-    let phase = [1.0 - block * u[0], -block * u[1], -block * u[2]];
-    [phase, filter, integrator]
-}
-
 /// The update's poles in the s-plane, scaled by τ, slowest first.
 fn poles(law: Law, tau: f64) -> [Complex; 3] {
-    let m = update(law, tau);
+    let m = update_matrix(tau);
     let trace = m[0][0] + m[1][1] + m[2][2];
     let minors = m[0][0] * m[1][1] - m[0][1] * m[1][0] + m[0][0] * m[2][2] - m[0][2] * m[2][0]
         + m[1][1] * m[2][2]
@@ -1172,13 +1163,13 @@ fn poles(law: Law, tau: f64) -> [Complex; 3] {
 }
 
 /// The phase after each update, from a unit phase error at rest.
-fn step_response(law: Law, tau: f64, updates: usize) -> Vec<f64> {
-    let m = update(law, tau);
-    let mut state = [1.0, 0.0, 0.0];
+fn step_response(tau: f64, updates: usize) -> Vec<f64> {
+    let mut closed = ClosedLoop::new(1.0, tau, 1.0, 0.0, 0.0);
+    closed.phase = 1.0;
     (0..updates)
         .map(|_| {
-            state = [0, 1, 2].map(|row| (0..3).map(|col| m[row][col] * state[col]).sum());
-            state[0]
+            closed.block(&[]);
+            closed.phase
         })
         .collect()
 }
@@ -1262,7 +1253,7 @@ fn the_page_s_step_response_is_the_firmware_s() {
     for receiver in &RECEIVERS {
         let law = Law::from_evidence(&evidence, receiver);
         let tau = f64::from(law.tau);
-        let response = step_response(law, tau, UPDATES);
+        let response = step_response(tau, UPDATES);
         let peak = -response.iter().copied().fold(f64::INFINITY, f64::min) * 100.0;
         assert!(
             (peak - overshoot).abs() < 2.5,

@@ -846,6 +846,10 @@ compare it with the Z3805A 3543B's and 58503A 3704's images
   the fixtures in `crates/smartclock/tests/fixtures/loop/`.
 - A replay of the update law as written here must reproduce the traced
   f, I, B, u, constant and stage at every step, about 3000 per image.
+  The law it replays is the library's, `smartclock::discipline`
+  (`crates/smartclock/src/discipline.rs`), run in single precision as
+  the firmware runs it, and the tests hold that module's constants to
+  the ones above.
   The run covers the waits, the ramp, the hand-over, the aging slope's
   clamp and blocks with no reading.  Each of the first three errors
   fails it.

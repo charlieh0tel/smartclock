@@ -179,10 +179,11 @@ docs:
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03
-PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage
+PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage \
+	58501a-prototype
 NEW_PAGE := gps-architecture
 FEATURED_PAGE := loop
-UNLISTED_PAGES := bench-sky-2026-10-03
+UNLISTED_PAGES := bench-sky-2026-10-03 58501a-prototype
 WIP_PAGES := block-diagram
 HERO_IMAGE :=
 HERO_ALT :=
@@ -236,6 +237,22 @@ pforth-models:
 	mkdir -p $(PAGES_DIR) $(PAGES_DATA)
 	uv run -q tools/firmware/pforth_words.py --json > $(PAGES_DATA)/pforth-models.json
 	python3 -I tools/pforth_models.py $(PAGES_DATA)/pforth-models.json $(PAGES_DIR)/pforth-models.html
+
+# The 58501A prototype's page, rendered from its document,
+# docs/firmware/58501a.md, the one source, by tools/markdown_page.py,
+# its photos shown where the document first names them and copied
+# beside it.  Unlisted: it stands apart from the production models, and
+# fpga.html links it.  Fails on a link the generator cannot resolve, a
+# photo the document never names, or no link to the forum thread the
+# unit's files were posted to.  Needs uv, which installs the script's
+# markdown-it-py.
+58501a-prototype:
+	mkdir -p $(PAGES_DIR)
+	uv run -q tools/markdown_page.py --group firmware \
+		--description "The HP 58501A, an early prototype relative of the 58503A: its photos, firmware image, FPGA pins and EEPROM, read from the files its owner contributed." \
+		--photos docs/images/58501a-prototype \
+		--require-link https://www.eevblog.com/forum/testgear/prototype-hpagilent-gps-based-refererence-clocks-generator/ \
+		docs/firmware/58501a.md $(PAGES_DIR)/58501a-prototype.html
 
 $(HAND_PAGES):
 	mkdir -p $(PAGES_DIR)

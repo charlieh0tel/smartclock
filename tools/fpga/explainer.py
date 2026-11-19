@@ -221,6 +221,8 @@ the internal 1 PPS's printed period, on P83, or P78 in the Z3817A, over the test
 <p>The front door, {link('docs/firmware/fpga-comparison.md', 'fpga-comparison.md')},
 has every pin, role and difference side by side.  Only the 58503A's and Z3801A's
 bitstream is shared byte for byte.</p>
+<p>The 58501A, an early prototype, loads a design of its own, apart from these and not
+traced; <a href="58501a-prototype.html">its page</a> sets its pins against the 58503A's.</p>
 </section>""")
 
     sections.append(f"""<section id="count">

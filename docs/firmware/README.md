@@ -152,7 +152,8 @@ seven Oncore images' message tables and request scripts in `oncore/`.
 
 Other material: [the 58501A](58501a.md), an early prototype
 relative of the 58503A contributed by its owner, apart from the
-images above.
+images above; the document is also published as a page,
+[`58501a-prototype.html`](https://charlieh0tel.github.io/smartclock/58501a-prototype.html).
 
 ## Summary
 

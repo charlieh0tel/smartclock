@@ -7,9 +7,8 @@ use smartclock_gps::time::GpsWeek;
 use smartclock_gps::units::PRNS;
 use smartclock_gps::units::Prn;
 use smartclock_gps::units::PrnSet;
-
-use crate::subframe::Body;
-use crate::subframe::Subframe;
+use smartclock_ubx::subframe::Body;
+use smartclock_ubx::subframe::Subframe;
 
 /// The data ID of a page of L1 C/A's own data (IS-GPS-200N, section
 /// 20.3.3.5.1.1).

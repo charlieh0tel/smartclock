@@ -1,55 +1,11 @@
 //! Frames built by hand from the layouts of UBX-13003221 R28, through
-//! the deframer, the decoders and the assembler.  The position is the
+//! the decoders' record traits and the assembler.  The position is the
 //! one `docs/firmware/gps.md` gives: 37.3255833 N, 121.9978333 W, 55 m.
 
 use std::boxed::Box;
 use std::vec;
 use std::vec::Vec;
 
-use crate::assembler::Assembler;
-use crate::assembler::DECLARATION;
-use crate::frame::Deframer;
-use crate::frame::EncodeError;
-use crate::frame::FrameError;
-use crate::frame::MessageId;
-use crate::frame::NoRoom;
-use crate::frame::OVERHEAD;
-use crate::frame::checksum;
-use crate::frame::encode;
-use crate::message::ACK_ACK;
-use crate::message::ACK_NAK;
-use crate::message::MESSAGES;
-use crate::message::MON_HW;
-use crate::message::Message;
-use crate::message::NAV_CLOCK;
-use crate::message::NAV_DOP;
-use crate::message::NAV_EOE;
-use crate::message::NAV_POSECEF;
-use crate::message::NAV_PVT;
-use crate::message::NAV_SAT;
-use crate::message::NAV_TIMEGPS;
-use crate::message::NAV_TIMELS;
-use crate::message::NAV_VELECEF;
-use crate::message::PayloadLength;
-use crate::message::RXM_RAWX;
-use crate::message::RXM_SFRBX;
-use crate::message::TIM_TP;
-use crate::message::payload_length;
-use crate::nav::LeapChange as UbxLeapChange;
-use crate::nav::LeapNotice;
-use crate::nav::nav_sat_length;
-use crate::record::LeapNoticeRecord;
-use crate::record::MonHwRecord;
-use crate::record::NavDopRecord;
-use crate::record::NavPosEcefRecord;
-use crate::record::NavPvtRecord;
-use crate::record::NavSatRecord;
-use crate::record::NavTimeGpsRecord;
-use crate::rxm::rxm_rawx_length;
-use crate::subframe::tests::Bits;
-use crate::subframe::tests::word_start;
-use crate::units;
-use crate::units::Picoseconds;
 use smartclock_gps::record::Almanac;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -89,6 +45,39 @@ use smartclock_gps::units::PrnSet;
 use smartclock_gps::units::Seconds;
 use smartclock_gps::units::TenthDegrees;
 use smartclock_gps::units::Tenths;
+use smartclock_ubx::frame::Deframer;
+use smartclock_ubx::frame::MessageId;
+use smartclock_ubx::frame::OVERHEAD;
+use smartclock_ubx::frame::encode;
+use smartclock_ubx::message::MON_HW;
+use smartclock_ubx::message::Message;
+use smartclock_ubx::message::NAV_DOP;
+use smartclock_ubx::message::NAV_EOE;
+use smartclock_ubx::message::NAV_POSECEF;
+use smartclock_ubx::message::NAV_PVT;
+use smartclock_ubx::message::NAV_SAT;
+use smartclock_ubx::message::NAV_TIMEGPS;
+use smartclock_ubx::message::NAV_TIMELS;
+use smartclock_ubx::message::RXM_SFRBX;
+use smartclock_ubx::message::TIM_TP;
+use smartclock_ubx::nav::LeapChange as UbxLeapChange;
+use smartclock_ubx::nav::LeapNotice;
+use smartclock_ubx::nav::NavPvt;
+use smartclock_ubx::nav::NavTimeGps;
+use smartclock_ubx::nav::nav_sat_length;
+use smartclock_ubx::subframe::PREAMBLE;
+use smartclock_ubx::subframe::WORDS;
+use smartclock_ubx::units;
+
+use crate::assembler::Assembler;
+use crate::assembler::DECLARATION;
+use crate::record::LeapNoticeRecord;
+use crate::record::MonHwRecord;
+use crate::record::NavDopRecord;
+use crate::record::NavPosEcefRecord;
+use crate::record::NavPvtRecord;
+use crate::record::NavSatRecord;
+use crate::record::NavTimeGpsRecord;
 
 /// Room for a `NAV-SAT` of every GPS satellite.
 type Bench = Assembler<{ nav_sat_length(32) }>;
@@ -390,241 +379,6 @@ fn time(week: u16, milliseconds: u32) -> Option<GpsTime> {
     })
 }
 
-/// Section 32.4's sums, by hand: `CK_A` is 0x01, 0x62, 0x66, 0x66,
-/// 0x76, 0x9d, 0x9d, 0x9d and `CK_B` their running sum.
-#[test]
-fn a_frame_is_sync_header_payload_and_fletcher_sum() {
-    let frame = frame(NAV_EOE, &eoe(10_000));
-    assert_eq!(
-        frame,
-        [
-            0xb5, 0x62, 0x01, 0x61, 0x04, 0x00, 0x10, 0x27, 0x00, 0x00, 0x9d, 0x7c
-        ]
-    );
-    assert_eq!(checksum(&frame[2..10]), [0x9d, 0x7c]);
-    assert_eq!(checksum(&[]), [0, 0]);
-    assert_eq!(OVERHEAD, 8);
-}
-
-#[test]
-fn encoding_needs_room_and_a_length_that_fits() {
-    let mut out = [0; 11];
-    assert_eq!(
-        encode(NAV_EOE, &eoe(0), &mut out),
-        Err(EncodeError::NoRoom(NoRoom {
-            needed: 12,
-            room: 11
-        }))
-    );
-    let long = vec![0; usize::from(u16::MAX) + 1];
-    let mut out = vec![0; long.len() + OVERHEAD];
-    assert_eq!(
-        encode(MessageId::new(0x7f, 0x7f), &long, &mut out),
-        Err(EncodeError::TooLong(long.len()))
-    );
-    assert_eq!(
-        encode(MessageId::new(0x7f, 0x7f), &long[1..], &mut out),
-        Ok(out.len() - 1)
-    );
-    // No payload at all.
-    assert_eq!(
-        frame(MessageId::new(0x0a, 0x04), &[]),
-        [0xb5, 0x62, 0x0a, 0x04, 0x00, 0x00, 0x0e, 0x34]
-    );
-}
-
-#[test]
-fn every_message_has_its_documented_length() {
-    for (id, length) in [
-        (NAV_POSECEF, 20),
-        (NAV_DOP, 18),
-        (NAV_PVT, 92),
-        (NAV_TIMEGPS, 16),
-        (NAV_TIMELS, 24),
-        (NAV_SAT, 8),
-        (NAV_SAT, 8 + 12 * 32),
-        (NAV_EOE, 4),
-        (NAV_CLOCK, 20),
-        (NAV_VELECEF, 20),
-        (RXM_RAWX, 16),
-        (RXM_RAWX, 16 + 32 * 20),
-        (RXM_SFRBX, 8 + 4 * 10),
-        (ACK_ACK, 2),
-        (ACK_NAK, 2),
-        (MON_HW, 60),
-        (TIM_TP, 16),
-    ] {
-        let own = payload_length(id).unwrap();
-        assert!(own.allows(length), "{id}");
-        assert!(!own.allows(length + 1), "{id}");
-        assert!(!own.allows(length - 1), "{id}");
-    }
-    assert_eq!(MESSAGES.len(), 15);
-    assert_eq!(rxm_rawx_length(20), 656);
-    assert_eq!(payload_length(MessageId::new(0x01, 0x03)), None);
-    assert_eq!(nav_sat_length(32), 392);
-}
-
-/// A frame is found however the stream is cut into reads.
-#[test]
-fn a_frame_split_across_reads_is_one_frame() {
-    let bytes = stream(&[(NAV_PVT, &PVT.payload()), (NAV_EOE, &eoe(NOON))]);
-    for cut in 0..=bytes.len() {
-        let mut deframer = Deframer::<92>::new();
-        let mut found = Vec::new();
-        for part in [&bytes[..cut], &bytes[cut..]] {
-            let mut rest = part;
-            while !rest.is_empty() {
-                let (taken, event) = deframer.feed(rest);
-                rest = &rest[taken..];
-                if let Some(frame) = event {
-                    let frame = frame.unwrap();
-                    found.push((frame.id(), frame.payload().to_vec()));
-                }
-            }
-        }
-        assert_eq!(
-            found,
-            [
-                (NAV_PVT, PVT.payload().to_vec()),
-                (NAV_EOE, eoe(NOON).to_vec())
-            ],
-            "cut at {cut}"
-        );
-    }
-}
-
-fn events<const N: usize>(bytes: &[u8]) -> Vec<Result<MessageId, FrameError>> {
-    let mut deframer = Deframer::<N>::new();
-    bytes
-        .iter()
-        .filter_map(|&byte| {
-            deframer
-                .push(byte)
-                .map(|event| event.map(|frame| frame.id()))
-        })
-        .collect()
-}
-
-#[test]
-fn noise_and_a_stray_sync_byte_are_skipped() {
-    let mut bytes = vec![0x00, 0x62, 0xb5, 0x00, 0xb5, 0xb5];
-    bytes.extend(&frame(NAV_EOE, &eoe(NOON))[1..]);
-    bytes.extend([0xb5, 0x61]);
-    bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    assert_eq!(events::<4>(&bytes), [Ok(NAV_EOE), Ok(NAV_EOE)]);
-}
-
-/// A known message whose length is not its own is dropped at its
-/// header: the frame that follows at once is found.
-#[test]
-fn a_length_that_lies_is_not_followed() {
-    let mut bytes = vec![0xb5, 0x62, 0x01, 0x07, 0xff, 0xff];
-    bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    assert_eq!(
-        events::<92>(&bytes),
-        [
-            Err(FrameError::BadLength {
-                id: NAV_PVT,
-                length: 0xffff
-            }),
-            Ok(NAV_EOE)
-        ]
-    );
-    // One byte short is as bad.
-    let mut bytes = vec![0xb5, 0x62, 0x01, 0x07, 91, 0];
-    bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    assert_eq!(
-        events::<92>(&bytes),
-        [
-            Err(FrameError::BadLength {
-                id: NAV_PVT,
-                length: 91
-            }),
-            Ok(NAV_EOE)
-        ]
-    );
-}
-
-#[test]
-fn a_payload_past_the_buffer_is_not_followed() {
-    let unknown = MessageId::new(0x0a, 0x04);
-    let mut bytes = vec![0xb5, 0x62, 0x0a, 0x04, 0x11, 0x00];
-    bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    assert_eq!(
-        events::<16>(&bytes),
-        [
-            Err(FrameError::Overflow {
-                id: unknown,
-                length: 17,
-                capacity: 16
-            }),
-            Ok(NAV_EOE)
-        ]
-    );
-    // What fits is framed, known or not.
-    let bytes = frame(unknown, &[0xb5; 16]);
-    assert_eq!(events::<16>(&bytes), [Ok(unknown)]);
-    // A NAV-SAT with more satellites than there is room for.
-    let bytes = frame(NAV_SAT, &sat(NOON, &[SAT; 2]));
-    assert_eq!(
-        events::<{ nav_sat_length(1) }>(&bytes)[0],
-        Err(FrameError::Overflow {
-            id: NAV_SAT,
-            length: 32,
-            capacity: 20
-        })
-    );
-}
-
-#[test]
-fn a_bad_checksum_drops_the_frame_and_the_next_is_found() {
-    let mut bytes = frame(NAV_EOE, &eoe(NOON));
-    let good = [bytes[10], bytes[11]];
-    bytes[7] ^= 0x01;
-    let expected = checksum(&bytes[2..10]);
-    bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    assert_eq!(
-        events::<4>(&bytes),
-        [
-            Err(FrameError::BadChecksum {
-                id: NAV_EOE,
-                expected,
-                found: good
-            }),
-            Ok(NAV_EOE)
-        ]
-    );
-}
-
-/// A length damaged into another the checks allow costs no more than
-/// the buffer's length of what follows.
-#[test]
-fn a_damaged_length_costs_at_most_the_buffer() {
-    let unknown = MessageId::new(0x0a, 0x04);
-    let mut bytes = frame(unknown, &[0; 2]);
-    bytes[4] = 16;
-    // The 16 bytes it now claims run through the next frame and into
-    // the one after, which is lost with it; the third is found.
-    for _ in 0..3 {
-        bytes.extend(frame(NAV_EOE, &eoe(NOON)));
-    }
-    let events = events::<16>(&bytes);
-    assert!(matches!(events[0], Err(FrameError::BadChecksum { .. })));
-    assert_eq!(events[1..], [Ok(NAV_EOE)]);
-}
-
-#[test]
-fn reset_forgets_a_frame_in_progress() {
-    let bytes = frame(NAV_EOE, &eoe(NOON));
-    let mut deframer = Deframer::<4>::new();
-    assert!(deframer.feed(&bytes[..6]).1.is_none());
-    deframer.reset();
-    let (taken, event) = deframer.feed(&bytes);
-    assert_eq!(taken, bytes.len());
-    assert_eq!(event.unwrap().unwrap().id(), NAV_EOE);
-}
-
 const POSITION: Position = Position {
     latitude: MilliArcSeconds(134_372_100),
     longitude: MilliArcSeconds(-439_192_200),
@@ -637,7 +391,7 @@ const VELOCITY: Velocity = Velocity {
     heading: TenthDegrees(900),
 };
 
-fn pvt(fields: Pvt) -> crate::nav::NavPvt {
+fn pvt(fields: Pvt) -> NavPvt {
     match decode(NAV_PVT, &fields.payload()) {
         Some(Message::NavPvt(pvt)) => pvt,
         other => panic!("{other:?}"),
@@ -719,7 +473,7 @@ fn nav_pvt_edges() {
     );
 }
 
-fn nav_time_gps(payload: [u8; 16]) -> crate::nav::NavTimeGps {
+fn nav_time_gps(payload: [u8; 16]) -> NavTimeGps {
     match decode(NAV_TIMEGPS, &payload) {
         Some(Message::NavTimeGps(time)) => time,
         other => panic!("{other:?}"),
@@ -782,83 +536,12 @@ fn nav_timegps_week_near_a_reference() {
     );
 }
 
-fn nav_time_ls(fields: Ls) -> Option<crate::nav::NavTimeLs> {
-    match decode(NAV_TIMELS, &fields.payload()) {
-        Some(Message::NavTimeLs(leap)) => Some(leap),
-        None => None,
-        other => panic!("{other:?}"),
-    }
-}
-
-/// [`BEFORE`] as `NAV-TIMELS` gives it.
-const COUNT: units::Seconds<i8> = units::Seconds(BEFORE.0);
-
 const NOTICE: LeapNotice = LeapNotice {
     change: UbxLeapChange::Insert,
     until: units::Seconds(12 * 3600 + 17),
     week: WEEK,
     day: 7,
 };
-
-#[test]
-fn nav_timels_count_and_notice() {
-    let decoded = nav_time_ls(LS).unwrap();
-    assert_eq!(decoded.time_of_week, units::Milliseconds(NOON));
-    assert_eq!(decoded.count(), Some(COUNT));
-    assert_eq!(decoded.notice(), Some(NOTICE));
-    assert!(NOTICE.pending());
-    assert_eq!(nav_time_ls(Ls { version: 1, ..LS }), None);
-}
-
-#[test]
-fn nav_timels_count_needs_a_source() {
-    // The firmware's default and "unknown" are not believed.
-    for (count_source, valid, count) in [
-        (0, 0b11, None),
-        (255, 0b11, None),
-        (2, 0b10, None),
-        (1, 0b11, Some(COUNT)),
-        (7, 0b01, Some(COUNT)),
-    ] {
-        let fields = Ls {
-            count_source,
-            valid,
-            ..LS
-        };
-        assert_eq!(
-            nav_time_ls(fields).unwrap().count(),
-            count,
-            "{count_source} {valid}"
-        );
-    }
-}
-
-#[test]
-fn nav_timels_notice_needs_a_gps_date() {
-    let none = |fields: Ls| assert_eq!(nav_time_ls(fields).unwrap().notice(), None);
-    none(Ls { valid: 0b01, ..LS });
-    none(Ls { change: 0, ..LS });
-    none(Ls { change: 2, ..LS });
-    none(Ls { day: 0, ..LS });
-    none(Ls { day: 8, ..LS });
-    // No source, SBAS, BeiDou, whose days run 0 to 6, and GLONASS.
-    for change_source in [0, 3, 4, 6, 7] {
-        none(Ls {
-            change_source,
-            ..LS
-        });
-    }
-    let galileo = Ls {
-        change_source: 5,
-        change: -1,
-        until: -5,
-        ..LS
-    };
-    let notice = nav_time_ls(galileo).unwrap().notice().unwrap();
-    assert_eq!(notice.change, UbxLeapChange::Remove);
-    assert_eq!(notice.until, units::Seconds(-5));
-    assert!(!notice.pending());
-}
 
 /// The leap second of 2016 ended a Saturday: day 7 of week 1929 ends
 /// where week 1930 starts.
@@ -1138,29 +821,6 @@ fn mon_hw_gives_the_antenna() {
     }
 }
 
-#[test]
-fn tim_tp_is_decoded() {
-    let decode = |flags| match decode(TIM_TP, &tp(NOON + 1000, -4_321, WEEK, flags)) {
-        Some(Message::TimTp(pulse)) => pulse,
-        other => panic!("{other:?}"),
-    };
-    let pulse = decode(0);
-    assert_eq!(pulse.time_of_week, units::Milliseconds(NOON + 1000));
-    assert_eq!(pulse.week, WEEK);
-    assert_eq!(pulse.quantization_error, Some(Picoseconds(-4_321)));
-    assert!(!pulse.utc_base);
-    assert!(pulse.locked);
-    assert_eq!(pulse.raim, None);
-    let pulse = decode(0b11_0001);
-    assert_eq!(pulse.quantization_error, None);
-    assert!(pulse.utc_base);
-    assert!(!pulse.locked);
-    assert_eq!(Message::TimTp(pulse).epoch(), None);
-    assert_eq!(decode(RAIM_NOT_ACTIVE).raim, Some(false));
-    assert_eq!(decode(RAIM_ACTIVE).raim, Some(true));
-    assert_eq!(decode(0b1100).raim, None);
-}
-
 /// A record's Time RAIM result is the last `TIM-TP`'s, read as the
 /// crate's documentation says, and none without one.  Its solution is
 /// never known, even active with the pulse locked: the message gives no
@@ -1197,26 +857,56 @@ fn time_raim_is_the_last_pulses() {
     assert_eq!(records[0].derived.raim, None);
 }
 
-#[test]
-fn a_message_of_another_kind_or_length_is_not_decoded() {
-    assert_eq!(decode(MessageId::new(0x01, 0x03), &[0; 16]), None);
+/// A subframe's bits, set by their numbers in the subframe, 1 to 300
+/// (IS-GPS-200N, Figure 20-1).  Each word's parity and the two bits
+/// above it are filled with something, which the decoder must not read.
+struct Bits([u32; WORDS]);
+
+impl Bits {
+    fn new() -> Self {
+        Self([0xc000_002a; WORDS])
+    }
+
+    /// `width` bits of `value` from subframe bit `first`, 1 the first
+    /// sent; within one word.
+    fn set(&mut self, first: u32, width: u32, value: i64) -> &mut Self {
+        let word = usize::try_from((first - 1) / 30).unwrap();
+        let bit = (first - 1) % 30 + 1;
+        assert!(bit + width - 1 <= 24, "field at {first} runs past the data");
+        let mask = (1_u32 << width) - 1;
+        let shift = 31 - bit - width;
+        let bits = u32::try_from(value & i64::from(mask)).unwrap();
+        self.0[word] = (self.0[word] & !(mask << shift)) | (bits << shift);
+        self
+    }
+
+    /// TLM and HOW: the preamble, a TLM message, the integrity flag,
+    /// a time of week, the alert flag and the subframe's ID.
+    fn head(&mut self, subframe: i64) -> &mut Self {
+        self.set(1, 8, i64::from(PREAMBLE))
+            .set(9, 14, 0x1555)
+            .set(23, 1, 1)
+            .set(31, 17, 100_799)
+            .set(48, 1, 1)
+            .set(49, 1, 0)
+            .set(50, 3, subframe)
+    }
+
+    /// A page of subframe 4 or 5: data ID `01` and its SV ID.
+    fn page(&mut self, subframe: i64, id: i64) -> &mut Self {
+        self.head(subframe).set(61, 2, 1).set(63, 6, id)
+    }
+
+    /// The words, as `RXM-SFRBX` gives them.
+    const fn words(&self) -> [u32; WORDS] {
+        self.0
+    }
 }
 
-#[test]
-fn a_payload_off_its_length_is_not_decoded() {
-    // A fixed message's length, a streamed one's header's.
-    let lengths = MESSAGES.map(|(id, length)| match length {
-        PayloadLength::Fixed(own) => (id, own),
-        PayloadLength::Blocks { header, .. } => (id, header),
-    });
-    let bytes = vec![0; lengths.iter().map(|&(_, own)| own).max().unwrap() + 1];
-    for (id, own) in lengths {
-        assert_eq!(Message::parse_payload(id, &bytes[..own - 1]), None, "{id}");
-        assert_eq!(Message::parse_payload(id, &bytes[..=own]), None, "{id}");
-    }
-    let pvt = PVT.payload();
-    assert!(Message::parse_payload(NAV_PVT, &pvt).is_some());
-    assert_eq!(Message::parse_payload(NAV_PVT, &pvt[1..]), None);
+/// The first bit of each word's fields on a page 25, words 4 to 9 or 3
+/// to 8: the subframe's bits 91, 121, ... or 61, 91, ...
+const fn word_start(word: u32) -> u32 {
+    (word - 1) * 30 + 1
 }
 
 /// The almanac's time, raw (589 824 s into its week), and its week as
@@ -2189,6 +1879,3 @@ fn the_almanac_week_is_resolved_near_the_time() {
         almanac(2048, &[1], &[1])
     );
 }
-
-mod decoders;
-mod streaming;

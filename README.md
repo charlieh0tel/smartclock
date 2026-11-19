@@ -221,7 +221,7 @@ Without a receiver, use the simulator; every tool takes
 ## Development
 
 `make ci` runs CI's Rust checks: formatting, clippy, the tests, the
-`no_std` builds of `smartclock-gps` and `smartclock-gps-ublox`
+`no_std` builds of `smartclock-gps`, `smartclock-ubx` and `smartclock-gps-ublox`
 (`make check-no-std`, after `make no-std-targets` once) and the API documentation (`make doc`), in
 which a rustdoc warning is an error.  The tests include
 `make check-engine-vectors`, the Oncore model's recorded exchanges;

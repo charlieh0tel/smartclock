@@ -1,0 +1,15 @@
+[package]
+name = "smartclock-ubx"
+description = "A u-blox receiver's UBX framing and messages, every field decoded, for a microcontroller or a host: a codec alone, depending on no other crate of this workspace"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+thiserror = { version = "2.0.21", default-features = false }

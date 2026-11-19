@@ -31,12 +31,11 @@ WINDOWS_TARGET := x86_64-pc-windows-gnu
 windows:
 	$(CARGO) build --workspace --all-targets --target $(WINDOWS_TARGET)
 
-# smartclock-gps and smartclock-gps-ublox for a microcontroller and for
-# a browser, neither of which the host build proves: it has std to fall
-# back on.  The thumb
-# targets have no std at all, so a dependency that wants one fails
-# there, and the first, a Cortex-M0, has the least besides: no atomic
-# compare-and-swap.
+# smartclock-gps, smartclock-ubx and smartclock-gps-ublox for a
+# microcontroller and for a browser, neither of which the host build
+# proves: it has std to fall back on.  The thumb targets have no std
+# at all, so a dependency that wants one fails there, and the first, a
+# Cortex-M0, has the least besides: no atomic compare-and-swap.
 # NO_STD_TARGETS is the whole list: CI reads it from here, through
 # no-std-targets, which adds the targets to the toolchain, once.
 NO_STD_TARGETS := thumbv6m-none-eabi thumbv7em-none-eabihf wasm32-unknown-unknown
@@ -45,7 +44,7 @@ no-std-targets:
 
 check-no-std:
 	set -e; for target in $(NO_STD_TARGETS); do \
-		$(CARGO) build --locked -p smartclock-gps -p smartclock-gps-ublox --target $$target; \
+		$(CARGO) build --locked -p smartclock-gps -p smartclock-ubx -p smartclock-gps-ublox --target $$target; \
 	done
 
 # The Oncore and Furuno models against their recorded exchanges, byte

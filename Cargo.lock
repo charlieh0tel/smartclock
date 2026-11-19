@@ -773,6 +773,7 @@ dependencies = [
  "serialport",
  "smartclock-gps",
  "smartclock-gps-ublox",
+ "smartclock-ubx",
  "socket2",
 ]
 
@@ -781,7 +782,7 @@ name = "smartclock-gps-ublox"
 version = "1.9.1"
 dependencies = [
  "smartclock-gps",
- "thiserror",
+ "smartclock-ubx",
 ]
 
 [[package]]
@@ -825,6 +826,13 @@ dependencies = [
  "clap",
  "jiff",
  "smartclock",
+ "thiserror",
+]
+
+[[package]]
+name = "smartclock-ubx"
+version = "1.9.1"
+dependencies = [
  "thiserror",
 ]
 

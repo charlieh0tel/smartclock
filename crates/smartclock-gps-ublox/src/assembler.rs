@@ -26,14 +26,16 @@ use smartclock_gps::time::LeapEvent;
 use smartclock_gps::time::SECONDS_PER_WEEK;
 use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
+use smartclock_ubx::frame::Deframer;
+use smartclock_ubx::message::Message;
+use smartclock_ubx::nav::LeapNotice;
+use smartclock_ubx::nav::NavPvt;
+use smartclock_ubx::nav::NavTimeGps;
+use smartclock_ubx::nav::NavTimeLs;
+use smartclock_ubx::subframe::Subframe;
+use smartclock_ubx::units::Milliseconds;
 
 use crate::almanac::Gathered;
-use crate::frame::Deframer;
-use crate::message::Message;
-use crate::nav::LeapNotice;
-use crate::nav::NavPvt;
-use crate::nav::NavTimeGps;
-use crate::nav::NavTimeLs;
 use crate::record::LeapNoticeRecord;
 use crate::record::MonHwRecord;
 use crate::record::NavDopRecord;
@@ -44,8 +46,6 @@ use crate::record::NavTimeGpsRecord;
 use crate::record::leap_change;
 use crate::record::time_raim;
 use crate::record::utc_offset;
-use crate::subframe::Subframe;
-use crate::units::Milliseconds;
 
 /// What an [`Assembler`] has of the epoch in progress.  Every message
 /// in it has the same `iTOW`.
@@ -180,14 +180,14 @@ pub fn act(record: &mut Record, settings: &Settings) {
 /// Makes a [`Record`] of each navigation epoch in a stream of UBX bytes
 /// ("From messages to a record" in the crate's documentation).  `N`
 /// is the longest payload it takes, as a [`Deframer`]'s is:
-/// [`nav_sat_length`](crate::nav::nav_sat_length) of the satellites the receiver may report.
+/// [`nav_sat_length`](smartclock_ubx::nav::nav_sat_length) of the satellites the receiver may report.
 ///
 /// ```
 /// use smartclock_gps::record::Fix;
 /// use smartclock_gps::record::Record;
 /// use smartclock_gps::source::replay::Assemble;
 /// use smartclock_gps_ublox::assembler::Assembler;
-/// use smartclock_gps_ublox::nav::nav_sat_length;
+/// use smartclock_ubx::nav::nav_sat_length;
 ///
 /// let mut assembler = Assembler::<{ nav_sat_length(32) }>::new();
 /// let mut record = Record::EMPTY;

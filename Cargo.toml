@@ -13,6 +13,7 @@ members = [
     "crates/smartclock-log",
     "crates/smartclock-sensord",
     "crates/smartclock-sim",
+    "crates/smartclock-ubx",
     "crates/smartclock-web",
     "crates/smartclockd",
 ]

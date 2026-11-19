@@ -86,6 +86,23 @@
 //! it, so it need not copy the rule; [`Engine::tracking`] says whether
 //! the engine tracks a satellite, the mode's condition for a pulse.
 //!
+//! Position hold is reported by one rule, in this model and in
+//! [`furuno`]'s, which depends on whether the source of its records
+//! commands its receiver ([`ReceiverControl`]).  What a setting's
+//! command or query is answered with is always what the command set,
+//! which the receivers' firmware checks.  From a source whose receiver
+//! is not commanded, as a receiver listened to or a recording, the
+//! status (the receiver status and Time RAIM's ability here) holds the
+//! position as `@@At` set it, at the position `@@As` gave.  From a
+//! source whose receiver is commanded, its owner passing the image's
+//! commands on to the receiver, the status holds the position only
+//! while the record's receiver does
+//! ([`Record::receiver_mode`](crate::record::Record::receiver_mode)),
+//! one not known taken to navigate, and the position given is the
+//! record's: a hold commanded shows once the receiver holds, and `@@At`
+//! 0 or `@@Cf` putting it off shows once the receiver navigates.  A
+//! time-only fix not held for is reported as a 3D fix.
+//!
 //! The Z3815A's Furuno GT-74 has a model of its own, [`furuno`], which
 //! shares [`Output`], the [`Settings`] and the [`Events`] with this one.
 //!
@@ -183,6 +200,7 @@ use crate::record::Fix;
 use crate::record::Health;
 use crate::record::RaimAbility;
 use crate::record::RaimSolution;
+use crate::record::ReceiverMode;
 use crate::record::Record;
 use crate::record::SATELLITES;
 use crate::record::Satellite;
@@ -237,6 +255,10 @@ pub struct Options {
     /// ([`saved`]).  `None` for one that powers
     /// up as it left the factory and waits to be told.
     pub saved: Option<SavedConfiguration>,
+    /// Whether the source of its records commands its receiver, which
+    /// decides what its status reports of position hold
+    /// ([module](self)).
+    pub receiver: ReceiverControl,
 }
 
 impl Options {
@@ -245,7 +267,36 @@ impl Options {
         eight_on_ea: None,
         deaf: false,
         saved: None,
+        receiver: ReceiverControl::Uncommanded,
     };
+}
+
+/// Whether the source of an engine's records commands its receiver,
+/// set when the engine is made: what its status reports of position
+/// hold goes by ([module](self)).  An Oncore's [`Options::receiver`],
+/// a GT-74's [`furuno::Engine::with_receiver`].
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ReceiverControl {
+    /// The source does not command its receiver, as one listened to, a
+    /// recording or the fake receiver: the status holds the position
+    /// as the engine's settings do.
+    #[default]
+    Uncommanded,
+    /// The source's owner passes the image's commands on to its
+    /// receiver: the status holds the position only while the record's
+    /// receiver does, one whose mode is not known taken to navigate.
+    Commanded,
+}
+
+impl ReceiverControl {
+    /// Whether the status reports the position held, `set` being
+    /// whether the settings hold it.
+    const fn holds(self, set: bool, record: &Record) -> bool {
+        match self {
+            Self::Uncommanded => set,
+            Self::Commanded => matches!(record.receiver_mode, ReceiverMode::Holding),
+        }
+    }
 }
 
 /// How long a self-test takes to answer, in milliseconds: within the
@@ -1628,28 +1679,33 @@ impl Engine {
     }
 
     /// Whether the position status and Time RAIM report the position
-    /// held, as `@@At` set it.  [`Self::place`] goes by the command
-    /// alone.
-    fn holds(&self) -> bool {
-        self.state.store.holding()
+    /// held: as `@@At` set it, or from a source whose receiver is
+    /// commanded, as the record's receiver does ([`ReceiverControl`]).
+    fn holds(&self, record: &Record) -> bool {
+        self.options
+            .receiver
+            .holds(self.state.store.holding(), record)
     }
 
-    /// The position reported: the one held, when holding, else the
-    /// record's, and while it has none, the one `@@Ad`, `@@Ae` and
-    /// `@@Af` gave to start from (VP pp. 17 and 25).
+    /// The position reported: from a source whose receiver is
+    /// commanded, the record's, the receiver holding where it holds;
+    /// else the one held, when `@@At` holds it, else the record's; and
+    /// while the record has none, the one held, when held, else the one
+    /// `@@Ad`, `@@Ae` and `@@Af` gave to start from (VP pp. 17 and 25).
     fn place(&self, record: &Record) -> Place {
-        if self.state.store.holding() {
-            return self.state.store.held_position(Self::separation(record));
-        }
-        record.position.map_or_else(
-            || Place::of(self.state.initial, 0),
-            |position| Place {
+        let commanded = self.options.receiver == ReceiverControl::Commanded;
+        match record.position {
+            Some(position) if commanded || !self.state.store.holding() => Place {
                 latitude: position.latitude.0,
                 longitude: position.longitude.0,
                 ellipsoid: position.ellipsoid.0,
                 mean_sea_level: position.mean_sea_level.0,
             },
-        )
+            _ if self.state.store.holding() => {
+                self.state.store.held_position(Self::separation(record))
+            }
+            _ => Place::of(self.state.initial, 0),
+        }
     }
 
     /// `@@Af` (VP p. 25): a height given, or the current one asked, is
@@ -1855,7 +1911,7 @@ impl Engine {
         let position = record.dops.map_or(0, |dops| dops.position.0);
         let horizontal = record.dops.map_or(0, |dops| dops.horizontal.0);
         let three_d = position <= self.state.store.xdop_threshold();
-        match (self.holds(), tracked, record.fix) {
+        match (self.holds(record), tracked, record.fix) {
             (true, _, _) | (false, _, Fix::None) => NONE,
             (false, _, Fix::Propagated) => Solution {
                 status: STATUS_POSITION_PROPAGATE,
@@ -2274,10 +2330,10 @@ impl Engine {
     }
 
     /// What Time RAIM can do with `tracked` satellites (VP p. 106).
-    fn traim_ability(&self, tracked: usize) -> u8 {
+    fn traim_ability(&self, record: &Record, tracked: usize) -> u8 {
         let limit = self.state.traim.alarm_limit;
         match TRAIM_NEEDS.iter().find(|need| limit >= need.from) {
-            Some(need) if tracked >= need.isolate && self.holds() => TRAIM_ISOLATION,
+            Some(need) if tracked >= need.isolate && self.holds(record) => TRAIM_ISOLATION,
             Some(need) if tracked >= need.detect => TRAIM_DETECTION,
             _ => TRAIM_NEITHER,
         }
@@ -2295,9 +2351,9 @@ impl Engine {
     /// limit nor which satellites the engine was set to track.  Out of
     /// position hold, it can only detect (UT p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
-        let holding = self.holds();
+        let holding = self.holds(record);
         let on = self.state.traim.algorithm;
-        let able = self.traim_ability(tracked);
+        let able = self.traim_ability(record, tracked);
         match record.derived.raim {
             None => TraimResult {
                 solution: TRAIM_SOLUTION_UNKNOWN,

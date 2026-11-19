@@ -11,6 +11,7 @@ use crate::engine::ALERT_PERIOD;
 use crate::engine::Engine;
 use crate::engine::Options;
 use crate::engine::Output;
+use crate::engine::ReceiverControl;
 use crate::engine::SELF_TEST;
 use crate::engine::event::Event;
 use crate::engine::event::Events;
@@ -114,6 +115,7 @@ use crate::record::Position;
 use crate::record::Raim;
 use crate::record::RaimAbility;
 use crate::record::RaimSolution;
+use crate::record::ReceiverMode;
 use crate::record::Record;
 use crate::record::Satellite;
 use crate::record::SatelliteFlag;
@@ -1213,6 +1215,202 @@ fn an_engine_saved_as_a_58503a_leaves_it_sends_unasked() {
     // Time RAIM on, at an alarm limit of 10, the pulse always (VP
     // p. 140).
     assert_eq!(traim[HEADER + 1..HEADER + 5], [1, 0, 10, 1]);
+}
+
+/// The receiver status bits of a 3D fix and of position hold (VP
+/// p. 73).
+const STATUS_3D: u8 = 0x20;
+const STATUS_HOLD: u8 = 0x08;
+/// `@@En`'s Time RAIM status for isolation and for detection (VP
+/// p. 141).
+const TRAIM_ISOLATION: u8 = 0;
+const TRAIM_DETECTION: u8 = 1;
+
+/// [`full`] with its receiver in `mode`: in position hold, with a fix of
+/// time alone.
+fn in_mode(mode: ReceiverMode) -> Record {
+    let mut record = full();
+    record.receiver_mode = mode;
+    if mode == ReceiverMode::Holding {
+        record.fix = Fix::TimeOnly;
+    }
+    record
+}
+
+/// The receiver status and the latitude of the `@@Ea` an eight-channel
+/// engine answers with for `record` (VP pp. 124 to 126).
+fn status_of(engine: &mut Engine, record: &Record) -> (u8, i32) {
+    let frames = ask(engine, record, EA_POSITION_STATUS, &[0]);
+    let data = only(&frames, EA_POSITION_STATUS);
+    let latitude = data[11..15].try_into().expect("four bytes");
+    (data[68], i32::from_be_bytes(latitude))
+}
+
+/// [`full`]'s latitude, and the one [`hold_position`] holds, in
+/// milliarcseconds.
+const FOUND_LATITUDE: i32 = 134_372_100;
+const HELD_LATITUDE: i32 = 123_456_789;
+
+/// `@@As`'s data for a position away from [`full`]'s (VP p. 53).
+fn hold_position() -> Vec<u8> {
+    [
+        &HELD_LATITUDE.to_be_bytes()[..],
+        &(-98_765_432_i32).to_be_bytes()[..],
+        &1234_i32.to_be_bytes()[..],
+        &[1],
+    ]
+    .concat()
+}
+
+/// What `@@At` answers a query with: the command alone.
+fn hold_set(engine: &mut Engine, record: &Record) -> u8 {
+    let frames = ask(engine, record, AT_POSITION_HOLD, &[0xff]);
+    only(&frames, AT_POSITION_HOLD)[0]
+}
+
+/// An engine of `identity` whose source's receiver is `receiver`,
+/// fixing.
+fn fixing_with(identity: &'static Identity, receiver: ReceiverControl) -> Engine {
+    let mut options = Options::DEFAULT;
+    options.receiver = receiver;
+    let mut engine = Engine::new(identity, options).expect("an engine that powers up");
+    ask(&mut engine, &Record::EMPTY, CG_FIX_MODE, &FIX);
+    engine
+}
+
+/// From a source whose receiver is commanded, the position status
+/// holds the position only while the record's receiver does, one whose
+/// mode is not known navigating, at the record's position, whatever
+/// `@@At` or `@@Cf` set; `@@At`'s answer is the command alone.
+#[test]
+fn a_commanded_receiver_status_holds_as_the_receiver_does() {
+    let holding = in_mode(ReceiverMode::Holding);
+    let navigating = in_mode(ReceiverMode::Navigating);
+    let unknown = in_mode(ReceiverMode::Unknown);
+    let hold_position = hold_position();
+
+    // Never commanded, its receiver found holding.
+    let mut engine = fixing_with(&VP_EIGHT, ReceiverControl::Commanded);
+    assert_eq!(
+        status_of(&mut engine, &holding),
+        (STATUS_HOLD, FOUND_LATITUDE)
+    );
+    assert_eq!(hold_set(&mut engine, &holding), 0);
+
+    let mut engine = fixing_with(&VP_EIGHT, ReceiverControl::Commanded);
+    ask(&mut engine, &navigating, AS_HOLD_POSITION, &hold_position);
+    ask(&mut engine, &navigating, AT_POSITION_HOLD, &[1]);
+    assert_eq!(hold_set(&mut engine, &navigating), 1);
+    assert!(engine.settings().position_hold);
+    assert_eq!(
+        status_of(&mut engine, &navigating),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+    assert_eq!(
+        status_of(&mut engine, &holding),
+        (STATUS_HOLD, FOUND_LATITUDE)
+    );
+    assert_eq!(
+        status_of(&mut engine, &unknown),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+
+    ask(&mut engine, &holding, AT_POSITION_HOLD, &[0]);
+    assert_eq!(hold_set(&mut engine, &holding), 0);
+    assert_eq!(
+        status_of(&mut engine, &holding),
+        (STATUS_HOLD, FOUND_LATITUDE)
+    );
+    assert_eq!(
+        status_of(&mut engine, &navigating),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+
+    ask(&mut engine, &navigating, AT_POSITION_HOLD, &[1]);
+    // `@@Cf` puts position hold off, and idles a VP.
+    ask(&mut engine, &holding, CF_SET_TO_DEFAULTS, &[]);
+    ask(&mut engine, &holding, CG_FIX_MODE, &FIX);
+    assert!(!engine.settings().position_hold);
+    assert_eq!(
+        status_of(&mut engine, &holding),
+        (STATUS_HOLD, FOUND_LATITUDE)
+    );
+    assert_eq!(
+        status_of(&mut engine, &navigating),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+    assert_eq!(
+        status_of(&mut engine, &unknown),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+}
+
+/// From a source whose receiver is not commanded, the position status
+/// holds the position as `@@At` set it, at `@@As`'s position, whatever
+/// the record's receiver does.
+#[test]
+fn an_uncommanded_receiver_status_holds_as_set() {
+    let holding = in_mode(ReceiverMode::Holding);
+    let navigating = in_mode(ReceiverMode::Navigating);
+    let hold_position = hold_position();
+    let mut engine = fixing_with(&VP_EIGHT, ReceiverControl::Uncommanded);
+    assert_eq!(
+        status_of(&mut engine, &holding),
+        (STATUS_3D, FOUND_LATITUDE)
+    );
+    ask(&mut engine, &holding, AS_HOLD_POSITION, &hold_position);
+    ask(&mut engine, &holding, AT_POSITION_HOLD, &[1]);
+    assert_eq!(
+        status_of(&mut engine, &navigating),
+        (STATUS_HOLD, HELD_LATITUDE)
+    );
+}
+
+/// Time RAIM can isolate only in position hold (VP p. 106): from a
+/// source whose receiver is commanded, while the record's receiver
+/// holds; from one not commanded, as the settings hold, which a 58503A's
+/// configuration does not.
+#[test]
+fn time_raim_isolates_as_the_status_holds() {
+    for (receiver, mode, status, ability) in [
+        (
+            ReceiverControl::Commanded,
+            ReceiverMode::Holding,
+            STATUS_HOLD,
+            TRAIM_ISOLATION,
+        ),
+        (
+            ReceiverControl::Commanded,
+            ReceiverMode::Navigating,
+            STATUS_3D,
+            TRAIM_DETECTION,
+        ),
+        (
+            ReceiverControl::Commanded,
+            ReceiverMode::Unknown,
+            STATUS_3D,
+            TRAIM_DETECTION,
+        ),
+        (
+            ReceiverControl::Uncommanded,
+            ReceiverMode::Holding,
+            STATUS_3D,
+            TRAIM_DETECTION,
+        ),
+    ] {
+        let record = in_mode(mode);
+        let mut options = Options::DEFAULT;
+        options.saved = Some(CONFIGURATION_58503A);
+        options.receiver = receiver;
+        let mut engine = Engine::new(&VP_EIGHT, options).expect("an engine that powers up");
+        let mut sent = Sent::default();
+        engine.second(&record, NOW, &mut sent);
+        let [position, traim] = &sent.0[..] else {
+            panic!("{} frames, not two", sent.0.len());
+        };
+        assert_eq!(position[HEADER + 68], status, "{receiver:?} {mode:?}");
+        assert_eq!(traim[HEADER + 18], ability, "{receiver:?} {mode:?}");
+    }
 }
 
 /// What it is saved as, an engine reports as its settings.

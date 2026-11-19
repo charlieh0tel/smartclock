@@ -1619,7 +1619,8 @@ stands in for one.
   depending on no other crate here, so it can later be published as a
   general UBX crate from a repository of its own; and
   `smartclock-gps-ublox`, which maps its messages to records: a trait
-  per message type in `record`, and the assembler, using the core's
+  per message type in `record`, and a public `const fn` for a value a
+  caller maps too, a satellite's health (`satellite_health`), and the assembler, using the core's
   time arithmetic.  The thin crate re-exports nothing, so a caller
   takes the codec's types from the codec.  Both are `no_std` without
   allocation too, and `make check-no-std` builds them for the same

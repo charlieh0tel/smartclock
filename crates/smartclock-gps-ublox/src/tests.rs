@@ -64,6 +64,7 @@ use smartclock_ubx::nav::LeapChange as UbxLeapChange;
 use smartclock_ubx::nav::LeapNotice;
 use smartclock_ubx::nav::NavPvt;
 use smartclock_ubx::nav::NavTimeGps;
+use smartclock_ubx::nav::SatelliteHealth;
 use smartclock_ubx::nav::nav_sat_length;
 use smartclock_ubx::subframe::PREAMBLE;
 use smartclock_ubx::subframe::WORDS;
@@ -78,6 +79,7 @@ use crate::record::NavPosEcefRecord;
 use crate::record::NavPvtRecord;
 use crate::record::NavSatRecord;
 use crate::record::NavTimeGpsRecord;
+use crate::record::satellite_health;
 
 /// Room for a `NAV-SAT` of every GPS satellite.
 type Bench = Assembler<{ nav_sat_length(32) }>;
@@ -1878,4 +1880,14 @@ fn the_almanac_week_is_resolved_near_the_time() {
         one(&mut Bench::near(GpsWeek::new(2047)), &pages(0)),
         almanac(2048, &[1], &[1])
     );
+}
+
+#[test]
+fn a_satellite_health_maps_to_the_records() {
+    assert_eq!(satellite_health(SatelliteHealth::Healthy), Health::Healthy);
+    assert_eq!(
+        satellite_health(SatelliteHealth::Unhealthy),
+        Health::Unhealthy
+    );
+    assert_eq!(satellite_health(SatelliteHealth::Unknown), Health::Unknown);
 }

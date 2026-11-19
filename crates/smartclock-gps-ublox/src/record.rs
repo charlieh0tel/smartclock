@@ -296,8 +296,10 @@ const QUALITY_CODE_LOCKED: u8 = 4;
 /// if out of range" of 90 degrees either way (p. 381).
 const ELEVATIONS: core::ops::RangeInclusive<i8> = 0..=90;
 
-/// A satellite's health as a record holds it.
-const fn health(health: SatelliteHealth) -> Health {
+/// A satellite's health, `NAV-SAT`'s `health` (p. 382), as a record
+/// holds it.
+#[must_use]
+pub const fn satellite_health(health: SatelliteHealth) -> Health {
     match health {
         SatelliteHealth::Healthy => Health::Healthy,
         SatelliteHealth::Unhealthy => Health::Unhealthy,
@@ -335,7 +337,7 @@ impl SatelliteInfoRecord for SatelliteInfo {
             _ => Tracking::Ephemeris,
         };
         satellite.used = self.used;
-        satellite.health = health(self.health);
+        satellite.health = satellite_health(self.health);
         satellite.ephemeris = self.ephemeris;
         Some(satellite)
     }

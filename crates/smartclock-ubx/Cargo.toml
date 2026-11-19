@@ -1,6 +1,6 @@
 [package]
 name = "smartclock-ubx"
-description = "A u-blox receiver's UBX framing and messages, every field decoded, for a microcontroller or a host: a codec alone, depending on no other crate of this workspace"
+description = "A u-blox receiver's UBX framing and messages both ways, every field decoded and the configuration messages encoded, for a microcontroller or a host: a codec alone, depending on no other crate of this workspace"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

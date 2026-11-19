@@ -1,5 +1,6 @@
-//! UBX framing: a frame's layout, its checksum, an encoder and a
-//! deframer ("Resynchronizing" in the crate's documentation).
+//! UBX framing: a frame's layout, its checksum, an encoder, a poll, a
+//! frame's message read back, and a deframer ("Resynchronizing" in the
+//! crate's documentation).
 
 use core::fmt;
 
@@ -94,6 +95,9 @@ pub enum EncodeError {
     /// A payload longer than a frame's 16-bit length can say.
     #[error("a payload of {0} bytes is more than a frame can hold")]
     TooLong(usize),
+    /// More blocks than a message's one-byte count can say.
+    #[error("{0} blocks are more than a message can count")]
+    TooManyBlocks(usize),
     /// The output buffer is shorter than the frame.
     #[error(transparent)]
     NoRoom(#[from] NoRoom),
@@ -108,6 +112,33 @@ pub enum EncodeError {
 /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
 pub fn encode(id: MessageId, payload: &[u8], out: &mut [u8]) -> Result<usize, EncodeError> {
     encode_with(id, payload.len(), out, |data| data.bytes(0, payload))
+}
+
+/// Writes a poll request into `out`, a frame of `id` with no payload,
+/// and returns its length: the receiver answers with the message,
+/// filled (section 32.5.2, p. 172).  Some messages are polled with a
+/// parameter instead, such as [`CfgPrtPoll`](crate::cfg::CfgPrtPoll),
+/// and a command such as `CFG-CFG` is not polled.
+///
+/// # Errors
+///
+/// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
+pub fn poll(id: MessageId, out: &mut [u8]) -> Result<usize, EncodeError> {
+    encode(id, &[], out)
+}
+
+/// Which message an encoded frame is, from its first four bytes;
+/// `None` if they are not the sync bytes and two more.  So a caller
+/// matches an acknowledgment's [`Ack::message`](crate::ack::Ack::message) to the
+/// frame it sent.
+#[must_use]
+pub fn message_id(frame: &[u8]) -> Option<MessageId> {
+    match *frame {
+        [first, second, class, id, ..] if [first, second] == SYNC => {
+            Some(MessageId::new(class, id))
+        }
+        _ => None,
+    }
 }
 
 /// Writes a frame of a payload of `length` bytes into `out`, the

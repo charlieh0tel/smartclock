@@ -39,6 +39,15 @@ pub struct Millimeters<T>(pub T);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct MillimetersPerSecond<T>(pub T);
 
+/// A length in meters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Meters<T>(pub T);
+
+/// An area in square centimeters, 1e-4 square meter: a variance of a
+/// length.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct SquareCentimeters(pub u32);
+
 /// A length in centimeters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Centimeters<T>(pub T);
@@ -58,6 +67,10 @@ pub struct TenMicrodegrees<T>(pub T);
 /// An angle in hundredths of a degree: a magnetic declination.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct HundredthDegrees<T>(pub T);
+
+/// A dimensionless figure in tenths: a dilution of precision's mask.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Tenths(pub u16);
 
 /// A dimensionless figure in hundredths: a dilution of precision.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]

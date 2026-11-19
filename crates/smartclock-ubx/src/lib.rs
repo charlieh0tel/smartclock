@@ -1,9 +1,10 @@
-//! u-blox UBX framing and the messages a caller reads from a u-blox
-//! receiver, every field decoded.
+//! u-blox UBX framing, both ways: the messages a caller reads from a
+//! u-blox receiver, every field decoded, and those it sends one to set
+//! it up, each encoded whole.
 //!
 //! A codec alone: it depends on no other crate of this workspace, so a
 //! microcontroller with a u-blox module and a host reading a recording
-//! decode with the same code.  `smartclock-gps-ublox` makes its
+//! frame and unframe with the same code.  `smartclock-gps-ublox` makes its
 //! messages into `smartclock-gps` records.  It is `no_std`, does not
 //! allocate and does no floating-point arithmetic.
 //!
@@ -29,9 +30,9 @@
 //!   taken as the start.
 //! - A length is believed only as far as it can be checked before the
 //!   checksum.  For a message of [`MESSAGES`](message::MESSAGES) it
-//!   must be that message's own, for one of a header and blocks no
-//!   more blocks than its header's one-byte count can give, or the
-//!   frame is
+//!   must be that message's own, or for a configuration message a poll
+//!   request's, for one of a header and blocks no more blocks than its
+//!   header's one-byte count can give, or the frame is
 //!   [`FrameError::BadLength`](frame::FrameError::BadLength); for any
 //!   message it must fit the deframer's buffer, or it is
 //!   [`FrameError::Overflow`](frame::FrameError::Overflow).  Either is
@@ -49,7 +50,7 @@
 //!
 //! [`Message::parse`](message::Message::parse) decodes a frame of
 //! [`MESSAGES`](message::MESSAGES), each by a type in its class's
-//! module ([`nav`], [`rxm`], [`mon`], [`tim`], [`ack`]).  A decoder
+//! module ([`nav`], [`rxm`], [`mon`], [`tim`], [`ack`], [`cfg`](mod@cfg)).  A decoder
 //! keeps every field of its message, in the message's own units
 //! ([`units`]).  A message is decoded only at its exact length: a
 //! fixed one's, or, for one of a header and blocks, a length whose
@@ -63,6 +64,23 @@
 //!
 //! A GPS satellite's own navigation data, the subframes `RXM-SFRBX`
 //! carries, is decoded by [`subframe`], to IS-GPS-200N.
+//!
+//! # Configuring
+//!
+//! A message a caller sends is a struct of its fields in [`cfg`](mod@cfg) or
+//! [`mga`], const-constructible, whose `encode` writes the whole frame,
+//! sync bytes to checksum, into the caller's slice and returns its
+//! length, with no allocation.  It writes the values it holds: which
+//! to send, and any state carried from one message to the next, is
+//! the caller's.  A field of a list of values is an enum that keeps a
+//! value the document does not give; a bit field is its bits, with its
+//! named bits and field values as constants, so a reserved bit a
+//! caller sets is sent too.  [`poll`](frame::poll) asks for a message,
+//! and [`message_id`](frame::message_id) reads back which message a
+//! frame is, to match the receiver's `UBX-ACK-ACK` or `UBX-ACK-NAK` to
+//! it.  The answers to the polls of `CFG-TMODE2` and `CFG-TP5` are
+//! decoded by [`Message::parse`](message::Message::parse), into the
+//! same structs.
 //!
 //! # Streaming
 //!
@@ -90,10 +108,15 @@
 
 #![no_std]
 
+#[macro_use]
+mod macros;
+
 pub mod ack;
+pub mod cfg;
 mod fields;
 pub mod frame;
 pub mod message;
+pub mod mga;
 pub mod mon;
 pub mod nav;
 pub mod rxm;

@@ -1614,7 +1614,8 @@ stands in for one.
   rather than a feature, so the line between what the receivers use
   and what feeds them is a crate's edge, and no build of the core
   carries them.  They are two (owner, 2026-11-18): `smartclock-ubx`, a
-  codec alone (framing, the decoders, their units and enums, ACK),
+  codec alone (framing both ways, the decoders, the encoders of the
+  configuration messages, their units and enums, ACK),
   depending on no other crate here, so it can later be published as a
   general UBX crate from a repository of its own; and
   `smartclock-gps-ublox`, which maps its messages to records: a trait
@@ -1665,16 +1666,32 @@ stands in for one.
     `SmartClock` that surveys its position (58503B, Z3816A) never
     locked.  With no DOPs the engine gives the 3D fix with a DOP of 0,
     and `@@Bk`/`@@Ek` give every DOP as 0, `gDOP` and `tDOP` too.
-  - *One UBX parser, shared.*  A microcontroller board with a u-blox
+  - *One UBX codec, shared.*  A microcontroller board with a u-blox
     module (a Cortex-M0, little RAM, small stack frames) reads its
     module with `smartclock-ubx`'s framing and decoders rather than a parser
     of its own, and hosts read recordings with the same code.  So the
     decoders are complete, not cut to what a record holds: every field
     of each message, in the message's own units, with the record's
     view of a field a trait method of `smartclock-gps-ublox`'s
-    `record`.  The board's configuration of
-    its module, the `CFG-*` messages it sends, stays the board's: this
-    crate decodes and builds no configuration.
+    `record`.
+  - *The crate frames both ways* (owner, 2026-11-19: the shared crate
+    does all UBX framing and unframing).  It encodes the messages a
+    caller sends to set a receiver up, `CFG-PRT` (a UART's), `CFG-TP5`
+    (version 1), `CFG-MSG` (the current port's), `CFG-ANT`, `CFG-RATE`,
+    `CFG-RXM`, `CFG-GNSS`, `CFG-NAV5`, `CFG-NAVX5` (version 2),
+    `CFG-TMODE2`, `CFG-DAT` (a user datum), `CFG-CFG` (with its device
+    mask) and `MGA-INI-POS_LLH`: each a const-constructible struct of
+    its fields whose `encode` writes the whole frame into the caller's
+    slice, with no allocation.  Beside them are polls, a frame's class
+    and ID read back to match the receiver's acknowledgment to it, and
+    the answers to the polls of `CFG-TMODE2` and `CFG-TP5` decoded into
+    the same structs.  Which values are sent, and when, stays the
+    caller's: an encoder writes the fields it holds, so policy, such as
+    which datum an altitude is of or what one message carries over from
+    another, is not in it.  A bit field is kept as its bits, with its
+    named bits as constants, so a caller that moves its own frames to
+    the encoders sends the same bytes, a reserved bit it sets
+    included; tests hold the encoders to such frames, byte for byte.
   - *Floating point is kept as bits.*  `RXM-RAWX` gives its
     measurements as `R4` and `R8`; they are decoded to their bits and
     the caller converts.  A Cortex-M0 has no floating-point unit, and
@@ -1728,7 +1745,8 @@ stands in for one.
   - *A length is not followed on its own word.*  A UBX frame says its
     own length, up to 65535 bytes, and the checksum that would vouch
     for it comes after them.  A message the crate decodes must have
-    its documented length, of no more blocks than its header's count
+    its documented length, or for a configuration message a poll
+    request's, of no more blocks than its header's count
     can give, and any other must fit the buffer, or the
     frame is dropped at its header and the next start looked for from
     there.

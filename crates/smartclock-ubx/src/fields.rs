@@ -54,6 +54,19 @@ impl Fields<'_> {
     }
 }
 
+/// A payload being written, by its fields' byte offsets: the writing
+/// counterpart of [`Fields`], little-endian likewise.  It starts
+/// zeroed, so a reserved field left alone is zero, as an input
+/// message's must be (section 32.3.2, p. 169).
+#[derive(Debug)]
+pub(crate) struct Writer<'a>(pub(crate) &'a mut [u8]);
+
+impl Writer<'_> {
+    pub(crate) fn bytes(&mut self, offset: usize, field: &[u8]) {
+        self.0[offset..offset + field.len()].copy_from_slice(field);
+    }
+}
+
 /// `width` bits of `value` from bit `shift` up: a bit field of an `X`
 /// field.
 pub(crate) const fn bit_field(value: u32, shift: u32, width: u32) -> u8 {

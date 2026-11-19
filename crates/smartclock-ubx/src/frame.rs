@@ -5,6 +5,7 @@ use core::fmt;
 
 use thiserror::Error;
 
+use crate::fields::Writer;
 use crate::message::LONGEST_PART;
 use crate::message::Layout;
 use crate::message::payload_length;
@@ -106,17 +107,31 @@ pub enum EncodeError {
 /// [`EncodeError::TooLong`] for a payload over 65535 bytes, and
 /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
 pub fn encode(id: MessageId, payload: &[u8], out: &mut [u8]) -> Result<usize, EncodeError> {
-    let length = u16::try_from(payload.len()).map_err(|_| EncodeError::TooLong(payload.len()))?;
-    let needed = OVERHEAD + payload.len();
+    encode_with(id, payload.len(), out, |data| data.bytes(0, payload))
+}
+
+/// Writes a frame of a payload of `length` bytes into `out`, the
+/// payload by `fill` in place, from zero, and returns the frame's
+/// length.  Errors as [`encode`]'s.
+pub(crate) fn encode_with(
+    id: MessageId,
+    length: usize,
+    out: &mut [u8],
+    fill: impl FnOnce(&mut Writer<'_>),
+) -> Result<usize, EncodeError> {
+    let [low, high] = u16::try_from(length)
+        .map_err(|_| EncodeError::TooLong(length))?
+        .to_le_bytes();
+    let needed = OVERHEAD + length;
     let room = out.len();
     let frame = out.get_mut(..needed).ok_or(NoRoom { needed, room })?;
     let (sync, rest) = frame.split_at_mut(SYNC.len());
-    let (body, sum) = rest.split_at_mut(HEADER + payload.len());
+    let (body, sum) = rest.split_at_mut(HEADER + length);
     let (header, data) = body.split_at_mut(HEADER);
-    let [low, high] = length.to_le_bytes();
     sync.copy_from_slice(&SYNC);
     header.copy_from_slice(&[id.class, id.id, low, high]);
-    data.copy_from_slice(payload);
+    data.fill(0);
+    fill(&mut Writer(data));
     sum.copy_from_slice(&checksum(body));
     Ok(needed)
 }

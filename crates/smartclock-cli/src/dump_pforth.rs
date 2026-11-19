@@ -20,7 +20,7 @@ use crate::image::Image;
 /// A kernel word every image's dictionary holds, to find it by.
 const KERNEL_ANCHOR: &str = "halt";
 /// A diagnostic word every image's table holds, to find it by.
-const DIAGNOSTIC_ANCHOR: &str = "loop_time";
+const DIAGNOSTIC_ANCHOR: &str = "dmessage";
 
 /// Where a dictionary entry keeps the link to the entry before it,
 /// zero for the first.

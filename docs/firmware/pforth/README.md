@@ -142,7 +142,7 @@ records:
     +4   28 bytes  the name, NUL-padded
     +32  6 bytes   not read here
 
-It finds the record named `loop_time`, which every image has, and takes
+It finds the record named `dmessage`, which every image has, and takes
 records before and after it for as long as each has an even code
 address inside the image and a padded name.
 

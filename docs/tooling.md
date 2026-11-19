@@ -31,6 +31,12 @@ receiver.
 | `smartclock-cli dump-pforth` | every word an image's pForth console knows ([`firmware/pforth/README.md`](firmware/pforth/README.md)) |
 | `smartclock-cli dump-oncore` | the Oncore messages an image knows and what sends them ([`firmware/oncore/README.md`](firmware/oncore/README.md)) |
 
+## Simulating the loop
+
+| Tool | What it is |
+| ---- | ---------- |
+| `smartclock-cli simulate-loop` | the disciplining loop's TI and EFC for a phase step, frequency steps or a drift, at an image's τ and G, beside a snapshot log's ([`firmware/loop.md`](firmware/loop.md#simulating-it)).  Needs no receiver |
+
 ## Decompiling and the rewrite
 
 | Tool | What it is |

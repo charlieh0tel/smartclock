@@ -827,6 +827,45 @@ skips the update, the EFC left as it was: without a hold cause if a
 second in it was questionable, else with the Z3805A's 4 or 8
 (`0x44c0a` to `0x44c32`).
 
+## Simulating it
+
+`smartclock-cli simulate-loop` runs `pll_normal`'s update ("The
+loop") at an image's τ and G from `loop-constants.json`, closed around
+a model oscillator, against a disturbance, and prints TSV: the second,
+x̄ in nanoseconds (`ti_ns`, what the TI queries return) and u in
+percent (`efc_percent`, `:EFControl:RELative?`'s scale, 2²⁰ counts
+from −100 to +100 %).  The law is the tests' (`smartclock::discipline`,
+"How this is checked"), in double precision.  Each second the time
+interval moves by y − S·(u − u₀): y the free-running fractional
+frequency offset, u₀ the EFC the loop starts at, `--efc`, and S the
+oscillator's sensitivity, `--sensitivity`, in fractional frequency an
+EFC percent and G's sign, by default G's.  A change of u acts from the
+second after the update.  The loop starts at rest, its time interval 0.
+
+    smartclock-cli simulate-loop --image 58503a-3704 --seconds 10000 \
+        --efc 35 --frequency-step 600:-1e-9
+
+Disturbances, any number of each, at AT seconds: `--phase-step
+AT:NANOSECONDS`, `--frequency-step AT:SIZE` and `--drift AT:RATE`, a
+rate a day.  `--aging-slope`, EFC percent a day, feeds a constant d to
+the integrator in place of the aging fit's, clamped to ±M.  An image
+with two τ or two G, by a switch or an oscillator type, needs `--tau`
+or `--gain`.  With `--log` and `--from`, the latest row of a snapshot
+TSV with columns `at` (nanoseconds since the Unix epoch),
+`time_interval_s` and `efc_percent` at each update, within a minute,
+is printed beside it, for comparing a logged receiver with the law.
+
+From the law, as `crates/smartclock/src/discipline.rs`'s tests check:
+a frequency step Δy moves u by Δy / S and the time interval back to 0;
+a drift D, held by the integrator, stands the time interval at
+f = 4·G·τ²·(D/S − d/2700), since k·f + d/2700 must climb by D/S a
+second; a phase step leaves u where it was.  What it leaves out:
+`startup_pll`, holdover and the aging fit itself; c·s; the EFC's clamp
+and the DAC's dither; the counter's noise.  The Z3815A, 58503B and
+Z3805A 1.01.03 ease the aging slope in, which a constant d does not
+model, and the Z3817A's G moves with u and its integral's step with
+the block ("In every image").
+
 ## How this is checked
 
 Until October 2026 the tests compared this document with a copy of

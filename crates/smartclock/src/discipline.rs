@@ -323,13 +323,119 @@ pub fn update_matrix(tau: f64) -> [[f64; 3]; 3] {
 #[cfg(test)]
 mod tests {
     use super::ClosedLoop;
+    use super::Disturbance;
+    use super::ENTRY_SECONDS;
+    use super::INTEGRAL_SCALE;
+    use super::Update;
+
+    /// The 58503A's G, fractional frequency a count.
+    const GAIN: f64 = 6.25e-13;
+
+    /// The 58503A's τ, seconds.
+    const TAU: f64 = 700.0;
+
+    /// Long enough for the slow pole, near 2.7·τ, to die away.
+    const SETTLE: u32 = 40 * 700;
+
+    /// A loop with the 58503A's constants at EFC 0, its oscillator `S`
+    /// times as sensitive as G says.
+    fn closed(ratio: f64, slope: f64) -> ClosedLoop {
+        ClosedLoop::new(GAIN, TAU, ratio * GAIN, 0.0, slope)
+    }
+
+    fn last(updates: &[Update]) -> Update {
+        *updates.last().expect("an update")
+    }
 
     #[test]
     fn a_loop_at_rest_stays_there() {
-        let mut closed = ClosedLoop::new(6.25e-13, 700.0, 6.25e-13, 1000.0, 0.0);
+        let mut closed = ClosedLoop::new(GAIN, TAU, GAIN, 1000.0, 0.0);
         for update in closed.run(&[], 3600) {
             assert!(update.interval.abs() < f64::EPSILON);
             assert!((update.efc - 1000.0).abs() < f64::EPSILON);
+        }
+    }
+
+    #[test]
+    fn a_phase_step_is_removed_and_the_efc_comes_back() {
+        let step = 100e-9;
+        let updates = closed(1.0, 0.0).run(&[Disturbance::PhaseStep { at: 1, size: step }], SETTLE);
+        let final_update = last(&updates);
+        assert!(final_update.interval.abs() < 1e-3 * step);
+        assert!(final_update.efc.abs() < 1e-3 * step / GAIN / TAU);
+    }
+
+    /// The phase runs off at the step's rate until the loop answers,
+    /// sooner and less far the more sensitive the oscillator, then
+    /// comes back to zero, the EFC having taken the step up.
+    #[test]
+    fn a_frequency_step_peaks_and_the_efc_takes_it_up() {
+        let size = -1e-9;
+        let mut previous: Option<Update> = None;
+        for ratio in [0.5, 1.0, 2.0] {
+            let updates =
+                closed(ratio, 0.0).run(&[Disturbance::FrequencyStep { at: 0, size }], SETTLE);
+            let peak = *updates
+                .iter()
+                .min_by(|a, b| a.interval.total_cmp(&b.interval))
+                .expect("a peak");
+            assert!(
+                peak.interval < 0.0 && peak.interval > size * 4.0 * TAU,
+                "S/G {ratio}: peak {:e}",
+                peak.interval
+            );
+            assert!(f64::from(peak.second) < 4.0 * TAU, "S/G {ratio}");
+            if let Some(previous) = previous {
+                assert!(peak.interval > previous.interval && peak.second < previous.second);
+            }
+            previous = Some(peak);
+            let final_update = last(&updates);
+            assert!(
+                final_update.interval.abs() < 1e-3 * peak.interval.abs(),
+                "S/G {ratio}: {:e} left",
+                final_update.interval
+            );
+            let taken = size / (ratio * GAIN);
+            assert!(
+                (final_update.efc / taken - 1.0).abs() < 1e-3,
+                "S/G {ratio}: EFC {} for {taken}",
+                final_update.efc
+            );
+        }
+    }
+
+    #[test]
+    fn steps_add() {
+        let first = Disturbance::FrequencyStep { at: 0, size: 1e-9 };
+        let second = Disturbance::FrequencyStep {
+            at: 3000,
+            size: -3e-9,
+        };
+        let both = closed(1.0, 0.0).run(&[first, second], 6000);
+        let alone = [first, second].map(|one| closed(1.0, 0.0).run(&[one], 6000));
+        for (index, update) in both.iter().enumerate() {
+            let sum = alone[0][index].interval + alone[1][index].interval;
+            assert!((update.interval - sum).abs() < 1e-15);
+        }
+    }
+
+    /// A drift D held by the integrator alone, k·f = D/S a second, stands
+    /// the error at f = 4·G·τ²·D/S, less what an aging slope d takes:
+    /// f = 4·G·τ²·(D/S − d/2700).
+    #[test]
+    fn a_drift_stands_the_error_where_the_law_puts_it() {
+        let rate = 1e-9 / 86_400.0;
+        let drift = [Disturbance::Drift { at: 0, rate }];
+        for ratio in [0.5, 1.0, 2.0] {
+            let standing = INTEGRAL_SCALE * GAIN * TAU * TAU * rate / (ratio * GAIN);
+            let error = last(&closed(ratio, 0.0).run(&drift, SETTLE)).interval;
+            assert!(
+                (error / standing - 1.0).abs() < 1e-3,
+                "S/G {ratio}: {error:e} for {standing:e}"
+            );
+            let slope = rate / (ratio * GAIN) * ENTRY_SECONDS;
+            let error = last(&closed(ratio, slope).run(&drift, SETTLE)).interval;
+            assert!(error.abs() < 1e-3 * standing, "S/G {ratio}: {error:e}");
         }
     }
 }

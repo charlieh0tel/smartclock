@@ -55,12 +55,12 @@
 //! [`MESSAGES`](message::MESSAGES), each by a type in its class's
 //! module ([`nav`], [`rxm`], [`mon`], [`tim`], [`ack`]).  A decoder
 //! keeps every field of its message, in the message's own units
-//! ([`units`] has those `smartclock-gps` lacks); where a record holds
-//! the same thing, a method gives it in the record's units, as
-//! [`NavPvt::fix`](nav::NavPvt::fix) does.  A message is decoded only
-//! at its exact length: a fixed one's, or, for one of a header and
-//! blocks, a length whose count of blocks is the count the header
-//! gives.  A field the document gives as floating point is kept as its
+//! ([`units`]), and no type of `smartclock-gps`; where a record holds
+//! the same thing, a trait of [`record`] gives it in the record's
+//! units, as [`NavPvtRecord::fix`](record::NavPvtRecord::fix) does.
+//! A message is decoded only at its exact length: a fixed one's, or,
+//! for one of a header and blocks, a length whose count of blocks is
+//! the count the header gives.  A field the document gives as floating point is kept as its
 //! bits, for a caller to convert.  Which satellite system's data a
 //! caller keeps is the caller's: the decoders give the system of each
 //! satellite and drop none.
@@ -135,7 +135,8 @@
 //!   DOPs.
 //! - **The receiver's mode** is position hold from the `NAV-PVT` whose
 //!   `fixType` is 5, the time-only fix, and navigating from one of a
-//!   2D or 3D fix ([`NavPvt::receiver_mode`](nav::NavPvt::receiver_mode)),
+//!   2D or 3D fix
+//!   ([`NavPvtRecord::receiver_mode`](record::NavPvtRecord::receiver_mode)),
 //!   and is kept through the epochs whose `NAV-PVT` gives no fix from
 //!   satellites, or that have none: position hold is the receiver's
 //!   configuration (section 25.1, p. 85), which losing its satellites
@@ -147,10 +148,11 @@
 //!   `NAV-TIMEGPS`'s `leapS` from a receiver that sends no `NAV-TIMELS`.
 //!   A leap second is `NAV-TIMELS`'s while its countdown is above zero,
 //!   placed by its week and day
-//!   ([`LeapNotice::event`](nav::LeapNotice::event)).  Once announced
-//!   it is remembered, and from its second on the record's offset is
-//!   the one it leaves whatever the receiver reports in that second,
-//!   the document not saying in which second `currLs` steps.
+//!   ([`LeapNoticeRecord::event`](record::LeapNoticeRecord::event)).
+//!   Once announced it is remembered, and from its second on the
+//!   record's offset is the one it leaves whatever the receiver reports
+//!   in that second, the document not saying in which second `currLs`
+//!   steps.
 //! - **Satellites** are `NAV-SAT`'s GPS ones with a known place in the
 //!   sky, those used in the fix first, and the lowest left out if there
 //!   are more than a record holds.  An epoch with a fix and no `NAV-SAT`
@@ -230,6 +232,7 @@ pub mod frame;
 pub mod message;
 pub mod mon;
 pub mod nav;
+pub mod record;
 pub mod rxm;
 pub mod subframe;
 pub mod tim;

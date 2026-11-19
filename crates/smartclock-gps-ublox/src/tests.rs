@@ -12,6 +12,7 @@ use crate::frame::Deframer;
 use crate::frame::EncodeError;
 use crate::frame::FrameError;
 use crate::frame::MessageId;
+use crate::frame::NoRoom;
 use crate::frame::OVERHEAD;
 use crate::frame::checksum;
 use crate::frame::encode;
@@ -34,13 +35,21 @@ use crate::message::RXM_RAWX;
 use crate::message::RXM_SFRBX;
 use crate::message::TIM_TP;
 use crate::message::payload_length;
+use crate::nav::LeapChange as UbxLeapChange;
 use crate::nav::LeapNotice;
 use crate::nav::nav_sat_length;
+use crate::record::LeapNoticeRecord;
+use crate::record::MonHwRecord;
+use crate::record::NavDopRecord;
+use crate::record::NavPosEcefRecord;
+use crate::record::NavPvtRecord;
+use crate::record::NavSatRecord;
+use crate::record::NavTimeGpsRecord;
 use crate::rxm::rxm_rawx_length;
 use crate::subframe::tests::Bits;
 use crate::subframe::tests::word_start;
+use crate::units;
 use crate::units::Picoseconds;
-use smartclock_gps::NoRoom;
 use smartclock_gps::record::Almanac;
 use smartclock_gps::record::Antenna;
 use smartclock_gps::record::Dops;
@@ -638,7 +647,7 @@ fn pvt(fields: Pvt) -> crate::nav::NavPvt {
 #[test]
 fn nav_pvt_is_converted_to_the_records_units() {
     let decoded = pvt(PVT);
-    assert_eq!(decoded.time_of_week, Milliseconds(NOON));
+    assert_eq!(decoded.time_of_week, units::Milliseconds(NOON));
     assert_eq!(decoded.fix(), Fix::ThreeD);
     assert_eq!(decoded.position(), Some(POSITION));
     assert_eq!(decoded.velocity(), VELOCITY);
@@ -720,11 +729,11 @@ fn nav_time_gps(payload: [u8; 16]) -> crate::nav::NavTimeGps {
 #[test]
 fn nav_timegps_gives_the_nearest_second() {
     let decoded = nav_time_gps(time_gps(NOON, -250_000, WEEK.cast_signed(), 17, 7));
-    assert_eq!(decoded.time_of_week, Milliseconds(NOON));
-    assert_eq!(decoded.fraction, Nanoseconds(-250_000));
+    assert_eq!(decoded.time_of_week, units::Milliseconds(NOON));
+    assert_eq!(decoded.fraction, units::Nanoseconds(-250_000));
     assert_eq!(decoded.week(), Some(GpsWeek::new(WEEK)));
-    assert_eq!(decoded.leap_seconds(), Some(Seconds(17)));
-    assert_eq!(decoded.accuracy, Nanoseconds(25));
+    assert_eq!(decoded.leap_seconds(), Some(units::Seconds(17)));
+    assert_eq!(decoded.accuracy, units::Nanoseconds(25));
     assert_eq!(decoded.seconds(None), Some(second(WEEK, NOON)));
     // A millisecond short of a second is that second; so is the last
     // of the week, which is the next week's first.
@@ -745,7 +754,7 @@ fn nav_timegps_validity() {
         assert_eq!(decoded.seconds(None), None, "{valid}");
         assert_eq!(
             decoded.leap_seconds(),
-            (valid == 0b100).then_some(Seconds(17))
+            (valid == 0b100).then_some(units::Seconds(17))
         );
     }
     let timed = nav_time_gps(time_gps(NOON, 0, WEEK.cast_signed(), 17, 0b011));
@@ -781,9 +790,12 @@ fn nav_time_ls(fields: Ls) -> Option<crate::nav::NavTimeLs> {
     }
 }
 
+/// [`BEFORE`] as `NAV-TIMELS` gives it.
+const COUNT: units::Seconds<i8> = units::Seconds(BEFORE.0);
+
 const NOTICE: LeapNotice = LeapNotice {
-    change: LeapChange::Insert,
-    until: Seconds(12 * 3600 + 17),
+    change: UbxLeapChange::Insert,
+    until: units::Seconds(12 * 3600 + 17),
     week: WEEK,
     day: 7,
 };
@@ -791,8 +803,8 @@ const NOTICE: LeapNotice = LeapNotice {
 #[test]
 fn nav_timels_count_and_notice() {
     let decoded = nav_time_ls(LS).unwrap();
-    assert_eq!(decoded.time_of_week, Milliseconds(NOON));
-    assert_eq!(decoded.count(), Some(BEFORE));
+    assert_eq!(decoded.time_of_week, units::Milliseconds(NOON));
+    assert_eq!(decoded.count(), Some(COUNT));
     assert_eq!(decoded.notice(), Some(NOTICE));
     assert!(NOTICE.pending());
     assert_eq!(nav_time_ls(Ls { version: 1, ..LS }), None);
@@ -805,8 +817,8 @@ fn nav_timels_count_needs_a_source() {
         (0, 0b11, None),
         (255, 0b11, None),
         (2, 0b10, None),
-        (1, 0b11, Some(BEFORE)),
-        (7, 0b01, Some(BEFORE)),
+        (1, 0b11, Some(COUNT)),
+        (7, 0b01, Some(COUNT)),
     ] {
         let fields = Ls {
             count_source,
@@ -843,8 +855,8 @@ fn nav_timels_notice_needs_a_gps_date() {
         ..LS
     };
     let notice = nav_time_ls(galileo).unwrap().notice().unwrap();
-    assert_eq!(notice.change, LeapChange::Remove);
-    assert_eq!(notice.until, Seconds(-5));
+    assert_eq!(notice.change, UbxLeapChange::Remove);
+    assert_eq!(notice.until, units::Seconds(-5));
     assert!(!notice.pending());
 }
 
@@ -861,7 +873,7 @@ fn a_notice_places_the_leap_second_at_its_days_end() {
     }
     // Counted to the midnight after the inserted second.
     let notice = LeapNotice {
-        until: Seconds(NOTICE.until.0 + 1),
+        until: units::Seconds(NOTICE.until.0 + 1),
         ..NOTICE
     };
     assert_eq!(notice.event(now, BEFORE), Some(leap()));
@@ -869,7 +881,7 @@ fn a_notice_places_the_leap_second_at_its_days_end() {
     let early = second(WEEK - 20, 0);
     let until = leap().at.checked_since(early).unwrap();
     let notice = LeapNotice {
-        until: Seconds(i32::try_from(until.0).unwrap()),
+        until: units::Seconds(i32::try_from(until.0).unwrap()),
         ..NOTICE
     };
     assert_eq!(notice.event(early, BEFORE), Some(leap()));
@@ -881,8 +893,8 @@ fn a_notice_places_the_leap_second_at_its_days_end() {
 fn a_notice_in_the_middle_of_a_week() {
     let now = second(1851, 0);
     let notice = LeapNotice {
-        change: LeapChange::Insert,
-        until: Seconds(3 * 86_400 + 16),
+        change: UbxLeapChange::Insert,
+        until: units::Seconds(3 * 86_400 + 16),
         week: 1851,
         day: 3,
     };
@@ -890,8 +902,8 @@ fn a_notice_in_the_middle_of_a_week() {
     assert_eq!(event.at, second(1851, (3 * 86_400 + 16) * 1000));
     // A second removed comes a second sooner.
     let notice = LeapNotice {
-        change: LeapChange::Remove,
-        until: Seconds(3 * 86_400 + 15),
+        change: UbxLeapChange::Remove,
+        until: units::Seconds(3 * 86_400 + 15),
         ..notice
     };
     let event = notice.event(now, Seconds(16)).unwrap();
@@ -909,11 +921,11 @@ fn a_notice_whose_date_and_countdown_disagree_is_not_believed() {
             ..NOTICE
         },
         LeapNotice {
-            until: Seconds(NOTICE.until.0 + 3),
+            until: units::Seconds(NOTICE.until.0 + 3),
             ..NOTICE
         },
         LeapNotice {
-            until: Seconds(NOTICE.until.0 - 3),
+            until: units::Seconds(NOTICE.until.0 - 3),
             ..NOTICE
         },
     ] {
@@ -924,7 +936,7 @@ fn a_notice_whose_date_and_countdown_disagree_is_not_believed() {
 fn nav_dop(payload: [u8; 18]) -> Dops {
     match decode(NAV_DOP, &payload) {
         Some(Message::NavDop(dop)) => {
-            assert_eq!(dop.time_of_week, Milliseconds(NOON));
+            assert_eq!(dop.time_of_week, units::Milliseconds(NOON));
             dop.dops()
         }
         other => panic!("{other:?}"),
@@ -952,9 +964,9 @@ const ECEF: [i32; 3] = [-269_100_000, -430_700_000, 384_600_000];
 fn nav_posecef_is_centimeters_already() {
     match decode(NAV_POSECEF, &pos_ecef(NOON, ECEF)) {
         Some(Message::NavPosEcef(ecef)) => {
-            assert_eq!(ecef.time_of_week, Milliseconds(NOON));
+            assert_eq!(ecef.time_of_week, units::Milliseconds(NOON));
             assert_eq!(
-                ecef.position,
+                ecef.ecef(),
                 Ecef {
                     x: Centimeters(ECEF[0]),
                     y: Centimeters(ECEF[1]),
@@ -979,7 +991,7 @@ const SAT: Sat = Sat {
 fn nav_sat(satellites: &[Sat]) -> smartclock_gps::record::Satellites {
     match decode(NAV_SAT, &sat(NOON, satellites)) {
         Some(Message::NavSat(sat)) => {
-            assert_eq!(sat.header.time_of_week, Milliseconds(NOON));
+            assert_eq!(sat.header.time_of_week, units::Milliseconds(NOON));
             assert_eq!(sat.satellites().count(), satellites.len());
             sat.sky()
         }
@@ -1120,7 +1132,7 @@ fn mon_hw_gives_the_antenna() {
         (5, Antenna::Unknown),
     ] {
         match decode(MON_HW, &hw(status)) {
-            Some(Message::MonHw(hardware)) => assert_eq!(hardware.antenna, antenna),
+            Some(Message::MonHw(hardware)) => assert_eq!(hardware.antenna(), antenna),
             other => panic!("{other:?}"),
         }
     }
@@ -1133,7 +1145,7 @@ fn tim_tp_is_decoded() {
         other => panic!("{other:?}"),
     };
     let pulse = decode(0);
-    assert_eq!(pulse.time_of_week, Milliseconds(NOON + 1000));
+    assert_eq!(pulse.time_of_week, units::Milliseconds(NOON + 1000));
     assert_eq!(pulse.week, WEEK);
     assert_eq!(pulse.quantization_error, Some(Picoseconds(-4_321)));
     assert!(!pulse.utc_base);

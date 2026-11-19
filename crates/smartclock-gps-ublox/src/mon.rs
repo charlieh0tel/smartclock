@@ -1,7 +1,5 @@
 //! The monitoring messages, `UBX-MON-*`.
 
-use smartclock_gps::record::Antenna;
-
 use crate::fields::Fields;
 use crate::fields::bit_field;
 
@@ -21,6 +19,20 @@ const HW_JAMMING_WIDTH: u32 = 2;
 const HW_CRYSTAL_ABSENT: u32 = 4;
 /// `MON-HW`'s `VP`: the virtual pins' mapping to physical ones.
 const VIRTUAL_PINS: usize = 17;
+
+/// The antenna supervisor's state: `MON-HW`'s `aStatus` (p. 342).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum AntennaStatus {
+    /// 2: OK.
+    Ok,
+    /// 3: shorted.
+    Short,
+    /// 4: open.
+    Open,
+    /// Starting up, not knowing, or a value the document does not
+    /// give.
+    Unknown,
+}
 
 /// Whether the antenna is powered: `MON-HW`'s `aPower` (p. 342).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -51,7 +63,7 @@ pub struct MonHw {
     pub agc_count: u16,
     /// `aStatus`, the antenna supervisor's state: unknown while it
     /// starts up or does not know.
-    pub antenna: Antenna,
+    pub antenna: AntennaStatus,
     /// `aPower`.
     pub antenna_power: AntennaPower,
     /// `flags` bit 0, `rtcCalib`: the RTC is calibrated.
@@ -89,10 +101,10 @@ impl MonHw {
             noise: fields.u16(16),
             agc_count: fields.u16(18),
             antenna: match fields.u8(20) {
-                ANTENNA_OK => Antenna::Connected,
-                ANTENNA_SHORT => Antenna::Shorted,
-                ANTENNA_OPEN => Antenna::Open,
-                _ => Antenna::Unknown,
+                ANTENNA_OK => AntennaStatus::Ok,
+                ANTENNA_SHORT => AntennaStatus::Short,
+                ANTENNA_OPEN => AntennaStatus::Open,
+                _ => AntennaStatus::Unknown,
             },
             antenna_power: match fields.u8(21) {
                 POWER_OFF => AntennaPower::Off,

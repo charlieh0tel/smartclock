@@ -1,12 +1,8 @@
 //! The timing messages, `UBX-TIM-*`.
 
-use smartclock_gps::record::Raim;
-use smartclock_gps::record::RaimAbility;
-use smartclock_gps::record::RaimSolution;
-use smartclock_gps::units::Milliseconds;
-
 use crate::fields::Fields;
 use crate::fields::bit_field;
+use crate::units::Milliseconds;
 use crate::units::Picoseconds;
 use crate::units::SubMilliseconds;
 
@@ -79,19 +75,5 @@ impl TimTp {
             time_reference: bit_field(reference, TP_REFERENCE_SHIFT, TP_REFERENCE_WIDTH),
             utc_standard: bit_field(reference, TP_STANDARD_SHIFT, TP_REFERENCE_WIDTH),
         }
-    }
-
-    /// What a record makes of `raim` ("From messages to a record" in
-    /// the crate's documentation): the solution is never known, the
-    /// message giving no RAIM result or alarm.
-    pub(crate) fn time_raim(&self) -> Option<Raim> {
-        self.raim.map(|active| {
-            let ability = if active {
-                RaimAbility::Detection
-            } else {
-                RaimAbility::Neither
-            };
-            Raim::new(RaimSolution::Unknown, ability)
-        })
     }
 }

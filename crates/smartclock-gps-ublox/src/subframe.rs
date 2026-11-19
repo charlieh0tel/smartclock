@@ -34,7 +34,7 @@
 
 use core::marker::PhantomData;
 
-use smartclock_gps::units::Seconds;
+use crate::units::Seconds;
 
 /// A subframe's words.
 pub const WORDS: usize = 10;

@@ -4,15 +4,6 @@
 
 use std::vec::Vec;
 
-use smartclock_gps::record::Antenna;
-use smartclock_gps::record::Health;
-use smartclock_gps::units::DecibelHertz;
-use smartclock_gps::units::Decimeters;
-use smartclock_gps::units::Degrees;
-use smartclock_gps::units::Milliseconds;
-use smartclock_gps::units::Nanoseconds;
-use smartclock_gps::units::Seconds;
-
 use super::decode;
 use super::events;
 use super::frame;
@@ -38,6 +29,7 @@ use crate::message::RXM_RAWX;
 use crate::message::RXM_SFRBX;
 use crate::message::TIM_TP;
 use crate::mon::AntennaPower;
+use crate::mon::AntennaStatus;
 use crate::mon::MonHw;
 use crate::nav::FixType;
 use crate::nav::NavClock;
@@ -47,6 +39,7 @@ use crate::nav::NavTimeGps;
 use crate::nav::NavTimeLs;
 use crate::nav::NavVelEcef;
 use crate::nav::OrbitSource;
+use crate::nav::SatelliteHealth;
 use crate::nav::SatelliteInfo;
 use crate::rxm::Measurement;
 use crate::rxm::RxmRawxHeader;
@@ -57,6 +50,9 @@ use crate::subframe::tests::Bits;
 use crate::tim::TimTp;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
+use crate::units::DecibelHertz;
+use crate::units::Decimeters;
+use crate::units::Degrees;
 use crate::units::F32Bits;
 use crate::units::F64Bits;
 use crate::units::HundredNanodegrees;
@@ -64,9 +60,12 @@ use crate::units::HundredthDegrees;
 use crate::units::Hundredths;
 use crate::units::Millimeters;
 use crate::units::MillimetersPerSecond;
+use crate::units::Milliseconds;
+use crate::units::Nanoseconds;
 use crate::units::NanosecondsPerSecond;
 use crate::units::Picoseconds;
 use crate::units::PicosecondsPerSecond;
+use crate::units::Seconds;
 use crate::units::SubMilliseconds;
 use crate::units::TenMicrodegrees;
 
@@ -205,7 +204,6 @@ fn nav_pvt_every_field() {
     assert_eq!(position_dop, Hundredths(149));
     assert!(position_invalid);
     assert_eq!(correction_age, 11);
-    assert_eq!(pvt.position(), None);
     assert_eq!(vehicle_heading, TenMicrodegrees(-49));
     assert_eq!(magnetic_declination, HundredthDegrees(-1_234));
     assert_eq!(magnetic_accuracy, HundredthDegrees(50));
@@ -403,7 +401,7 @@ fn nav_sat_every_flag() {
     );
     assert_eq!(none.residual, Decimeters(-123));
     assert_eq!(none.orbit_source, OrbitSource::None);
-    assert_eq!(none.health, Health::Unknown);
+    assert_eq!(none.health, SatelliteHealth::Unknown);
     type Read = fn(&SatelliteInfo) -> bool;
     let bits: [(u32, Read); 18] = [
         (3, |info| info.used),
@@ -422,7 +420,7 @@ fn nav_sat_every_flag() {
         (22, |info| info.doppler_corrections),
         (23, |info| info.clas_corrections),
         (0, |info| info.quality == 1),
-        (4, |info| info.health == Health::Healthy),
+        (4, |info| info.health == SatelliteHealth::Healthy),
         (8, |info| info.orbit_source == OrbitSource::Ephemeris),
     ];
     for (bit, read) in bits {
@@ -434,7 +432,7 @@ fn nav_sat_every_flag() {
         }
     }
     assert_eq!(satellite(0b111).quality, 7);
-    assert_eq!(satellite(2 << 4).health, Health::Unhealthy);
+    assert_eq!(satellite(2 << 4).health, SatelliteHealth::Unhealthy);
     for (value, source) in [
         (2, OrbitSource::Almanac),
         (3, OrbitSource::AssistNowOffline),
@@ -649,7 +647,7 @@ fn mon_hw_every_field() {
             pin_value: 4,
             noise: 5,
             agc_count: 6,
-            antenna: Antenna::Shorted,
+            antenna: AntennaStatus::Short,
             antenna_power: AntennaPower::On,
             rtc_calibrated: true,
             safe_boot: false,

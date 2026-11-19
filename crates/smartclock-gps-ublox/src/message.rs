@@ -1,8 +1,6 @@
 //! The messages this crate decodes: their IDs, their payloads'
 //! lengths, and a frame decoded.
 
-use smartclock_gps::units::Milliseconds;
-
 use crate::ack::Ack;
 use crate::fields::Fields;
 use crate::frame::Block;
@@ -35,6 +33,7 @@ use crate::rxm::SFRBX_COUNT;
 use crate::rxm::SFRBX_HEADER;
 use crate::rxm::SFRBX_WORD;
 use crate::tim::TimTp;
+use crate::units::Milliseconds;
 
 /// The navigation results' class (section 32.6, p. 172).
 const CLASS_NAV: u8 = 0x01;

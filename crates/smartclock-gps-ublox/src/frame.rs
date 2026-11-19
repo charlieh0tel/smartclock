@@ -5,10 +5,6 @@ use core::fmt;
 
 use thiserror::Error;
 
-use smartclock_gps::NoRoom;
-use smartclock_gps::framing::Step;
-use smartclock_gps::framing::feed;
-
 use crate::message::LONGEST_PART;
 use crate::message::Layout;
 use crate::message::payload_length;
@@ -25,6 +21,22 @@ const CHECKSUM: usize = 2;
 
 /// The bytes a frame adds to its payload.
 pub const OVERHEAD: usize = SYNC.len() + HEADER + CHECKSUM;
+
+/// What one byte did to a deframer: nothing yet, ended a frame of some
+/// length, or an error.  A frame borrows the deframer's buffer, so the
+/// step is taken first and the frame made from it after.
+type Step = Option<Result<usize, FrameError>>;
+
+/// Gives `step` bytes from the front of `chunk` up to the first that
+/// ends a frame or is an error, and returns how many it took and what
+/// that one ended.
+fn feed(chunk: &[u8], mut step: impl FnMut(u8) -> Step) -> (usize, Step) {
+    chunk
+        .iter()
+        .enumerate()
+        .find_map(|(index, &byte)| step(byte).map(|ended| (index + 1, ended)))
+        .map_or((chunk.len(), None), |(taken, ended)| (taken, Some(ended)))
+}
 
 /// Which message a frame is: its class and its ID within the class
 /// (section 32.2, p. 168).
@@ -63,6 +75,16 @@ const fn sum_with(sum: [u8; CHECKSUM], byte: u8) -> [u8; CHECKSUM] {
 pub fn checksum(body: &[u8]) -> [u8; CHECKSUM] {
     body.iter()
         .fold([0; CHECKSUM], |sum, &byte| sum_with(sum, byte))
+}
+
+/// The output buffer is shorter than the frame.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
+#[error("a frame of {needed} bytes does not fit in {room}")]
+pub struct NoRoom {
+    /// The frame's length.
+    pub needed: usize,
+    /// The buffer's.
+    pub room: usize,
 }
 
 /// Why [`encode`] wrote no frame.
@@ -326,7 +348,7 @@ impl<const N: usize> Deframer<N> {
         (self.length - parts.header) / parts.block
     }
 
-    fn step(&mut self, byte: u8) -> Step<FrameError> {
+    fn step(&mut self, byte: u8) -> Step {
         match self.state {
             State::Idle => {
                 if byte == SYNC[0] {

@@ -1,13 +1,35 @@
-//! Units as types, all integers: those of UBX fields that
-//! `smartclock-gps`'s units do not have at the field's width or
-//! resolution.  A name the core's units also use is the same unit at
-//! another width, and a module that needs both names the core's.
+//! Units as types, all integers, each at a UBX field's width and
+//! resolution.
 //!
 //! A field the document gives as floating point (`R4`, `R8`) is kept
 //! as its bits, [`F32Bits`] and [`F64Bits`]: nothing here does
 //! floating-point arithmetic, which a microcontroller without a
 //! floating-point unit pays for in code, and a caller that wants the
 //! number has `f32::from_bits` and `f64::from_bits`.
+
+/// A count of seconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Seconds<T>(pub T);
+
+/// A count of milliseconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Milliseconds<T>(pub T);
+
+/// A count of nanoseconds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Nanoseconds<T>(pub T);
+
+/// An angle in degrees.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Degrees<T>(pub T);
+
+/// A length in decimeters: a pseudorange residual.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Decimeters(pub i16);
+
+/// A carrier-to-noise density ratio in dB-Hz: a satellite's signal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct DecibelHertz(pub u8);
 
 /// A length in millimeters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]

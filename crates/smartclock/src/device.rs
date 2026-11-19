@@ -770,6 +770,9 @@ mod tests {
         assert!(!z3817a(CommandId::OvenCurrent));
         assert!(z3817a(CommandId::Efc));
         assert!(z3817a(CommandId::EfcAbsolute));
+        // It answers the count, but nobody has asked it for the list.
+        assert!(z3817a(CommandId::SatVisibleCount));
+        assert!(!z3817a(CommandId::SatVisible));
         // Compared without case, as dialect_for compares.
         assert!(spec_for(Dialect::Z3801, "z3817a", CommandId::Efc).is_some());
         assert!(spec_for(Dialect::Z3801, "z3817a", CommandId::OvenCurrent).is_none());

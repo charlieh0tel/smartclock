@@ -369,6 +369,7 @@ mod tests {
         let z3817 = measured("Z3817A");
         assert!(!z3817.contains(&"oven_current"), "{z3817:?}");
         assert!(z3817.contains(&"efc_dac"), "{z3817:?}");
+        assert!(z3817.contains(&"not_tracking"), "{z3817:?}");
         assert!(measured("Z3805A").contains(&"oven_current"));
     }
 

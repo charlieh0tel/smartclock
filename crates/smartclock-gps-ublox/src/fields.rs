@@ -1,6 +1,6 @@
 //! A payload's fields, read by their offsets.
 
-use smartclock_gps::units::Milliseconds;
+use crate::units::Milliseconds;
 
 /// A payload's fields, by their byte offsets: little-endian, as every
 /// number in a payload is (section 32.3, p. 169).

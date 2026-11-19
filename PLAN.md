@@ -1613,9 +1613,12 @@ stands in for one.
   rather than a feature, so the line between what the receivers use
   and what feeds them is the crate's edge, and no build of the core
   carries it.  It is `no_std` without allocation too, and
-  `make check-no-std` builds it for the same targets.  It uses the
-  core's chunk feeding (`framing`, public for it) and its time
-  arithmetic.  Its layouts are those of u-blox's protocol
+  `make check-no-std` builds it for the same targets.  Its decoders
+  use no type of the core's: their units and enums are their own, and
+  the record's view of each message is a trait of `record`, so the
+  decoders can stand as a crate of their own (owner, 2026-11-18).
+  `record` and the assembler use the core's time arithmetic.  Its
+  layouts are those of u-blox's protocol
   specification UBX-13003221 R28, cited by section and page, of which
   `third_party/` has no copy.  It is integer only, as the core is.
   The assembler reads the receiver's navigation solution, and of the
@@ -1664,7 +1667,7 @@ stands in for one.
     of its own, and hosts read recordings with the same code.  So the
     decoders are complete, not cut to what a record holds: every field
     of each message, in the message's own units, with the record's
-    view of a field a method beside it.  The board's configuration of
+    view of a field a trait method of `record` beside it.  The board's configuration of
     its module, the `CFG-*` messages it sends, stays the board's: this
     crate decodes and builds no configuration.
   - *Floating point is kept as bits.*  `RXM-RAWX` gives its

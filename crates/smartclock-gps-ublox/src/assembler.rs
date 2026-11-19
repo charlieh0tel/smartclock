@@ -24,7 +24,6 @@ use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::GpsWeek;
 use smartclock_gps::time::LeapEvent;
 use smartclock_gps::time::SECONDS_PER_WEEK;
-use smartclock_gps::units::Milliseconds;
 use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 
@@ -35,7 +34,18 @@ use crate::nav::LeapNotice;
 use crate::nav::NavPvt;
 use crate::nav::NavTimeGps;
 use crate::nav::NavTimeLs;
+use crate::record::LeapNoticeRecord;
+use crate::record::MonHwRecord;
+use crate::record::NavDopRecord;
+use crate::record::NavPosEcefRecord;
+use crate::record::NavPvtRecord;
+use crate::record::NavSatRecord;
+use crate::record::NavTimeGpsRecord;
+use crate::record::leap_change;
+use crate::record::time_raim;
+use crate::record::utc_offset;
 use crate::subframe::Subframe;
+use crate::units::Milliseconds;
 
 /// What an [`Assembler`] has of the epoch in progress.  Every message
 /// in it has the same `iTOW`.
@@ -295,8 +305,8 @@ impl Assembly {
     fn take(&mut self, message: &Message<'_>, record: &mut Record) -> bool {
         let Some(time_of_week) = message.epoch() else {
             match message {
-                Message::MonHw(hardware) => self.antenna = hardware.antenna,
-                Message::TimTp(pulse) => self.raim = pulse.time_raim(),
+                Message::MonHw(hardware) => self.antenna = hardware.antenna(),
+                Message::TimTp(pulse) => self.raim = time_raim(pulse),
                 Message::RxmSfrbx(subframe) => {
                     if let Some(subframe) = subframe.gps_words().as_ref().and_then(Subframe::decode)
                     {
@@ -323,7 +333,7 @@ impl Assembly {
         }
         self.epoch.time_of_week = Some(time_of_week);
         match message {
-            Message::NavPosEcef(ecef) => self.epoch.ecef = Some(ecef.position),
+            Message::NavPosEcef(ecef) => self.epoch.ecef = Some(ecef.ecef()),
             Message::NavDop(dop) => self.epoch.dops = Some(dop.dops()),
             Message::NavPvt(solution) => self.epoch.solution = Some(*solution),
             Message::NavTimeGps(time) => self.epoch.time = Some(*time),
@@ -384,7 +394,8 @@ impl Assembly {
         let count = epoch
             .leap
             .and_then(|leap| leap.count())
-            .or_else(|| epoch.time.and_then(|time| time.leap_seconds()));
+            .or_else(|| epoch.time.and_then(|time| time.leap_seconds()))
+            .map(utc_offset);
         self.note(now, count, epoch.leap);
         (record.utc_offset, record.leap) = match (self.announced, now) {
             (Some(Announced { event, before }), Some(now)) => {
@@ -440,9 +451,9 @@ impl Assembly {
                 // announced under: a receiver that steps its count
                 // before the leap would otherwise move it a second.
                 let stands = withdrawn
-                    && self
-                        .announced
-                        .is_some_and(|announced| announced.event.change == notice.change);
+                    && self.announced.is_some_and(|announced| {
+                        announced.event.change == leap_change(notice.change)
+                    });
                 if let Some(event) = notice.event(now, before).filter(|_| !stands) {
                     self.announced = Some(Announced { event, before });
                 }

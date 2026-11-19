@@ -1,17 +1,16 @@
 //! The receiver manager's messages, `UBX-RXM-*`: raw measurements and
 //! the satellites' own navigation data.
 
-use smartclock_gps::units::DecibelHertz;
-use smartclock_gps::units::Milliseconds;
-use smartclock_gps::units::Seconds;
-
 use crate::fields::Fields;
 use crate::fields::bit_field;
 use crate::message::SYSTEM_GPS;
 use crate::subframe::WORDS;
 use crate::subframe::Words;
+use crate::units::DecibelHertz;
 use crate::units::F32Bits;
 use crate::units::F64Bits;
+use crate::units::Milliseconds;
+use crate::units::Seconds;
 
 /// `RXM-RAWX`'s payload before its first measurement.
 pub(crate) const RAWX_HEADER: usize = 16;

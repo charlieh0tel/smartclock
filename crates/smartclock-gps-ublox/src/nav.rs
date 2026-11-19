@@ -1,48 +1,23 @@
 //! The navigation results' messages, `UBX-NAV-*`.  Each decoder keeps
-//! every field of its message, in the message's own units; where a
-//! record holds the same thing, a method gives it in the record's.
-
-use smartclock_gps::record::Dops;
-use smartclock_gps::record::Ecef;
-use smartclock_gps::record::Fix;
-use smartclock_gps::record::Health;
-use smartclock_gps::record::Position;
-use smartclock_gps::record::ReceiverMode;
-use smartclock_gps::record::Satellite;
-use smartclock_gps::record::Satellites;
-use smartclock_gps::record::Tracking;
-use smartclock_gps::record::Velocity;
-use smartclock_gps::time::ALMANAC_WEEKS;
-use smartclock_gps::time::BROADCAST_WEEKS;
-use smartclock_gps::time::GpsSeconds;
-use smartclock_gps::time::GpsWeek;
-use smartclock_gps::time::LeapChange;
-use smartclock_gps::time::LeapEvent;
-use smartclock_gps::time::SECONDS_PER_DAY;
-use smartclock_gps::units::Centimeters;
-use smartclock_gps::units::CentimetersPerSecond;
-use smartclock_gps::units::DecibelHertz;
-use smartclock_gps::units::Decimeters;
-use smartclock_gps::units::Degrees;
-use smartclock_gps::units::MilliArcSeconds;
-use smartclock_gps::units::Milliseconds;
-use smartclock_gps::units::Nanoseconds;
-use smartclock_gps::units::Prn;
-use smartclock_gps::units::Seconds;
-use smartclock_gps::units::TenthDegrees;
-use smartclock_gps::units::Tenths;
+//! every field of its message, in the message's own units.
 
 use crate::fields::Fields;
 use crate::fields::bit_field;
-use crate::message::SYSTEM_GPS;
-use crate::units;
+use crate::units::Centimeters;
+use crate::units::CentimetersPerSecond;
+use crate::units::DecibelHertz;
+use crate::units::Decimeters;
+use crate::units::Degrees;
 use crate::units::HundredNanodegrees;
 use crate::units::HundredthDegrees;
 use crate::units::Hundredths;
 use crate::units::Millimeters;
 use crate::units::MillimetersPerSecond;
+use crate::units::Milliseconds;
+use crate::units::Nanoseconds;
 use crate::units::NanosecondsPerSecond;
 use crate::units::PicosecondsPerSecond;
+use crate::units::Seconds;
 use crate::units::TenMicrodegrees;
 
 /// `NAV-SAT`'s payload before its first satellite.
@@ -53,61 +28,11 @@ pub(crate) const NAV_SAT_BLOCK: usize = 12;
 pub(crate) const NAV_SAT_COUNT: usize = 5;
 
 /// The length of a `NAV-SAT` payload that reports `satellites`: what a
-/// [`Deframer`](crate::frame::Deframer)'s or an
-/// [`Assembler`](crate::assembler::Assembler)'s `N` must reach for a
+/// [`Deframer`](crate::frame::Deframer)'s `N` must reach for a
 /// receiver that reports so many, of every system it tracks.
 #[must_use]
 pub const fn nav_sat_length(satellites: usize) -> usize {
     NAV_SAT_HEADER + NAV_SAT_BLOCK * satellites
-}
-
-/// `value` times `numerator` over `denominator`, to the nearest whole.
-const fn rescale(value: i64, numerator: i64, denominator: i64) -> i64 {
-    (value * numerator + denominator / 2).div_euclid(denominator)
-}
-
-/// `value` as an `i32`, held to its ends.
-fn to_i32(value: i64) -> i32 {
-    i32::try_from(value).unwrap_or(if value < 0 { i32::MIN } else { i32::MAX })
-}
-
-/// `value` as a `u16`, held to its ends.
-fn to_u16(value: i64) -> u16 {
-    u16::try_from(value.max(0)).unwrap_or(u16::MAX)
-}
-
-/// The units of `lon` and `lat` in a degree: they are scaled 1e-7.
-const ANGLE_UNITS_PER_DEGREE: i64 = 10_000_000;
-const MILLI_ARC_SECONDS_PER_DEGREE: i64 = 3_600_000;
-/// The units of `headMot` in a tenth of a degree: it is scaled 1e-5.
-const HEADING_UNITS_PER_TENTH_DEGREE: i64 = 10_000;
-const TENTH_DEGREES_PER_TURN: i64 = 3600;
-const MILLIMETERS_PER_CENTIMETER: i64 = 10;
-/// The units of a dilution of precision in a tenth: it is scaled 0.01.
-const DOP_UNITS_PER_TENTH: i64 = 10;
-const DEGREES_PER_TURN: i16 = 360;
-
-/// An angle scaled 1e-7 degrees, in milliarcseconds.
-fn milli_arc_seconds(angle: HundredNanodegrees) -> MilliArcSeconds {
-    MilliArcSeconds(to_i32(rescale(
-        i64::from(angle.0),
-        MILLI_ARC_SECONDS_PER_DEGREE,
-        ANGLE_UNITS_PER_DEGREE,
-    )))
-}
-
-/// Millimeters, in centimeters.
-fn centimeters(length: Millimeters<i32>) -> Centimeters {
-    Centimeters(to_i32(rescale(
-        i64::from(length.0),
-        1,
-        MILLIMETERS_PER_CENTIMETER,
-    )))
-}
-
-/// A dilution of precision scaled 0.01, in tenths.
-fn tenths(dop: Hundredths) -> Tenths {
-    Tenths(to_u16(rescale(i64::from(dop.0), 1, DOP_UNITS_PER_TENTH)))
 }
 
 /// `NAV-PVT`'s `fixType` (p. 375).
@@ -327,71 +252,6 @@ impl NavPvt {
             magnetic_valid: fields.bit(11, PVT_VALID_MAGNETIC),
         }
     }
-
-    /// The fix as a record holds it: [`Fix::None`] unless `gnssFixOK`
-    /// is set and `fixType` is 2 to 5.  A fix combined with dead
-    /// reckoning counts as three-dimensional; dead reckoning alone is
-    /// no fix from satellites.
-    #[must_use]
-    pub const fn fix(&self) -> Fix {
-        if !self.fix_ok {
-            return Fix::None;
-        }
-        match self.fix_type {
-            FixType::TwoD => Fix::TwoD,
-            FixType::ThreeD | FixType::WithDeadReckoning => Fix::ThreeD,
-            FixType::TimeOnly => Fix::TimeOnly,
-            FixType::None | FixType::DeadReckoning | FixType::Other(_) => Fix::None,
-        }
-    }
-
-    /// What `fixType` tells of the receiver's mode, whatever
-    /// `gnssFixOK`: position hold at 5, the time-only fix of a receiver
-    /// whose position is fixed (section 25.1, p. 85); navigating at 2 to
-    /// 4, a fix of its position.  `None` at 0, 1 or a value the document
-    /// does not give: no fix from satellites tells nothing of the mode.
-    #[must_use]
-    pub const fn receiver_mode(&self) -> Option<ReceiverMode> {
-        match self.fix_type {
-            FixType::TimeOnly => Some(ReceiverMode::Holding),
-            FixType::TwoD | FixType::ThreeD | FixType::WithDeadReckoning => {
-                Some(ReceiverMode::Navigating)
-            }
-            FixType::None | FixType::DeadReckoning | FixType::Other(_) => None,
-        }
-    }
-
-    /// `lat`, `lon`, `height` and `hMSL`, to the record's units; `None`
-    /// with `invalidLlh` set.
-    #[must_use]
-    pub fn position(&self) -> Option<Position> {
-        (!self.position_invalid).then(|| Position {
-            longitude: milli_arc_seconds(self.longitude),
-            latitude: milli_arc_seconds(self.latitude),
-            ellipsoid: centimeters(self.height),
-            mean_sea_level: centimeters(self.mean_sea_level),
-        })
-    }
-
-    /// `gSpeed` and `headMot`, to the record's units.
-    #[must_use]
-    pub fn velocity(&self) -> Velocity {
-        let speed = rescale(
-            i64::from(self.ground_speed.0),
-            1,
-            MILLIMETERS_PER_CENTIMETER,
-        );
-        let heading = rescale(
-            i64::from(self.motion_heading.0),
-            1,
-            HEADING_UNITS_PER_TENTH_DEGREE,
-        )
-        .rem_euclid(TENTH_DEGREES_PER_TURN);
-        Velocity {
-            speed: CentimetersPerSecond(to_u16(speed)),
-            heading: TenthDegrees(to_u16(heading)),
-        }
-    }
 }
 
 /// `NAV-TIMEGPS`'s `valid` bits (p. 397).
@@ -434,16 +294,6 @@ impl NavTimeGps {
         }
     }
 
-    /// `week`; `None` without `towValid` and `weekValid` both, or for a
-    /// week below zero.
-    #[must_use]
-    pub fn week(&self) -> Option<GpsWeek> {
-        u16::try_from(self.week_number)
-            .ok()
-            .filter(|_| self.time_of_week_valid && self.week_valid)
-            .map(GpsWeek::new)
-    }
-
     /// `leapS`; `None` without `leapSValid`.
     #[must_use]
     pub const fn leap_seconds(&self) -> Option<Seconds<i8>> {
@@ -452,21 +302,6 @@ impl NavTimeGps {
         } else {
             None
         }
-    }
-
-    /// The epoch's second, the nearest to its time of week.  With a
-    /// `reference`, the week is taken for its ten broadcast bits alone
-    /// and is the one nearest `reference` that has them: for a receiver
-    /// whose own resolution cannot be trusted.  `None` without a valid
-    /// time of week and week.
-    #[must_use]
-    pub fn seconds(&self, reference: Option<GpsWeek>) -> Option<GpsSeconds> {
-        let week = self.week()?;
-        let week = match reference {
-            Some(reference) => reference.nearest(week.get(), BROADCAST_WEEKS)?,
-            None => week,
-        };
-        GpsSeconds::nearest(week, self.time_of_week, self.fraction)
     }
 }
 
@@ -477,7 +312,7 @@ const TIMELS_VERSION: u8 = 0;
 const TIMELS_COUNT_DEFAULT: u8 = 0;
 const TIMELS_COUNT_UNKNOWN: u8 = 255;
 /// `srcOfLsChange`: the systems whose week and day are GPS's, Galileo's
-/// week being GPS's less a multiple of [`ALMANAC_WEEKS`] (p. 399).
+/// week being GPS's less a multiple of 256 (p. 399).
 const TIMELS_CHANGE_GPS: u8 = 2;
 const TIMELS_CHANGE_GALILEO: u8 = 5;
 /// `NAV-TIMELS`'s `valid` bits (p. 400).
@@ -486,11 +321,15 @@ const TIMELS_EVENT_VALID: u32 = 1;
 /// `dateOfLsGpsDn` runs from 1, Sunday, to 7, Saturday (p. 399).
 const DAYS: core::ops::RangeInclusive<u16> = 1..=7;
 
-/// How far a leap second placed by its week and day may lie from where
-/// `timeToLsEvent` puts it and still be believed.  The document does
-/// not say which second the countdown ends on, the inserted one or the
-/// midnight after it, so they may differ by one.
-const LEAP_SLACK: i64 = 2;
+/// Which way a leap second steps UTC: `NAV-TIMELS`'s `lsChange`
+/// (p. 399).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum LeapChange {
+    /// 1: a second inserted.
+    Insert,
+    /// -1: a second removed.
+    Remove,
+}
 
 /// A leap second as `UBX-NAV-TIMELS` announces it (p. 399).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -513,29 +352,6 @@ impl LeapNotice {
     #[must_use]
     pub const fn pending(&self) -> bool {
         self.until.0 > 0
-    }
-
-    /// The leap second, `now` being the second the notice was given in
-    /// and `before` GPS less UTC until the leap.
-    ///
-    /// It is put at the end of [`Self::day`] of [`Self::week`], the
-    /// week read modulo [`ALMANAC_WEEKS`] and resolved nearest the week
-    /// [`Self::until`] counts to, so it is found whether the receiver
-    /// gives the week in full or cut short, at a week's end as on any
-    /// other day.  `None` if that is not where the countdown ends, to
-    /// within two seconds.
-    #[must_use]
-    pub fn event(&self, now: GpsSeconds, before: Seconds<i8>) -> Option<LeapEvent> {
-        let counted = now.checked_add(Seconds(i64::from(self.until.0)))?;
-        let week = counted.week()?.nearest(self.week, ALMANAC_WEEKS)?;
-        let days = Seconds(i64::from(self.day) * SECONDS_PER_DAY);
-        // GPS time with no offset reads as UTC's calendar does.
-        let midnight = GpsSeconds::week_start(week)
-            .checked_add(days)?
-            .to_utc(Seconds(0))?;
-        let event = LeapEvent::at_day_end(midnight, before, self.change)?;
-        let apart = event.at.checked_since(counted)?;
-        (apart.0.abs() <= LEAP_SLACK).then_some(event)
     }
 }
 
@@ -652,18 +468,6 @@ impl NavDop {
             easting: Hundredths(fields.u16(16)),
         }
     }
-
-    /// The record's dilutions, to the nearest tenth.
-    #[must_use]
-    pub fn dops(&self) -> Dops {
-        Dops {
-            geometric: tenths(self.geometric),
-            position: tenths(self.position),
-            time: tenths(self.time),
-            vertical: tenths(self.vertical),
-            horizontal: tenths(self.horizontal),
-        }
-    }
 }
 
 /// `UBX-NAV-POSECEF` (section 32.17.15, p. 374), every field.
@@ -671,22 +475,24 @@ impl NavDop {
 pub struct NavPosEcef {
     /// `iTOW`: the epoch.
     pub time_of_week: Milliseconds<u32>,
-    /// `ecefX`, `ecefY` and `ecefZ`, which are centimeters.
-    pub position: Ecef,
+    /// `ecefX`.
+    pub x: Centimeters<i32>,
+    /// `ecefY`.
+    pub y: Centimeters<i32>,
+    /// `ecefZ`.
+    pub z: Centimeters<i32>,
     /// `pAcc`, the position's accuracy estimate.
-    pub accuracy: units::Centimeters<u32>,
+    pub accuracy: Centimeters<u32>,
 }
 
 impl NavPosEcef {
     pub(crate) fn parse(fields: Fields<'_>) -> Self {
         Self {
             time_of_week: fields.time_of_week(),
-            position: Ecef {
-                x: Centimeters(fields.i32(4)),
-                y: Centimeters(fields.i32(8)),
-                z: Centimeters(fields.i32(12)),
-            },
-            accuracy: units::Centimeters(fields.u32(16)),
+            x: Centimeters(fields.i32(4)),
+            y: Centimeters(fields.i32(8)),
+            z: Centimeters(fields.i32(12)),
+            accuracy: Centimeters(fields.u32(16)),
         }
     }
 }
@@ -698,23 +504,23 @@ pub struct NavVelEcef {
     /// `iTOW`: the epoch.
     pub time_of_week: Milliseconds<u32>,
     /// `ecefVX`.
-    pub x: units::CentimetersPerSecond<i32>,
+    pub x: CentimetersPerSecond<i32>,
     /// `ecefVY`.
-    pub y: units::CentimetersPerSecond<i32>,
+    pub y: CentimetersPerSecond<i32>,
     /// `ecefVZ`.
-    pub z: units::CentimetersPerSecond<i32>,
+    pub z: CentimetersPerSecond<i32>,
     /// `sAcc`, the speed's accuracy estimate.
-    pub accuracy: units::CentimetersPerSecond<u32>,
+    pub accuracy: CentimetersPerSecond<u32>,
 }
 
 impl NavVelEcef {
     pub(crate) fn parse(fields: Fields<'_>) -> Self {
         Self {
             time_of_week: fields.time_of_week(),
-            x: units::CentimetersPerSecond(fields.i32(4)),
-            y: units::CentimetersPerSecond(fields.i32(8)),
-            z: units::CentimetersPerSecond(fields.i32(12)),
-            accuracy: units::CentimetersPerSecond(fields.u32(16)),
+            x: CentimetersPerSecond(fields.i32(4)),
+            y: CentimetersPerSecond(fields.i32(8)),
+            z: CentimetersPerSecond(fields.i32(12)),
+            accuracy: CentimetersPerSecond(fields.u32(16)),
         }
     }
 }
@@ -780,16 +586,20 @@ const SAT_PSEUDORANGE_CORRECTIONS: u32 = 20;
 const SAT_CARRIER_CORRECTIONS: u32 = 21;
 const SAT_DOPPLER_CORRECTIONS: u32 = 22;
 const SAT_CLAS_CORRECTIONS: u32 = 23;
-/// `qualityInd` values (p. 382).
-const QUALITY_NO_SIGNAL: u8 = 0;
-const QUALITY_SEARCHING: u8 = 1;
-const QUALITY_CODE_LOCKED: u8 = 4;
 /// `health` values (p. 382).
 const HEALTH_HEALTHY: u8 = 1;
 const HEALTH_UNHEALTHY: u8 = 2;
-/// The elevations of a satellite above the horizon.  `elev` is "unknown
-/// if out of range" of 90 degrees either way (p. 381).
-const ELEVATIONS: core::ops::RangeInclusive<i8> = 0..=90;
+
+/// A satellite's health: `NAV-SAT`'s `health` (p. 382).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SatelliteHealth {
+    /// 1: healthy.
+    Healthy,
+    /// 2: unhealthy.
+    Unhealthy,
+    /// 0, unknown, or a value the document does not give.
+    Unknown,
+}
 
 /// Where a satellite's orbit comes from: `NAV-SAT`'s `orbitSource`
 /// (p. 382).
@@ -847,7 +657,8 @@ impl NavSatHeader {
 /// One satellite's block of `UBX-NAV-SAT` (pp. 381-383), every field.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SatelliteInfo {
-    /// `gnssId`: which system's it is, [`SYSTEM_GPS`] for GPS.
+    /// `gnssId`: which system's it is,
+    /// [`SYSTEM_GPS`](crate::message::SYSTEM_GPS) for GPS.
     pub system: u8,
     /// `svId`: its number in that system.
     pub id: u8,
@@ -865,7 +676,7 @@ pub struct SatelliteInfo {
     /// `svUsed`: whether the fix uses it.
     pub used: bool,
     /// `health`.
-    pub health: Health,
+    pub health: SatelliteHealth,
     /// `diffCorr`: differential correction data is available.
     pub differential: bool,
     /// `smoothed`: carrier smoothed pseudorange used.
@@ -912,9 +723,9 @@ impl SatelliteInfo {
             quality: bit_field(flags, SAT_QUALITY_SHIFT, SAT_QUALITY_WIDTH),
             used: bit(SAT_USED),
             health: match bit_field(flags, SAT_HEALTH_SHIFT, SAT_HEALTH_WIDTH) {
-                HEALTH_HEALTHY => Health::Healthy,
-                HEALTH_UNHEALTHY => Health::Unhealthy,
-                _ => Health::Unknown,
+                HEALTH_HEALTHY => SatelliteHealth::Healthy,
+                HEALTH_UNHEALTHY => SatelliteHealth::Unhealthy,
+                _ => SatelliteHealth::Unknown,
             },
             differential: bit(SAT_DIFFERENTIAL),
             smoothed: bit(SAT_SMOOTHED),
@@ -932,35 +743,6 @@ impl SatelliteInfo {
             doppler_corrections: bit(SAT_DOPPLER_CORRECTIONS),
             clas_corrections: bit(SAT_CLAS_CORRECTIONS),
         }
-    }
-
-    /// This satellite as a record holds one: `None` unless it is a GPS
-    /// satellite at a known place above the horizon.
-    ///
-    /// How far a channel has got with it is this crate's reading of
-    /// `qualityInd`, which does not name an Oncore's stages: searching
-    /// below 2, code lock at 2 and 3, and from 4, where the receiver
-    /// has its time, reading its ephemeris until `ephAvail`, then
-    /// ready for the fix.
-    #[must_use]
-    pub fn satellite(&self) -> Option<Satellite> {
-        let prn = Prn::new(self.id).filter(|_| self.system == SYSTEM_GPS)?;
-        if !ELEVATIONS.contains(&self.elevation.0) {
-            return None;
-        }
-        let azimuth = u16::try_from(self.azimuth.0.rem_euclid(DEGREES_PER_TURN)).ok()?;
-        let mut satellite = Satellite::new(prn, self.elevation, Degrees(azimuth));
-        satellite.signal = (self.quality != QUALITY_NO_SIGNAL).then_some(self.signal);
-        satellite.tracking = match self.quality {
-            QUALITY_NO_SIGNAL | QUALITY_SEARCHING => Tracking::Searching,
-            quality if quality < QUALITY_CODE_LOCKED => Tracking::CodeLock,
-            _ if self.ephemeris => Tracking::Position,
-            _ => Tracking::Ephemeris,
-        };
-        satellite.used = self.used;
-        satellite.health = self.health;
-        satellite.ephemeris = self.ephemeris;
-        Some(satellite)
     }
 }
 
@@ -990,21 +772,5 @@ impl<'a> NavSat<'a> {
             .0
             .iter()
             .map(|block| SatelliteInfo::parse(Fields(block)))
-    }
-
-    /// The GPS satellites with a known place in the sky, as a record
-    /// holds them: those the fix uses first, then the rest, each group
-    /// in the message's order.  Past a record's room the lowest in the
-    /// sky go, as [`Satellites::push`] has it.
-    #[must_use]
-    pub fn sky(&self) -> Satellites {
-        let mut sky = Satellites::EMPTY;
-        for used in [true, false] {
-            self.satellites()
-                .filter(|info| info.used == used)
-                .filter_map(|info| info.satellite())
-                .for_each(|satellite| sky.push(satellite));
-        }
-        sky
     }
 }

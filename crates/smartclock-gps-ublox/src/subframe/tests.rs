@@ -19,7 +19,7 @@ use super::Subframe3;
 use super::Telemetry;
 use super::WORDS;
 use super::Words;
-use smartclock_gps::units::Seconds;
+use crate::units::Seconds;
 
 /// A subframe's bits, set by their numbers in the subframe.  The
 /// crate's tests build `RXM-SFRBX` of them too.

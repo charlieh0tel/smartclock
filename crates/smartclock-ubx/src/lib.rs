@@ -68,9 +68,10 @@
 //! # Configuring
 //!
 //! A message a caller sends is a struct of its fields in [`cfg`](mod@cfg) or
-//! [`mga`], const-constructible, whose `encode` writes the whole frame,
-//! sync bytes to checksum, into the caller's slice and returns its
-//! length, with no allocation.  It writes the values it holds: which
+//! [`mga`], const-constructible, whose [`Encode`](frame::Encode) writes
+//! the whole frame, sync bytes to checksum, into the caller's slice and
+//! returns its length, with no allocation; each module gives its
+//! payloads' lengths, to size a buffer.  It writes the values it holds: which
 //! to send, and any state carried from one message to the next, is
 //! the caller's.  A field of a list of values is an enum that keeps a
 //! value the document does not give; a bit field is its bits, with its

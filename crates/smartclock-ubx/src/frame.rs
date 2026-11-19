@@ -114,6 +114,22 @@ pub fn encode(id: MessageId, payload: &[u8], out: &mut [u8]) -> Result<usize, En
     encode_with(id, payload.len(), out, |data| data.bytes(0, payload))
 }
 
+/// A message a caller sends a receiver, written whole into a frame: each
+/// struct of [`cfg`](mod@crate::cfg) and [`mga`](crate::mga), so a
+/// caller can be generic over them.
+pub trait Encode {
+    /// Writes the frame, sync bytes through checksum, into `out` and
+    /// returns its length.  The fields are written as the struct holds
+    /// them, a reserved field zero.
+    ///
+    /// # Errors
+    ///
+    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame, and
+    /// [`EncodeError::TooManyBlocks`] for a message of more blocks than
+    /// its one-byte count can say.
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError>;
+}
+
 /// Writes a poll request into `out`, a frame of `id` with no payload,
 /// and returns its length: the receiver answers with the message,
 /// filled (section 32.5.2, p. 172).  Some messages are polled with a

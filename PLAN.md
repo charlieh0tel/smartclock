@@ -1681,8 +1681,11 @@ stands in for one.
     `CFG-RXM`, `CFG-GNSS`, `CFG-NAV5`, `CFG-NAVX5` (version 2),
     `CFG-TMODE2`, `CFG-DAT` (a user datum), `CFG-CFG` (with its device
     mask) and `MGA-INI-POS_LLH`: each a const-constructible struct of
-    its fields whose `encode` writes the whole frame into the caller's
-    slice, with no allocation.  Beside them are polls, a frame's class
+    its fields whose `Encode` trait writes the whole frame into the
+    caller's slice, with no allocation, so a caller can be generic over
+    them; the trait alone carries `encode`, with no inherent copy, as a
+    caller imports it.  Each payload's length is public, to size a
+    buffer.  Beside them are polls, a frame's class
     and ID read back to match the receiver's acknowledgment to it, and
     the answers to the polls of `CFG-TMODE2` and `CFG-TP5` decoded into
     the same structs.  Which values are sent, and when, stays the

@@ -8,9 +8,11 @@ use std::vec::Vec;
 
 use super::decode;
 use super::frame;
+use crate::cfg::ANT_LENGTH;
 use crate::cfg::AntennaFlags;
 use crate::cfg::AntennaPins;
 use crate::cfg::AopConfig;
+use crate::cfg::CFG_LENGTH;
 use crate::cfg::CfgAnt;
 use crate::cfg::CfgCfg;
 use crate::cfg::CfgDat;
@@ -27,18 +29,30 @@ use crate::cfg::CfgTmode2;
 use crate::cfg::CfgTp5;
 use crate::cfg::CfgTp5Poll;
 use crate::cfg::ConfigSections;
+use crate::cfg::DAT_LENGTH;
 use crate::cfg::DeviceMask;
 use crate::cfg::DynamicModel;
 use crate::cfg::FixMode;
 use crate::cfg::GnssBlock;
 use crate::cfg::GnssFlags;
 use crate::cfg::LowPowerMode;
+use crate::cfg::MSG_LENGTH;
+use crate::cfg::MSG_POLL_LENGTH;
+use crate::cfg::NAV5_LENGTH;
+use crate::cfg::NAVX5_LENGTH;
 use crate::cfg::Nav5Mask;
 use crate::cfg::Navx5Mask1;
 use crate::cfg::Navx5Mask2;
+use crate::cfg::PRT_LENGTH;
+use crate::cfg::PRT_POLL_LENGTH;
 use crate::cfg::PortFlags;
 use crate::cfg::Protocols;
 use crate::cfg::PulseFlags;
+use crate::cfg::RATE_LENGTH;
+use crate::cfg::RXM_LENGTH;
+use crate::cfg::TMODE2_LENGTH;
+use crate::cfg::TP5_LENGTH;
+use crate::cfg::TP5_POLL_LENGTH;
 use crate::cfg::TimeMode;
 use crate::cfg::TimeModeFlags;
 use crate::cfg::TimePulse;
@@ -48,6 +62,7 @@ use crate::cfg::UartMode;
 use crate::cfg::UtcStandard;
 use crate::cfg::cfg_gnss_length;
 use crate::frame::Deframer;
+use crate::frame::Encode;
 use crate::frame::EncodeError;
 use crate::frame::NoRoom;
 use crate::frame::OVERHEAD;
@@ -86,6 +101,7 @@ use crate::message::SYSTEM_IMES;
 use crate::message::SYSTEM_QZSS;
 use crate::message::SYSTEM_SBAS;
 use crate::message::TIM_TP;
+use crate::mga::INI_POS_LLH_LENGTH;
 use crate::mga::MgaIniPosLlh;
 use crate::units::Centimeters;
 use crate::units::CentimetersPerSecond;
@@ -234,6 +250,43 @@ fn check(name: &str, encode: impl FnOnce(&mut [u8]) -> Result<usize, EncodeError
     let mut out = [0xaa; LONGEST];
     let length = encode(&mut out).unwrap();
     assert_eq!(out[..length], hex(expected), "{name}");
+}
+
+/// Each payload length a module gives is its golden frame's, less the
+/// frame's overhead; and a caller can hold the messages behind the
+/// trait.
+#[test]
+fn each_length_is_its_frames() {
+    for (length, expected) in [
+        (PRT_LENGTH, PRT),
+        (MSG_LENGTH, MSG_NAV_PVT),
+        (ANT_LENGTH, ANT),
+        (RATE_LENGTH, RATE),
+        (RXM_LENGTH, RXM),
+        (NAV5_LENGTH, NAV5_ALL),
+        (NAVX5_LENGTH, NAVX5),
+        (TMODE2_LENGTH, TMODE2_OFF),
+        (DAT_LENGTH, DAT),
+        (CFG_LENGTH, CFG),
+        (TP5_LENGTH, TP5_UTC),
+        (INI_POS_LLH_LENGTH, MGA_POSITION),
+    ] {
+        assert_eq!(OVERHEAD + length, hex(expected).len(), "{expected}");
+    }
+    let polls: [(&dyn Encode, usize); 3] = [
+        (&CfgPrtPoll { port_id: 1 }, PRT_POLL_LENGTH),
+        (&CfgMsgPoll { message: NAV_PVT }, MSG_POLL_LENGTH),
+        (
+            &CfgTp5Poll {
+                time_pulse: TimePulse::First,
+            },
+            TP5_POLL_LENGTH,
+        ),
+    ];
+    let mut out = [0; LONGEST];
+    for (poll, length) in polls {
+        assert_eq!(poll.encode(&mut out), Ok(OVERHEAD + length));
+    }
 }
 
 #[test]

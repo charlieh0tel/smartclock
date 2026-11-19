@@ -2,7 +2,7 @@
 //! receiver to set it up, each written whole into a frame, and the
 //! answers to two of their polls, decoded.
 //!
-//! An encoder writes the fields its struct holds, as they are: which
+//! Each struct's [`Encode`] writes the fields it holds, as they are: which
 //! values to send is the caller's.  A reserved field is written zero
 //! (section 32.3.2, p. 169); a reserved bit of a bit field is the
 //! caller's, since a bit field is kept as its bits.  The receiver
@@ -11,6 +11,7 @@
 //! sent matches to it.
 
 use crate::fields::Fields;
+use crate::frame::Encode;
 use crate::frame::EncodeError;
 use crate::frame::MessageId;
 use crate::frame::encode_with;
@@ -40,21 +41,36 @@ use crate::units::Seconds;
 use crate::units::SquareCentimeters;
 use crate::units::Tenths;
 
-/// The payloads' lengths, each its section's "Message Structure".
-const PRT_LENGTH: usize = 20;
-const PRT_POLL_LENGTH: usize = 1;
-const MSG_LENGTH: usize = 3;
-const MSG_POLL_LENGTH: usize = 2;
-const ANT_LENGTH: usize = 4;
-const RATE_LENGTH: usize = 6;
-const RXM_LENGTH: usize = 2;
-const NAV5_LENGTH: usize = 36;
-const NAVX5_LENGTH: usize = 40;
-const DAT_LENGTH: usize = 44;
-const CFG_LENGTH: usize = 13;
-pub(crate) const TMODE2_LENGTH: usize = 28;
-pub(crate) const TP5_LENGTH: usize = 32;
-pub(crate) const TP5_POLL_LENGTH: usize = 1;
+/// [`CfgPrt`]'s payload length, its section's "Message Structure", as
+/// for each length below: the frame is
+/// [`OVERHEAD`](crate::frame::OVERHEAD) more.
+pub const PRT_LENGTH: usize = 20;
+/// [`CfgPrtPoll`]'s.
+pub const PRT_POLL_LENGTH: usize = 1;
+/// [`CfgMsg`]'s.
+pub const MSG_LENGTH: usize = 3;
+/// [`CfgMsgPoll`]'s.
+pub const MSG_POLL_LENGTH: usize = 2;
+/// [`CfgAnt`]'s.
+pub const ANT_LENGTH: usize = 4;
+/// [`CfgRate`]'s.
+pub const RATE_LENGTH: usize = 6;
+/// [`CfgRxm`]'s.
+pub const RXM_LENGTH: usize = 2;
+/// [`CfgNav5`]'s.
+pub const NAV5_LENGTH: usize = 36;
+/// [`CfgNavx5`]'s.
+pub const NAVX5_LENGTH: usize = 40;
+/// [`CfgDat`]'s.
+pub const DAT_LENGTH: usize = 44;
+/// [`CfgCfg`]'s.
+pub const CFG_LENGTH: usize = 13;
+/// [`CfgTmode2`]'s.
+pub const TMODE2_LENGTH: usize = 28;
+/// [`CfgTp5`]'s.
+pub const TP5_LENGTH: usize = 32;
+/// [`CfgTp5Poll`]'s.
+pub const TP5_POLL_LENGTH: usize = 1;
 /// `CFG-GNSS`'s payload before its first block, and each block's
 /// (p. 208).
 const GNSS_HEADER: usize = 4;
@@ -67,7 +83,8 @@ const TP5_VERSION: u8 = 1;
 const NAVX5_VERSION: u16 = 2;
 const GNSS_VERSION: u8 = 0;
 
-/// The length of a `CFG-GNSS` payload of `blocks` systems.
+/// The length of a `CFG-GNSS` payload of `blocks` systems: [`CfgGnss`]'s
+/// length, which grows with its blocks.
 #[must_use]
 pub const fn cfg_gnss_length(blocks: usize) -> usize {
     GNSS_HEADER + GNSS_BLOCK * blocks
@@ -190,13 +207,8 @@ pub struct CfgPrt {
     pub flags: PortFlags,
 }
 
-impl CfgPrt {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgPrt {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_PRT, PRT_LENGTH, out, |payload| {
             payload.u8(0, self.port_id);
             payload.u16(2, self.tx_ready.0);
@@ -216,13 +228,8 @@ pub struct CfgPrtPoll {
     pub port_id: u8,
 }
 
-impl CfgPrtPoll {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgPrtPoll {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_PRT, PRT_POLL_LENGTH, out, |payload| {
             payload.u8(0, self.port_id);
         })
@@ -240,13 +247,8 @@ pub struct CfgMsg {
     pub rate: u8,
 }
 
-impl CfgMsg {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgMsg {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_MSG, MSG_LENGTH, out, |payload| {
             payload.u8(0, self.message.class);
             payload.u8(1, self.message.id);
@@ -263,13 +265,8 @@ pub struct CfgMsgPoll {
     pub message: MessageId,
 }
 
-impl CfgMsgPoll {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgMsgPoll {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_MSG, MSG_POLL_LENGTH, out, |payload| {
             payload.u8(0, self.message.class);
             payload.u8(1, self.message.id);
@@ -336,13 +333,8 @@ pub struct CfgAnt {
     pub pins: AntennaPins,
 }
 
-impl CfgAnt {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgAnt {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_ANT, ANT_LENGTH, out, |payload| {
             payload.u16(0, self.flags.0);
             payload.u16(2, self.pins.0);
@@ -381,13 +373,8 @@ pub struct CfgRate {
     pub time_reference: TimeReference,
 }
 
-impl CfgRate {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgRate {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_RATE, RATE_LENGTH, out, |payload| {
             payload.u16(0, self.measurement_rate.0);
             payload.u16(2, self.navigation_rate);
@@ -413,13 +400,8 @@ pub struct CfgRxm {
     pub low_power_mode: LowPowerMode,
 }
 
-impl CfgRxm {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgRxm {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_RXM, RXM_LENGTH, out, |payload| {
             payload.u8(1, self.low_power_mode.value());
         })
@@ -507,15 +489,8 @@ pub struct CfgGnss<'a> {
     pub blocks: &'a [GnssBlock],
 }
 
-impl CfgGnss<'_> {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::TooManyBlocks`] for more blocks than
-    /// `numConfigBlocks`, one byte, can count, and
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgGnss<'_> {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         let count = self.blocks.len();
         let blocks = u8::try_from(count).map_err(|_| EncodeError::TooManyBlocks(count))?;
         encode_with(CFG_GNSS, cfg_gnss_length(count), out, |payload| {
@@ -665,13 +640,8 @@ pub struct CfgNav5 {
     pub utc_standard: UtcStandard,
 }
 
-impl CfgNav5 {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgNav5 {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_NAV5, NAV5_LENGTH, out, |payload| {
             payload.u16(0, self.mask.0);
             payload.u8(2, self.dynamic_model.value());
@@ -774,13 +744,8 @@ pub struct CfgNavx5 {
     pub use_adr: bool,
 }
 
-impl CfgNavx5 {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgNavx5 {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_NAVX5, NAVX5_LENGTH, out, |payload| {
             payload.u16(0, NAVX5_VERSION);
             payload.u16(2, self.mask1.0);
@@ -851,13 +816,8 @@ pub struct CfgTmode2 {
     pub survey_in_accuracy_limit: Millimeters<u32>,
 }
 
-impl CfgTmode2 {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgTmode2 {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_TMODE2, TMODE2_LENGTH, out, |payload| {
             payload.u8(0, self.time_mode.value());
             payload.u16(2, self.flags.0);
@@ -869,7 +829,9 @@ impl CfgTmode2 {
             payload.u32(24, self.survey_in_accuracy_limit.0);
         })
     }
+}
 
+impl CfgTmode2 {
     pub(crate) fn parse(fields: Fields<'_>) -> Self {
         Self {
             time_mode: TimeMode::new(fields.u8(0)),
@@ -982,13 +944,8 @@ pub struct CfgTp5 {
     pub flags: PulseFlags,
 }
 
-impl CfgTp5 {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgTp5 {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_TP5, TP5_LENGTH, out, |payload| {
             payload.u8(0, self.time_pulse.value());
             payload.u8(1, TP5_VERSION);
@@ -1002,7 +959,9 @@ impl CfgTp5 {
             payload.u32(28, self.flags.0);
         })
     }
+}
 
+impl CfgTp5 {
     /// `None` for a version other than 1.
     pub(crate) fn parse(fields: Fields<'_>) -> Option<Self> {
         (fields.u8(1) == TP5_VERSION).then(|| Self {
@@ -1027,13 +986,8 @@ pub struct CfgTp5Poll {
     pub time_pulse: TimePulse,
 }
 
-impl CfgTp5Poll {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgTp5Poll {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_TP5, TP5_POLL_LENGTH, out, |payload| {
             payload.u8(0, self.time_pulse.value());
         })
@@ -1065,13 +1019,8 @@ pub struct CfgDat {
     pub scale: F32Bits,
 }
 
-impl CfgDat {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgDat {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_DAT, DAT_LENGTH, out, |payload| {
             payload.u64(0, self.semi_major_axis.0);
             payload.u64(8, self.inverse_flattening.0);
@@ -1158,13 +1107,8 @@ pub struct CfgCfg {
     pub device_mask: DeviceMask,
 }
 
-impl CfgCfg {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for CfgCfg {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(CFG_CFG, CFG_LENGTH, out, |payload| {
             payload.u32(0, self.clear_mask.0);
             payload.u32(4, self.save_mask.0);

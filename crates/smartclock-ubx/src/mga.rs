@@ -1,15 +1,17 @@
 //! The assistance messages, `UBX-MGA-*`: what a caller tells a
 //! receiver to speed its first fix.
 
+use crate::frame::Encode;
 use crate::frame::EncodeError;
 use crate::frame::encode_with;
 use crate::message::MGA_INI;
 use crate::units::Centimeters;
 use crate::units::HundredNanodegrees;
 
-/// `MGA-INI-POS_LLH`'s payload's length, and its `type` and `version`
-/// (p. 329).
-const INI_POS_LLH_LENGTH: usize = 20;
+/// [`MgaIniPosLlh`]'s payload length (p. 329): the frame is
+/// [`OVERHEAD`](crate::frame::OVERHEAD) more.
+pub const INI_POS_LLH_LENGTH: usize = 20;
+/// Its `type` and `version`.
 const INI_POS_LLH_TYPE: u8 = 0x01;
 const INI_POS_LLH_VERSION: u8 = 0x00;
 
@@ -29,13 +31,8 @@ pub struct MgaIniPosLlh {
     pub position_accuracy: Centimeters<u32>,
 }
 
-impl MgaIniPosLlh {
-    /// Writes the frame into `out` and returns its length.
-    ///
-    /// # Errors
-    ///
-    /// [`EncodeError::NoRoom`] if `out` is shorter than the frame.
-    pub fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
+impl Encode for MgaIniPosLlh {
+    fn encode(&self, out: &mut [u8]) -> Result<usize, EncodeError> {
         encode_with(MGA_INI, INI_POS_LLH_LENGTH, out, |payload| {
             payload.u8(0, INI_POS_LLH_TYPE);
             payload.u8(1, INI_POS_LLH_VERSION);

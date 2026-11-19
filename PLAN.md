@@ -1060,7 +1060,8 @@ stands in for one.
 - **Scoped to what the receivers use.**  A message or sentence is in
   its tables only if some image's firmware sends or decodes it; it is
   not a general Oncore or Furuno library.  A format no receiver
-  speaks has a crate of its own (`smartclock-gps-ublox`, below).  Each
+  speaks has crates of its own (`smartclock-ubx` and
+  `smartclock-gps-ublox`, below).  Each
   row cites the manual page that gives its layout, and tests hold the
   tables to the images' own: the Oncore lengths to `docs/firmware/oncore/*.txt`, the NMEA
   sentences to the two tables in the Z3815A's image.
@@ -1603,22 +1604,25 @@ stands in for one.
   under the same provider, held to the same declaration and the same
   rows of the exceptions tables, which name it `fake receiver`; the position in Earth-centered
   coordinates stays its holder's to work out.
-- **A u-blox receiver is a source, in a crate of its own**
-  (`smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
+- **A u-blox receiver is a source, in crates of its own**
+  (`smartclock-ubx` and `smartclock-gps-ublox`).  The `SmartClock`s never speak UBX: no
   image sends or decodes it, so it is not in `smartclock-gps`, which
   stays the receivers' formats and the types they share.  It is there
   because a bench's real sky comes from such a receiver, live or
-  recorded, and it makes that receiver's messages into
-  `smartclock-gps` records under the record's rules on time.  A crate
+  recorded, and they make that receiver's messages into
+  `smartclock-gps` records under the record's rules on time.  Crates
   rather than a feature, so the line between what the receivers use
-  and what feeds them is the crate's edge, and no build of the core
-  carries it.  It is `no_std` without allocation too, and
-  `make check-no-std` builds it for the same targets.  Its decoders
-  use no type of the core's: their units and enums are their own, and
-  the record's view of each message is a trait of `record`, so the
-  decoders can stand as a crate of their own (owner, 2026-11-18).
-  `record` and the assembler use the core's time arithmetic.  Its
-  layouts are those of u-blox's protocol
+  and what feeds them is a crate's edge, and no build of the core
+  carries them.  They are two (owner, 2026-11-18): `smartclock-ubx`, a
+  codec alone (framing, the decoders, their units and enums, ACK),
+  depending on no other crate here, so it can later be published as a
+  general UBX crate from a repository of its own; and
+  `smartclock-gps-ublox`, which maps its messages to records: a trait
+  per message type in `record`, and the assembler, using the core's
+  time arithmetic.  The thin crate re-exports nothing, so a caller
+  takes the codec's types from the codec.  Both are `no_std` without
+  allocation too, and `make check-no-std` builds them for the same
+  targets.  The layouts are those of u-blox's protocol
   specification UBX-13003221 R28, cited by section and page, of which
   `third_party/` has no copy.  It is integer only, as the core is.
   The assembler reads the receiver's navigation solution, and of the
@@ -1663,11 +1667,12 @@ stands in for one.
     and `@@Bk`/`@@Ek` give every DOP as 0, `gDOP` and `tDOP` too.
   - *One UBX parser, shared.*  A microcontroller board with a u-blox
     module (a Cortex-M0, little RAM, small stack frames) reads its
-    module with this crate's framing and decoders rather than a parser
+    module with `smartclock-ubx`'s framing and decoders rather than a parser
     of its own, and hosts read recordings with the same code.  So the
     decoders are complete, not cut to what a record holds: every field
     of each message, in the message's own units, with the record's
-    view of a field a trait method of `record` beside it.  The board's configuration of
+    view of a field a trait method of `smartclock-gps-ublox`'s
+    `record`.  The board's configuration of
     its module, the `CFG-*` messages it sends, stays the board's: this
     crate decodes and builds no configuration.
   - *Floating point is kept as bits.*  `RXM-RAWX` gives its

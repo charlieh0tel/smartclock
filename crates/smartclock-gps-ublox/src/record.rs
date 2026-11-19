@@ -33,25 +33,24 @@ use smartclock_gps::units::Prn;
 use smartclock_gps::units::Seconds;
 use smartclock_gps::units::TenthDegrees;
 use smartclock_gps::units::Tenths;
-
-use crate::message::SYSTEM_GPS;
-use crate::mon::AntennaStatus;
-use crate::mon::MonHw;
-use crate::nav::FixType;
-use crate::nav::LeapChange as UbxLeapChange;
-use crate::nav::LeapNotice;
-use crate::nav::NavDop;
-use crate::nav::NavPosEcef;
-use crate::nav::NavPvt;
-use crate::nav::NavSat;
-use crate::nav::NavTimeGps;
-use crate::nav::SatelliteHealth;
-use crate::nav::SatelliteInfo;
-use crate::tim::TimTp;
-use crate::units;
-use crate::units::HundredNanodegrees;
-use crate::units::Hundredths;
-use crate::units::Millimeters;
+use smartclock_ubx::message::SYSTEM_GPS;
+use smartclock_ubx::mon::AntennaStatus;
+use smartclock_ubx::mon::MonHw;
+use smartclock_ubx::nav::FixType;
+use smartclock_ubx::nav::LeapChange as UbxLeapChange;
+use smartclock_ubx::nav::LeapNotice;
+use smartclock_ubx::nav::NavDop;
+use smartclock_ubx::nav::NavPosEcef;
+use smartclock_ubx::nav::NavPvt;
+use smartclock_ubx::nav::NavSat;
+use smartclock_ubx::nav::NavTimeGps;
+use smartclock_ubx::nav::SatelliteHealth;
+use smartclock_ubx::nav::SatelliteInfo;
+use smartclock_ubx::tim::TimTp;
+use smartclock_ubx::units;
+use smartclock_ubx::units::HundredNanodegrees;
+use smartclock_ubx::units::Hundredths;
+use smartclock_ubx::units::Millimeters;
 
 /// `value` times `numerator` over `denominator`, to the nearest whole.
 const fn rescale(value: i64, numerator: i64, denominator: i64) -> i64 {

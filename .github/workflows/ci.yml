@@ -28,10 +28,11 @@ jobs:
       check-args: "--workspace --all-targets --all-features"
 
   no-std:
-    # smartclock-gps and smartclock-gps-ublox are no_std and do not
-    # allocate, so that one copy runs on a microcontroller, in a browser
-    # and on a host.  The jobs above build them for a host, which proves
-    # neither of the other two; this builds them for targets of each.
+    # smartclock-gps, smartclock-ubx and smartclock-gps-ublox are no_std
+    # and do not allocate, so that one copy runs on a microcontroller,
+    # in a browser and on a host.  The jobs above build them for a host,
+    # which proves neither of the other two; this builds them for
+    # targets of each.
     # `make check-no-std`.
     runs-on: ubuntu-latest
     permissions:

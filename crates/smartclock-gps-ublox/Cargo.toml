@@ -1,6 +1,6 @@
 [package]
 name = "smartclock-gps-ublox"
-description = "A u-blox receiver's UBX framing and messages, every field decoded for a microcontroller or a host, and made into smartclock-gps records: a source of records, not a format any SmartClock's engine speaks"
+description = "A u-blox receiver's UBX messages, as smartclock-ubx decodes them, made into smartclock-gps records: a source of records, not a format any SmartClock's engine speaks"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,4 +13,4 @@ workspace = true
 
 [dependencies]
 smartclock-gps = { path = "../smartclock-gps" }
-thiserror = { version = "2.0.21", default-features = false }
+smartclock-ubx = { path = "../smartclock-ubx" }

@@ -107,7 +107,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
 
 <main>
 <header>
-  <div class="eyebrow">HP / Symmetricom SmartClock · crates smartclock-gps, smartclock-gps-ublox, smartclock-gps-feed</div>
+  <div class="eyebrow">HP / Symmetricom SmartClock · crates smartclock-gps, smartclock-ubx, smartclock-gps-ublox, smartclock-gps-feed</div>
   <h1>GPS Support Architecture</h1>
   <p class="lede">Three providers side by side, one engine. A second's record comes from a u-blox module on a microcontroller board, from a u-blox receiver through gpsd or a recording, or from a made-up sky; whichever fills it, the engine builds the same bytes. The crates are written once, in this repository; the board and <code>smartclock-gps-feed</code> on a host each run their own instance of them.</p>
 </header>
@@ -115,7 +115,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
 <section id="the-places">
   <h2>Three providers, one engine</h2>
   <figure class="fig" data-scroll="x">
-    <svg class="places" viewBox="0 0 1140 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three provider columns side by side feed one engine. Column 1, a microcontroller board: a u-blox module, the board's own provider on the u-blox parser, its own engine instance, out to the SmartClock's Oncore socket, with the module's 1 PPS wired straight to the socket. Column 2, a host: a u-blox receiver through gpsd or a recording, read by the u-blox crate's Assembler. Column 3, fake GPS: a made-up sky from smartclock-gps's source module. smartclock-gps-ublox is drawn once across columns 1 and 2, the engine once across all three; each place runs its own instance. smartclock-gps-feed holds columns 2 and 3's provider and engine, out to a SmartClock's engine port over serial or TCP, with no 1 PPS.">
+    <svg class="places" viewBox="0 0 1140 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three provider columns side by side feed one engine. Column 1, a microcontroller board: a u-blox module, the board's own provider on the u-blox parser, its own engine instance, out to the SmartClock's Oncore socket, with the module's 1 PPS wired straight to the socket. Column 2, a host: a u-blox receiver through gpsd or a recording, read by smartclock-gps-ublox's Assembler. Column 3, fake GPS: a made-up sky from smartclock-gps's source module. smartclock-ubx, the UBX parser, is drawn once across columns 1 and 2, the engine once across all three; each place runs its own instance. smartclock-gps-feed holds columns 2 and 3's provider and engine, out to a SmartClock's engine port over serial or TCP, with no 1 PPS.">
       <defs>
         <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
         <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--pps)"/></marker>
@@ -157,7 +157,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
 
       <!-- row 2: the providers -->
       <rect class="ours" x="40" y="154" width="710" height="164" rx="4"/>
-      <text class="t" x="54" y="176"><tspan class="k">smartclock-gps-ublox</tspan>: the one UBX parser, one copy</text>
+      <text class="t" x="54" y="176"><tspan class="k">smartclock-ubx</tspan>: the one UBX parser, one copy</text>
       <text class="u" x="54" y="192">no_std, no allocation; columns 1 and 2 both use it</text>
       <text class="s" x="54" y="212"><tspan class="k">frame</tspan>: Deframer, Streamer · decoders: nav, rxm, tim, mon, ack · <tspan class="k">subframe</tspan>: GPS subframes</text>
 
@@ -168,7 +168,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <text class="s" x="66" y="298">DOPs; acts on its held settings</text>
 
       <rect class="sub" x="424" y="226" width="312" height="80" rx="4"/>
-      <text class="t" x="436" y="246"><tspan class="k">assembler</tspan>: Assembler, the provider</text>
+      <text class="t" x="436" y="246"><tspan class="k">smartclock-gps-ublox</tspan>: Assembler</text>
       <text class="s" x="436" y="264">acts on the mask angle and ignore list;</text>
       <text class="s" x="436" y="281">configures nothing; no DOPs in a</text>
       <text class="s" x="436" y="298">time-only fix; makes no pulse</text>
@@ -251,7 +251,7 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <text class="mp" transform="translate(16 352) rotate(-90)" text-anchor="middle">1 PPS: a wire from the module straight to the socket, not through the engine</text>
     </svg>
     <div class="legend"><span class="ours">library code in this repository: one copy</span><span class="inst">an instance of it, running in that place</span><span>outside the crates: hardware, the board's own code, a transport</span><span class="back">settings going back to whoever acts on them</span><span class="pps">1 PPS</span></div>
-    <figcaption>Each column reads top to bottom: where the data starts, the provider that turns it into a record, the engine, where its bytes go. A box drawn across columns is one copy of the code: <code>smartclock-gps-ublox</code> serves columns 1 and 2, the engine all three. The bottom row says what holds each column's provider and engine instance. A record is one second of what an engine would know: time, leap second, fix, position, the satellites on each channel, almanac, antenna, Time RAIM.</figcaption>
+    <figcaption>Each column reads top to bottom: where the data starts, the provider that turns it into a record, the engine, where its bytes go. A box drawn across columns is one copy of the code: <code>smartclock-ubx</code> serves columns 1 and 2, the engine all three. The bottom row says what holds each column's provider and engine instance. A record is one second of what an engine would know: time, leap second, fix, position, the satellites on each channel, almanac, antenna, Time RAIM.</figcaption>
   </figure>
 </section>
 
@@ -320,10 +320,10 @@ thead th{font-weight:600;font-size:.8125rem;letter-spacing:.04em;text-transform:
       <tr><td>Saved configuration</td><td><code>smartclock-gps</code>, <code>engine::saved</code>: <code>SavedConfiguration</code>, and <code>CONFIGURATION_58503A</code> built in</td></tr>
       <tr><td>Record</td><td><code>smartclock-gps</code>, <code>record</code>; <code>record::field</code>: the field table (<code>RecordField</code>), what the images use and set (<code>IMAGE_USES</code>, <code>IMAGE_SETS</code>, <code>IMAGE_HOLDS</code>), the <code>PULSE_SETTINGS</code>, and a provider's <code>Declaration</code></td></tr>
       <tr><td>Made-up sky</td><td><code>smartclock-gps</code>, <code>source</code>: <code>source::fake_receiver</code>, <code>source::scenario</code> (<code>Fixed</code>, <code>Scenario</code>), <code>source::wrap</code> (<code>FakeTime</code>, <code>LeapSchedule</code>), <code>source::replay</code> (<code>Replay</code>, for a recording)</td></tr>
-      <tr><td>UBX parser</td><td><code>smartclock-gps-ublox</code>: <code>frame</code> (<code>Deframer</code>, and <code>Streamer</code> for a caller that takes a long message a block at a time), the message decoders (<code>message</code>, <code>nav</code>, <code>rxm</code>, <code>tim</code>, <code>mon</code>, <code>ack</code>) and <code>subframe</code>, the GPS subframes decoded</td></tr>
+      <tr><td>UBX parser</td><td><code>smartclock-ubx</code>, depending on no other crate here: <code>frame</code> (<code>Deframer</code>, and <code>Streamer</code> for a caller that takes a long message a block at a time), the message decoders (<code>message</code>, <code>nav</code>, <code>rxm</code>, <code>tim</code>, <code>mon</code>, <code>ack</code>) and <code>subframe</code>, the GPS subframes decoded</td></tr>
       <tr><td>u-blox provider</td><td><code>smartclock-gps-ublox</code>, <code>assembler</code>: <code>Assembler</code>, its <code>DECLARATION</code> and <code>act</code>; <code>record</code>: a trait for each decoded message a record holds part of, giving it in the record's units</td></tr>
       <tr><td>Host feed</td><td><code>smartclock-gps-feed</code>: providers (<code>provider</code>), the Oncore or GT-74 engine (<code>engine</code>), transports (<code>link</code>), the paced loop (<code>feed</code>)</td></tr>
-      <tr><td>Board provider</td><td>not in this repository: a microcontroller board's own code, depending on the two library crates</td></tr>
+      <tr><td>Board provider</td><td>not in this repository: a microcontroller board's own code, depending on the library crates</td></tr>
     </tbody>
   </table></div>
   <p>The link from the firmware's side, message by message, every path by which an image sets something, and the field and setting tables the tests hold providers to, are in <a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/firmware/gps.md">docs/firmware/gps.md</a>.</p>

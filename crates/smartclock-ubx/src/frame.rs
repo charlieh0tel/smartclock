@@ -288,8 +288,8 @@ impl<const N: usize> Deframer<N> {
     /// one ended.  With bytes left over, call again with the rest:
     ///
     /// ```
-    /// use smartclock_gps_ublox::frame::Deframer;
-    /// use smartclock_gps_ublox::message::NAV_EOE;
+    /// use smartclock_ubx::frame::Deframer;
+    /// use smartclock_ubx::message::NAV_EOE;
     ///
     /// let mut deframer = Deframer::<4>::new();
     /// let mut rest: &[u8] = &[
@@ -503,12 +503,12 @@ pub enum Event<'a> {
 /// documentation).
 ///
 /// ```
-/// use smartclock_gps_ublox::frame::Event;
-/// use smartclock_gps_ublox::frame::OVERHEAD;
-/// use smartclock_gps_ublox::frame::Streamer;
-/// use smartclock_gps_ublox::frame::encode;
-/// use smartclock_gps_ublox::message::NAV_SAT;
-/// use smartclock_gps_ublox::message::Part;
+/// use smartclock_ubx::frame::Event;
+/// use smartclock_ubx::frame::OVERHEAD;
+/// use smartclock_ubx::frame::Streamer;
+/// use smartclock_ubx::frame::encode;
+/// use smartclock_ubx::message::NAV_SAT;
+/// use smartclock_ubx::message::Part;
 ///
 /// // NAV-SAT of one GPS satellite, 12 at 40 dB-Hz, used.
 /// let payload = [

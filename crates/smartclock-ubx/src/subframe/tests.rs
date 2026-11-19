@@ -293,7 +293,7 @@ fn the_ionosphere_and_utc_page() {
 
 /// The first bit of each word's fields on a page 25, words 4 to 9 or 3
 /// to 8: the subframe's bits 91, 121, ... or 61, 91, ...
-pub(crate) const fn word_start(word: u32) -> u32 {
+const fn word_start(word: u32) -> u32 {
     (word - 1) * 30 + 1
 }
 

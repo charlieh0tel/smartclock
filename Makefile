@@ -262,13 +262,17 @@ check-fpga-decoder: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 	python3 -I tools/fpga/xact/roundtrip.py $(XC3000_VIEWER)/html
 
 # The figures docs/firmware/58501a.md quotes, recomputed from the
-# 58501A's image and EEPROM, and its FPGA pins from tools/fpga/iobdump.js
-# with the same viewer; and the SHA-256s third_party/NOTICE gives them.
-# Needs uv, node and git.
+# 58501A's image and EEPROM, its FPGA pins from tools/fpga/iobdump.js
+# with the same viewer, and its pForth words from smartclock-cli
+# dump-pforth; and the SHA-256s third_party/NOTICE gives them.  Needs
+# uv, node, git and cargo.  CI runs it in ci.yml's prototype-58501a
+# job, not firmware.yml, which builds no Rust.
 .PHONY: check-58501a-figures
 check-58501a-figures: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))
-	uv run -q tools/firmware/figures_58501a.py --viewer $(XC3000_VIEWER)/html
+	$(CARGO) build -q -p smartclock-cli
+	uv run -q tools/firmware/figures_58501a.py --viewer $(XC3000_VIEWER)/html \
+		--cli target/debug/smartclock-cli
 
 fpga-designs:
 	tools/fpga/xact/build.sh

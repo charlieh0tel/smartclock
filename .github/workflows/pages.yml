@@ -35,12 +35,16 @@ jobs:
           node-version: 22
       # The pForth words page reads the images with
       # tools/firmware/pforth_words.py, whose Capstone `uv run` installs
-      # from the script's inline metadata; uv is firmware.yml's pin.
+      # from the script's inline metadata, as it does the markdown-it-py
+      # of tools/markdown_page.py, which renders the 58501A's page; uv
+      # is firmware.yml's pin.
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "0.13.2"
           enable-cache: true
-          cache-dependency-glob: "tools/firmware/pforth_words.py"
+          cache-dependency-glob: |
+            tools/firmware/pforth_words.py
+            tools/markdown_page.py
       - run: node --version && iverilog -V | head -n 1 && uv --version
       - run: make pages PAGES_DIR=_site
       - if: github.event_name != 'pull_request'

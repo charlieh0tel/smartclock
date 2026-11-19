@@ -708,7 +708,11 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   `images/58501a-prototype/`, its photos under
   `docs/images/58501a-prototype/`, with a document of its own and no
   row in any table of the models, so that no tool or check over the
-  production images takes it and no exception is needed.
+  production images takes it and no exception is needed.  Its page,
+  `58501a-prototype.html`, is rendered from that document by
+  `tools/markdown_page.py`, so the document stays the one source, and
+  is published unlisted, off the landing page's groups, linked from the
+  FPGA explainer instead.
 - **A second image is ported by copying the first's work**, not by
   sharing it from the start: the 58503A's `rewritten/` and
   `smartclock.h` began as copies of the Z3805A's, seeded from

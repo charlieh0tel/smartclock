@@ -30,7 +30,7 @@ returns `NotListed` without anything reaching the receiver.  Any
 other model is asked every query its tree has, except one naming
 none but these.
 
-The Z3817A is asked 26 of the `z3801` tree's 63 queries: idn, stb, position avg, sat tracking count, sync state, efc, led gpslock, ffom, tfom, tinterval, holdover unc pred, holdover unc now, holdover duration, holdover waiting, status screen, log count, log read, oper condition, hardware condition, holdover condition, powerup condition, date, time, efc absolute, oven tempco, reference status.
+The Z3817A is asked 27 of the `z3801` tree's 63 queries: idn, stb, position avg, sat tracking count, sat visible count, sync state, efc, led gpslock, ffom, tfom, tinterval, holdover unc pred, holdover unc now, holdover duration, holdover waiting, status screen, log count, log read, oper condition, hardware condition, holdover condition, powerup condition, date, time, efc absolute, oven tempco, reference status.
 
 ## Undocumented
 

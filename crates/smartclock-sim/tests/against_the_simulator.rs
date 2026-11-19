@@ -308,6 +308,10 @@ fn a_z3817a_is_not_asked_what_its_lists_leave_out() {
     assert!(snapshot.operation.is_some());
     assert!(snapshot.holdover_duration.is_some());
     assert!(snapshot.oven_tempco.is_some());
+    // The predicted-visible count, from which the log derives
+    // `not_tracking`.
+    assert_eq!(snapshot.visible, Some(9));
+    assert!(snapshot.tracking.is_some());
     assert_eq!(snapshot.freshness, Freshness::Live);
     assert_eq!(
         snapshot.reference,

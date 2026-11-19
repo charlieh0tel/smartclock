@@ -53,6 +53,7 @@ use crate::flash::FlashArgs;
 use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
 use crate::registers::ReadRegistersArgs;
+use crate::simulate_loop::SimulateLoopArgs;
 
 #[derive(Parser)]
 // The crate's description is the smartclock-utils package's summary,
@@ -194,6 +195,11 @@ enum Command {
         #[arg(long)]
         models: bool,
     },
+    /// Simulate the disciplining loop against a disturbance and print
+    /// its time interval and EFC as TSV, beside a snapshot log's if
+    /// given (docs/firmware/loop.md, "Simulating it").  Needs no
+    /// receiver.
+    SimulateLoop(SimulateLoopArgs),
     /// Read the DUART's and the SIM's registers that a console read
     /// leaves unchanged, for hardware-investigations items 21 and 26
     /// (docs/hardware-investigations.md, "Register reads through the
@@ -330,6 +336,7 @@ mod dump_scpi;
 mod flash;
 mod image;
 mod registers;
+mod simulate_loop;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -357,6 +364,9 @@ fn main() -> Result<()> {
     }
     if let Command::DumpOncore { images, models } = &cli.command {
         return dump_oncore::run(images, *models);
+    }
+    if let Command::SimulateLoop(args) = &cli.command {
+        return simulate_loop::run(args);
     }
     // A dry run opens nothing.
     if let Command::ReadRegisters(args) = &cli.command
@@ -600,7 +610,8 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         | Command::SplitChips(_)
         | Command::DumpScpi(_)
         | Command::DumpPforth { .. }
-        | Command::DumpOncore { .. } => unreachable!("handled before the session is opened"),
+        | Command::DumpOncore { .. }
+        | Command::SimulateLoop(_) => unreachable!("handled before the session is opened"),
         Command::Note { .. } | Command::Fact { .. } => {
             unreachable!("refused without --daemon, before the port is opened")
         }
@@ -639,6 +650,7 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::DumpScpi(_)
         | Command::DumpPforth { .. }
         | Command::DumpOncore { .. }
+        | Command::SimulateLoop(_)
         | Command::Note { .. }
         | Command::Fact { .. }
         | Command::Sensors { .. } => Vec::new(),
@@ -1044,6 +1056,7 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
         Command::DumpScpi(args) => dump_scpi::run(args),
         Command::DumpPforth { images, models } => dump_pforth::run(images, *models),
         Command::DumpOncore { images, models } => dump_oncore::run(images, *models),
+        Command::SimulateLoop(args) => simulate_loop::run(args),
         Command::Probe { .. } | Command::Sweep { .. } => anyhow::bail!(
             "probe and sweep send hundreds of commands and need the port to themselves; \
              stop smartclockd and use --device"

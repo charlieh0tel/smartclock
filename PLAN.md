@@ -350,6 +350,33 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
   of its y axis change.
 - Exporter metrics are not renamed and their labels not changed.
 
+### HTTP is served with tiny_http
+
+The exporter and the web view serve HTTP with tiny_http, through
+`smartclock::http` (behind the library's `http` feature, so its other
+users do not build it), which holds the receive loop, a thread per
+request, the answer with `Cache-Control: no-store`, and query decoding
+with `form_urlencoded`.  It replaced an in-house server crate because
+a request needs parsing properly: that server read the request line,
+answered and closed, so a client whose headers arrived in a later
+write than its line was reset.
+
+The in-house server's limits went with it: a cap of 32 requests in
+flight (503 past it), a ten-second deadline for the request and a
+thirty-second write timeout, and an 8 KiB cap on the request line.
+tiny_http has no option for any of them (0.12.0: its pool starts a
+thread a connection, it sets no socket timeouts, it reads a header
+line of any length, and it keeps HTTP/1.1 connections alive), and they
+were not rebuilt around it.  Under this project's threat model, a
+careless operator rather than an attacker (Known defects), a flood or
+a slow client on the local network is accepted.
+
+tiny_http stops accepting at its listener's first error, out of file
+descriptors among them, and says so once; `smartclock::http` then
+starts a server again on the same listener 100 ms later
+(`ACCEPT_RETRY`) rather than leave the page dark until a restart.  A
+body past 64 KiB is refused 413.
+
 ### No terminal monitor
 
 The ratatui terminal monitor, `smartclockmon`, is dropped (owner,
@@ -1938,8 +1965,9 @@ stands in for one.
   every pass, until the reason is known; asked again, it would give
   the browser's not-tracking series.
 - **Editing notes from the web view**, through the daemon socket.
-  Needs POST bodies in `smartclock::http`, `/api/notes` returning each
-  note's `id`, and edit requests keyed by it.
+  Needs `/api/notes` returning each note's `id`, and edit requests
+  keyed by it; `smartclock::http`'s `serve_requests_on` hands a POST's
+  body.
 - **Tracking log decoder:** a 58503A's `Track lost` and `Track resumed`
   event log entries carry packed channel words
   (`docs/firmware/gps.md`, "Channel mode and signal strength");

@@ -331,14 +331,14 @@ GLL	command	longitude	3	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:repo
 GLL	command	east or west	4	1	1	-	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:reported with no position, or in fixed mode from a source whose receiver is not commanded;held:held_position;held:initial_position	-	-	engine;holder	-
 GLL	command	null	5	1	3	1	-	GT	6	z3815a-4010,z3805a-1.01.03	-	-	honored:null, any entry ignored	-	-	engine	-
 GGA	response	UTC	1	1	1	-	-	GT	19	-	z3815a-4010,z3805a-1.01.03	-	clock	-	Time	-	-
-GGA	response	latitude	2	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-GGA	response	north or south	3	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-GGA	response	longitude	4	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
-GGA	response	east or west	5	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
+GGA	response	latitude	2	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Latitude	-	-
+GGA	response	north or south	3	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.latitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Latitude	-	-
+GGA	response	longitude	4	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Longitude	-	-
+GGA	response	east or west	5	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	z3815a-4010,z3805a-1.01.03	control	record.position.longitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Longitude	-	-
 GGA	response	quality	6	1	1	-	-	GT	19	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:by the satellites used and the mode	-	Fix;ReceiverMode	-	-
 GGA	response	satellites used	7	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	console	record.satellites.used;record.satellites.elevation;record.antenna;computed:above the mask and not deleted	-	SatelliteElevation;SatelliteUsed;Antenna	-	-
 GGA	response	DOP	8	1	1	-	-	GT	19	-	-	-	record.dops.position;record.dops.horizontal;record.receiver_mode:from a source whose receiver is commanded;computed:PDOP 3D, HDOP 2D	00.00	PositionDop;HorizontalDop;ReceiverMode	-	-
-GGA	response	altitude	9	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.mean_sea_level;state:the height entered, held or with none	-	MeanSeaLevelHeight	-	-
+GGA	response	altitude	9	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.mean_sea_level;state:the height entered, with no position or in fixed mode from a source whose receiver is not commanded	-	MeanSeaLevelHeight	-	-
 GGA	response	altitude unit	10	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
 GGA	response	geoid altitude	11	1	1	-	-	GT	19	z3815a-4010,z3805a-1.01.03	-	control	record.position.ellipsoid;record.position.mean_sea_level	-	EllipsoidHeight;MeanSeaLevelHeight	-	-
 GGA	response	geoid altitude unit	12	1	1	-	-	GT	19	-	-	-	fixed	-	-	-	M
@@ -359,10 +359,10 @@ GSV	response	azimuth	6	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	recor
 GSV	response	SNR	7	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.signal;record.antenna	-	SatelliteSignal;Antenna	-	00 with no signal
 RMC	response	UTC	1	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;clock;state:the last fix	-	Time;Fix;ReceiverMode	-	null before a fix
 RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:by the satellites used and the mode	-	Fix;ReceiverMode	-	-
-RMC	response	latitude	3	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-RMC	response	north or south	4	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
-RMC	response	longitude	5	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
-RMC	response	east or west	6	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
+RMC	response	latitude	3	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Latitude	-	-
+RMC	response	north or south	4	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Latitude	-	-
+RMC	response	longitude	5	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Longitude	-	-
+RMC	response	east or west	6	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, with no position or in fixed mode from a source whose receiver is not commanded	-	Longitude	-	-
 RMC	response	speed	7	1	1	-	-	GT	25	-	-	-	record.velocity.speed;record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:null without a fix	-	Fix;Speed;ReceiverMode	-	null without one
 RMC	response	true course	8	1	1	-	-	GT	25	-	-	-	record.velocity.heading;record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:null without a fix	-	Fix;Heading;ReceiverMode	-	null without one
 RMC	response	date	9	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;clock;state:the last fix	-	Time;Fix;ReceiverMode	-	null before a fix

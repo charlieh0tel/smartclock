@@ -2346,20 +2346,28 @@ impl Engine {
     /// detection nor isolation possible (VP p. 106), the engine's own
     /// count being a bound on a record's result, not a result.  Off,
     /// with the alarm limit too low or with too few satellites
-    /// tracked, the solution is unknown (VP p. 105) and nothing is
-    /// isolated, whatever the record has: it knows of neither the
-    /// limit nor which satellites the engine was set to track.  Out of
-    /// position hold, it can only detect (UT p. 6.93).
+    /// tracked, the solution is unknown (VP p. 105), neither detection
+    /// nor isolation is possible and nothing is isolated, whatever the
+    /// record has: it knows of neither the limit nor which satellites
+    /// the engine was set to track.  The manual gives no Time RAIM
+    /// status for the algorithm off; tests of a real VP (eight
+    /// channels, software 8.8) with it off read the solution status 2
+    /// and the Time RAIM status 2 in `@@En`, in position hold and out
+    /// of it.  In position hold with Time RAIM on and the antenna
+    /// disconnected, the same VP's solution status went from 0 to 2
+    /// within a second, stayed 2 while it was off and was 0 again
+    /// seven seconds after it was reconnected, its 1 PPS never
+    /// stopping; the engine, with no satellite tracked, reports 2 as
+    /// long as none is heard and the record's result again as soon as
+    /// enough are, without that delay.  That test did not capture the
+    /// pulse status or `@@Ea`'s count of satellites tracked, which the
+    /// engine gives as it otherwise would.  Out of position hold, it
+    /// can only detect (UT p. 6.93).
     fn traim_result(&self, record: &Record, tracked: usize) -> TraimResult {
         let holding = self.holds(record);
         let on = self.state.traim.algorithm;
         let able = self.traim_ability(record, tracked);
         match record.derived.raim {
-            None => TraimResult {
-                solution: TRAIM_SOLUTION_UNKNOWN,
-                ability: TRAIM_NEITHER,
-                isolated: PrnSet::EMPTY,
-            },
             Some(raim) if on && able != TRAIM_NEITHER => TraimResult {
                 solution: match raim.solution {
                     RaimSolution::Ok => TRAIM_SOLUTION_OK,
@@ -2379,9 +2387,9 @@ impl Engine {
                     PrnSet::EMPTY
                 },
             },
-            Some(_) => TraimResult {
+            _ => TraimResult {
                 solution: TRAIM_SOLUTION_UNKNOWN,
-                ability: able,
+                ability: TRAIM_NEITHER,
                 isolated: PrnSet::EMPTY,
             },
         }

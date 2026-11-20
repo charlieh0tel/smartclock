@@ -1984,6 +1984,16 @@ specification; in short:
   on only while Time RAIM confirms the time solution (VP p. 102),
   which no image sets, has no pulse on a solution unknown:
   `Engine::pulsing` and the pulse status of `@@Bn` and `@@En` are off.
+  The manual gives no Time RAIM status for the algorithm off; tests of
+  a real VP (eight channels, software 8.8) with it off read 2 for both
+  statuses in `@@En`, in position hold and out of it.  In position
+  hold with Time RAIM on, the same VP with its antenna disconnected
+  read the solution status 2, not an alarm, within a second, for as
+  long as it was off, its 1 PPS on throughout, and 0 again seven
+  seconds after it was reconnected; the model, tracking none, sends 2
+  while none is heard and the record's result again as soon as
+  enough are, without the delay.  That test did not capture the pulse
+  status or the count of satellites tracked.
 - **A self-test tells the record's faults.**  A record names the parts
   a self-test would fail and the channels whose correlation would, and
   the model sets the bits the message has for them: `@@Ca`'s (VP
@@ -2037,9 +2047,10 @@ specification; in short:
   fix mode besides.  So with all Time RAIM's setup (`@@Bn` and
   `@@En`, VP pp. 104 and 140), `raim_algorithm` and
   `raim_alarm_limit` beside `pulse_mode`: the model reports the
-  solution unknown with the algorithm off and what can be done, of
-  what a record's result says can be, by the
-  limit and the satellites tracked (VP pp. 103, 105 and 106), and
+  solution unknown and neither detection nor isolation possible with
+  the algorithm off, and with it on what can be done, of what a
+  record's result says can be, by the limit and the satellites
+  tracked (VP pp. 103, 105 and 106), and
   whether a receiver checks its time solution, and against what
   limit, is its holder's to set.  Two engine fields are in the `Settings` all the
   same (`given:`).  One is the kind of DOP `@@Aj` asks for,

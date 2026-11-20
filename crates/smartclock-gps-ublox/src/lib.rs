@@ -45,8 +45,11 @@
 //!   an epoch whose `NAV-PVT` has `gnssFixOK` set and whose
 //!   `NAV-TIMEGPS` has a valid time of week and week: without a fix the
 //!   receiver gives plausible times from its own clock (section 9.2,
-//!   p. 27).  The week is the receiver's own resolution of the
-//!   satellites' ten bits (section 9.9.1, p. 29) unless the assembler
+//!   p. 27).  The part of a second is how far the epoch, `iTOW` plus
+//!   `fTOW` (section 32.17.30, p. 397), lies after that second, and zero
+//!   where it lies before it, so that the second stays the nearest.
+//!   The week is the receiver's own resolution of the satellites' ten
+//!   bits (section 9.9.1, p. 29) unless the assembler
 //!   was made with a week to resolve it near
 //!   ([`Assembler::near`](assembler::Assembler::near)).
 //! - **Position hold.**  A timing receiver whose position is fixed,

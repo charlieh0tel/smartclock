@@ -101,12 +101,18 @@ pub const PLACE: Position = position(
 /// it acts on ([`act`]): in position hold its receiver is where it was
 /// told it is, and its fix leaves out the satellites below the mask and
 /// those ignored.  It makes no pulse, so whoever times one from its
-/// records acts on the pulse settings.  The exceptions tables name it
+/// records acts on the pulse settings.  The part of a second, where in
+/// its second the epoch lies, is its holder's to give with the time, as
+/// the time is: the vectors' and the host feed's put the epoch on the
+/// second, at zero, unless they are told another place in it.  A real
+/// VP's is not zero (`docs/firmware/gps.md`, "The fields"); a made-up
+/// sky's epoch is where its holder says.  The exceptions tables name it
 /// `fake receiver`, for the vectors and the host feed alike.
 pub const DECLARATION: Declaration = Declaration {
     name: "fake receiver",
     fills: FieldSet::of(&[
         RecordField::Time,
+        RecordField::Subsecond,
         RecordField::UtcOffset,
         RecordField::Leap,
         RecordField::Fix,

@@ -24,7 +24,6 @@ use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::GpsWeek;
 use smartclock_gps::time::LeapEvent;
 use smartclock_gps::time::SECONDS_PER_WEEK;
-use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 use smartclock_ubx::frame::Deframer;
 use smartclock_ubx::message::Message;
@@ -43,6 +42,7 @@ use crate::record::NavPosEcefRecord;
 use crate::record::NavPvtRecord;
 use crate::record::NavSatRecord;
 use crate::record::NavTimeGpsRecord;
+use crate::record::after_second;
 use crate::record::leap_change;
 use crate::record::time_raim;
 use crate::record::utc_offset;
@@ -131,11 +131,14 @@ struct Announced {
 /// receiver makes its own, which the holder shifts by the pulse settings.
 /// Of Time RAIM it fills the ability alone: the solution it gives is
 /// always unknown, and `docs/firmware/gps-field-exceptions.tsv` excuses
-/// it the solution.
+/// it the solution.  The part of a second is the epoch's place after the
+/// second its time is rounded to, from `NAV-TIMEGPS`'s `fTOW`, and zero
+/// for an epoch before it, the second staying the nearest.
 pub const DECLARATION: Declaration = Declaration {
     name: "u-blox",
     fills: FieldSet::of(&[
         RecordField::Time,
+        RecordField::Subsecond,
         RecordField::UtcOffset,
         RecordField::Leap,
         RecordField::Fix,
@@ -379,13 +382,12 @@ impl Assembly {
             // crate's documentation).
             record.dops = epoch.dops.filter(|_| solution.fix() != Fix::TimeOnly);
             record.derived.ecef = epoch.ecef.filter(|_| record.position.is_some());
-            record.time = epoch
-                .time
-                .and_then(|time| time.seconds(self.reference))
-                .map(|seconds| GpsTime {
+            record.time = epoch.time.and_then(|time| {
+                time.seconds(self.reference).map(|seconds| GpsTime {
                     seconds,
-                    subsecond: Nanoseconds(0),
-                });
+                    subsecond: after_second(&time),
+                })
+            });
         }
         let now = record.time.map(|time| time.seconds);
         self.week = now.and_then(GpsSeconds::week).or(self.week);

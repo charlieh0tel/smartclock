@@ -53,6 +53,7 @@ use smartclock_gps::source::fake_receiver::DECLARATION;
 use smartclock_gps::units::Centimeters;
 use smartclock_gps::units::MilliArcSeconds;
 use smartclock_gps::units::Milliseconds;
+use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 use std::collections::BTreeMap;
 use std::env;
@@ -261,7 +262,10 @@ fn a_fake_receiver_fills_what_it_declares() {
 
     let head = declared_head();
     let engine = Engine::new(identity(&head), options(&head)).expect("an engine that powers up");
-    let record = FakeReceiver::new(&head).record(1, true, &engine.settings());
+    // An epoch off the second, so that its part of a second shows.
+    let mut receiver = FakeReceiver::new(&head);
+    receiver.after_second = Nanoseconds(12_726);
+    let record = receiver.record(1, true, &engine.settings());
     let undeclared = DECLARATION.undeclared(&UNFILLED, &record);
     assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
     let unshown = DECLARATION.unshown(changed(&UNFILLED, &record));

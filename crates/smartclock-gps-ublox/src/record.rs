@@ -211,6 +211,36 @@ impl NavTimeGpsRecord for NavTimeGps {
     }
 }
 
+const NANOSECONDS_PER_MILLISECOND: i64 = 1_000_000;
+const NANOSECONDS_PER_SECOND: i64 = 1_000_000_000;
+
+/// How far into its second `time`'s epoch lies: the precise time of
+/// week, `iTOW` plus `fTOW` (section 32.17.30, p. 397), less the second
+/// [`NavTimeGpsRecord::seconds`] rounds it to, which is the nearest;
+/// zero where the epoch lies before that second, a record's part of a
+/// second being 0 to 999,999,999 ns (VP p. 71).  The second is left
+/// where the rounding put it, so a record's whole second is the same
+/// with this as without it.
+///
+/// Of an epoch a second, `iTOW` on the second, the remainder is
+/// `fTOW` alone, the receiver's clock against GPS time: measurements
+/// of a NEO-M8T at one epoch a second put it between -464 and +294 us,
+/// negative in about three epochs of five, slewing about 0.84 us a
+/// second and expected to reach +/-0.5 ms before the receiver steps its
+/// clock.  So this gives the epoch's offset up to about 0.5 ms where it
+/// lies after the second, and zero where it lies before, which
+/// understates it by as much and never gives a negative part.  Of a
+/// faster rate the remainder is up to half a second: an epoch in the
+/// first half of a second keeps its place in it, and one in the second
+/// half is taken, as the second is, for the next second's top.
+pub(crate) fn after_second(time: &NavTimeGps) -> Nanoseconds<u32> {
+    let precise =
+        i64::from(time.time_of_week.0) * NANOSECONDS_PER_MILLISECOND + i64::from(time.fraction.0);
+    let second = (precise + NANOSECONDS_PER_SECOND / 2).div_euclid(NANOSECONDS_PER_SECOND);
+    let remainder = precise - second * NANOSECONDS_PER_SECOND;
+    Nanoseconds(u32::try_from(remainder).unwrap_or(0))
+}
+
 /// How far a leap second placed by its week and day may lie from where
 /// `timeToLsEvent` puts it and still be believed.  The document does
 /// not say which second the countdown ends on, the inserted one or the

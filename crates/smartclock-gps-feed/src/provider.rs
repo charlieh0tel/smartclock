@@ -26,6 +26,7 @@ use smartclock_gps::source::wrap::Relabel;
 use smartclock_gps::time::GpsSeconds;
 use smartclock_gps::time::UnixSeconds;
 use smartclock_gps::units::Centimeters;
+use smartclock_gps::units::Nanoseconds;
 use smartclock_gps::units::Seconds;
 use smartclock_gps_ublox::assembler::Assembler;
 use smartclock_ubx::nav::nav_sat_length;
@@ -68,8 +69,9 @@ type Ubx = Assembler<{ nav_sat_length(u8::MAX as usize) }>;
 /// One of the providers the command line can name.
 #[derive(Debug, Clone)]
 pub(crate) enum Provider {
-    /// The made-up sky, with or without a leap second.
-    FakeReceiver(Fixed<'static>),
+    /// The made-up sky, with or without a leap second, and how far into
+    /// each second its epoch lies.
+    FakeReceiver(Fixed<'static>, Nanoseconds<u32>),
     /// A UBX recording, an epoch a tick, boxed for its assembler's
     /// buffer.
     Recording(Box<Replay<&'static [u8], Ubx>>),
@@ -80,7 +82,7 @@ pub(crate) enum Provider {
 impl Source for Provider {
     fn clocking(&self) -> Clocking {
         match self {
-            Self::FakeReceiver(fixed) => fixed.clocking(),
+            Self::FakeReceiver(fixed, _) => fixed.clocking(),
             Self::Recording(replay) => replay.clocking(),
             Self::Live(latest) => latest.clocking(),
         }
@@ -88,7 +90,13 @@ impl Source for Provider {
 
     fn record(&mut self, tick: Tick, record: &mut Record) -> Presence {
         match self {
-            Self::FakeReceiver(fixed) => fixed.record(tick, record),
+            Self::FakeReceiver(fixed, after_second) => {
+                let presence = fixed.record(tick, record);
+                if let Some(time) = record.time.as_mut() {
+                    time.subsecond = *after_second;
+                }
+                presence
+            }
             Self::Recording(replay) => replay.record(tick, record),
             Self::Live(latest) => latest.record(tick, record),
         }
@@ -125,7 +133,7 @@ impl Shared {
     pub(crate) const fn latest(&self) -> Option<&Latest> {
         match self.nest.inner().inner() {
             Provider::Live(latest) => Some(&**latest),
-            Provider::FakeReceiver(_) | Provider::Recording(_) => None,
+            Provider::FakeReceiver(..) | Provider::Recording(_) => None,
         }
     }
 
@@ -190,10 +198,27 @@ pub(crate) fn build(
     fake_start: Option<UnixSeconds>,
     now: UnixSeconds,
 ) -> Result<Built> {
+    build_at(spec, fake_start, now, ON_THE_SECOND)
+}
+
+/// The made-up sky's epoch: on the second, as the vectors' is.
+const ON_THE_SECOND: Nanoseconds<u32> = Nanoseconds(0);
+
+/// [`build`], the made-up sky's epoch `after_second` into each second.
+fn build_at(
+    spec: &ProviderSpec,
+    fake_start: Option<UnixSeconds>,
+    now: UnixSeconds,
+    after_second: Nanoseconds<u32>,
+) -> Result<Built> {
     let (provider, relabel, leap) = match spec {
         ProviderSpec::Fake => {
             let start = gps(fake_start.unwrap_or(now))?;
-            (fake_receiver_from(start)?, Relabel::Keep, None)
+            (
+                fake_receiver_from(start, after_second)?,
+                Relabel::Keep,
+                None,
+            )
         }
         ProviderSpec::FakeLeap(event) => {
             let start = match fake_start.map(gps).transpose()? {
@@ -203,7 +228,11 @@ pub(crate) fn build(
                     .checked_sub(LEAP_LEAD)
                     .ok_or_else(|| anyhow!("a leap second too near GPS time's start"))?,
             };
-            (fake_receiver_from(start)?, Relabel::Keep, Some(*event))
+            (
+                fake_receiver_from(start, after_second)?,
+                Relabel::Keep,
+                Some(*event),
+            )
         }
         ProviderSpec::Ubx(path) => {
             let bytes = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
@@ -234,9 +263,10 @@ const fn relabel(fake_start: Option<UnixSeconds>) -> Relabel {
     }
 }
 
-/// The made-up sky, its first second `start`.  The sky is built once
-/// and lives as long as the program.
-fn fake_receiver_from(start: GpsSeconds) -> Result<Provider> {
+/// The made-up sky, its first second `start` and its epoch
+/// `after_second` into each second.  The sky is built once and lives as
+/// long as the program.
+fn fake_receiver_from(start: GpsSeconds, after_second: Nanoseconds<u32>) -> Result<Provider> {
     let week = start
         .week()
         .ok_or_else(|| anyhow!("a start before GPS time's"))?;
@@ -245,7 +275,7 @@ fn fake_receiver_from(start: GpsSeconds) -> Result<Provider> {
         UTC_OFFSET,
         week,
     )));
-    Ok(Provider::FakeReceiver(Fixed::new(start, sky)))
+    Ok(Provider::FakeReceiver(Fixed::new(start, sky), after_second))
 }
 
 /// A UBX recording, which lives as long as the program.
@@ -423,6 +453,7 @@ pub(crate) mod tests {
     use super::UTC_OFFSET;
     use super::Ubx;
     use super::build;
+    use super::build_at;
     use super::complete_fake_receiver;
     use super::recording;
     use super::spawn_gpsd;
@@ -659,8 +690,8 @@ pub(crate) mod tests {
     }
 
     /// The made-up sky starts at the driver's second, or at the fake
-    /// start; a `fake:leap=` sky a minute before its leap second, which
-    /// it announces.
+    /// start, its epoch on the second; a `fake:leap=` sky a minute
+    /// before its leap second, which it announces.
     #[test]
     fn the_fake_receiver_starts_where_it_is_told() {
         let now = DateTime::new(2026, 11, 15, 12, 0, 0).unwrap().to_unix();
@@ -671,6 +702,7 @@ pub(crate) mod tests {
         assert_eq!(kind, Kind::FakeReceiver);
         assert_eq!(nest.record(Tick(5), &mut record), Presence::Fresh);
         assert_eq!(record.time.unwrap().seconds, at_now + Seconds(5));
+        assert_eq!(record.time.unwrap().subsecond, Nanoseconds(0));
 
         let fake = DateTime::new(2030, 6, 1, 0, 0, 0).unwrap().to_unix();
         let Built { mut nest, .. } = build(&ProviderSpec::Fake, Some(fake), now).unwrap();
@@ -713,11 +745,15 @@ pub(crate) mod tests {
         let now = DateTime::new(2027, 12, 31, 23, 0, 0).unwrap().to_unix();
         let midnight = DateTime::new(2028, 1, 1, 0, 0, 0).unwrap().to_unix();
         let leap = LeapEvent::at_day_end(midnight, Seconds(18), LeapChange::Insert).unwrap();
-        let Built { mut nest, .. } = build(&ProviderSpec::FakeLeap(leap), None, now).unwrap();
+        // An epoch off the second, so that its part of a second shows.
+        let after_second = Nanoseconds(12_726);
+        let Built { mut nest, .. } =
+            build_at(&ProviderSpec::FakeLeap(leap), None, now, after_second).unwrap();
         let engine = Engine::new(&VP_EIGHT, Options::DEFAULT).unwrap();
         let mut record = UNFILLED;
         assert_eq!(nest.record(Tick(0), &mut record), Presence::Fresh);
         complete_fake_receiver(&mut record, &engine.settings());
+        assert_eq!(record.time.unwrap().subsecond, after_second);
         let undeclared = FAKE_RECEIVER.undeclared(&UNFILLED, &record);
         assert!(undeclared.is_empty(), "undeclared: {undeclared:?}");
         let unshown = FAKE_RECEIVER.unshown(changed(&UNFILLED, &record));

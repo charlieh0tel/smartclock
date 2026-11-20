@@ -252,7 +252,7 @@ lacks or a line that does not meet its blocks.  `make check-pages` loads each pa
 Chrome and fails if anything on it scrolls sideways at desktop width,
 or at a phone's anything but a box marked `data-scroll="x"`, which a
 page's generator gives each table, figure or listing meant to scroll
-inside its own frame.
+inside its own frame; the pages workflow runs it too.
 
 ## Documentation
 

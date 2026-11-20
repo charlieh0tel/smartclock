@@ -37,6 +37,7 @@ use smartclock::defaults::RUN_DIR;
 use smartclock::defaults::SENSORD;
 use smartclock::error::Error;
 use smartclock::http::Response;
+use smartclock::http::Status;
 use smartclock::task::Cadence;
 
 use crate::metrics::Scrape;
@@ -128,9 +129,9 @@ fn main() -> Result<()> {
                 metrics::render(&scrapes) + &metrics::render_sensors(&sensors),
             )
         }
-        Route::Index => Response::ok(
-            "text/plain; charset=utf-8",
-            "smartclock-exporter\n\nMetrics are at /metrics.\n".to_owned(),
+        Route::Index => Response::text(
+            Status::Ok,
+            "smartclock-exporter\n\nMetrics are at /metrics.\n",
         ),
         Route::NotFound => Response::not_found(),
     })?;

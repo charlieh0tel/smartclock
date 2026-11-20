@@ -543,7 +543,7 @@ fn facts(logs: &Logs, query: &str) -> Result<serde_json::Value> {
 fn deviation(logs: &Logs, query: &str) -> Result<serde_json::Value> {
     let (mut from, mut to) = (None, None);
     for (key, value) in smartclock::http::pairs(query) {
-        match key {
+        match key.as_ref() {
             "from" => from = value.parse::<i64>().ok(),
             "to" => to = value.parse::<i64>().ok(),
             _ => {}
@@ -742,7 +742,7 @@ fn series(logs: &Logs, query: &str) -> Result<serde_json::Value> {
     let (mut from, mut to, mut points) = (None, None, DEFAULT_POINTS);
     let mut modes = Modes::Every;
     for (key, value) in smartclock::http::pairs(query) {
-        match key {
+        match key.as_ref() {
             // Split after decoding, not before: a `+` is a space by
             // the time it gets here, and `%2C` is a comma.
             "columns" | "column" => columns.extend(

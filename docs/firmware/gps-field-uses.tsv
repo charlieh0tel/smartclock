@@ -6,15 +6,16 @@ command_log_add	*	*	*	console	command_log_add() stamps a command log entry with 
 command_monitor	*	Ba,Ea	hours; minutes; seconds	control	command_monitor(), in its status monitor, counts the messages that repeat the last one's time and at too many fails the receiver's health, which it gives status_happening()
 command_monitor	*	Bn,En	rate	control	command_monitor(), in its status monitor, expects a Time RAIM message with each status message while the rate is not zero, and without them fails the receiver's health, which it gives status_happening()
 command_monitor	*	Cg	mode	control	command_monitor() watches for status messages only in position fix mode
-command_monitor	z3817a-3752	Bn,En	algorithm	control	command_monitor(), in its status monitor, expects Time RAIM messages only with the algorithm on
+command_monitor	z3817a-3752,58503b-1.01.04,z3816a-4001	Bn,En	algorithm	control	command_monitor(), in its status monitor, expects Time RAIM messages only with the algorithm on
 gps_response_decode	*	*	*	console	gps_response_decode() gives the time to status_snapshot_update(), which chooses by it which of two snapshots to keep; gps_print_1pps() alone prints them
 gps_time_local_get	*	*	*	reported	scpi_query_DIAGnostic_GPSystem_TIME() answers with gps_time_local_get()'s date and time
+gps_time_local_get	z3816a-4001	Ba,Ea	fractional seconds	none	gps_time_local_get() gives scpi_query_DIAGnostic_GPSystem_TIME() the fraction of a second, which it leaves unread
 gps_position_get	*	*	*	reported	scpi_query_SOURce_GPSystem_POSition_ACTual() answers with gps_position_get()'s position, the held one in position hold
 status_snapshot	*	*	*	reported	status_snapshot() copies the field, or what satellite_sets_build() and satellite_status_list() make of it, to the snapshot status_screen() draws for status_screen_print()
 status_snapshot	*	Ba,Ea	channel status flags	none	status_snapshot() hands the channels to satellite_sets_build() and satellite_status_list(), which read each one's satellite, mode and signal strength and not its flags
 status_snapshot	*	Ba,Ea	receiver status position propagate; receiver status poor geometry; receiver status 2D fix; receiver status acquiring or position hold; receiver status differential; receiver status insufficient visible satellites; receiver status bad almanac	none	status_snapshot() copies the receiver status whole to the snapshot, of which status_screen_position() alone reads it, for its 3D fix bit, to say why a survey is suspended
 status_snapshot	*	Bb	Doppler	none	status_snapshot() hands the visibility to satellite_status_list(), which reads each satellite's number, elevation, azimuth and health and not its Doppler
-gps_debug_status	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
+gps_debug_status	z3805a-3543b,z3801a-3543,58503a-3704,z3817a-3752,58503b-1.01.04,z3816a-4001	*	*	console	oncore_position_message() calls gps_debug_status(), which prints, only while a console word has set its interval
 gps_print_average	*	*	*	console	gps_print_average() prints, on a request of gps_console_request()
 gps_print_best_combinations	*	*	*	console	gps_print_best_combinations() prints, on a request of gps_console_request()
 gps_print_extension	*	*	*	console	gps_print_extension() prints, on a request of gps_console_request()
@@ -30,8 +31,8 @@ oncore_position_message	*	At	position hold	control	oncore_position_message() ave
 oncore_position_message	*	Ba,Ea	latitude; longitude; ellipsoid height; mean sea level height; receiver status 3D fix	control	oncore_position_message() averages the position by running_average_update() for the survey, while the receiver status has its 3D fix bit
 oncore_position_message	*	Ba,Ea	receiver status position propagate; receiver status poor geometry; receiver status 2D fix; receiver status acquiring or position hold; receiver status differential; receiver status insufficient visible satellites; receiver status bad almanac	none	oncore_position_message() tests the receiver status for its 3D fix bit alone
 oncore_position_message	z3805a-3543b,z3801a-3543	Cg	mode	control	oncore_position_message() takes the status only in position fix mode, and resets the channels otherwise
-oncore_position_message	z3817a-3752	Ba,Ea	hours; minutes; seconds; channel satellite; channel tracking mode	control	oncore_position_message() counts the messages that repeat the last one's time while a channel tracks a satellite for position, the count command_monitor() fails the receiver's health by
-oncore_position_message	z3817a-3752	Ba,Ea	channel signal strength; channel status flags	none	oncore_position_message() reads each channel's satellite and mode alone
+oncore_position_message	z3817a-3752,58503b-1.01.04,z3816a-4001	Ba,Ea	hours; minutes; seconds; channel satellite; channel tracking mode	control	oncore_position_message() counts the messages that repeat the last one's time while a channel tracks a satellite for position, the count command_monitor() fails the receiver's health by
+oncore_position_message	z3817a-3752,58503b-1.01.04,z3816a-4001	Ba,Ea	channel signal strength; channel status flags	none	oncore_position_message() reads each channel's satellite and mode alone
 channel_position_satellite	*	*	*	none	channel_position_satellite() reads a channel's satellite and mode alone
 channel_position_satellite	*	Ba,Ea	channel satellite; channel tracking mode	control	channel_position_satellite() gives gps_receiver_status_update() the satellites tracked for position, by which it qualifies the reference
 gps_receiver_status_update	*	*	*	control	gps_receiver_status_update() sets the receiver's status code, and so the reference's validity, by the position hold and the fix mode
@@ -39,7 +40,9 @@ raim_monitor	*	*	*	control	raim_monitor() sets the Time RAIM assessment gps_rece
 raim_request_arguments	*	*	*	control	raim_request_arguments() chooses the Time RAIM algorithm and alarm limit it has the engine set by the position hold
 gps_parse_options	*	*	*	control	gps_parse_options() sets gps.raim_option, by which the Time RAIM setup is sent or not, from the options line
 gps_receiver_abilities_update	*	Cj	line	control	gps_receiver_abilities_update() sets the engine's abilities, the channel count and Time RAIM among them, from the receiver ID's lines
-oncore_receiver_id_value	*	*	*	control	oncore_receiver_id_value() finds a receiver ID line by its label for gps_receiver_abilities_update(), which sets the engine's abilities from it
+oncore_receiver_id_value	58503a-3704,z3817a-3752	*	*	control	oncore_receiver_id_value() finds a receiver ID line by its label for gps_receiver_abilities_update(), which sets the engine's abilities from it
+oncore_receiver_id_value	58503b-1.01.04,z3816a-4001	*	*	control	oncore_receiver_id_value() finds a receiver ID line by its label for oncore_receiver_id_message(), which takes the engine's kind and abilities from it
+oncore_receiver_id_message	58503b-1.01.04,z3816a-4001	Cj	line	control	oncore_receiver_id_message() takes the engine's kind, Time RAIM and software from the receiver ID's lines, by which the send filters choose the messages sent, and has gps_channel_count_update() set the channel count
 gps_selftest_run	*	*	*	control	gps_selftest_run() takes the result into selftest.gps, on which selftest_gps_with_lamp() lights the self-test LED and fails the self-test
 gps_diag_sequence	*	*	*	control	gps_diag_sequence() takes the result into selftest.gps, as gps_selftest_run() does
 leap_event_create	*	*	*	control	leap_event_create() schedules the leap second from the leap second status
@@ -47,6 +50,8 @@ gps_leap_ack	*	*	*	control	gps_leap_ack() switches the engine between GPS and UT
 visible_satellites	*	*	*	none	visible_satellites() reads the count and each satellite's number alone
 visible_satellites	*	Bb	visible satellites; satellite	reported	scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted() and scpi_query_SOURce_GPSystem_SATellite_VISible_PREDicted_COUNt() answer with visible_satellites()'s list
 position_settable	*	*	*	reported	scpi_set_SOURce_GPSystem_INITial_POSition() refuses the position in position hold, by position_settable()
+position_settable	58503b-1.01.04	Ba,Ea	receiver status 3D fix; receiver status 2D fix	reported	scpi_set_SOURce_GPSystem_INITial_POSition() refuses the position, by position_settable(), once gps.surveying is set, which oncore_position_message() sets on a 2D or 3D fix
+position_settable	z3816a-4001	Ba,Ea	receiver status 3D fix; receiver status 2D fix	reported	scpi_set_SOURce_GPSystem_INITial_POSition() refuses the position, by position_settable(), once gps.fix_seen is set, which oncore_position_message() sets on a 2D or 3D fix: the ROM's position_settable() tests fix_seen, 0x10147a, where the rewritten C names surveying
 survey_progress_text	*	*	*	reported	scpi_query_DOUGlas_PROGress() answers with survey_progress_text()'s survey progress
 survey_progress_percent	*	*	*	none	survey_progress_percent() has no caller
 front_panel_status_text	*	*	*	reported	front_panel_status_text() gives front_panel_update() the Status key's line
@@ -63,7 +68,27 @@ oncore_traim_8_message	*	Bn,En	alarm limit	none	oncore_traim_8_message() rescale
 *	z3817a-3752	Bn,En	pulse mode	none	the pulse mode's stores include gps.field_592, a bit of which the decoder sets by it; gps_pps_check() and gps_pps_pass_update() alone test that bit, every other reader of the byte another
 gps_pps_check	z3817a-3752	Bn,En	pulse mode	control	gps_pps_check() fails the GPS 1PPS only while the pulse is not continuous
 gps_pps_pass_update	z3817a-3752	Bn,En	pulse mode	control	gps_pps_pass_update() passes the GPS 1PPS only while the pulse is not continuous
-gps_print_time_raim	z3817a-3752	Bn,En	pulse mode	console	gps_print_time_raim() prints the pulse mode
+gps_print_time_raim	z3817a-3752,58503b-1.01.04,z3816a-4001	Bn,En	pulse mode	console	gps_print_time_raim() prints the pulse mode
+*	58503b-1.01.04	Bn,En	pulse mode	none	the pulse mode's stores include gps.field_608, whose bit 3 oncore_traim_message() and oncore_traim_8_message() set while the 1PPS is on; gps_pps_check() and gps_pps_dead_update() alone test that bit, every other reader of the byte another
+gps_pps_check	58503b-1.01.04	Bn,En	pulse mode	control	gps_pps_check() takes the GPS 1PPS for lost, and marks it dead, only while gps.field_608's bit 3 is clear, the pulse not on, and the GPS reference not valid
+gps_pps_dead_update	58503b-1.01.04	Bn,En	pulse mode	control	gps_pps_dead_update() marks the GPS 1PPS dead only while gps.field_608's bit 3 is clear, the pulse not on, and the GPS reference not valid
+*	z3816a-4001	Bn,En	pulse mode	none	the pulse mode's stores include gps.engine, whose 1PPS bit oncore_traim_message() and oncore_traim_8_message() set while the pulse is on; no function tests that bit, every reader of the word another
+oncore_traim_message	58503b-1.01.04,z3816a-4001	Ba,Ea	channel tracking mode	console	oncore_traim_message() copies each channel's mode into the Time RAIM record, which only gps_print_time_raim(), a console word's, prints
+oncore_traim_8_message	58503b-1.01.04,z3816a-4001	Ba,Ea	channel tracking mode	console	oncore_traim_8_message() copies each channel's mode into the Time RAIM record, which only gps_print_time_raim(), a console word's, prints
+raim_monitor	58503b-1.01.04,z3816a-4001	Bn,En	sigma; channel satellite; channel time fraction	console	raim_monitor() keeps the sigma and, at an alarm detected, the channels' satellites and estimates, which only gps_print_time_raim(), a console word's, prints
+gps_leap_ack	58503b-1.01.04,z3816a-4001	Bo	UTC offset	control	gps_leap_ack(), for a UT Plus engine, which oncore_receiver_id_message() marks, sets the GPS-UTC offset from @@Bo's by set_gps_utc_offset() once it is not 0
+gps_receiver_status_update	58503b-1.01.04,z3816a-4001	Bo	UTC offset	control	gps_receiver_status_update() takes the reference for valid, where the clock keeps UTC, only once @@Bo's offset has come
+oncore_position_message	58503b-1.01.04,z3816a-4001	Aw,Bo	time mode; UTC offset	reported	oncore_position_message() makes the time's status UTC by the time mode and whether @@Bo's offset has come, which status_snapshot() copies for the status screen to mark the time by
+oncore_utc_offset_message	58503b-1.01.04,z3816a-4001	Bo	UTC offset	none	oncore_utc_offset_message() sets gps.utc_offset_received by the offset it has just stored, which oncore_position_message() and gps_receiver_status_update() read
+poll_monitor	58503b-1.01.04,z3816a-4001	Bo	UTC offset	none	poll_monitor() takes @@Bo's offset only to choose how long it waits between the queries it posts
+oncore_leap_pending_decode	58503b-1.01.04	Bj	leap second status	none	oncore_leap_pending_decode() copies the status it has just stored to gps.leap_second_pending, which leap_event_create() reads
+oncore_leap_pending_message	z3816a-4001	Bj	leap second status	none	oncore_leap_pending_message() copies the status it has just stored to gps.leap_second_pending, which leap_event_create() reads
+oncore_visibility_removed_mark	58503b-1.01.04,z3816a-4001	Am	ignore list	reported	oncore_visibility_removed_mark() marks each visible satellite ignored removed in its health, by which satellite_status() shows it ignored in the status screen's list status_snapshot() takes
+oncore_position_status_8_message	58503b-1.01.04,z3816a-4001	Ba	DOP type	none	oncore_position_status_8_message() runs only for @@Ea, whose decoding has just stored its own byte where @@Ba's goes
+oncore_position_status_8_message	58503b-1.01.04	Ea	DOP type	reported	oncore_position_status_8_message() takes the antenna's current from the byte into gps.antenna_sense, which hmon_check_antenna_current() gives scpi_query_DIAGnostic_GPSystem_ACURrent_STATe() and status_snapshot() the status screen
+oncore_position_status_8_message	z3816a-4001	Ea	DOP type	none	oncore_position_status_8_message() takes the antenna's sense from the byte into gps.antenna_sense by gps_antenna_sense_set(), which only status_snapshot() copies, to a field of the snapshot nothing reads
+status_snapshot	z3816a-4001	Ea	DOP type	none	status_snapshot() copies gps.antenna_sense, which oncore_position_status_8_message() takes from the byte, to a field of the snapshot nothing reads
+scpi_query_DIAGnostic_GPSystem_DCXO	58503b-1.01.04	Ta	values	reported	scpi_query_DIAGnostic_GPSystem_DCXO() answers with the three words @@Ta's response leaves
 gps_request_build	*	*	*	none	gps_request_build() names oncore_messages for a message's kind, ID and encoders; gps_response_decode() alone walks its decoders, which store the field
 gps_response_lookup	*	*	*	none	gps_response_lookup() names oncore_messages for a message's ID and length; gps_response_decode() alone walks its decoders, which store the field
 gps_response_match	z3805a-3543b,z3801a-3543	*	*	none	gps_response_match() names oncore_messages for a message's match kind, and compares the response with the request sent; gps_response_decode() alone walks its decoders, which store the field
@@ -97,3 +122,8 @@ gps_pps_check	z3805a-1.01.03	rsd	1PPS control mode	control	gps_pps_check(), with
 gps_pps_dead_update	z3805a-1.01.03	rsd	1PPS control mode	control	gps_pps_dead_update() marks the 1PPS dead while gps.field_592's bit 2 is clear, which nmea_pps_mode_commit() sets while rsd's mode is 1, and the GPS reference is not valid
 gps_print_time_raim	z3805a-1.01.03	rsd	1PPS control mode	console	gps_print_time_raim() prints the 1PPS control mode, only when a console word asks
 status_snapshot	z3805a-1.01.03	acc	*	none	satellite_sets_build() and satellite_status_list(), which status_snapshot() calls, take each channel's satellite, mode and signal strength and test no bit of its status, acc's bit 3 among them
+satellites_used_list	58503b-1.01.04	Ba,Ea,Bb	channel satellite; channel tracking mode; channel signal strength; visible satellites; satellite; elevation; azimuth	reported	satellites_used_list() lists the satellites the channels use for position, each with its channel's signal strength and its elevation and azimuth, which scpi_query_CHOE() answers
+gps_date_time_local	58503b-1.01.04	*	*	reported	gps_date_time_local() gives status_snapshot() the status screen's date and time, @@Ba's made local, once get_date_time() finds the clock set
+status_snapshot_time	z3816a-4001	*	*	reported	status_snapshot_time() gives status_snapshot() the status screen's date and time, @@Ba's made local, once get_date_time() finds the clock set
+satellite_view_gather	z3816a-4001	*	*	console	satellite_view_gather() gathers the Sat View page, which only satellite_view_print(), a console word's, prints
+satellite_view_print	z3816a-4001	*	*	console	satellite_view_print() prints the Sat View page, only when a console word asks

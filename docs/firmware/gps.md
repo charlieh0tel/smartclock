@@ -1887,9 +1887,9 @@ specification; in short:
   runs in the image's own ROM on a message of the table's length, and
   the bytes of the message it reads are noted.  A read is a read
   whatever becomes of the byte: this is what a decoder copies out, not
-  what the receiver then uses, which is the use.  The 58503A 3704 and
-  the Z3817A decode `@@Ai` and the URA of
-  the extension messages by their channel count, so each message is
+  what the receiver then uses, which is the use.  The 58503A 3704,
+  the Z3817A, the Z3816A 4001 and the 58503B 1.01.04 decode `@@Ai`
+  and the URA of the extension messages by their channel count, so each message is
   decoded with the count the image's own code sets, six or eight
   ("Six or eight channels").
 - **Use is what becomes of a field read**, the strongest of what its
@@ -1943,7 +1943,7 @@ specification; in short:
   `:GPS:EMANgle`, `:GPS:ADELay` and `:GPS:SATellite:TRACking:IGNore`
   do.  The console's `gps_change`, which sends whatever it is given,
   sets nothing here.  A query sends no field.  The table's images are
-  the six whose reads it measures; the crate's `IMAGE_SETS` and
+  the eight whose reads it measures; the crate's `IMAGE_SETS` and
   `IMAGE_HOLDS` are of every image's paths.
 - **A message's rows tile its data**, every byte once, and end where
   the images' tables frame the message.  Rows share a byte only as
@@ -1974,7 +1974,21 @@ specification; in short:
   as well.  The one is the satellites Time RAIM isolated, which the
   Z3815A's status screen shows from `rrm`: the owner granted both a
   row for it (2026-11-16), the fake receiver's sky having no bad
-  satellite to isolate and `TIM-TP` not saying which a receiver removed.  The
+  satellite to isolate and `TIM-TP` not saying which a receiver removed.
+  The part of a second, which the 58503B 1.01.04 gives in
+  `:DIAGnostic:GPSystem:TIME?`, is where in its second the epoch lies:
+  tests of a real VP (eight channels, software 8.8) had `@@Ea`'s
+  nonzero while it ran, in position hold and not tracking alike,
+  climbing about 13 us each second, and zero while it was idle.  The
+  u-blox crate gives how far the epoch, `NAV-TIMEGPS`'s `iTOW` plus
+  `fTOW`, lies after the second its time is rounded to, the nearest,
+  and zero where it lies before it, so that the second is the same as
+  without it: measurements of a NEO-M8T at one epoch a second put
+  `fTOW` between -464 and +294 us, negative in about three epochs of
+  five, so the part given understates the epoch's place by at most
+  about 0.5 ms and is never negative, as a VP's is not.  The fake
+  receiver's is its holder's, on the second unless the holder puts it
+  elsewhere.  The
   u-blox crate writes the solution as unknown, the manual's value for
   not known, `TIM-TP` giving no RAIM result or alarm, and the owner
   granted it a row for that too (2026-11-16).  A solution of unknown
@@ -2021,10 +2035,12 @@ specification; in short:
   gives it "up to ten seconds" (VP p. 107); two captures of a real VP
   had `@@Ca` answered 5.2 and 7.1 seconds after it was sent, and the
   model takes a time between them.
-- **`@@Ta` is a gap, and stays one.**  It is in no manual here, the
-  table's rows name no public image that sets it or decodes its
-  response, and the model keeps the values it is given and answers
-  with them (`stored`).  With nothing to say what the values are,
+- **`@@Ta` is a gap.**  It is in no manual here.  The 58503B
+  1.01.04 sets it by `:DIAGnostic:GPSystem:DCXO` and answers
+  `:DIAGnostic:GPSystem:DCXO?` with what its response leaves
+  (`scpi_query_DIAGnostic_GPSystem_DCXO`), and the Z3816A 4001 and the
+  58503B decode the response; the model keeps the values it is given
+  and answers with them (`stored`).  With nothing to say what the values are,
   there is no field of the settings to hold them in and nothing for a
   holder to do.
 - **Every field of a message the model speaks is the record's, the
@@ -2230,9 +2246,11 @@ specification; in short:
 
 What the decoders skip: `@@Am`'s first byte; each line's CR LF in
 `@@Cj`, of which they read the text alone; and in `@@Bk`, on the 58503A
-3704 and the Z3817A, everything after the seventh matrix element ("The
-extension messages").  No public image decodes `@@Ap`, `@@Bo`, `@@Gj`
-or `@@Ta`, and the Z3817A's `@@Sz` decoder reads nothing.
+3704, the Z3817A, the Z3816A 4001 and the 58503B 1.01.04, everything
+after the seventh matrix element ("The extension messages").  Of the
+public images only the Z3816A and the 58503B decode `@@Ap`, `@@Bo`,
+`@@Gj` and `@@Ta`, and the `@@Sz` decoders of the Z3817A, the Z3816A
+and the 58503B read nothing.
 
 The gaps are the work list: a response field some image uses, as
 control or reported, or compares, that the model sends as zero, a
@@ -2250,84 +2268,93 @@ every command field, with who acts on it.
 
 | Message | Field | Bytes | Console only | The engine sends |
 |---|---|---|---|---|
-| `@@Bk` | channel URA | 36-41, 6 x 1 | console: all four | unknown: no URA decoded, or no satellite on the channel |
-| `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752 | unknown: no URA decoded, or no satellite on the channel |
+| `@@Bk` | channel URA | 36-41, 6 x 1 | console: every Oncore image | unknown: no URA decoded, or no satellite on the channel |
+| `@@Ek` | channel URA | 36-43, 8 x 1 | console: 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04 | unknown: no URA decoded, or no satellite on the channel |
+| `@@Gj` | UTC offset fraction | 11-14 | console: z3816a-4001, 58503b-1.01.04 | zero |
 | `$PFEC,GPacc` | accuracies | field 2 | console: z3805a-1.01.03 | unknown: no URA decoded, or no satellite in the record |
 
 | Message | Field | Bytes | Stored only | The engine sends |
 |---|---|---|---|---|
+| `@@Ap` | semi-major axis integer | 5-7 | stored: z3816a-4001, 58503b-1.01.04 | constant: WGS-84, whatever the datum |
+| `@@Ap` | semi-major axis fraction | 8-9 | stored: z3816a-4001, 58503b-1.01.04 | constant: WGS-84, whatever the datum |
+| `@@Ap` | inverse flattening integer | 10-11 | stored: z3816a-4001, 58503b-1.01.04 | constant: WGS-84, whatever the datum |
+| `@@Ap` | inverse flattening fraction | 12-15 | stored: z3816a-4001, 58503b-1.01.04 | constant: WGS-84, whatever the datum |
+| `@@Ap` | delta X | 16-17 | stored: z3816a-4001, 58503b-1.01.04 | zero |
+| `@@Ap` | delta Y | 18-19 | stored: z3816a-4001, 58503b-1.01.04 | zero |
+| `@@Ap` | delta Z | 20-21 | stored: z3816a-4001, 58503b-1.01.04 | zero |
 | `$PFEC,GPssd` | E not known | field 4 | stored: z3805a-1.01.03 | constant: made up, the GT-8031 has none |
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|
+| `@@Ta` | values | 58503b-1.01.04 | stored |
 
 | Command | Field | Set by | Who acts | How |
 |---|---|---|---|---|
-| `@@Aa` | hours | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@Aa` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@Aa` | seconds | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@Ab` | sign | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Ab` | hours | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Ab` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@AB` | application type | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `application` |
-| `@@Ac` | month | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@Ac` | day | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@Ac` | year | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: while the record tells no time |
-| `@@AC` | HDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `hdop_threshold` |
-| `@@Ad` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@AD` | fix threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `correction_thresholds` |
-| `@@AD` | output threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `correction_thresholds` |
-| `@@Ae` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Af` | height | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Af` | height type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: reported while the record has no position; `initial_position` |
-| `@@Ag` | mask angle | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `mask_angle` |
-| `@@Ah` | select option | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored: 2, highest in sky; `satellite_select` |
-| `@@Ai` | channel | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `manual_satellites` |
-| `@@Ai` | satellite | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `manual_satellites` |
-| `@@Aj` | xDOP type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored; given: dop_kind |
-| `@@Ak` | xDOP hysteresis | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `xdop_hysteresis` |
-| `@@Al` | xDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Am` | constant | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Am` | ignore list | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored; given: ignore_list |
-| `@@An` | almanac update | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `almanac_update` |
-| `@@Ao` | datum | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Aq` | ionospheric correction | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `atmospheric_correction` |
-| `@@Ar` | fix algorithm | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `fix_algorithm` |
-| `@@As` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
-| `@@As` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
-| `@@As` | height | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
-| `@@As` | height type | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `held_position` |
-| `@@At` | position hold | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `position_hold` |
+| `@@Aa` | hours | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@Aa` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@Aa` | seconds | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@Ab` | sign | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Ab` | hours | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Ab` | minutes | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@AB` | application type | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `application` |
+| `@@Ac` | month | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@Ac` | day | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@Ac` | year | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: while the record tells no time |
+| `@@AC` | HDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `hdop_threshold` |
+| `@@Ad` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@AD` | fix threshold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `correction_thresholds` |
+| `@@AD` | output threshold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `correction_thresholds` |
+| `@@Ae` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Af` | height type | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored: reported while the record has no position; `initial_position` |
+| `@@Ag` | mask angle | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `mask_angle` |
+| `@@Ah` | select option | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored: 2, highest in sky; `satellite_select` |
+| `@@Ai` | channel | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `manual_satellites` |
+| `@@Ai` | satellite | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `manual_satellites` |
+| `@@Aj` | xDOP type | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored; given: dop_kind |
+| `@@Ak` | xDOP hysteresis | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `xdop_hysteresis` |
+| `@@Al` | xDOP threshold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Am` | constant | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Am` | ignore list | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored; given: ignore_list |
+| `@@An` | almanac update | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `almanac_update` |
+| `@@Ao` | datum | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Aq` | ionospheric correction | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `atmospheric_correction` |
+| `@@Ar` | fix algorithm | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `fix_algorithm` |
+| `@@As` | latitude | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `held_position` |
+| `@@As` | longitude | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `held_position` |
+| `@@As` | height | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `held_position` |
+| `@@As` | height type | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `held_position` |
+| `@@At` | position hold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `position_hold` |
 | `@@Au` | height | none | holder | `altitude_hold_height` |
 | `@@Au` | height type | none | holder | `altitude_hold_height` |
-| `@@Av` | altitude hold | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `altitude_hold` |
-| `@@Aw` | time mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `time_base` |
-| `@@Ax` | epoch offset | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `epoch_offset` |
-| `@@Ay` | pulse offset | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `pulse_offset` |
-| `@@Az` | cable delay | z3805a-3543b, z3801a-3543, 58503a-3704 | holder | `cable_delay` |
-| `@@Ba` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Bb` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Bc` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: 1 sends it again at each change |
+| `@@Av` | altitude hold | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `altitude_hold` |
+| `@@Aw` | time mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `time_base` |
+| `@@Ax` | epoch offset | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `epoch_offset` |
+| `@@Ay` | pulse offset | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `pulse_offset` |
+| `@@Az` | cable delay | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | holder | `cable_delay` |
+| `@@Ba` | rate | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Bb` | mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Bc` | mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: 1 sends it again at each change |
 | `@@Bd` | mode | none | engine | honored: 1 sends it again at each change |
 | `@@Bh` | rate | none | engine | honored |
-| `@@Bj` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: polled only, nothing to do |
-| `@@Bk` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Bn` | rate | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
-| `@@Bn` | algorithm | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `raim_algorithm` |
-| `@@Bn` | alarm limit | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `raim_alarm_limit` |
-| `@@Bn` | pulse mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine, holder | honored; `pulse_mode` |
-| `@@Bn` | not used | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored: not used, nothing to do |
-| `@@Bo` | mode | none | engine | honored |
-| `@@Cg` | mode | z3805a-3543b, z3801a-3543, 58503a-3704 | engine | honored |
+| `@@Bj` | mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: polled only, nothing to do |
+| `@@Bk` | rate | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Bn` | rate | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Bn` | algorithm | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_algorithm` |
+| `@@Bn` | alarm limit | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_alarm_limit` |
+| `@@Bn` | pulse mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `pulse_mode` |
+| `@@Bn` | not used | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: not used, nothing to do |
+| `@@Bo` | mode | z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Cg` | mode | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
 | `@@Ci` | format | z3805a-3543b, z3801a-3543 | holder | `output_format` |
-| `@@Ea` | rate | 58503a-3704 | engine | honored |
-| `@@Ek` | rate | 58503a-3704 | engine | honored |
-| `@@En` | rate | 58503a-3704 | engine | honored |
-| `@@En` | algorithm | 58503a-3704 | engine, holder | honored; `raim_algorithm` |
-| `@@En` | alarm limit | 58503a-3704 | engine, holder | honored; `raim_alarm_limit` |
-| `@@En` | pulse mode | 58503a-3704 | engine, holder | honored; `pulse_mode` |
-| `@@En` | not used | 58503a-3704 | engine | honored: not used, nothing to do |
-| `@@Ta` | values | none | gap | stored |
+| `@@Ea` | rate | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@Ek` | rate | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@En` | rate | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored |
+| `@@En` | algorithm | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_algorithm` |
+| `@@En` | alarm limit | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_alarm_limit` |
+| `@@En` | pulse mode | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `pulse_mode` |
+| `@@En` | not used | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: not used, nothing to do |
+| `@@Ta` | values | 58503b-1.01.04 | gap | stored |
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |

@@ -510,6 +510,7 @@ pub fn changed(before: &Record, after: &Record) -> FieldSet {
 /// control or reported.
 pub const IMAGE_USES: FieldSet = FieldSet::of(&[
     RecordField::Time,
+    RecordField::Subsecond,
     RecordField::UtcOffset,
     RecordField::Leap,
     RecordField::Fix,

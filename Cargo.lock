@@ -753,7 +753,6 @@ dependencies = [
  "jiff",
  "serde_json",
  "smartclock",
- "smartclock-http",
 ]
 
 [[package]]
@@ -783,13 +782,6 @@ version = "1.9.1"
 dependencies = [
  "smartclock-gps",
  "smartclock-ubx",
-]
-
-[[package]]
-name = "smartclock-http"
-version = "1.9.1"
-dependencies = [
- "thiserror",
 ]
 
 [[package]]
@@ -847,7 +839,6 @@ dependencies = [
  "serde",
  "serde_json",
  "smartclock",
- "smartclock-http",
  "smartclock-log",
 ]
 

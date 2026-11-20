@@ -15,7 +15,6 @@ on:
     paths:
       - "crates/smartclock-web/**"
       - "crates/smartclock/**"
-      - "crates/smartclock-http/**"
       - "crates/smartclock-log/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -26,7 +25,6 @@ on:
     paths:
       - "crates/smartclock-web/**"
       - "crates/smartclock/**"
-      - "crates/smartclock-http/**"
       - "crates/smartclock-log/**"
       - "Cargo.toml"
       - "Cargo.lock"

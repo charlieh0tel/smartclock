@@ -24,3 +24,9 @@ thiserror = "2.0.20"
 
 [dev-dependencies]
 serde_json = "1.0.151"
+
+# `http`, the small HTTP server the exporter and the web view share
+# (`smartclock::http`), off by default, so that the library's other
+# users do not build it.
+[features]
+http = []

@@ -29,9 +29,8 @@ receiver are in [`tooling.md`](tooling.md).
 
 | Crate | What it is |
 | ----- | ---------- |
-| `smartclock` | transports, SCPI framing, the command table, parsers, the status screen scraper, the polling task, the Allan deviation |
+| `smartclock` | transports, SCPI framing, the command table, parsers, the status screen scraper, the polling task, the Allan deviation, and behind its `http` feature the small HTTP server the exporter and the web view share |
 | `smartclock-log` | the log's schema and readers |
-| `smartclock-http` | the server the exporter and web view share |
 | `smartclock-gps` | the wire formats of the GPS engines inside the receivers, Oncore binary and NMEA with Furuno's `$PFEC` sentences: IDs, lengths, checksums, encoders and deframers, a record of what an engine knows in one second and sources of it, and models that stand in for an Oncore and for the Z3815A's Furuno, `no_std` ([`firmware/gps.md`](firmware/gps.md)) |
 | `smartclock-ubx` | a u-blox receiver's UBX framing and messages both ways, every field decoded, the messages that configure it encoded, and a GPS satellite's navigation subframes too, for a microcontroller and for hosts alike: a codec alone, depending on no other crate here, `no_std` |
 | `smartclock-gps-ublox` | `smartclock-ubx`'s messages made into `smartclock-gps` records, a source of them from a receiver no `SmartClock` holds, `no_std` |

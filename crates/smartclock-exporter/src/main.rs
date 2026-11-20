@@ -36,8 +36,8 @@ use smartclock::defaults::DAEMON;
 use smartclock::defaults::RUN_DIR;
 use smartclock::defaults::SENSORD;
 use smartclock::error::Error;
+use smartclock::http::Response;
 use smartclock::task::Cadence;
-use smartclock_http::Response;
 
 use crate::metrics::Scrape;
 use crate::metrics::SensorScrape;
@@ -110,7 +110,7 @@ fn main() -> Result<()> {
     let seen = Mutex::new(BTreeSet::new());
     let sensord_seen = AtomicBool::new(false);
     let sensor_socket = cli.sensord.clone();
-    smartclock_http::serve(&cli.listen, move |target| match Route::of(target) {
+    smartclock::http::serve(&cli.listen, move |target| match Route::of(target) {
         Route::Metrics => {
             let (scrapes, sensors) = thread::scope(|scope| {
                 let sensors = scope.spawn(|| scrape_sensors(&sensor_socket, &sensord_seen));

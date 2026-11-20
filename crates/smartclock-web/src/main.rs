@@ -36,9 +36,9 @@ use smartclock::defaults::LOG_DIR;
 use smartclock::defaults::RUN_DIR;
 use smartclock::defaults::SENSOR_LOG;
 use smartclock::defaults::SENSORD;
+use smartclock::http::Response;
 use smartclock::parse::Identity;
 use smartclock::protocol::Op;
-use smartclock_http::Response;
 use smartclock_log::reader::Journal;
 use smartclock_log::reader::Log;
 use smartclock_log::reader::MAX_PHASE_ROWS;
@@ -193,7 +193,7 @@ fn main() -> Result<()> {
     };
     let cache = Cache::default();
     let (sensor_log, sensor_socket) = (cli.sensor_log.clone(), cli.sensord.clone());
-    smartclock_http::serve(&cli.listen, move |target| {
+    smartclock::http::serve(&cli.listen, move |target| {
         let (path, query) = target.split_once('?').unwrap_or((target, ""));
         match path {
             "/" => Response::ok("text/html; charset=utf-8", PAGE.to_owned()),
@@ -405,7 +405,7 @@ fn live(daemons: &Daemons, cache: &Cache) -> Vec<Live> {
 /// and the page is told so.  Without one, the only daemon, or the
 /// first by instance name.
 fn choose(daemons: &Daemons, cache: &Cache, query: &str) -> Result<PathBuf> {
-    let asked = smartclock_http::value(query, "receiver");
+    let asked = smartclock::http::value(query, "receiver");
     match asked {
         Some(serial) => live(daemons, cache)
             .into_iter()
@@ -442,7 +442,7 @@ fn journal(logs: &Logs, query: &str) -> Result<serde_json::Value> {
 /// The receiver's notes over `from` to `to`, unix seconds, for the
 /// charts to mark; the whole log when either is left out.
 fn notes(logs: &Logs, query: &str) -> Result<serde_json::Value> {
-    let bound = |key| smartclock_http::value(query, key).and_then(|v| v.parse::<i64>().ok());
+    let bound = |key| smartclock::http::value(query, key).and_then(|v| v.parse::<i64>().ok());
     let notes = match logs.choose(query)? {
         Some((log, receiver)) => log.notes(
             receiver,
@@ -483,7 +483,7 @@ fn sensors(path: &Path) -> Result<serde_json::Value> {
 /// `?quantity=temperature&from=...&to=...&points=1500`: every sensor of
 /// one quantity, a line each, bucketed on the receivers' grid.
 fn sensor_history(path: &Path, query: &str) -> Result<serde_json::Value> {
-    let value = |key| smartclock_http::value(query, key);
+    let value = |key| smartclock::http::value(query, key);
     let number = |key| value(key).and_then(|v: String| v.parse::<i64>().ok());
     let quantity = value("quantity").ok_or_else(|| anyhow::anyhow!("which quantity?"))?;
     let (Some(from), Some(to)) = (number("from"), number("to")) else {
@@ -542,7 +542,7 @@ fn facts(logs: &Logs, query: &str) -> Result<serde_json::Value> {
 /// exists to perform.
 fn deviation(logs: &Logs, query: &str) -> Result<serde_json::Value> {
     let (mut from, mut to) = (None, None);
-    for (key, value) in smartclock_http::pairs(query) {
+    for (key, value) in smartclock::http::pairs(query) {
         match key {
             "from" => from = value.parse::<i64>().ok(),
             "to" => to = value.parse::<i64>().ok(),
@@ -640,7 +640,7 @@ impl Logs {
     /// than quietly serving a different unit's history under its name.
     /// `None` when no log names a receiver.
     fn choose(&self, query: &str) -> Result<Option<(Log, i64)>> {
-        let asked = smartclock_http::value(query, "receiver");
+        let asked = smartclock::http::value(query, "receiver");
         let found = self.receivers()?;
         let chosen = match &asked {
             None => found.first(),
@@ -741,7 +741,7 @@ fn series(logs: &Logs, query: &str) -> Result<serde_json::Value> {
     let mut columns: Vec<String> = Vec::new();
     let (mut from, mut to, mut points) = (None, None, DEFAULT_POINTS);
     let mut modes = Modes::Every;
-    for (key, value) in smartclock_http::pairs(query) {
+    for (key, value) in smartclock::http::pairs(query) {
         match key {
             // Split after decoding, not before: a `+` is a space by
             // the time it gets here, and `%2C` is a comma.

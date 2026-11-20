@@ -1,11 +1,12 @@
-//! The little HTTP server the exporter and the web view share.
+//! The little HTTP server the exporter and the web view share, behind
+//! the `http` feature.
 //!
 //! Not a web framework and not trying to be: it accepts a connection,
 //! hands the caller a path, and writes back a status and a body.  That
 //! is the whole of what either program needs, and an async runtime and
 //! a routing crate would be a large dependency for it.
 //!
-//! It exists as a crate rather than as two copies because the two
+//! It is shared rather than kept as two copies because the two
 //! copies had already drifted -- one sent `Cache-Control`, the other
 //! did not -- and because the limits below are the kind of thing that
 //! gets added to one server and forgotten in the other.  The daemon's
@@ -277,7 +278,7 @@ where
     let slot = Slot(Arc::clone(inflight));
     let answer = Arc::clone(answer);
     let spawned = thread::Builder::new()
-        .name("smartclock-http".to_owned())
+        .name("http".to_owned())
         .spawn(move || {
             let _slot = slot;
             handle(&stream, answer.as_ref());

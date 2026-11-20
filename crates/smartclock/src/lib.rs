@@ -14,6 +14,8 @@ pub mod defaults;
 pub mod device;
 pub mod discipline;
 pub mod error;
+#[cfg(feature = "http")]
+pub mod http;
 pub mod link;
 pub mod matrix;
 /// What this build is, as `<version>-<commits>+g<commit>`, with

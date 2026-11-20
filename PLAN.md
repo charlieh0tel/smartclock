@@ -1938,7 +1938,7 @@ stands in for one.
   every pass, until the reason is known; asked again, it would give
   the browser's not-tracking series.
 - **Editing notes from the web view**, through the daemon socket.
-  Needs POST bodies in `smartclock-http`, `/api/notes` returning each
+  Needs POST bodies in `smartclock::http`, `/api/notes` returning each
   note's `id`, and edit requests keyed by it.
 - **Tracking log decoder:** a 58503A's `Track lost` and `Track resumed`
   event log entries carry packed channel words
@@ -2004,7 +2004,7 @@ stands in for one.
    event register clears the alarm: right for a deliberate
    acknowledgment, wrong on a timer.  Nothing needs it yet.
 
-5. **Maybe: a Host allowlist for the web view.**  `smartclock-http`
+5. **Maybe: a Host allowlist for the web view.**  `smartclock::http`
    checks neither `Host` nor `Origin`, so a DNS-rebinding page could read
    `/api/status` or force screen reads.  Likely shape: `--allow-host
    NAME`, loopback always allowed, a non-loopback bind refused without

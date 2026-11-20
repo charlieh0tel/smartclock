@@ -239,7 +239,8 @@ network access to github.com, for the XC3000 viewer's clone
 page's needs uv, for `tools/firmware/pforth_words.py`'s Capstone.  One page is rendered from a
 document, the one source: the 58501A prototype's, from
 `docs/firmware/58501a.md`, by `tools/markdown_page.py`, with uv for its
-markdown-it-py; it is published at its URL, [`58501a-prototype.html`](https://charlieh0tel.github.io/smartclock/58501a-prototype.html),
+markdown-it-py, once `make check-58501a-figures` finds every figure it
+quotes current, which needs cargo, node and the viewer's clone too; it is published at its URL, [`58501a-prototype.html`](https://charlieh0tel.github.io/smartclock/58501a-prototype.html),
 but left off the landing page, apart from the production models, and
 the FPGA explainer links it.  `.github/workflows/pages.yml` publishes them on GitHub
 Pages from main, at <https://charlieh0tel.github.io/smartclock/>.

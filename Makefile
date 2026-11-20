@@ -244,9 +244,11 @@ pforth-models:
 # beside it.  Unlisted: it stands apart from the production models, and
 # fpga.html links it.  Fails on a link the generator cannot resolve, a
 # photo the document never names, or no link to the forum thread the
-# unit's files were posted to.  Needs uv, which installs the script's
-# markdown-it-py.
-58501a-prototype:
+# unit's files were posted to; and, before it renders, on a stale
+# figure: it runs check-58501a-figures first, so the Pages build checks
+# the document's figures.  Needs uv, which installs the script's markdown-it-py,
+# and what check-58501a-figures needs.
+58501a-prototype: check-58501a-figures
 	mkdir -p $(PAGES_DIR)
 	uv run -q tools/markdown_page.py --group firmware \
 		--description "The HP 58501A, an early prototype relative of the 58503A: its photos, firmware image, FPGA pins and EEPROM, read from the files its owner contributed." \
@@ -281,8 +283,8 @@ check-fpga-decoder: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 # 58501A's image and EEPROM, its FPGA pins from tools/fpga/iobdump.js
 # with the same viewer, and its pForth words from smartclock-cli
 # dump-pforth; and the SHA-256s third_party/NOTICE gives them.  Needs
-# uv, node, git and cargo.  CI runs it in ci.yml's prototype-58501a
-# job, not firmware.yml, which builds no Rust.
+# uv, node, git and cargo.  The 58501a-prototype page runs it first,
+# so .github/workflows/pages.yml's build does.
 .PHONY: check-58501a-figures
 check-58501a-figures: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 	$(call decoder_verify,$(XC3000_VIEWER),$(DECODER_COMMIT))

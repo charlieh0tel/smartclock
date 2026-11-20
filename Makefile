@@ -322,7 +322,8 @@ check-fpga-xapp: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
 # Fail if a published page, every one under PAGES_DIR, listed or not,
 # scrolls sideways at desktop width, or at a phone's outside a box its
 # generator marks data-scroll="x" to scroll on its own.  Needs
-# Chrome; not part of ci.
+# Chrome; not part of ci, but the pages workflow runs the script on the
+# site it builds.
 check-pages: pages
 	./tools/check-pages.sh $(PAGES_DIR)
 

@@ -7,7 +7,8 @@
 # (tools/check-pages-probe.js).  A
 # page forwarding to another, which docs/ keeps at a published page's
 # old path, is skipped.  Headless screenshots hide scrollbars, so this
-# measures instead of looking.  Needs google-chrome or chromium; not run in CI.
+# measures instead of looking.  Needs google-chrome or chromium; the pages
+# workflow runs it on the site it builds.
 set -eu
 
 WIDTHS="1920 1280 1000"

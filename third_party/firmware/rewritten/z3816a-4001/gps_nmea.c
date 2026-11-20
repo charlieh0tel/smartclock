@@ -70,11 +70,11 @@ uint32_t nmea_field_equal(uint8_t* a, uint16_t a_length, uint8_t* b,
   return 0;
 }
 
-/* Whether an @@As position hold height sent, four bytes high first, is
- * one the Oncore takes, -100000 to 1800000 cm, and within 2 cm of the
- * one it answered: 1 if so, else 0 (0x55030).  The 58503A 3704's
- * gps_response_match makes the test in line, for its @@As echo
- * (gps_oncore.c); nothing calls this one. */
+/* Whether a height sent, four bytes high first, is one the Oncore
+ * takes, -100000 to 1800000 cm, and within 2 cm of the one it answered:
+ * 1 if so, else 0 (0x55030).  gps_response_match calls it for @@Af's and
+ * @@Au's heights and @@As's held one (0x56544, 0x5656e; gps_oncore.c), where
+ * the 58503A 3704's makes the test in line, for its @@As echo. */
 uint32_t oncore_hold_heights_match(uint8_t* sent, uint8_t* response) {
   /* The heights the Oncore takes, in cm (VPCommands.pdf, Position Hold
    * Position), and how far the answer may be from the height sent. */

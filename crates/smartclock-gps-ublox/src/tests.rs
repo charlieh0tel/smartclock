@@ -79,6 +79,7 @@ use crate::record::NavPosEcefRecord;
 use crate::record::NavPvtRecord;
 use crate::record::NavSatRecord;
 use crate::record::NavTimeGpsRecord;
+use crate::record::after_second;
 use crate::record::satellite_health;
 
 /// Room for a `NAV-SAT` of every GPS satellite.
@@ -473,6 +474,51 @@ fn nav_pvt_edges() {
             mean_sea_level: Centimeters(-1),
         })
     );
+}
+
+/// An epoch's part of a second is how far it lies after the second its
+/// time rounds to, and zero before it, the second the same either way;
+/// of a faster rate, an epoch in a second's first half keeps its place
+/// and one in its second half is the next second's top, as its second
+/// is.
+#[test]
+fn an_epoch_lies_after_its_second_or_on_it() {
+    let at = |time_of_week: u32, fraction: i32| {
+        let time = nav_time_gps(time_gps(time_of_week, fraction, WEEK.cast_signed(), 17, 7));
+        (time.seconds(None), after_second(&time))
+    };
+    let on = Some(second(WEEK, NOON));
+    assert_eq!(at(NOON, 294_471), (on, Nanoseconds(294_471)));
+    assert_eq!(at(NOON, 0), (on, Nanoseconds(0)));
+    assert_eq!(at(NOON, -463_860), (on, Nanoseconds(0)));
+    assert_eq!(at(NOON - 1, 400_000), (on, Nanoseconds(0)));
+    assert_eq!(at(NOON + 250, 0), (on, Nanoseconds(250_000_000)));
+    assert_eq!(at(NOON + 499, 999_999), (on, Nanoseconds(499_999_999)));
+    let next = Some(second(WEEK, NOON + 1000));
+    assert_eq!(at(NOON + 500, 0), (next, Nanoseconds(0)));
+    assert_eq!(at(NOON + 750, 0), (next, Nanoseconds(0)));
+}
+
+/// An epoch just before its second gives a record of that second, not
+/// the one before, its part of a second zero.
+#[test]
+fn an_epoch_before_its_second_keeps_the_second() {
+    let mut bytes = Vec::new();
+    for message in [
+        (NAV_PVT, PVT.payload().to_vec()),
+        (
+            NAV_TIMEGPS,
+            time_gps(NOON, -85_000, WEEK.cast_signed(), 17, 7).to_vec(),
+        ),
+        (NAV_EOE, eoe(NOON).to_vec()),
+    ] {
+        bytes.extend(stream(&[(message.0, &message.1)]));
+    }
+    let records = records(&mut Bench::new(), &bytes);
+    let [record] = records[..] else {
+        panic!("{records:?}");
+    };
+    assert_eq!(record.time, time(WEEK, NOON));
 }
 
 fn nav_time_gps(payload: [u8; 16]) -> NavTimeGps {
@@ -973,6 +1019,9 @@ fn almanac(week: u16, held: &[u8], healthy: &[u8]) -> Option<Almanac> {
     Some(almanac)
 }
 
+/// Where the whole epoch lies after its second, `NAV-TIMEGPS`'s `fTOW`.
+const AFTER_SECOND: i32 = 250;
+
 /// One whole epoch, every message of it, as a receiver sends them.
 fn whole_epoch() -> Vec<u8> {
     stream(&[
@@ -980,7 +1029,10 @@ fn whole_epoch() -> Vec<u8> {
         (NAV_POSECEF, &pos_ecef(NOON, ECEF)),
         (NAV_DOP, &dop(NOON, [251, 199, 155, 150, 94])),
         (NAV_PVT, &PVT.payload()),
-        (NAV_TIMEGPS, &time_gps(NOON, 0, WEEK.cast_signed(), 17, 7)),
+        (
+            NAV_TIMEGPS,
+            &time_gps(NOON, AFTER_SECOND, WEEK.cast_signed(), 17, 7),
+        ),
         (NAV_TIMELS, &LS.payload()),
         (
             NAV_SAT,
@@ -1059,7 +1111,13 @@ fn an_epoch_makes_a_record() {
     let [record] = records[..] else {
         panic!("{records:?}");
     };
-    assert_eq!(record.time, time(WEEK, NOON));
+    assert_eq!(
+        record.time,
+        Some(GpsTime {
+            seconds: second(WEEK, NOON),
+            subsecond: Nanoseconds(AFTER_SECOND.cast_unsigned()),
+        })
+    );
     assert_eq!(record.utc_offset, Some(BEFORE));
     assert_eq!(record.leap, Some(leap()));
     assert_eq!(record.fix, Fix::ThreeD);

@@ -128,6 +128,9 @@ pub(crate) struct FakeReceiver {
     leap: Option<LeapEvent>,
     /// The record less its time.
     record: Record,
+    /// How far into each second its epoch lies: on it, but where a
+    /// test puts it elsewhere.
+    pub(crate) after_second: Nanoseconds<u32>,
 }
 
 impl FakeReceiver {
@@ -152,6 +155,7 @@ impl FakeReceiver {
             offset,
             leap,
             record,
+            after_second: Nanoseconds(0),
         }
     }
 
@@ -167,7 +171,7 @@ impl FakeReceiver {
         let mut record = self.record;
         record.time = Some(GpsTime {
             seconds,
-            subsecond: Nanoseconds(0),
+            subsecond: self.after_second,
         });
         record.utc_offset = Some(offset);
         fake_receiver::act(&mut record, settings);

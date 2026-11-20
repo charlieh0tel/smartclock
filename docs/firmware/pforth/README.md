@@ -31,8 +31,8 @@ where one is known, what it does:
 [58503B 1.01.04](58503b-1.01.04-words.md).
 `tools/firmware/pforth_words.py` writes them from the images, with no
 Ghidra; `make pforth-words` rewrites them and `make
-check-pforth-words` fails when one and its image disagree.  It needs
-python3's `capstone` module.
+check-pforth-words` fails when one and its image disagree.  They run
+it with uv, which installs the script's Capstone.
 
 [`pforth-models.html`](https://charlieh0tel.github.io/smartclock/pforth-models.html)
 sets the word tables side by side as a page that filters them: a row

@@ -554,8 +554,9 @@ them against the command table.
   antenna current; 1 and 5, at 4.0, are the two oven readings, whose
   tolerance messages call one `Primary oven voltage` (`0x23cb6`) --
   which of the two is not determined here.
-- *The console.*  The diagnostic word table has 63 words, among them
-  `cal` where the Z3816A has `xcal` -- the same routine, printing
+- *The console.*  The diagnostic word table (`pforth/models.md`
+  counts it) has, among its words, `cal` where the Z3816A has `xcal`
+  -- the same routine, printing
   `curr= %d efc= %.1f, sec remaining= %d` and `tempco = %f` and
   storing nothing (`0x1bf0c`) -- `doven`, `dmes_curv`, `pll_debug`,
   `pr_pll`, `pll_restart`, `phase_off`, `eman` and `master_reset`; the
@@ -613,11 +614,9 @@ Every image carries `pForth $Revision: 1.2 $`, the `PFORTH` value of
 the same five instructions in each (the table in "Leaving it").
 Every image has the same 154 kernel words; the diagnostic words
 differ, and every image's are side by side in `pforth/models.md`, from
-`smartclock-cli dump-pforth`.  They number 80 in the Z3816A, 85 in the
-Z3801A and Z3805A, 86 in 58503A 3633, 79 in 3704, 89 in the Z3815A and
-78 in the 58503B.  Against the Z3816A's, the Z3801A, Z3805A and 3633
-add the `adc_` words (temperature, ovens, supplies, antenna current)
-and lack `clr_satview` and `pr_satview`; 3704 drops the `adc_` words
+`smartclock-cli dump-pforth`, which counts them by image.  Against the
+Z3816A's, the Z3801A, Z3805A and 3633 add the `adc_` words
+(temperature, ovens, supplies, antenna current) and lack `clr_satview` and `pr_satview`; 3704 drops the `adc_` words
 again; the Z3815A adds `efc_comp`, `efc_comp_debug`, `puck`, `set_mux`
 and its `s3_` and `n3_` words and lacks `cal`; the 58503B lacks `cal`
 and `phase_off`.

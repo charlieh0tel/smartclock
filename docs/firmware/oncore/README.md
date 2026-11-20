@@ -4,9 +4,9 @@
 engine, the GPS task's message table, its request scripts and its
 polling lists.  `<image>.txt` holds one image's, `models.md` the
 messages of all seven side by side; `make docs` regenerates them and a
-test fails if they and the images disagree.  The Z3815A's engine is a
-Furuno on NMEA sentences (`../gps.md`, "In every image"); its image has
-no such table and is refused.  The addresses below are the 58503B
+test fails if they and the images disagree.  The Z3815A's and the
+Z3805A 1.01.03's engines are Furunos on NMEA sentences (`../gps.md`,
+"In every image"); their images have no such table and are refused.  The addresses below are the 58503B
 1.01.04's.
 
 ## Requests

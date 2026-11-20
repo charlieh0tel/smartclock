@@ -635,8 +635,9 @@ faults that preserve the installer while failing primary checks.
   5.10.2 documents debug access independent of a running primary.
   Protected installer entry `0xa58` is a candidate destination after
   reset has initialized the memory interfaces; see `firmware/restart.md`,
-  "Forced installer entry with an unusable primary".  Neither the
-  board connection nor that recovery method has been tested.
+  "Forced installer entry with an unusable primary".  On the 58503A
+  they are on J12 (below); the Z3805A's and Z3801A's are not checked,
+  and that recovery method has not been tested.
 
 *Photos:* S1 is an 8-position DIP switch on the Z3805A and 58503A.  On the
 Z3805A it is under the oven cable in the close-up and whole in
@@ -648,11 +649,15 @@ A fitted right-angle pin header, J12, sits at the board edge beside
 U33 (`z3805a-cpu-fpga-flash.jpg`, 3500,750 to 3850,1150), 2 x 5 at
 0.100 in pitch and partly behind a bracket: the shape of the 10-pin
 header the MC68331 manual recommends for BDM (MC68331UM 5.10.2.8, Figure
-5-11), but whether it carries BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO
-needs a continuity check.  J9, a 2 x 5 receptacle near U24
+5-11).  The 58503A's J12 is that header (below); whether the
+Z3805A's carries BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO needs a
+continuity check.  J9, a 2 x 5 receptacle near U24
 (3250,1550 to 3500,1850), is the Oncore GPS receiver's connector.
 
-- [ ] TODO: J12 continuity, below.
+- [x] J12 continuity on the 58503A (58503-60001 Rev C), 2026-11-20:
+  the standard BDM header of Figure 5-11 ("Measured, J12 on the
+  58503A", below).
+- [ ] TODO: J12 continuity on the Z3805A, below.
 
 *Procedure, J12 (power off; "Working on the open Z3805A board" above).*
 MC68331UM 5.10.2.8, Figure 5-11, gives the recommended 10-pin, 2 × 5
@@ -675,8 +680,9 @@ BDM header:
    or a phone camera, and note whether it is 1 × 5 or 2 × 5 and any
    key, missing pin or pin-1 mark on the silkscreen.  Photograph it
    (`bench.md`, "Photos still wanted").  Number the pins by the
-   silkscreen mark, else from the end nearest U33, odd pins in the row
-   nearer the board edge, and say which.
+   silkscreen mark, else as on the 58503A (below): pin 2 the corner
+   pin, nearest the two closest board edges, pin 1 inboard of it; say
+   which.
 2. Read every J12 pin to ground and to +5 V.  Record each value.  On
    the standard header two pins read 0 Ω to ground and one 0 Ω to
    +5 V.
@@ -705,6 +711,30 @@ resistances, under this item, and update J12's entry in
 becomes known and its recovery remains untested; using it needs a
 BDM pod and the owner's say-so, powered, and is a separate step.
 
+*Measured, J12 on the 58503A.*  On the bench 58503A's main board
+(58503-60001 Rev C), on 2026-11-20, J12 is the standard header of
+Figure 5-11.  Pin 2 is the pin nearest the two closest board edges,
+the corner pin; pin 1 is inboard of pin 2.  Buzzed with the power off:
+
+| Header pin | Signal (Figure 5-11) | Reads |
+| ---------- | -------------------- | ----- |
+| 1 | DS | not checked |
+| 2 | BERR | not checked |
+| 3 | GND | ground |
+| 4 | BKPT/DSCLK | U33 pin 56 |
+| 5 | GND | ground |
+| 6 | FREEZE | not buzzed; behaved as FREEZE in use |
+| 7 | RESET | not buzzed; behaved as RESET in use |
+| 8 | IFETCH/DSI | U33 pin 55 |
+| 9 | VDD | +5 V |
+| 10 | IPIPE/DSO | U33 pin 54 |
+
+Powered, a BDM probe on J12 reset the CPU into background mode and
+read the whole flash, which matched the 3704 image.  So BDM access
+through J12 is established on that board; whether a unit can be
+reflashed that way is not (hypothesis 2).  The Z3805A's and Z3801A's
+J12 are not checked.
+
 *Changes:* a verified switch map and, if the board supports it, a
 recovery procedure for a primary whose checksums pass but which cannot
 accept `:SYSTem:LANGuage "INSTALL"`.
@@ -729,7 +759,7 @@ receiver was accessed.  Results recorded on 2026-09-28.
 | Hypothesis | Mechanism | Current evidence |
 | ---------- | --------- | ---------------- |
 | 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  S1 wiring is unknown. |
-| 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; board access and recovery are untested.  A switch alone does not select INSTALL. |
+| 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; BDM access through J12 is established on the 58503A, not checked on the Z3801A and Z3805A; recovery is untested.  A switch alone does not select INSTALL. |
 | 3. Select alternate boot storage | Bank selection changes the reset vectors or startup code presented to the CPU. | No alternate recovery image or selection circuit identified. |
 | 4. S1 is the byte at `0x302000` | An 8-bit input in CS5's window that software reads. | Only the Oman installer reads it, to override host-port settings; no firmware on the bench units reads it.  Nothing ties it to S1. |
 
@@ -861,8 +891,11 @@ code has configured the memory interfaces, redirecting execution to the
 protected installer entry at `0xa58` is a candidate recovery for a
 checksum-valid primary that cannot accept commands.  This is an
 inference from the CPU manual and firmware, not a tested procedure.
-Access to BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO on these boards has not
-been mapped.
+BDM access through J12 is now established on the 58503A: J12 is the
+standard BDM header, and a BDM probe on it reset the CPU into
+background mode and read the whole flash ("Measured, J12 on the
+58503A", above).  Whether a unit can be reflashed that way is not
+established, and the Z3805A's and Z3801A's J12 are not checked.
 
 ### 4. S1 is the byte at `0x302000`
 

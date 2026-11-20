@@ -152,7 +152,7 @@ def designs_table(f):
             f'<td class="short">{num(d["divide"])}</td>'
             f'<td><code>0x{d["preset"]}</code>, <code>0x{d["status"]}</code></td>'
             f'<td class="short">{num(d["tap"])} ns</td>'
-            f'<td class="short">{trace(d["image"])}</td>'
+            f'<td>{trace(d["image"])}</td>'
             "</tr>")
     return ('<div class="wide" data-scroll="x"><table class="designs">\n<thead><tr>'
             "<th>Design</th><th>Firmware images</th><th>Logic blocks, I/O blocks, nets</th>"

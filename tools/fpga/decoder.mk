@@ -20,14 +20,21 @@ define decoder_verify
 	  || { echo "decoder.mk: $(1) has local changes" >&2; exit 1; }
 endef
 
+# That the clone at $(1) has commit $(2), fetching it if not.
+decoder_fetch = { git -C $(1) cat-file -e $(2)^{commit} 2>/dev/null || git -C $(1) fetch -q origin $(2); }
+
 # The clone at $(1), checked out at commit $(2) and verified, then the
 # stamp $(1).commit-$(2), which what reads the clone depends on: a new
 # pin checks out again.  The commit is fetched by its hash, which
-# reaches one only a pull request's ref holds.
+# reaches one only a pull request's ref holds.  A clone that has
+# neither the commit nor a fetch of it, such as a cache's copy of .git
+# without its objects, is cloned again.
 define decoder_checkout
 	@rm -f $(1).commit-*
 	@if [ ! -d $(1)/.git ]; then rm -rf $(1) && git clone -q $(DECODER_REPO) $(1); fi
-	@git -C $(1) cat-file -e $(2)^{commit} 2>/dev/null || git -C $(1) fetch -q origin $(2)
+	@$(call decoder_fetch,$(1),$(2)) \
+	  || { echo "decoder.mk: $(1) cannot reach $(2); cloning it again" >&2; \
+	       rm -rf $(1) && git clone -q $(DECODER_REPO) $(1) && $(call decoder_fetch,$(1),$(2)); }
 	git -C $(1) checkout -q $(2)
 	$(call decoder_verify,$(1),$(2))
 	@touch $(1).commit-$(2)

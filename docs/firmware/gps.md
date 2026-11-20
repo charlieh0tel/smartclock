@@ -332,13 +332,19 @@ its ID:
 | 58503A 3633 | yes | yes | yes | yes |
 | 58503A 3704 | yes | yes | yes | yes |
 | Z3816A 4001 | yes | yes | yes | yes |
+| 58503B 1.01.04 | yes | yes | yes | yes |
+| Z3817A 3752 | yes | yes | yes | yes |
+| Z3815A 4010 | no | no | no | no |
 | Z3805A 1.01.03 | no | no | no | no |
 
-The Z3805A 1.01.03 takes no Oncore at all: its engine is a Furuno,
-spoken to in NMEA and Furuno's `$PFEC` sentences, as the Z3815A 4010's
-is, and the image holds no Oncore message table and frames no `@@`
-message.  It names the engine a GT-80, a GT-77 or a GT-74 by the
-software part number the engine reports
+The 58503B's and the Z3817A's are from their message tables
+(`oncore/models.md`); what each image does with them is in "Which
+engines each image accepts".  The Z3815A 4010 and the Z3805A 1.01.03
+take no Oncore at all: their engines are Furunos, spoken to in NMEA
+and Furuno's `$PFEC` sentences ("In every image"), and the images hold
+no Oncore message table and frame no `@@` message.  The Z3805A
+1.01.03 names its engine a GT-80, a GT-77 or a GT-74 by the software
+part number the engine reports
 ([`z3805a-1.01.03.md`](z3805a-1.01.03.md), "The GPS engine").
 
 The Z380x send every message to any engine but `@@Bn`, which
@@ -2365,9 +2371,12 @@ every command field, with who acts on it.
 
 ## In every image
 
-The Z3801A, Z3805A, both 58503As, the Z3816A and the 58503B talk to an
-Oncore in its binary `@@` messages; the 58503B names the engine
-`Oncore`, as the Z3816A does.  The Z3815A's engine is a Furuno GT-74
+The Z3801A, Z3805A 3543B, both 58503As, the Z3816A, the 58503B and the
+Z3817A talk to an Oncore in its binary `@@` messages, the Z3817A only
+listening ("The Z3817A takes an `@@Ea` stream"); the 58503B names the
+engine `Oncore`, as the Z3816A does.  The Z3805A 1.01.03's engine is a
+Furuno on the Z3815A's protocol ("Which engines each image accepts").
+The Z3815A's engine is a Furuno GT-74
 (its identification template reads `MODEL # FURUNO GT-74`), on NMEA
 sentences: it takes `GGA`, `GSA`, `GSV`, `RMC` and Furuno's own `anc`,
 `ssd`, `tst`, `tps`, `rrm` and `rsd` (`0x5e398`), and sends Furuno's

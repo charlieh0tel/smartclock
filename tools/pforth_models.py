@@ -70,11 +70,12 @@ matrix({
 });
 """
 
-# A word's descriptions under it, prose in the text face; each cell's
-# lines under its address, smaller and wrapped, so that an effect shown
-# by image does not widen the table.
+# A word's descriptions under it, prose in the text face, breaking
+# anywhere as the word does, so that a long name in one does not widen
+# the table; each cell's lines under its address, smaller and wrapped,
+# so that an effect shown by image does not widen it either.
 CSS = """\
-td.lead .also{font-family:"IBM Plex Sans",system-ui,sans-serif;overflow-wrap:normal}
+td.lead .also{font-family:"IBM Plex Sans",system-ui,sans-serif}
 td.cell .also{display:block;color:var(--muted);font-size:.74rem;white-space:normal;text-align:left}
 """
 

@@ -224,8 +224,8 @@ receiver, not the port, chooses the log: after `*IDN?` the daemon opens
 `<model>-<serial>.sqlite`, and nothing before, so a swap switches files,
 a unit moved to another port keeps one history, and two instances cannot
 collide.  A receiver whose identity does not parse gets a file named
-after the device, not a shared "unknown" file.  The daemon and monitor
-have no socket default, which would guess an instance name.
+after the device, not a shared "unknown" file.  The daemon has no
+socket default, which would guess an instance name.
 
 ### Storage: SQLite, integer nanoseconds, no rollups
 
@@ -429,7 +429,7 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   required check is never left pending.  Cost: `main`'s run mostly
   re-proves what the rebase-merged pull request tested; the checkout
   fetches the whole history; and a branch is not checked until it has
-  a pull request or is run by hand.  The four
+  a pull request or is run by hand.  The eight
   images' function checks run at once (`make -j`), each one's output
   kept whole in a log of its own.
 - HTML pages are published on GitHub Pages by
@@ -1969,9 +1969,7 @@ stands in for one.
 - **FPGA netlists:** where DL.Y goes; what each trace lists as open
   (`docs/firmware/z3805a-trace.md` and its siblings, "Confidence"),
   among them the other four designs' write maps and pins; all of it on
-  a board.  The Z3816A 4001's `counter_set_sync` is read later, with
-  the Z3816A rewrite; until then the P7-reach finding names only the
-  images whose sync writes are read.
+  a board.
 
 ## Open questions
 

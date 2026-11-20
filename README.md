@@ -131,8 +131,8 @@ Their mid-1990s Motorola GPS engines predate the week rollovers of
 1999 and 2019, so a unit reports a date 1024 weeks in the past.  Time
 of day, 1 PPS and 10 MHz are unaffected; the tools correct the date.
 Factory serial settings are 9600 8N1; the Z3801A's port is fixed at
-19200 7O1.  When the configured settings get no answer, the daemon,
-monitor and CLI probe 19200 and 9600 at 8N1 and 7O1.
+19200 7O1.  When the configured settings get no answer, the daemon
+and CLI probe 19200 and 9600 at 8N1 and 7O1.
 
 The first-family main board, the Z3805A's, is mapped part by part on
 its photographs, with the firmware's address for each part and the
@@ -224,7 +224,7 @@ Without a receiver, use the simulator; every tool takes
 `no_std` builds of `smartclock-gps`, `smartclock-ubx` and `smartclock-gps-ublox`
 (`make check-no-std`, after `make no-std-targets` once) and the API documentation (`make doc`), in
 which a rustdoc warning is an error.  The tests include
-`make check-engine-vectors`, the Oncore model's recorded exchanges;
+`make check-engine-vectors`, the Oncore and Furuno models' recorded exchanges;
 `make engine-vectors` rewrites their answers from the model.
 The firmware's checks are their own CI job.  `make test-web` runs the
 browser tests, after `make web-deps` once.  `make hooks`, once per
@@ -275,6 +275,10 @@ inside its own frame.
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3801a-3543.md`](docs/firmware/z3801a-3543.md) | the Z3801A 3543 against the Z3805A 3543B, and its rewrite |
 | [`docs/firmware/z3815a-4010.md`](docs/firmware/z3815a-4010.md) | the Z3815A 4010 against the 58503A 3704 and the Z3805A 3543B, and its rewrite |
+| [`docs/firmware/z3817a-3752.md`](docs/firmware/z3817a-3752.md) | the Z3817A 3752 against the Z3815A 4010 and the 58503A 3704, and its rewrite |
+| [`docs/firmware/z3816a-4001.md`](docs/firmware/z3816a-4001.md) | the Z3816A 4001 against the 58503A 3704 and the Z3815A 4010, and its rewrite |
+| [`docs/firmware/58503b-1.01.04.md`](docs/firmware/58503b-1.01.04.md) | the 58503B 1.01.04 against the Z3817A 3752 and the Z3816A 4001, and its rewrite |
+| [`docs/firmware/z3805a-1.01.03.md`](docs/firmware/z3805a-1.01.03.md) | the Z3805A 1.01.03 against the 58503B 1.01.04 and the Z3815A 4010, and its rewrite |
 | [`third_party/firmware/`](third_party/firmware/README.md) | the ROM images, Ghidra's exports, the rewritten C and the analysis, split by kind |
 | [`docs/firmware/fpga-comparison.md`](docs/firmware/fpga-comparison.md) | the six FPGA designs the nine images load, decoded from their bitstreams, simulated and compared; each design's trace beside it |
 | [`fpga.html`](https://charlieh0tel.github.io/smartclock/fpga.html) | the six FPGA designs illustrated: the count, the two families, the telecom pair's phase detector and what of P7 reaches the firmware, with waveforms from the simulations; built by `make fpga` and checked by `check-explainer` |

@@ -1764,8 +1764,8 @@ fn a_time_raim_result_is_sent_while_time_raim_is_on() {
     };
 
     let mut engine = powered_up(&UT_PLUS_2_2);
-    // Off: unknown, and nothing isolated.
-    assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 2, 1]);
+    // Off: unknown, neither possible, and nothing isolated.
+    assert_eq!(traim(&mut engine, &[0xff; 15]), [1, 0, 2, 2]);
     assert_eq!(channels(&mut engine), (0x82, 0x82));
     // On, not holding: detection only, nothing isolated.
     assert_eq!(traim(&mut engine, &TRAIM_EACH_SECOND), [1, 0, 1, 1]);
@@ -1839,8 +1839,8 @@ fn a_time_raim_status_claims_no_more_than_the_record() {
         (
             found(RaimSolution::Ok),
             TRAIM_OFF_EACH_SECOND,
-            [UNKNOWN, DETECTION],
-            [UNKNOWN, ISOLATION],
+            [UNKNOWN, NEITHER],
+            [UNKNOWN, NEITHER],
         ),
     ];
     for (identity, message) in [
@@ -1868,6 +1868,74 @@ fn a_time_raim_status_claims_no_more_than_the_record() {
             }
         }
     }
+}
+
+/// VP pp. 104 to 106 and 140 to 142: with Time RAIM off, the solution
+/// status and the Time RAIM status are both 2, in position hold and
+/// out of it, as tests of a real VP (eight channels, software 8.8)
+/// read them in `@@En`.  The images' set-up at power-up, `@@Bn` at
+/// rate 0 with Time RAIM off, an alarm limit of 1 us and the pulse
+/// always, is answered so too.
+#[test]
+fn time_raim_off_reports_unknown_and_neither() {
+    const UNKNOWN: u8 = 2;
+    const NEITHER: u8 = 2;
+    /// Time RAIM off at an alarm limit of 1 us, the pulse always, at
+    /// rate 0 as the images set it up and each second.
+    const IMAGE_SETUP: [u8; 15] = [0, 0, 0, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const OFF_EACH_SECOND: [u8; 15] = [1, 0, 0, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for message in [BN_TIME_RAIM, EN_TIME_RAIM] {
+        for hold in [false, true] {
+            for setup in [IMAGE_SETUP, OFF_EACH_SECOND] {
+                let mut engine = fixing(&VP_EIGHT);
+                ask(&mut engine, &full(), AT_POSITION_HOLD, &[u8::from(hold)]);
+                let frames = ask(&mut engine, &full(), message, &setup);
+                let data = only(&frames, message);
+                assert_eq!(data[1], 0, "off");
+                assert_eq!(
+                    data[17..19],
+                    [UNKNOWN, NEITHER],
+                    "{message:?}, hold {hold}, {setup:?}"
+                );
+            }
+        }
+    }
+}
+
+/// VP p. 105: in position hold with Time RAIM on, at an alarm limit
+/// of 1 us and the pulse always, tests of a real VP (eight channels,
+/// software 8.8) with the antenna disconnected read `@@En`'s solution
+/// status 2, not an alarm, from within a second of the disconnection
+/// for as long as it lasted, the 1 PPS on throughout, and 0 again once
+/// it was reconnected.  The engine gives the record's result again as
+/// soon as satellites are heard; that VP took seven seconds.
+#[test]
+fn time_raim_in_hold_is_unknown_while_no_satellite_is_heard() {
+    const OK: u8 = 0;
+    const UNKNOWN: u8 = 2;
+    let heard = full();
+    let mut unheard = heard;
+    unheard.antenna = Antenna::Open;
+    let mut engine = fixing(&VP_EIGHT);
+    ask(&mut engine, &heard, AT_POSITION_HOLD, &[1]);
+    ask(&mut engine, &heard, EN_TIME_RAIM, &TRAIM_EACH_SECOND);
+    // Each second's `@@En`: the pulse status and the solution status.
+    let mut second = |record: &Record, at: u64| {
+        let mut sent = Sent::default();
+        engine.second(record, Milliseconds(at * 1000), &mut sent);
+        let frame = sent
+            .0
+            .iter()
+            .find(|frame| frame[2..HEADER] == EN_TIME_RAIM.bytes())
+            .expect("an @@En each second");
+        let data = &frame[HEADER..frame.len() - TRAILER];
+        (data[15], data[17])
+    };
+    assert_eq!(second(&heard, 1), (1, OK));
+    for at in 2..6 {
+        assert_eq!(second(&unheard, at), (1, UNKNOWN), "second {at}");
+    }
+    assert_eq!(second(&heard, 6), (1, OK));
 }
 
 /// VP p. 102: the engine tracks for its pulse while fixing, with the

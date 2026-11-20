@@ -574,8 +574,9 @@ DE, EE, FE, GE, HE, IE, JE, KE and KD, with the carries FF, GF and
 HF), the detector LE and LD with P38 and P40, and the sync logic IF,
 JF, IG, IH, JD and JG.  Its one exit is IH.Y into JH, which no P7 net
 can move for any fixed field written 0 and then the kind, as the
-Z3815A's firmware writes it; the Z3816A 4001's own writes are not
-read (`counter.md`, "The sync field"; here `The sync field`).  So the bus, P83,
+Z3815A's firmware writes it and the Z3816A 4001's too
+(`counter_set_sync`, `rewritten/z3816a-4001/ti.c`; `counter.md`, "The
+sync field"; here `The sync field`).  So the bus, P83,
 P20, P14, P28 and P81 take nothing from P7: the internal 1 PPS, the
 count's ticks and the tap run on ACLK and GCLK alone, and the GPS
 1 PPS on P82, which clocks BH and CH, is the only other clock of what

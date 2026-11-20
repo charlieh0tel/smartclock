@@ -266,8 +266,9 @@ one P7 phase).  P7 reaches the P7
 divider, the detector with P38 and P40, and the sync logic that
 samples KE.X; the one net out of that set is IH.Y into JH, which no P7
 net can move for any fixed field written 0 and then the kind, as
-the Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010 and 58503B
-1.01.04 firmware write it; the Z3816A 4001's is not read.  The internal 1 PPS, the count's
+the Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010, 58503B
+1.01.04 and Z3816A 4001 firmware write it (the Z3816A's
+`counter_set_sync`, `rewritten/z3816a-4001/ti.c`).  The internal 1 PPS, the count's
 ticks and the tap run on ACLK and GCLK, ACLK halved, alone
 (`z3815a-trace.md`, `z3816a-trace.md`, "What of P7 reaches the
 firmware").  So on a board the loop is all that ties the firmware's

@@ -137,7 +137,7 @@
     "Which rail feeds {{U37}}'s VDD ([[docs/hardware-investigations.md|item 23]]); {{U40}}, a 78L12, sits beside it.",
     "{{U51}} and {{U57}}, under the heatsink.",
     "Which byte {{U9}} and {{U16}} each take, and which pair of U11 to U14 is the lower flash bank.",
-    "J12: a BDM header or not ([[docs/hardware-investigations.md|item 13]]).",
+    "Whether the Z3805A's and Z3801A's J12 are the BDM header the 58503A's is ([[docs/hardware-investigations.md|item 13]]).",
     "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them ([[docs/hardware-investigations.md|item 21]])."
   ],
   "parts": [
@@ -195,7 +195,7 @@
     },
     {
       "58503a": {
-        "note": "fitted (recalled, not photographed)",
+        "note": "fitted; the standard BDM header, measured on 2026-11-20 ([[docs/hardware-investigations.md|item 13]])",
         "status": "fitted"
       },
       "at": {
@@ -211,8 +211,8 @@
       "marking_confidence": "board",
       "note": "",
       "ref": "J12",
-      "role": "Not identified.  At the board edge beside U33, partly behind a bracket.  MC68331UM 5.10.2.8 (Figure 5-11) recommends a 10-pin, 2 x 5 header for BDM; a continuity check to BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO would settle whether it is one.",
-      "role_confidence": "open",
+      "role": "The processor's background debug mode (BDM) header, by the 58503A's: on the bench 58503A (58503-60001 Rev C) J12 is the standard 10-pin BDM header of MC68331UM 5.10.2.8, Figure 5-11, measured ([[docs/hardware-investigations.md|item 13]]); the Z3805A's is not checked.  At the board edge beside U33, partly behind a bracket.  On the 58503A pin 2 is the pin nearest the two closest board edges, the corner pin, and pin 1 is inboard of pin 2.",
+      "role_confidence": "inferred",
       "type": "Pin header, 2 x 5, 0.100 in pitch",
       "z3801a": {
         "note": "",

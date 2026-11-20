@@ -22,11 +22,12 @@ docs/firmware/gps-field-uses.tsv does not account for each function
 found reading a field, and prints the table's size, each image's read
 set, compared set and counts of fields by use, and the gaps.
 
-The images are the four with an Oncore message table and rewritten C:
-the Z3805A 3543B, the Z3801A 3543, the 58503A 3704 and the Z3817A
-3752.  The Z3815A 4010 and the Z3805A 1.01.03 (NMEA_IMAGES) speak NMEA
-with Furuno's sentences, which the Furuno model speaks
-(engine::furuno), and their rows, manual GT, count fields: a row's
+The images are the six with an Oncore message table and rewritten C:
+the Z3805A 3543B, the Z3801A 3543, the 58503A 3704, the Z3817A 3752,
+the Z3816A 4001 and the 58503B 1.01.04.  The Z3815A 4010 and the
+Z3805A 1.01.03 (NMEA_IMAGES) speak NMEA with Furuno's sentences, which
+the Furuno model speaks (engine::furuno), and their rows, manual GT,
+count fields: a row's
 offset is the field's index as the images number it, the address's
 fields first, and its length one field.  Their reads, stores, compared
 fields and sets are measured as nmea_trace says, and the rest of what
@@ -222,6 +223,8 @@ IMAGES = {
     'z3801a-3543': 0x10000,
     '58503a-3704': 0x10000,
     'z3817a-3752': 0x20000,
+    'z3816a-4001': 0x20000,
+    '58503b-1.01.04': 0x20000,
 }
 
 # A frame's bytes before and after its data: oncore::HEADER and
@@ -1960,7 +1963,7 @@ def gap_terms(row: Row) -> str:
 
 def short(images: list[str]) -> str:
     """Images as the document lists them."""
-    return 'all four' if images == list(IMAGES) else ', '.join(images)
+    return 'every Oncore image' if images == list(IMAGES) else ', '.join(images)
 
 
 def bytes_of(row: Row) -> str:

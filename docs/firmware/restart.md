@@ -703,6 +703,15 @@ EEPROM identity, not independent board identification.  A model
 without a dump (such as 59551A) is refused until its image and layout
 can be audited.
 
+`--experimental` also accepts an image built by its owner, not HP's,
+whose SHA-256 is in a second table, `EXPERIMENTAL`
+(`crates/smartclock-cli/src/flash/firmware.rs`), and warns before it
+touches the receiver.  The table is kept apart from the catalog so that
+the catalog is never widened, and it is empty in this repository.  The
+flag skips no check: the image's size and boot checksums are checked,
+and the receiver checks above key on the firmware running, not on the
+image's revision.
+
 The installer is checked only against the model/layout allowlist, not
 against the primary revision it was entered from: a 58503A running
 3704 can keep the Oman installer from 3633 after an upgrade.  The

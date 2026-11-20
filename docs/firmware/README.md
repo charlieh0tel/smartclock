@@ -95,8 +95,9 @@ its own, read from a bench unit's flash, came next
 Furuno, 1.01.03, read from a unit's flash, last
 ([`z3805a-1.01.03.md`](z3805a-1.01.03.md)).  `interval.md`, `loop.md`,
 `ovens.md`, `console.md` and `gps.md` each end with an "In every image"
-section setting the seven images before the Z3805A 1.01.03's side by
-side, `restart.md`'s tables cover those seven, all nine images'
+section setting the images side by side, the seven before the Z3817A's
+in each and the Z3817A's and the Z3805A 1.01.03's in some,
+`restart.md`'s tables cover those seven, all nine images'
 command trees are in `scpi/`, their console words in `pforth/` and the
 seven Oncore images' message tables and request scripts in `oncore/`.
 
@@ -2174,7 +2175,8 @@ which runs `check-unicorn` first,
 hand-written C and assembly alone, every function required ("Hand-written
 C"), and `report-decompiled`, which fails if any function fails and checks
 the figures this document, `rewrite.md`, `58503a-3704.md`,
-`z3801a-3543.md`, `z3815a-4010.md`, `z3817a-3752.md` and the top `README.md` give from each image's
+`z3801a-3543.md`, `z3815a-4010.md`, `z3817a-3752.md`, `z3816a-4001.md`,
+`58503b-1.01.04.md`, `z3805a-1.01.03.md` and the top `README.md` give from each image's
 function check -- the user-mode and console counts, the agreeing,
 known, skipped and failed functions, the agreeing ones' cases and the
 functions touching the status register --
@@ -2188,17 +2190,20 @@ checked in public.  `IMAGE=z3805a-3543b` is set for the job;
 `check-link` and `report-decompiled` run without `IMAGE`, for the eight,
 as many images at once as the runner has CPUs (`make -j"$(nproc)"`;
 `rewrite.md`, "Reproducing"), each failing if any of its functions fails
-(`58503a-3704.md`, `z3801a-3543.md`, `z3815a-4010.md` and
-`z3817a-3752.md`, "The function check").  An unfinished image (the
+(`58503a-3704.md`, `z3801a-3543.md`, `z3815a-4010.md`,
+`z3817a-3752.md`, `z3816a-4001.md`, `58503b-1.01.04.md` and
+`z3805a-1.01.03.md`, "The function check").  An unfinished image (the
 firmware Makefile's `UNFINISHED_IMAGES`, none now) has its function
 check run without a link check, its figures checked any failed
 functions among them (`report_figures.py --unfinished`), until its link
 check passes, as the Z3815A 4010's did from its fifth link run and the
 Z3817A 3752's, the Z3816A 4001's, the 58503B 1.01.04's and the Z3805A
 1.01.03's from their joins.  `check-image-diff`
-checks the 58503A's and the Z3801A's diffs against the Z3805A, their
-seeded names and the 58503A's document's figures, and reads the
-Z3815A 4010's image and `handlers.txt`;
+checks every diff the firmware Makefile's `IMAGE_DIFFS` lists, each
+seeded image's against its base and the others its document reads,
+the seeded images' names, the 58503A's document's figures and the
+candidate bases' tables of the later images' documents
+(`tools/firmware/base_figures.py`);
 `check-comment-addresses` checks the addresses their C's comments
 cite; and `check-common` the shared C, `common/`, each function's
 callees in each image's code against its C's, and that the

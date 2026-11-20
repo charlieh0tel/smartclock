@@ -733,8 +733,8 @@ GF and HF), the phase detector LE and LD with P38 and P40, and the
 sync logic that samples KE.X: IF, JF, IG, IH, JD and JG.  One net
 leaves that set, IH.Y, and it goes only into JH, which no P7 net can
 move for any fixed sync field written 0 and then the kind, as
-the Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010 and 58503B
-1.01.04 firmware write it; the Z3816A 4001's is not read (`counter.md`, "The sync field"; here "The sync
+the Z3805A 3543B, 58503A 3704, Z3801A 3543, Z3815A 4010, 58503B
+1.01.04 and Z3816A 4001 firmware write it (`counter.md`, "The sync field"; here "The sync
 field").  Straight from one nonzero kind to another, IH could hold a
 pending state set under the first, which P7-derived samples clear.  So the bus (the
 count, the status, the interpolator's byte, the seconds), P83, P20,

@@ -69,8 +69,14 @@ pub enum Status {
     NotFound,
     /// 405: something is served at that path, but not to its method.
     MethodNotAllowed,
+    /// 409 Conflict: the request conflicts with the current state of
+    /// what it addresses, and could succeed once that state changes.
+    Conflict,
     /// 413: its body is past what is read.
     TooLarge,
+    /// 503 Service Unavailable: the server cannot handle the request
+    /// now, as when what it needs is not ready, but may later.
+    Unavailable,
 }
 
 impl Status {
@@ -82,7 +88,9 @@ impl Status {
             Self::BadRequest => 400,
             Self::NotFound => 404,
             Self::MethodNotAllowed => 405,
+            Self::Conflict => 409,
             Self::TooLarge => 413,
+            Self::Unavailable => 503,
         }
     }
 }
@@ -350,6 +358,7 @@ mod tests {
     use super::Method;
     use super::Response;
     use super::ServeError;
+    use super::Status;
     use super::bind;
     use super::keep_accepting;
     use super::pairs;
@@ -551,5 +560,30 @@ mod tests {
         assert!(head.starts_with("HTTP/1.1 405 "), "{head}");
         assert!(head.contains("\r\nAllow: POST\r\n"), "{head}");
         assert_eq!(body, "POST only\n");
+    }
+
+    /// A 409 and a 503 go out with their codes and reason phrases, and
+    /// their bodies.
+    #[test]
+    fn a_conflict_and_an_unavailable_are_sent_as_such() {
+        for (status, line) in [
+            (Status::Conflict, "HTTP/1.1 409 Conflict\r\n"),
+            (Status::Unavailable, "HTTP/1.1 503 Service Unavailable\r\n"),
+        ] {
+            let listener = bind("127.0.0.1:0").expect("bind");
+            let address = listener.local_addr().expect("an address");
+            thread::spawn(move || {
+                serve_requests_on(listener, move |_| Response::text(status, "not now\n"))
+            });
+            let mut stream = TcpStream::connect(address).expect("connect");
+            stream
+                .write_all(b"POST /key HTTP/1.1\r\nHost: localhost\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                .expect("the request");
+            let mut answer = String::new();
+            stream.read_to_string(&mut answer).expect("an answer");
+            let (head, body) = answer.split_once("\r\n\r\n").expect("a head and a body");
+            assert!(head.starts_with(line), "{head}");
+            assert_eq!(body, "not now\n");
+        }
     }
 }

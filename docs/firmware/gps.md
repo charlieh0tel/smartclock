@@ -509,6 +509,25 @@ and `raim_monitor` reads the record.  For an engine, only the rate
 and on bytes, the two statuses and the steady arrival of `Bn` or `En`
 change the firmware's behavior.
 
+**Time RAIM at power-up.**  The 58503A 3704, 58503B 1.01.04, Z3816A
+4001 and Z3817A 3752 each send `@@Bn` in both of their set-up scripts,
+the one that begins with `@@Cf` and the one without, with literal
+arguments, `Bn/0(0, 0, 10, 1)`: output rate 0 (polled, once), Time
+RAIM algorithm 0 (off), alarm limit 10 (units of 100 ns, so 1 us) and
+1PPS control mode 1 ("1PPS on all the time"; VPCommands p. 104),
+shortly before the closing `@@Cg`.  The Z3801A 3543 and Z3805A 3543B
+send it in the script with `@@Cf` (`0x47`), with arguments computed at run time (`Bn/2`), but not
+in the one without (`0x48`), which "Which engines each image
+accepts" gives as their power-up script.  There `@@Bn` first goes out
+in the survey and position-hold scripts (`0x4f`, `0x51` to `0x55`).
+So until one of those runs, these two images leave the engine on whatever Time
+RAIM set-up it remembered or defaulted to.  Not established: whether
+the two images read or act on a `@@Bn` in that interval, and what a
+real engine's Time RAIM state is at power-up; neither has been
+measured.  This is documented, not acted on: no engine or tool
+behavior depends on it.  `smartclock-cli dump-oncore IMAGE` lists the
+scripts (`oncore/IMAGE.txt`).
+
 The SCPI Time RAIM commands (`:DIAG:GPS:POS:HOLD:RAIM:STATe` and
 `THReshold`) ask `gps_message_supported` too: before `@@Cj` they fail
 with an execution error, or for a query data stale; without the

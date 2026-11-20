@@ -357,15 +357,15 @@ GSV	response	satellite	4	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	rec
 GSV	response	elevation	5	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.elevation	-	SatelliteElevation	-	-
 GSV	response	azimuth	6	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.azimuth	-	SatelliteAzimuth	-	-
 GSV	response	SNR	7	1	4	4	-	GT	23	z3815a-4010,z3805a-1.01.03	-	reported	record.satellites.signal;record.antenna	-	SatelliteSignal;Antenna	-	00 with no signal
-RMC	response	UTC	1	1	1	-	-	GT	25	-	-	-	state:the last fix;clock	-	Time	-	null before a fix
-RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed	-	Fix;ReceiverMode	-	-
+RMC	response	UTC	1	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;clock;state:the last fix	-	Time;Fix;ReceiverMode	-	null before a fix
+RMC	response	status	2	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:by the satellites used and the mode	-	Fix;ReceiverMode	-	-
 RMC	response	latitude	3	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 RMC	response	north or south	4	1	1	-	-	GT	25	-	-	-	record.position.latitude;state:the position entered, held or with none	-	Latitude	-	-
 RMC	response	longitude	5	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
 RMC	response	east or west	6	1	1	-	-	GT	25	-	-	-	record.position.longitude;state:the position entered, held or with none	-	Longitude	-	-
-RMC	response	speed	7	1	1	-	-	GT	25	-	-	-	record.velocity.speed	-	Speed	-	null without one
-RMC	response	true course	8	1	1	-	-	GT	25	-	-	-	record.velocity.heading	-	Heading	-	null without one
-RMC	response	date	9	1	1	-	-	GT	25	-	-	-	state:the last fix;clock	-	Time	-	null before a fix
+RMC	response	speed	7	1	1	-	-	GT	25	-	-	-	record.velocity.speed;record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:null without a fix	-	Fix;Speed;ReceiverMode	-	null without one
+RMC	response	true course	8	1	1	-	-	GT	25	-	-	-	record.velocity.heading;record.fix;record.receiver_mode:from a source whose receiver is commanded;computed:null without a fix	-	Fix;Heading;ReceiverMode	-	null without one
+RMC	response	date	9	1	1	-	-	GT	25	-	-	-	record.fix;record.receiver_mode:from a source whose receiver is commanded;clock;state:the last fix	-	Time;Fix;ReceiverMode	-	null before a fix
 RMC	response	magnetic variation	10	1	1	-	-	GT	25	-	-	-	record.derived.magnetic_variation	-	MagneticVariation	-	null without one
 RMC	response	variation east or west	11	1	1	-	-	GT	25	-	-	-	record.derived.magnetic_variation	-	MagneticVariation	-	-
 anc	response	almanac date	2	1	1	-	-	GT	27	z3815a-4010,z3805a-1.01.03	-	stored	record.almanac;record.utc_offset;setting.ZDA:the zone	-	UtcOffset;Almanac	-	1980-01-06 with none

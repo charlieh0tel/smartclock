@@ -445,6 +445,12 @@ channels map to volts at P2/9 are owners' reports, not traced here.
   a meter.  P2 is not in the Z3805A photos, which are out of focus
   over the oscillator side; PGP5 leaves U33 through a via.
 
+*Seen on the bench 58503A* (58503-60001 Rev C), 2026-11-21: the
+oscillator's connector on its main board is P3, not P2 as the
+owners' reports name it; which of its pins carry the enable and the
+readback is not checked.  The owner's hypothesis, not checked: the
+outer oven is powered from the supply board.
+
 - Trace PGP5 (MC68331 pin, see the manual's pinout) to P2/8 and
   confirm the level changes when the firmware's state passes
   `external oven warmup` (the `Oven Pwr` field on the status screen).

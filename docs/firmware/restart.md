@@ -501,8 +501,11 @@ no such write either, so the installer runs on the boot code's map.
 reset code and writes `chip-selects.md` with each image's tables and
 how each map differs from the Z3805A's (`make chip-selects`; `make
 check-chip-selects` fails when the tables here, in `README.md` and
-there drift from the images).  The Z3801A 3543's map is the
-Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
+there drift from the images).  On the bench 58503A (58503-60001 Rev
+C), running 3704, every chip-select register read over the BDM
+header J12 as `chip-selects.md`'s 3704 tables give it
+(`../hardware-investigations.md`, "Register reads over BDM").  The
+Z3801A 3543's map is the Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
 reset state, its BYTE field disabled (MC68331UM 4.8.4), and 3633's
 boot code makes the CS4 pin a discrete output, PC1, which no image
 writes, so it drives PORTC's reset 1 (D.3.22): the pin is high

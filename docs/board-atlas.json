@@ -119,7 +119,7 @@
     {
       "net": "/OE",
       "note": "Low, so the outputs are enabled.  The net runs on toward the U33 area; it is on no pin of U32 or U33.  Nothing else on it is ruled out; {{R20}} is the candidate for the resistor.",
-      "path": "{{U17}} pin 19 and {{U18}} pin 19 joined, through one 1 kohm resistor to ground"
+      "path": "{{U17}} pin 19 and {{U18}} pin 19 joined, through one resistor to ground: 1 kohm read on 2026-10-30, 10 kohm on 2026-11-21 ([[docs/hardware-investigations.md|item 19]])"
     }
   ],
   "nets_intro": "Measured on the bench Z3805A on 2026-10-30, power off, with an ohmmeter, by the rules of [[docs/hardware-investigations.md|Working on the open Z3805A board]].  Pin numbers are the 74ABT245A's (DIR 1, A1 to A8 2 to 9, /OE 19; [[third_party/ti/sn74abt245b.pdf]]) and the XC3042's PLCC-84.",
@@ -130,7 +130,7 @@
   ],
   "open": [
     "Whether U32 pins 14 and 83 carry the same signal, so that J4 and J5 give the same pulse; and where pins 45 and 78 go.",
-    "What else is on the /OE net of {{U17}} and {{U18}}, and whether {{R20}} is its 1 kohm resistor; what else is on DIR.",
+    "What else is on the /OE net of {{U17}} and {{U18}}, its resistor's value (1 kohm on 2026-10-30, 10 kohm on 2026-11-21), and whether {{R20}} is it; what else is on DIR.",
     "The part that puts the switch byte at `0x302000` on the bus.  On the 58503A the byte is {{S1}}, measured ([[docs/hardware-investigations.md|item 13]]); beside S1 is {{U21}}, a 74AC251, which puts one of its eight inputs on one output, not a byte on the bus, and S1 has not been buzzed to U21 ([[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
     "Which '138, if any, decodes chip select 5's window into the lamp latch, the switch byte, the FPGA and the EFC strobe, and what `0x306000`'s strobe reaches ([[docs/firmware/restart.md|The chip selects]], [[docs/hardware-investigations.md|item 20]]).",
     "What decodes the QSPI's PCS0 to PCS3 into its devices ([[docs/firmware/structures.md|The QSPI's devices]]), and whether {{U48}} and {{U50}} take device 7's word to {{U56}}.",

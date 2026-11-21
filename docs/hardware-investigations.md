@@ -1222,7 +1222,9 @@ rear 1 PPS outputs.  The two boot different FPGA bitstreams, and
 no CPU code differs in a way that would drive J4
 (`firmware/outputs.md`, "The FPGA bitstreams").  On the component
 side, no part near J4 is fitted on the Z3805A and missing on the
-58503A.  The Z3805A's back side was photographed on 2026-10-30
+58503A.  The 58503A's J4 stays silent with the Z3805A's FPGA design
+loaded too, and on the shared layout the copper from U32 pin 14 to J4
+is intact (below).  The Z3805A's back side was photographed on 2026-10-30
 (`board-atlas.html`); the 58503A's has not been, but every resistor
 pack on its back side is seen fitted, R32 between U17 and J4 among
 them, so a missing pack does not explain J4.  Decoded with
@@ -1271,6 +1273,17 @@ to B by default.  /OE, pin 19, is one net for both, through a single
 or U33.  Nothing else on DIR or /OE is ruled out.  Whether pins 14 and
 83 carry the same signal is not settled.  The nets are tabled in
 `board-atlas.html`.
+
+*Measured on the open Z3805A board, 2026-11-21,* power off, with a
+meter, J4's path again: U32 pin 14 reaches U17 pin 9, A8; 100 Ω lies
+between the transceiver and J4; U17 pin 19 and U18 pin 19 are one
+net, 10 kΩ to ground, so the outputs are enabled (the 2026-10-30
+reading above gave 1 kΩ); U17 pin 1 reads 10.04 kΩ to VCC, so DIR
+transfers A to B.  So the board's path from the FPGA to J4 is intact.
+Why a 58503A is silent at J4 even with the Z3805A's FPGA design
+loaded stays open: whether that design configured, whether a part
+differs on the 58503A's board, and where the pulse was looked for are
+not recorded.
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
 that takes parts or the Z3805A's FPGA bitstream.

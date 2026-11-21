@@ -610,7 +610,9 @@ an unusable primary is item 13.
 
 *Open item:* what each of the eight positions on S1 controls, and
 whether any forces INSTALL without a working primary interpreter.
-The Z3801A 3543 and Z3805A 3543B reset-to-primary paths contain no
+On the 58503A each is a bit of the switch byte at `0x302000`, which
+its 3704 firmware never reads ("Measured, S1 on the 58503A", below);
+the Z3805A's and Z3801A's are not checked.  The Z3801A 3543 and Z3805A 3543B reset-to-primary paths contain no
 switch test, and a running primary enters the installer only through
 the SCPI task (`firmware/restart.md`, "Forced installer entry with an unusable
 primary").  The pForth console's `execute` reaches that same exit,
@@ -618,16 +620,19 @@ verified on the Z3801A and Z3805A on 2026-09-28.  This does not exclude
 a hardware effect on booting.  The hypotheses below model flash read
 faults that preserve the installer while failing primary checks.
 
-- [ ] TODO: with the unit open, read the byte at `0x302000` from the
-  pForth console (`3153920 c@ .`) before and after changing each S1
-  position, one at a time, powered down.  The Oman installer reads that
-  byte for its host-port settings (`firmware/restart.md`, "The switch byte at
-  `0x302000`"); whether S1 drives it is unknown.  See hypothesis 4
-  below.
+- [x] The byte at `0x302000` against each S1 position on the 58503A
+  (58503-60001 Rev C), 2026-11-21: S1 is the byte, position n bit
+  n − 1, ON 0 ("Measured, S1 on the 58503A", below).  The Oman
+  installer reads that byte for its host-port settings
+  (`firmware/restart.md`, "The switch byte at `0x302000`").  See
+  hypothesis 4 below.
+- [ ] TODO: the same on the Z3805A, from the pForth console
+  (`3153920 c@ .`) or over J12 once its J12 is checked.
 - [ ] TODO: on an unpowered board, map S1's connections to buffers,
   CPU pins, flash or programmable logic.  Record the assembly
   revision, physical switch numbering and which contacts close in the
-  marked ON position.
+  marked ON position.  On the 58503A which bit each position drives
+  is measured (below); its wiring is not traced.
 - Check whether any contact reaches the CPU's reset/debug signals or
   the flash's address/control signals.  Keep those possibilities
   separate from an ordinary input byte read by software.
@@ -735,6 +740,40 @@ through J12 is established on that board; whether a unit can be
 reflashed that way is not (hypothesis 2).  The Z3805A's and Z3801A's
 J12 are not checked.
 
+*Measured, S1 on the 58503A.*  On the bench 58503A's main board
+(58503-60001 Rev C), running 3704, on 2026-11-21, a BDM probe on J12
+read the byte at `0x302000`, the CPU halted only for each read, while
+S1's positions were changed with the power on.  With all eight
+positions ON, by the switch's own marking, the byte read `0x00`,
+twice, and CSBAR5 and CSOR5 read `0x3003` and `0x7b30`, the reset
+code's (`firmware/restart.md`, "The chip selects").  Then one position
+OFF at a time, each restored before the next; each value was steady
+over two reads:
+
+| Position OFF | `0x302000` reads |
+| ------------ | ---------------- |
+| 1 | `0x01` |
+| 2 | `0x02` |
+| 3 | `0x04` |
+| 4 | `0x08` |
+| 5 | `0x10` |
+| 6 | `0x20` |
+| 7 | `0x40` |
+| 8 | `0x80` |
+
+So on that board S1 is the switch byte: position n is bit n − 1,
+which reads 0 ON and 1 OFF (hypothesis 4 holds).  Three flash long
+words read the same at every position, as in the 3704 image:
+`0x3fffc` `0x5e4a146a` and `0x7fffc` `0xbcae0c74`, the two banks'
+stored lane sums, and `0x10000` `0x0010fffe`, the primary's first
+vector.  So S1 does not gate the flash's reads (hypothesis 1 rejected
+for that board).  The positions were changed while the firmware ran,
+and the byte followed each at once; no reset was taken with a
+position OFF.  The 3704 primary and its USA installer never read the
+byte, so on that unit S1 has no effect; what it would set under
+3633's Oman installer is in `firmware/restart.md`, "The switch byte
+at `0x302000`".  The Z3805A's and Z3801A's S1 are not checked.
+
 *Changes:* a verified switch map and, if the board supports it, a
 recovery procedure for a primary whose checksums pass but which cannot
 accept `:SYSTem:LANGuage "INSTALL"`.
@@ -747,8 +786,10 @@ not findings.  Facts they rest on are in `firmware/README.md`.*
 Research question: can a jumper or the eight-position S1 force recovery
 when PRIMARY has valid checksums but cannot accept the command to enter
 INSTALL?  The boards of interest are the Z3801A and Z3805A, with a
-58503A available for comparison.  No S1 position has been identified;
-the one candidate input is the byte at `0x302000` (hypothesis 4).
+58503A available for comparison.  On the 58503A, S1 is the byte at
+`0x302000` (hypothesis 4), measured on 2026-11-21 ("Measured, S1 on
+the 58503A", above); no S1 position has been identified on the
+Z3801A or Z3805A.
 
 These are hypotheses, not instructions for changing switches or wiring.
 The investigation used the firmware dumps and the MCU manual; no
@@ -758,10 +799,10 @@ receiver was accessed.  Results recorded on 2026-09-28.
 
 | Hypothesis | Mechanism | Current evidence |
 | ---------- | --------- | ---------------- |
-| 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  S1 wiring is unknown. |
+| 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  Rejected on the 58503A: no S1 position changes the flash's reads.  The Z3801A's and Z3805A's S1 wiring is unknown. |
 | 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; BDM access through J12 is established on the 58503A, not checked on the Z3801A and Z3805A; recovery is untested.  A switch alone does not select INSTALL. |
 | 3. Select alternate boot storage | Bank selection changes the reset vectors or startup code presented to the CPU. | No alternate recovery image or selection circuit identified. |
-| 4. S1 is the byte at `0x302000` | An 8-bit input in CS5's window that software reads. | Only the Oman installer reads it, to override host-port settings; no firmware on the bench units reads it.  Nothing ties it to S1. |
+| 4. S1 is the byte at `0x302000` | An 8-bit input in CS5's window that software reads. | Only the Oman installer reads it, to override host-port settings; no firmware on the bench units reads it.  Holds on the 58503A: position n is bit n − 1, ON 0.  Not checked on the Z3801A and Z3805A. |
 
 The related 55300A manual assigns S1 B1 to "Preset All Serial Ports at
 Powerup" and B2 to "Password Required" (097-55300-01, figures 3-14 and
@@ -880,6 +921,11 @@ The model verifies checksum consequences for known images, not the
 electrical circuit, an S1 assignment, an installer session, or recovery
 of a real unit.  Those remain open.
 
+On the 58503A it is rejected without a trace: S1 is the switch byte,
+and the flash read the same at every position, measured on
+2026-11-21 ("Measured, S1 on the 58503A", above).  The Z3801A and
+Z3805A are not checked.
+
 ### 2. Enable background debugging
 
 The MC68331 has an independent way to redirect execution: background
@@ -913,8 +959,16 @@ it, change one S1 position with the unit powered down, and read it
 again; a bit that follows the switch maps that position.  If no bit
 changes for any position, the hypothesis is rejected for that board.
 This needs `:SYSTem:LANGuage "PFORTH"` and `halt` to return to SCPI
-(item 14), and has not been done.  What else a read of `0x302000` does on
-the Z3801A and Z3805A boards is unknown.
+(item 14), and has not been done from the console.  What else a read
+of `0x302000` does on the Z3801A and Z3805A boards is unknown.
+
+On the 58503A the hypothesis holds, measured on 2026-11-21 over J12
+instead, with the power on ("Measured, S1 on the 58503A", above):
+position n is bit n − 1, ON reads 0 and OFF 1, and with every
+position ON the byte is `0x00`.  Position 1 is bit 0, the bit that
+enables the Oman installer's override: the place of the 55300A's S1
+B1, "Preset All Serial Ports at Powerup".  The bench unit runs 3704, whose primary and
+installer never read the byte.
 
 ## 14. Leaving the console with `halt` -- done
 

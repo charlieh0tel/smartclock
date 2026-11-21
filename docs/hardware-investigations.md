@@ -1144,7 +1144,8 @@ this.
 
 *Open item:* the bench 58503A's main board (58503-60001 Rev C) carries
 six LEDs, which the operator takes to be bicolor, red and green.
-Nothing here says what they show.
+They are the DUART's OP2 to OP7, measured (below); what each shows
+through the receiver's states is not watched.
 
 - [ ] TODO: note each LED's color through power-up, lock, a manual
   holdover (`:SYNChronization:HOLDover:INITiate`), recovery, an alarm,
@@ -1155,9 +1156,14 @@ DUART's OP2 to OP7: heartbeat, installer running, and the CPU, RAM,
 DUART and later self-test failures (`firmware/outputs.md`, "The rest
 of the bank").
 
-- [ ] TODO: find what drives them in the firmware: a port the start-up
-  code sets, the DUART's output port, or a write `:DIAGnostic:OUTPut`
-  or the self-test makes.
+- [x] What drives them, on the bench 58503A, 2026-11-21: the DUART's
+  output port, OP2 to OP7 counted from the right, OP2 the green
+  heartbeat (below).
+
+*Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
+2026-11-21: the six LEDs are the DUART's output port bits OP2 to
+OP7, counted from the right, and OP2, the heartbeat, is green.
+The other LEDs' colors and the polarity are not recorded here.
 
 *Photos:* the Z3805A and Z3801A carry the same row of six
 surface-mount LEDs at the board's rear edge, beside the RAM at U8 and

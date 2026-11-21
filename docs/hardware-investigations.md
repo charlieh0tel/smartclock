@@ -175,8 +175,9 @@ in the Z3805A's (CSOR4 `0x7830`, internal DSACK, 0 wait; the 58503A
 leaves CSBAR4 and CSOR4 at reset, BYTE disabled); CS8 and CS10
 external DSACK (CSOR8 `0x3bf0`, CSOR10 `0x2bc4`, DSACK field 1111) and
 every other select internal; PICR `0x0542`, the PIT at level 5 with
-vector `0x42`.  MC68331UM does not say what a user-mode read of an "S"
-register returns.  On 2026-10-10 a bench Z3801A read the SIM's
+vector `0x42`.  On the bench 58503A the chip selects read the same
+over BDM ("Register reads over BDM", below).  MC68331UM does not
+say what a user-mode read of an "S" register returns.  On 2026-10-10 a bench Z3801A read the SIM's
 registers through the console as zeros (`firmware/restart.md`, "The
 watchdog").  `--supervisor-registers` reads them after everything
 else, so the first tells whether this unit does the same, at the risk
@@ -234,6 +235,47 @@ wiring is continuity.
 values: `ISR AND IMR` `00`, IVR `43`, DDRE `40`, DDRF `f7`, PORTC `7f`
 and PF3 1 (the FPGA configured) on both units; anything else is worth
 recording, PE0's level among it.
+
+## Register reads over BDM
+
+On the bench 58503A (58503-60001 Rev C), running 3704, a BDM probe on
+J12 (item 13, "Measured, J12 on the 58503A") reads what the console
+cannot, the SIM's "S" registers among them, with the CPU halted in
+background mode.  Measured on 2026-11-20 and 2026-11-21.  The Z3805A's
+and Z3801A's J12 are not checked.
+
+*Halting the running firmware.*  The running firmware's SIMCR is
+`0x014a`: FRZSW and FRZBM clear, so the software watchdog keeps
+counting while the CPU is in background mode (MC68331UM 4.2.13,
+D.3.1), and SYPCR `0xcc` gives it about 8 s, measured (item 7,
+"Measured, resets on the 58503A").  A halt of under 1 s and resume
+left the firmware running: RSR unchanged, and `watchdog_countdown`
+(`0x100b90`; `firmware/restart.md`, "The watchdog") read `0x0007`.
+Writing SIMCR `0x614a`, FRZSW and FRZBM set, before a long halt froze
+the watchdog: a 15 s halt, then SIMCR restored to `0x014a` and
+resume, with no reset.  The receiver's log recorded that halt as
+`Holdover started, invalid GPS 1PPS`.  With `0x614a` a debugger read
+past the top of RAM hung the CPU until a probe reset; with `0x414a`,
+FRZSW alone, it did not.  Each was seen once.
+
+*At a reset entry* (BKPT held low at reset, so that the CPU enters
+background mode before its first instruction).  SIMCR reads `0x60cf`
+and SYPCR `0x80`: the watchdog is frozen in background mode until the
+firmware rewrites SIMCR.  MC68331UM D.3.1 gives FRZSW and FRZBM as 0
+at reset; why they read 1 here was not established.  CSPAR0 reads
+`0x3fff`, CSPAR1 `0x03ff`, CSBARBT `0x0007` and CSORBT `0x7b70`: only
+CSBOOT is set up, as a 1 MiB block, so `0x40000` mirrors the lower
+bank until the chip selects are set.  RPC and VBR are item 7's.
+
+*The chip selects.*  With the firmware run 3 s and halted, every
+chip-select register read as `firmware/chip-selects.md`'s tables for
+the 58503A 3704 give it, so those tables are confirmed on silicon
+for this board: CSPAR0 `0x2bff`, CSPAR1 `0x03af`; CSBARBT, CSORBT
+`0x0005`, `0x6870`; CS0 `0x1003`, `0x6830`; CS1 `0x0405`, `0x6870`;
+CS2 `0x1003`, `0x5030`; CS3 `0x1003`, `0x3030`; CS4 0, 0; CS5
+`0x3003`, `0x7b30`; CS6 `0x0005`, `0x7070`; CS7 `0x0405`, `0x7070`;
+CS8 `0x2000`, `0x3bf0`; CS9 `0x4001`, `0x78f0`; CS10 `0xfff8`,
+`0x2bc4`.
 
 ## 1. The word that chooses G
 
@@ -478,7 +520,8 @@ read after each:
   (`firmware/restart.md`, "Restarting"): EXT alone does not count as
   warm.
 - *Watchdog.*  The firmware was halted without freezing the watchdog
-  (SIMCR `0x014a`, FRZSW clear) and the CPU reset itself about 8 s into the halt:
+  (SIMCR `0x014a`, FRZSW clear; "Register reads over BDM" above) and
+  the CPU reset itself about 8 s into the halt:
   FREEZE dropped between 00:17:48 and 00:17:49 UTC for a halt begun
   at 00:17:41, matching SYPCR `0xcc` (`firmware/restart.md`, "The
   watchdog").  The log recorded `Re-boot` at that time and `GPS lock
@@ -1737,6 +1780,8 @@ images, CS4's field 10, a select on an 8-bit port, not a discrete
 output, so PORTC's PC1 does not reach pin 119; CSBAR4 `0x5000` and
 CSOR4 `0x7830` on the Z3805A (2 KiB at `0x500000`, read and write,
 internal DSACK, 0 wait), reset values with BYTE disabled on the 58503A.
+On the bench 58503A, running 3704, they read so over BDM: CSPAR0
+`0x2bff`, CSBAR4 and CSOR4 0 ("Register reads over BDM" above).
 PORTC is readable and should read `7f`, its reset value; it matters
 only on 3633, where CS4's field is 00.  A read inside CS4's window is
 refused: on the 58503A no select answers it, a bus error and a

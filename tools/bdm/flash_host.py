@@ -48,7 +48,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "firmware"))
 from board import FLASH_SIZE, PAIR_SIZE, READ_SELECTS, SECTOR_PAIR_SIZE, WORD, WRITE_SELECTS  # noqa: E402
-from lane_sums import lane_sums  # noqa: E402
+from lane_sums import BYTE_BITS, STORED_SIZE, lane_sums  # noqa: E402
 from target import Entry, Target, TargetError, TargetTimeout  # noqa: E402
 
 ROUTINE_SYMBOLS = HERE.parents[1] / "target" / "bdm" / "flash_routine.json"
@@ -85,6 +85,7 @@ SR_SUPERVISOR_MASKED = 0x2700
 # A call's outputs: D1 and D2 hold words; an exception's format and
 # vector word holds the vector's offset in bits 11-0 (CPU32RM 6.4).
 WORD_MASK = 0xFFFF
+BYTE_MASK = 0xFF
 VECTOR_OFFSET_MASK = 0x0FFF
 # identify's results: manufacturer, device, then each sector pair's
 # protection word; and what an unprotected Am29F010B pair reads, the
@@ -313,6 +314,15 @@ def check_image(image: bytes, unchecked: bool = False) -> None:
         computed, stored = lane_sums(image, start, end)
         if computed != stored:
             raise Refused(f"the lane sums of {start:#x}-{end:#x} are {computed}, but it stores {stored}")
+
+
+def with_lane_sums(image: bytes) -> bytes:
+    """image with each LANE_SUM_SPANS span's stored sums made to hold."""
+    fixed = bytearray(image)
+    for start, end in LANE_SUM_SPANS:
+        (even, odd), _ = lane_sums(fixed, start, end)
+        fixed[end - STORED_SIZE : end] = bytes([even >> BYTE_BITS, odd >> BYTE_BITS, even & BYTE_MASK, odd & BYTE_MASK])
+    return bytes(fixed)
 
 
 def plan(current: bytes, image: bytes, allow_low: bool = False) -> list[int]:

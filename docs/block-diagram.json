@@ -1399,7 +1399,7 @@
   ],
   "left_out": [
     "The FPGA outputs P2 (tied Low), P72, P79 and P84, and the input P17: what the board does with them is not traced ([[docs/firmware/fpga-comparison.md|Outputs]]).",
-    "The lamp latch U44, the switch byte at `0x302000` and the EFC strobe at `0x306000`, the rest of chip select 5's window: each part's role there is inferred or open ([[docs/firmware/restart.md|The chip selects]]; [[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
+    "The lamp latch U44, the switch byte at `0x302000` (S1 on the 58503A, measured) and the EFC strobe at `0x306000`, the rest of chip select 5's window: each part's role there is inferred or open ([[docs/firmware/restart.md|The chip selects]]; [[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
     "The analog parts round the EFC and the monitor, U52, U55, U59, U60 and U61, the references U39 and U49, and the shift registers U48 and U50: none is traced (the board atlas).",
     "J18, 10 MHz In, and J22, the EFC jack: their paths are not traced (the board atlas).",
     "The power supplies and regulators other than U40, U45 and U46, the LEDs, S1 and the front panel's connector: none bears on the signals drawn here (the board atlas)."

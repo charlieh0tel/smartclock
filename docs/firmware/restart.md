@@ -379,7 +379,8 @@ then the primary-vector loads at `0x738` and `0x73e` and jump at
 `0x744`.  The failure branches enter the installer startup at
 `0x746`.  The path has no switch input read, serial-break poll or
 separate force-INSTALL test.  This does not establish what the board's
-eight-position S1 does.
+eight-position S1 does; on the 58503A it is the switch byte (below),
+which no 58503A primary reads.
 
 A separate entry in protected flash at `0xa58` is addressed by vector
 43 at `0xac`.  It masks interrupts, resets VBR and SP, unpacks the
@@ -449,7 +450,9 @@ whose parser still runs, or one set to start the console before the
 parser stopped working; either way the primary itself must start.
 
 How S1, a flash-read fault or the CPU's background debug mode might
-reach the installer without a working primary is speculative; see
+reach the installer without a working primary is speculative, but for
+the 58503A's S1, which is the switch byte and leaves the flash's reads
+alone; see
 [the recovery hypotheses](../hardware-investigations.md#recovery-hypotheses).
 
 ## The chip selects
@@ -584,7 +587,7 @@ than one device:
 | Address | Name | In the Z3805A image | Device |
 | ------- | ---- | ------------------- | ------ |
 | `0x300000` | `lamp_latch` | written whole by `leds_update` (`0x464de`) and `lamp_test` (`0x184ee`) | the lamp latch (`outputs.md`, "The Z3805A's lamps"); U44 the candidate |
-| `0x302000` | -- | never accessed; only 58503A 3633's Oman installer reads it (below) | the switch byte; whether it is S1 is open |
+| `0x302000` | -- | never accessed; only 58503A 3633's Oman installer reads it (below) | the switch byte: S1 on the 58503A, measured; on the Z3805A open |
 | `0x304000` | `fpga_port` | read by `fpga_read` (`0x4076a`), written by `fpga_write` (`0x40756`) | U32, the XC3042 FPGA (`interval.md`) |
 | `0x306000` | `efc_strobe` | written 0 by `efc_write` (`0x1f646`) after the EFC goes out to QSPI device 7 | not identified |
 
@@ -644,9 +647,21 @@ sending the value to the DAC over the QSPI and pulsing port E bit 7;
 the console word `efc_write` and the loop's EFC conversion (`0x32cd0`)
 call it, so the byte is read at every EFC write, and what that read
 does was not traced.  So no firmware on the bench units reads this
-byte.  Whether it is S1 has not been established.
+byte.
 097-55300-01 figures 3-14 and 3-15A give the related 55300A's S1 B1 as
 "Preset All Serial Ports at Powerup", the same kind of function.
+
+On the bench 58503A (58503-60001 Rev C) the byte is S1, measured on
+2026-11-21 over the BDM header J12 (`../hardware-investigations.md`
+item 13, "Measured, S1 on the 58503A"): position n is bit n − 1, and
+a position reads 0 ON, by the switch's marking, and 1 OFF.  With every
+position ON the byte reads `0x00`, which under the Oman installer, by
+the reading above, enables the override (bit 0 clear) and selects the
+first baud code, `0x66`, 1200 baud at the standard clock, 8 bits, no
+parity, no pacing; the board's crystal was not checked.  That unit
+runs 3704, whose primary and USA installer do not read the byte: on a
+58503A running 3704 with its own installer, S1 has no effect.  Whether
+the Z3801A's and Z3805A's S1 drive the byte has not been established.
 
 ## The flasher
 

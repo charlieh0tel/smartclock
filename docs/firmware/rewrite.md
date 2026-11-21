@@ -890,7 +890,8 @@ the check is against the model, not the board.
   between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
 - **Untraced hardware.**  Which wires reach what (the DUART's interrupt
   level, the EEPROM's select line, the SCI's connector, the switch word
-  at `0x302000`) is inferred from the firmware, not traced on a board:
+  at `0x302000`, measured to be S1 on the 58503A but not traced) is
+  inferred from the firmware, not traced on a board:
   [`../hardware-investigations.md`](../hardware-investigations.md)
   lists each with its bench test.  The EEPROM's part is identified, from
   photographs: U4, an AT28C64B-20JC, chip select 9's by elimination.

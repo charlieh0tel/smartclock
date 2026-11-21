@@ -131,7 +131,7 @@
   "open": [
     "Whether U32 pins 14 and 83 carry the same signal, so that J4 and J5 give the same pulse; and where pins 45 and 78 go.",
     "What else is on the /OE net of {{U17}} and {{U18}}, and whether {{R20}} is its 1 kohm resistor; what else is on DIR.",
-    "The part behind the switch byte at `0x302000`.  Beside {{S1}} is {{U21}}, a 74AC251, which puts one of its eight inputs on one output, not a byte on the bus; no document says what drives the byte, and S1 has not been buzzed to U21 ([[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
+    "The part that puts the switch byte at `0x302000` on the bus.  On the 58503A the byte is {{S1}}, measured ([[docs/hardware-investigations.md|item 13]]); beside S1 is {{U21}}, a 74AC251, which puts one of its eight inputs on one output, not a byte on the bus, and S1 has not been buzzed to U21 ([[docs/firmware/restart.md|The switch byte at `0x302000`]]).",
     "Which '138, if any, decodes chip select 5's window into the lamp latch, the switch byte, the FPGA and the EFC strobe, and what `0x306000`'s strobe reaches ([[docs/firmware/restart.md|The chip selects]], [[docs/hardware-investigations.md|item 20]]).",
     "What decodes the QSPI's PCS0 to PCS3 into its devices ([[docs/firmware/structures.md|The QSPI's devices]]), and whether {{U48}} and {{U50}} take device 7's word to {{U56}}.",
     "Which rail feeds {{U37}}'s VDD ([[docs/hardware-investigations.md|item 23]]); {{U40}}, a 78L12, sits beside it.",
@@ -1079,7 +1079,7 @@
     },
     {
       "58503a": {
-        "note": "a CTS part marked ON",
+        "note": "a CTS part marked ON; the switch byte at `0x302000`, position n bit n - 1, ON 0, measured on 2026-11-21 ([[docs/hardware-investigations.md|item 13]])",
         "status": "fitted"
       },
       "at": {
@@ -1099,7 +1099,7 @@
       "marking_confidence": "board",
       "note": "Not yet buzzed.  Which way each position is set is not read.",
       "ref": "S1",
-      "role": "Configuration.  Whether it is the byte at `0x302000` is not established.",
+      "role": "Configuration: the byte at `0x302000`, by the 58503A's.  On the bench 58503A (58503-60001 Rev C) S1 is that byte, position n bit n - 1, reading 0 ON and 1 OFF, measured ([[docs/hardware-investigations.md|item 13]]); the Z3805A's is not checked.",
       "role_confidence": "inferred",
       "type": "8-position DIP switch",
       "z3801a": {

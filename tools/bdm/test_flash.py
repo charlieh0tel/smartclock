@@ -1,0 +1,413 @@
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["mc683xx==0.7.0"]
+# ///
+"""Tests of the BDM flash routine and its host on the model target:
+the routine as CPU32 code on mc683xx's MC68331, its BDM and SIM, the
+board's selects decoding the flash model (model_target.py,
+am29f010.py).  mc683xx is pinned as the firmware's checks pin it.
+
+    uv run -q tools/bdm/test_flash.py
+
+`make test-bdm` runs it.  It assembles the routine first
+(build_routine.py), with the m68k binutils.
+"""
+
+import hashlib
+import unittest
+from pathlib import Path
+
+import build_routine
+import flash_host
+from am29f010 import DQ5, DQ7, PART_SIZE, BoardFlash, Hazard, State, Timing
+from board import FLASH_SIZE, PAIR_SIZE, SECTOR_PAIR_SIZE, WORD
+from model_target import ModelTarget
+from flash_host import (
+    BUFFER,
+    CHIP_SELECTS,
+    LANE_SUM_SPANS,
+    PROTECTED_END,
+    Busy,
+    Failed,
+    Options,
+    Refused,
+    Routine,
+    Session,
+    hazards,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+IMAGES = ROOT / "third_party" / "firmware" / "images"
+IMAGE_3704 = (IMAGES / "58503a-3704.bin").read_bytes()
+SHA256_3704 = "d13b9ff1e4a0a59517aac4d066c60e22b290cf4ff6810c5c2bf01f1bc9491ca3"
+BLANK = bytes([0xFF]) * FLASH_SIZE
+# The modeled chip's clock out of reset: SYNCR $3F08, 32.768 kHz * 256.
+RESET_HZ = 8388608
+# The parts' times in the tests: the data sheet's typical byte program
+# (7 us) and an erase far shorter than its 1 s, to keep the runs short.
+PROGRAM_SECONDS = 7e-6
+ERASE_SECONDS = 2e-3
+# The sector erase time-out, 50 us, and a protected sector's status
+# times, 2 us and 100 us (Am29F010B, pp. 13, 16).
+WINDOW_SECONDS, PROTECTED_PROGRAM_SECONDS, PROTECTED_ERASE_SECONDS = 50e-6, 2e-6, 100e-6
+# The longest a run's erase may take in the tests: the routine's limit.
+TEST_ERASE_LIMIT = 0.05
+
+
+def clocks(seconds: float) -> int:
+    return round(seconds * RESET_HZ)
+
+
+def timing(program: float = PROGRAM_SECONDS, erase: float = ERASE_SECONDS, stuck: bool = False) -> Timing:
+    return Timing(
+        clocks(program), clocks(erase), clocks(WINDOW_SECONDS), clocks(PROTECTED_PROGRAM_SECONDS),
+        clocks(PROTECTED_ERASE_SECONDS), stuck,
+    )
+
+
+def with_sums(image: bytes) -> bytes:
+    """image with each pair's lane sums made to hold."""
+    fixed = bytearray(image)
+    for start, end in LANE_SUM_SPANS:
+        (even, odd), _ = flash_host.lane_sums(fixed, start, end)
+        fixed[end - 4 : end] = bytes([even >> 8, odd >> 8, even & 0xFF, odd & 0xFF])
+    return bytes(fixed)
+
+
+def variant(image: bytes, base: int) -> bytes:
+    """image with the sector pair at base changed, bits both cleared and
+    set, and the sums fixed."""
+    changed = bytearray(image)
+    for offset in range(0, SECTOR_PAIR_SIZE, 7):
+        changed[base + offset] ^= 0xA5
+    return with_sums(bytes(changed))
+
+
+# The routine, assembled afresh.
+ROUTINE = Routine.load(build_routine.build())
+
+
+def board(image: bytes = IMAGE_3704, part_timing=None, **flash) -> tuple[ModelTarget, BoardFlash]:
+    model = BoardFlash.from_image(image, part_timing or timing(), **flash)
+    return ModelTarget(model), model
+
+
+def quiet(_: str) -> None:
+    pass
+
+
+def run(target: ModelTarget, image: bytes, **options) -> flash_host.Report:
+    options.setdefault("erase_time", TEST_ERASE_LIMIT)
+    return flash_host.flash(target, image, Options(**options), ROUTINE, quiet)
+
+
+def session(target: ModelTarget, **keywords) -> Session:
+    built = Session(target, ROUTINE, quiet, Options(erase_time=TEST_ERASE_LIMIT), **keywords)
+    built.set_up()
+    return built
+
+
+def clean(test: unittest.TestCase, model: BoardFlash) -> None:
+    """No hazard, nothing unmodeled, every part reading array data."""
+    test.assertEqual(model.hazards, [])
+    test.assertEqual(model.unmodeled(), [])
+    test.assertEqual([part.state for part in model.parts()], [State.READ] * 4)
+
+
+class Routines(unittest.TestCase):
+    def test_built_position_independent(self):
+        # build_routine refuses relocations; the entries are where the
+        # host's vector table and PC point
+        self.assertEqual(len(ROUTINE.code), ROUTINE.labels["routine_end"])
+        self.assertIn("exception", ROUTINE.labels)
+        listing = (build_routine.FOLDER / "flash_routine.lst").read_text()
+        self.assertIn("bgnd", listing)
+
+    def test_geometry_agrees(self):
+        # flash_routine.S states the board's geometry for itself
+        self.assertEqual(
+            (ROUTINE.FLASH_END, ROUTINE.PAIR_SIZE, ROUTINE.SECTOR_PAIR_SIZE, ROUTINE.PAIR_2_BASE),
+            (FLASH_SIZE, PAIR_SIZE, SECTOR_PAIR_SIZE, PAIR_SIZE),
+        )
+
+    def test_identify(self):
+        target, model = board()
+        built = session(target)
+        protection = built.identify()
+        self.assertEqual(set(protection.values()), {0})
+        self.assertEqual(len(protection), FLASH_SIZE // SECTOR_PAIR_SIZE)
+        clean(self, model)
+        self.assertEqual(model.image(), IMAGE_3704)
+
+    def test_bad_operation_and_arguments(self):
+        target, model = board()
+        built = session(target)
+        for operation, address, count, floor, status in (
+            (99, 0x40000, 1, PROTECTED_END, "STATUS_BAD_OPERATION"),
+            (ROUTINE.OPERATION_ERASE, 0x8000, 0, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # below the floor
+            (ROUTINE.OPERATION_ERASE, 0x70002, 0, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # not a sector pair
+            (ROUTINE.OPERATION_PROGRAM, 0x70001, 1, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # odd
+            (ROUTINE.OPERATION_PROGRAM, 0x3FFFE, 2, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # across pairs
+            (ROUTINE.OPERATION_PROGRAM, 0x80000, 1, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # past the flash
+            (ROUTINE.OPERATION_VERIFY, 0x70000, 0, PROTECTED_END, "STATUS_BAD_ARGUMENT"),  # no words
+        ):
+            with self.assertRaisesRegex(Failed, status):
+                built.call(operation, address, count, floor, 1, 1)
+        clean(self, model)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        self.assertEqual(model.image(), IMAGE_3704)
+
+    def test_needs_erase_refused_before_programming(self):
+        target, model = board()
+        built = session(target)
+        # 0x7fffc holds the sums, 0xbcae: asking 0xffff there needs a 0 made 1
+        target.write_block(BUFFER, bytes([0x00, 0x00, 0xFF, 0xFF]))
+        with self.assertRaisesRegex(Failed, r"STATUS_NEEDS_ERASE at 0x7fffe: read 0x0c74, expected 0xffff"):
+            built.call(ROUTINE.OPERATION_PROGRAM, 0x7FFFC, 2, PROTECTED_END, 100, 100)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        clean(self, model)
+
+    def test_program_skips_equal_words(self):
+        target, model = board()
+        built = session(target)
+        target.write_block(BUFFER, IMAGE_3704[0x40000 : 0x40000 + SECTOR_PAIR_SIZE])
+        built.call(ROUTINE.OPERATION_PROGRAM, 0x40000, SECTOR_PAIR_SIZE // WORD, PROTECTED_END, 100, 100 * SECTOR_PAIR_SIZE)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        clean(self, model)
+
+    def test_verify_mismatch(self):
+        target, model = board()
+        built = session(target)
+        data = bytearray(IMAGE_3704[0x48000 : 0x48000 + SECTOR_PAIR_SIZE])
+        data[0x1235] ^= 1
+        target.write_block(BUFFER, bytes(data))
+        with self.assertRaisesRegex(Failed, r"STATUS_MISMATCH at 0x49234"):
+            built.call(ROUTINE.OPERATION_VERIFY, 0x48000, SECTOR_PAIR_SIZE // WORD, PROTECTED_END, 1, SECTOR_PAIR_SIZE)
+        clean(self, model)
+
+    def test_lanes_finish_apart(self):
+        # pair 2's even part slow to program, its odd part slow to erase
+        parts = [timing(), timing(), timing(program=250e-6), timing(erase=8e-3)]
+        image = variant(IMAGE_3704, 0x50000)
+        target, model = board(part_timing=parts)
+        report = run(target, image)
+        self.assertEqual(report.plan, [0x50000, 0x78000])
+        self.assertEqual(model.image(), image)
+        clean(self, model)
+
+    def test_stuck_lane_erase(self):
+        parts = [timing(), timing(), timing(), timing(stuck=True)]
+        target, model = board(part_timing=parts)
+        with self.assertRaisesRegex(Failed, r"STATUS_EXCEEDED at 0x50000: read 0xff([0-9a-f]{2}), expected 0xffff") as caught:
+            run(target, variant(IMAGE_3704, 0x50000))
+        # the even lane done, the odd still erasing (DQ7 0) with DQ5
+        odd = int(caught.exception.args[0].split("read 0xff")[1][:2], 16)
+        self.assertEqual(odd & (DQ7 | DQ5), DQ5)
+        # the routine's read/reset took the stuck part out of DQ5
+        clean(self, model)
+
+    def test_stuck_lane_program(self):
+        # pair 2's even part stuck; 0x70000 erased in the 3704 image
+        target, model = board()
+        model.pairs[1][0].timing = timing(stuck=True)
+        built = session(target)
+        target.write_block(BUFFER, bytes([0x12, 0x34]))
+        with self.assertRaisesRegex(Failed, r"STATUS_EXCEEDED at 0x70000: read 0x[0-9a-f]{4}, expected 0x1234"):
+            built.call(ROUTINE.OPERATION_PROGRAM, 0x70000, 1, PROTECTED_END, built.limit(1e-3), 10**5)
+        clean(self, model)
+
+    def test_timeout(self):
+        # a part that neither finishes nor shows DQ5 in the routine's time
+        parts = [timing(), timing(), timing(erase=1.0), timing()]
+        target, model = board(part_timing=parts)
+        with self.assertRaisesRegex(Busy, r"STATUS_TIMEOUT at 0x50000"):
+            run(target, variant(IMAGE_3704, 0x50000), erase_time=0.01)
+
+    def test_exception_returns_through_vector_table(self):
+        target, model = board()
+        target.peripheral.bus_errors = frozenset([0x50000])
+        built = session(target)
+        with self.assertRaisesRegex(Failed, r"exception, vector 2, PC 0x10[0-9a-f]{4}, fault address 0x50000"):
+            built.call(ROUTINE.OPERATION_ERASE, 0x50000, 0, PROTECTED_END, built.limit(TEST_ERASE_LIMIT), 10**6)
+        self.assertEqual(model.hazards, [])
+
+    def test_clock_bounds(self):
+        # the routine's poll limit rests on POLL_CLOCKS_MIN, the host's
+        # wait on STEP_CLOCKS_MAX: hold them to mc683xx's clocks
+        erase = 5e-3
+        target, model = board(part_timing=timing(erase=erase))
+        built = session(target)
+        pair = model.pairs[1]
+        built.call(ROUTINE.OPERATION_ERASE, 0x70000, 0, PROTECTED_END, built.limit(TEST_ERASE_LIMIT), 10**6)
+        polls = sum(part.status_reads for part in pair) // WORD
+        self.assertGreaterEqual(clocks(WINDOW_SECONDS + erase) / polls, flash_host.POLL_CLOCKS_MIN)
+        image = variant(IMAGE_3704, 0x70000)
+        target.write_block(BUFFER, image[0x70000 : 0x70000 + SECTOR_PAIR_SIZE])
+        before, start = sum(part.status_reads for part in pair), target.chip.now
+        words = SECTOR_PAIR_SIZE // WORD
+        built.call(ROUTINE.OPERATION_PROGRAM, 0x70000, words, PROTECTED_END, built.limit(1e-3), 10**7)
+        polls = (sum(part.status_reads for part in pair) - before) // WORD
+        steps = words * flash_host.PASSES_PER_WORD + polls
+        self.assertLessEqual(target.chip.now - start, steps * flash_host.STEP_CLOCKS_MAX)
+
+
+class Procedure(unittest.TestCase):
+    def test_from_blank(self):
+        target, model = board(BLANK)
+        report = run(target, IMAGE_3704, allow_low=True)
+        # all but the image's two blank sector pairs
+        self.assertEqual(report.plan, [base for base in range(0, FLASH_SIZE, SECTOR_PAIR_SIZE) if base not in (0x68000, 0x70000)])
+        self.assertEqual(report.final_sha256, SHA256_3704)
+        self.assertEqual(report.restore_sha256, hashlib.sha256(BLANK).hexdigest())
+        self.assertEqual(model.image(), IMAGE_3704)
+        clean(self, model)
+
+    def test_from_another_image(self):
+        image = variant(variant(IMAGE_3704, 0x10000), 0x68000)
+        target, model = board()
+        report = run(target, image)
+        self.assertEqual(report.plan, [0x10000, 0x38000, 0x68000, 0x78000])
+        self.assertEqual(report.restore_sha256, SHA256_3704)
+        self.assertEqual(model.image(), image)
+        clean(self, model)
+
+    def test_from_3633(self):
+        # the 58503A's other image differs in the installer too: refused,
+        # then written whole with the override
+        image_3633 = (IMAGES / "58503a-3633.bin").read_bytes()
+        target, model = board(image_3633)
+        with self.assertRaisesRegex(Refused, "differs below 0x10000, at 0x0, 0x8000"):
+            run(target, IMAGE_3704)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        report = run(target, IMAGE_3704, allow_low=True)
+        self.assertEqual(report.plan[:2], [0x0, 0x8000])
+        self.assertEqual(report.final_sha256, SHA256_3704)
+        clean(self, model)
+
+    def test_dry_run(self):
+        target, model = board()
+        report = run(target, variant(IMAGE_3704, 0x60000), dry_run=True)
+        self.assertEqual(report.plan, [0x60000, 0x78000])
+        self.assertEqual(model.image(), IMAGE_3704)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        self.assertEqual(target.runs, 0)
+        clean(self, model)
+
+    def test_refuses_below_protected_end(self):
+        image = bytearray(IMAGE_3704)
+        image[0x8000] ^= 0xFF
+        target, model = board()
+        with self.assertRaisesRegex(Refused, "differs below 0x10000, at 0x8000"):
+            run(target, bytes(image), unchecked=True)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        self.assertEqual(model.image(), IMAGE_3704)
+
+    def test_refuses_short_image(self):
+        target, model = board()
+        with self.assertRaisesRegex(Refused, "not 524288"):
+            run(target, IMAGE_3704[:-2])
+        self.assertEqual(target.runs, 0)
+
+    def test_refuses_bad_sums(self):
+        image = bytearray(IMAGE_3704)
+        image[0x50000] ^= 1
+        target, model = board()
+        with self.assertRaisesRegex(Refused, "lane sums of 0x40000-0x80000"):
+            run(target, bytes(image))
+        # deliberately unchecked, it is programmed
+        run(target, bytes(image), unchecked=True)
+        self.assertEqual(model.image(), bytes(image))
+
+    def test_refuses_unexpected_ids(self):
+        target, model = board()
+        model.pairs[1][1].device = 0xA4  # an Am29F040's code
+        with self.assertRaisesRegex(Refused, "not two AMD Am29F010s: 0x0101 0x20a4"):
+            run(target, variant(IMAGE_3704, 0x50000))
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        clean(self, model)
+
+    def test_refuses_protected_sector(self):
+        # pair 2's odd part's sector 2, the sector pair at 0x50000
+        target, model = board()
+        model.pairs[1][1].protected = frozenset([2])
+        with self.assertRaisesRegex(Refused, "protected: 0x50000"):
+            run(target, variant(IMAGE_3704, 0x50000))
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+
+    def test_watchdog_needs_sypcr(self):
+        # without SYPCR written the watchdog resets the CPU 2^9 crystal
+        # periods into the routine, before a 20 ms erase completes
+        target, model = board(part_timing=timing(erase=20e-3))
+        image = variant(IMAGE_3704, 0x50000)
+        built = Session(target, ROUTINE, quiet, Options(erase_time=TEST_ERASE_LIMIT), write_sypcr=False)
+        with self.assertRaisesRegex(Failed, "reset while running"):
+            flash_host.flash(target, image, Options(erase_time=TEST_ERASE_LIMIT), ROUTINE, quiet, built)
+
+
+class ChipSelectOrder(unittest.TestCase):
+    def test_bench_order_adds_no_hazard(self):
+        target, model = board()
+        built = session(target)
+        self.assertTrue(built.selected)
+        self.assertEqual(model.hazards, [])
+
+    def test_reset_decode_has_the_mirror(self):
+        registers = {address: value for address, _, value in flash_host.ENTRY_STATE}
+        for name in flash_host.SELECTS[1:]:
+            registers[flash_host.csbar(int(name[2:]))] = registers[flash_host.csor(int(name[2:]))] = 0
+        found = {hazard for hazard, _ in hazards(registers)}
+        self.assertEqual(found, {flash_host.Hazard.MIRROR, flash_host.Hazard.READ_SELECT_WRITES})
+
+    def test_mirror_on_the_model(self):
+        # at a reset entry a write meant for pair 2 reaches CSBOOT, pair 1's
+        # read select, through its 1 MiB block: the model sees it
+        target, model = board()
+        target.reset_into_bdm()
+        target.write_memory(0x4AAAA, WORD, 0xAAAA)
+        self.assertEqual({hazard for hazard, _, _ in model.hazards}, {Hazard.MIRROR, Hazard.WRITE_ON_READ_SELECT})
+        self.assertEqual({select for _, select, _ in model.hazards}, {"CSBOOT"})
+
+    def test_changed_orders_refused(self):
+        def moved(name: str, after: str) -> tuple:
+            order = [entry for entry in CHIP_SELECTS if entry[0] != name]
+            index = [entry[0] for entry in order].index(after) + 1
+            return tuple(order[:index] + [next(entry for entry in CHIP_SELECTS if entry[0] == name)] + order[index:])
+
+        for name, after, hazard in (
+            ("CSBARBT", "CSOR1", "two selects drive a flash read"),  # CS1 open under the mirror
+            ("CSBARBT", "CSOR7", "two selects drive a flash read"),
+            ("CSORBT", "CSOR6", "two selects take a flash write"),  # CS6 beside CSBOOT's writes
+            ("CSORBT", "CSOR7", "two selects take a flash write"),  # a pair 2 write reaching pair 1
+        ):
+            with self.subTest(name=name, after=after):
+                target, model = board()
+                with self.assertRaisesRegex(Refused, hazard):
+                    Session(target, ROUTINE, quiet, chip_selects=moved(name, after)).set_up()
+                self.assertEqual(model.hazards, [])
+
+
+class Model(unittest.TestCase):
+    def test_program_clears_only(self):
+        _, model = board()
+        part = model.pairs[1][0]
+        part.write(0x5555, 0xAA, 0)
+        part.write(0x2AAA, 0x55, 0)
+        part.write(0x5555, 0xA0, 0)
+        address = 0x10000
+        old = part.cells[address]
+        part.write(address, old | 0x01 if old & 0x01 == 0 else 0x00, 0)
+        part.settle(clocks(1e-3))
+        if old & 0x01 == 0:
+            self.assertEqual(part.state, State.EXCEEDED_PROGRAM)
+            self.assertEqual(part.cells[address], old)
+        part.write(0, 0xF0, clocks(1e-3))
+        self.assertEqual(part.state, State.READ)
+
+    def test_parts_hold_the_image(self):
+        _, model = board()
+        self.assertEqual(model.image(), IMAGE_3704)
+        self.assertEqual(len(model.pairs[0][0].cells), PART_SIZE)
+
+
+if __name__ == "__main__":
+    unittest.main()

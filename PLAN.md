@@ -607,6 +607,19 @@ override.  It never sends `*CLS`.  It reads the whole flash back and
 compares it before returning to SCPI.  `docs/firmware/restart.md`, "The
 flasher".
 
+### Flashing over BDM runs a routine from RAM
+
+Over a BDM pod each separate memory access is a host round trip, while
+a contiguous transfer is fast.  So `tools/bdm/` loads a small
+position-independent CPU32 routine and a sector pair's data into RAM
+and calls it; the routine makes the command writes and polls at bus
+speed and ends in BGND.  The host, not the routine, writes SYPCR
+(once, read back before anything runs) and VBR, to a table whose every
+vector leads to BGND.  The host takes images by their lane sums, not
+the audited catalog `smartclock-cli flash` uses, since it is meant for
+development images too, and never writes below `0x10000` unless told.
+`tools/bdm/README.md`.
+
 ### The firmware in C
 
 The goal is idiomatic C a person can read, proven function by function

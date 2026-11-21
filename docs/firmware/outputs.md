@@ -52,9 +52,9 @@ says nothing about a unit's hardware.
   the FPGA's register 3 (`0x40828`; `58503a-3704.md`, "The alarm
   outputs").  The bitstream does not latch that bit: register 3 keeps
   only the sync field, bits 0 and 1, and the bus's bit 2 reaches no
-  logic (`58503a-z3801a-trace.md`, "Register port").  What drives the
-  rear-panel Alarm output is not traced
-  (`../hardware-investigations.md`, item 25).
+  logic (`58503a-z3801a-trace.md`, "Register port").  The rear-panel
+  Alarm jack follows PF5, 5 V with no alarm, measured on the bench
+  58503A (`../hardware-investigations.md`, item 25).
 - Bits 4 to 2 of PORTGP, which 3633's DUART initialization writes
   (`0x1d5cc`, with 0) and no 3704 code does (`revisions.md`).  What
   those pins drive was not traced.
@@ -71,8 +71,7 @@ with every register left at its reset 0, no write needed
 (`fpga-comparison.md`, "The six designs"); whether that is the PP2S
 the monitor watches is not traced.
 
-Not traced: what drives the rear-panel Alarm output, and the
-time-code worker's output path (`0x13d28`).
+Not traced: the time-code worker's output path (`0x13d28`).
 
 ## The Z3805A's lamps
 

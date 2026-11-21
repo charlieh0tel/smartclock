@@ -1681,13 +1681,18 @@ FPGA's register 3 (`0x304003`) set while it is on, which reaches no
 FPGA logic (`firmware/58503a-z3801a-trace.md`, "Register port"), and
 the Alarm lamp, latch bit 2.  097-59551-02 gives the 58503A a
 rear-panel Alarm (TTL) output that goes on and off with the lamp
-(1-4).  Whether PF5 is that output or the FPGA drives it by other
-logic, and what PF5 drives if it is not, is not traced.  The Z3805A
-sets PF5 high at reset and never writes it again.
+(1-4).  On the bench 58503A the jack follows PF5, measured (below);
+the path between them is not traced.  The Z3805A sets PF5 high at
+reset and never writes it again.
 
-- [ ] TODO: unpowered, the rear Alarm jack back to U33 pin 73 or to
-  the FPGA.
-- [ ] TODO: powered, PF5 and the jack with the alarm off and on.
+- [ ] TODO: unpowered, the rear Alarm jack back to U33 pin 73.
+- [x] Powered, on the bench 58503A, 2026-11-21: the jack follows PF5
+  (below).
+
+*Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
+2026-11-21: the rear Alarm jack follows MCU port F bit 5, PF5, and
+reads 5 V with no alarm.  So PF5 is the rear Alarm output (the first
+hypothesis below), and FPGA register 3 bit 2 is not.
 
 *Photos:* of the five SMB jacks at the board's edge, J4 (silkscreen
 OUT A), J7 and J8 have no cable and J5 and J6 one each

@@ -33,6 +33,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools/firmware'))
 import pforth_words  # noqa: E402
+from lane_sums import lane_sums  # noqa: E402
 
 IMAGES = ROOT / 'third_party/firmware/images'
 IMAGE = IMAGES / '58501a-prototype/58501a-fiji_ege.bin'
@@ -46,8 +47,6 @@ NOTICE = ROOT / 'third_party/NOTICE'
 IOBDUMP = ROOT / 'tools/fpga/iobdump.js'
 
 BANK = 0x40000
-# The lane sums cover a bank but its last four bytes, which hold them.
-SUM_SPAN = BANK - 4
 
 # The SIM's chip-select registers, CSPAR0 to CSOR10 (MC68331UM Table D-3).
 CS_FIRST, CS_LAST = 0xfffa44, 0xfffa77
@@ -209,20 +208,12 @@ class Document:
             fault(f'{self.path.relative_to(ROOT)}: {count} times, not once: {sentence}')
 
 
-def lane_sums(image, base):
-    """A bank's even and odd byte sums, and the two its last four bytes hold."""
-    bank = image[base:base + SUM_SPAN]
-    even, odd = sum(bank[0::2]) & 0xffff, sum(bank[1::2]) & 0xffff
-    stored = image[base + SUM_SPAN:base + BANK]
-    return (even, odd), (stored[0] << 8 | stored[2], stored[1] << 8 | stored[3])
-
-
 def check_rom(image, document):
     if len(image) != 2 * BANK:
         fault(f'{IMAGE.name}: {len(image)} bytes, not two banks')
     figures = []
     for base in (0, BANK):
-        computed, stored = lane_sums(image, base)
+        computed, stored = lane_sums(image, base, base + BANK)
         if computed != stored:
             fault(f'bank at {base:#x}: sums {computed} but stores {stored}')
         figures.append(computed)

@@ -37,7 +37,7 @@ the bench 58503A (58503-60001 Rev C), with that board's parts as item
    minute.  Read +5 V (U33 pin 63 or U28 pin 8, below) and the ±15 V
    rails to ground on the DC volts range; go on only when each reads
    under 0.1 V.
-2. Wear a wrist strap to the chassis.  The oscillator and its outer
+2. Wear a wrist strap to the chassis.  The oscillator and any outer
    oven stay hot for a while after power-off; keep hands off them.
 3. Leave S1 alone: changing a position is item 13's own test.
 4. The board can stay in the chassis.  Where a cable or bracket hides
@@ -408,8 +408,10 @@ channels map to volts at P2/9 are owners' reports, not traced here.
 *Seen on the bench 58503A* (58503-60001 Rev C), 2026-11-21: the
 oscillator's connector on its main board is P3, not P2 as the
 owners' reports name it; which of its pins carry the enable and the
-readback is not checked.  The owner's hypothesis, not checked: the
-outer oven is powered from the supply board.
+readback is not checked.  This unit has no outer oven (the owner,
+2026-11-21).  Its PGP5 read 0 over J12 (`58503a-bdm.md`) that day,
+as 3704 leaves it: 3704 never raises it (`firmware/ovens.md`).  What
+PGP5 drives on this board is not established.
 
 - Trace PGP5 (MC68331 pin, see the manual's pinout) to P2/8 and
   confirm the level changes when the firmware's state passes

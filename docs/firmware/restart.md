@@ -56,6 +56,18 @@ complement, so a zeroed region fails it.  So `:SYSTem:PRESet`, which
 clears the flag, restarts into the defaults, and `:SYSTem:PON`, which
 zeroes the region, restarts cold.  No console word reaches `trap #12`.
 
+Measured on the bench 58503A (58503-60001 Rev C, 3704), on 2026-11-20
+and 2026-11-21, over the BDM header J12
+(`../hardware-investigations.md` item 7, "Measured, resets on the
+58503A"): after an external reset RSR read `0x80`, EXT alone, and
+`warm_start` (`0x1039af`, `structures.md`) `0x00`, a cold start, and
+the receiver's log recorded `Power on`; after a watchdog reset RSR
+read `0x20`, SW alone, and `warm_start` `0x01`, a warm start, logged
+`Re-boot`, with the region's first four bytes `93 6c 00 01`, its
+checksum and the flag word 1.  RSR holds only the last reset's
+source: SW alone after a watchdog reset that followed an external
+one.  RSR at a true power-up was not read.
+
 Two actions reach it, and the SCPI handlers that name them, through
 six-byte action entries at `0x44c9a` to `0x44cb2` (a word and a
 function; see below), are:
@@ -159,7 +171,11 @@ last: SYPCR `0xcc` sets SWE, SWP (÷ 512) and SWT 00, a ratio of 2¹⁸
 (MC68331UM table 4-4), and the time-out is that ratio over the EXTAL
 frequency, 32.768 kHz (`README.md`, SYNCR; PITR `0x0008` gives the
 1024 ticks a second above at the same reference).  Every image writes
-the same SYPCR and PITR.  That reset goes through the boot code and its checksums, and
+the same SYPCR and PITR.  On the bench 58503A the time-out measured
+about 8 s: every image's SIMCR, `0x014a`, leaves FRZSW clear, so the
+watchdog counts on while the CPU is in background mode (MC68331UM
+D.3.1), and halted over J12 the CPU reset itself about 8 s into the
+halt (`../hardware-investigations.md` item 7).  That reset goes through the boot code and its checksums, and
 with the region good and the flag set it is a warm start, which writes
 the pending exception, fatal message or `Watchdog timeout: clk ... gps
 ... mon ... pll ... spl ...` to the EEPROM log at `0x4001c0`
@@ -171,6 +187,17 @@ An exception no handler takes prints `<task>: <name>: PC = ..., SR =
 starves `hmon` and so ends in the watchdog.  The console installs its
 own handler (`0x18b6a`), which prints the exception and returns to the
 prompt.
+
+On the bench 58503A, a halt asked for over J12 while background mode
+was off -- the CPU having come out of reset with BKPT high -- was
+taken as a breakpoint exception, vector 12 (MC68331UM 5.10.2.2.1):
+on 2026-11-20 the EEPROM's reset records (`0x400200` in 3704,
+`58503a-3704.md`) gained three `Exception: ROOT, vector 2030, PC =
+...` entries, format/vector word `0x2030`, frame format 2 and vector
+offset `0x030`, and the log recorded each restart as `Re-boot`
+(`../hardware-investigations.md` item 7).  By which mechanism the
+firmware restarted -- the watchdog, as above, or another -- was not
+established: the RSR after it was not read.
 
 The console word `n crash` is the same code in every image, a jump
 table on n from 0 to 4 (Z3801A `0x1bd84`; above 4 it does nothing):

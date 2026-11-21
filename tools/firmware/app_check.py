@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["mc683xx==0.2.0", "unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.7.0", "unicorn==2.1.4"]
 # ///
 """Confirms application routines named from the decompiled firmware by
 running them, as libc_check.py does the C library's: each is called in

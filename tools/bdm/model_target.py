@@ -19,7 +19,7 @@ from dataclasses import dataclass
 
 import mc683xx
 
-from am29f010 import BoardFlash
+from am29f010 import BoardFlash, Timing
 from target import Entry, TargetError, TargetTimeout, WIDTHS
 
 RAM_SIZE = 0x10000
@@ -32,6 +32,27 @@ ENTRIES = {
     mc683xx.Entry.Breakpoint: Entry.BREAKPOINT,
     mc683xx.Entry.DoubleBusFault: Entry.DOUBLE_BUS_FAULT,
 }
+# The chip's clock out of reset: SYNCR $3F08, 32.768 kHz * 256.
+RESET_HZ = 8388608
+# The parts' times in the model: the data sheet's typical byte program
+# (7 us) and an erase far shorter than its 1 s, to keep the runs short.
+PROGRAM_SECONDS = 7e-6
+ERASE_SECONDS = 2e-3
+# The sector erase time-out, 50 us, and a protected sector's status
+# times, 2 us and 100 us (Am29F010B, pp. 13, 16).
+WINDOW_SECONDS, PROTECTED_PROGRAM_SECONDS, PROTECTED_ERASE_SECONDS = 50e-6, 2e-6, 100e-6
+
+
+def clocks(seconds: float) -> int:
+    return round(seconds * RESET_HZ)
+
+
+def timing(program: float = PROGRAM_SECONDS, erase: float = ERASE_SECONDS, stuck: bool = False) -> Timing:
+    """A part's Timing, seconds at the reset clock."""
+    return Timing(
+        clocks(program), clocks(erase), clocks(WINDOW_SECONDS), clocks(PROTECTED_PROGRAM_SECONDS),
+        clocks(PROTECTED_ERASE_SECONDS), stuck,
+    )
 
 
 @dataclass

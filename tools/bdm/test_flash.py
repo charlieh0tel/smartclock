@@ -19,13 +19,12 @@ from pathlib import Path
 
 import build_routine
 import flash_host
-from am29f010 import DQ5, DQ7, PART_SIZE, BoardFlash, Hazard, State, Timing
+from am29f010 import DQ5, DQ7, PART_SIZE, BoardFlash, Hazard, State
 from board import FLASH_SIZE, PAIR_SIZE, SECTOR_PAIR_SIZE, WORD
-from model_target import ModelTarget
+from model_target import WINDOW_SECONDS, ModelTarget, clocks, timing
 from flash_host import (
     BUFFER,
     CHIP_SELECTS,
-    LANE_SUM_SPANS,
     PROTECTED_END,
     Busy,
     Failed,
@@ -34,6 +33,7 @@ from flash_host import (
     Routine,
     Session,
     hazards,
+    with_lane_sums,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,37 +41,8 @@ IMAGES = ROOT / "third_party" / "firmware" / "images"
 IMAGE_3704 = (IMAGES / "58503a-3704.bin").read_bytes()
 SHA256_3704 = "d13b9ff1e4a0a59517aac4d066c60e22b290cf4ff6810c5c2bf01f1bc9491ca3"
 BLANK = bytes([0xFF]) * FLASH_SIZE
-# The modeled chip's clock out of reset: SYNCR $3F08, 32.768 kHz * 256.
-RESET_HZ = 8388608
-# The parts' times in the tests: the data sheet's typical byte program
-# (7 us) and an erase far shorter than its 1 s, to keep the runs short.
-PROGRAM_SECONDS = 7e-6
-ERASE_SECONDS = 2e-3
-# The sector erase time-out, 50 us, and a protected sector's status
-# times, 2 us and 100 us (Am29F010B, pp. 13, 16).
-WINDOW_SECONDS, PROTECTED_PROGRAM_SECONDS, PROTECTED_ERASE_SECONDS = 50e-6, 2e-6, 100e-6
 # The longest a run's erase may take in the tests: the routine's limit.
 TEST_ERASE_LIMIT = 0.05
-
-
-def clocks(seconds: float) -> int:
-    return round(seconds * RESET_HZ)
-
-
-def timing(program: float = PROGRAM_SECONDS, erase: float = ERASE_SECONDS, stuck: bool = False) -> Timing:
-    return Timing(
-        clocks(program), clocks(erase), clocks(WINDOW_SECONDS), clocks(PROTECTED_PROGRAM_SECONDS),
-        clocks(PROTECTED_ERASE_SECONDS), stuck,
-    )
-
-
-def with_sums(image: bytes) -> bytes:
-    """image with each pair's lane sums made to hold."""
-    fixed = bytearray(image)
-    for start, end in LANE_SUM_SPANS:
-        (even, odd), _ = flash_host.lane_sums(fixed, start, end)
-        fixed[end - 4 : end] = bytes([even >> 8, odd >> 8, even & 0xFF, odd & 0xFF])
-    return bytes(fixed)
 
 
 def variant(image: bytes, base: int) -> bytes:
@@ -80,7 +51,7 @@ def variant(image: bytes, base: int) -> bytes:
     changed = bytearray(image)
     for offset in range(0, SECTOR_PAIR_SIZE, 7):
         changed[base + offset] ^= 0xA5
-    return with_sums(bytes(changed))
+    return with_lane_sums(bytes(changed))
 
 
 # The routine, assembled afresh.

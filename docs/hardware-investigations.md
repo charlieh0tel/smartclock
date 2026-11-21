@@ -1182,12 +1182,14 @@ DUART and later self-test failures (`firmware/outputs.md`, "The rest
 of the bank").
 
 - [x] What drives them, on the bench 58503A, 2026-11-21: the DUART's
-  output port, OP2 to OP7 counted from the right, OP2 the green
-  heartbeat (below).
+  output port, OP2 to OP7 from the middle of the board outward to its
+  edge, OP2 the green heartbeat (below).
 
 *Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
 2026-11-21: the six LEDs are the DUART's output port bits OP2 to
-OP7, counted from the right, and OP2, the heartbeat, is green.
+OP7 in order from the middle of the board outward: OP2, the
+heartbeat and green, is the LED nearest the middle, and OP7 the one
+nearest the board edge.
 The other LEDs' colors and the polarity are not recorded here.
 
 *Photos:* the Z3805A and Z3801A carry the same row of six

@@ -1376,10 +1376,20 @@ acknowledge for level 2 with external DSACK (CSBAR10 `0xfff8`, CSOR10
 `0x2bc4`, `0x628`/`0x630`; `firmware/restart.md`, "The chip
 selects"), and the DUART answers with the vector its IVR holds, so its
 interrupt should be level 2.  Nothing in the firmware shows the wire.
+On the bench 58503A /IRQ2 follows the DUART's interrupt output,
+measured (below).
 
+- [x] /IRQ2 against the DUART's interrupt output, powered, on the
+  bench 58503A, 2026-11-21: it follows it (below).
 - [ ] TODO: with power off, check continuity from the 68681's /INTR to
   the MC68331's /IRQ2, and from chip select 10's pin to the 68681's
   /IACK.
+
+*Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
+2026-11-21: the MC68331's /IRQ2 follows the DUART's interrupt output,
+so the DUART's interrupt is level 2, as CS10's acknowledge says.
+Whether another source shares the line, and whether U29 is between
+them, is not settled.
 
 *Photos:* not followable.  U3, the SCC68692C1A44, is at the board's
 bottom edge (`z3805a-cpu-fpga-flash.jpg`, 1950,2800 to 2550,3072) and

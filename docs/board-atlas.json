@@ -138,7 +138,7 @@
     "{{U51}} and {{U57}}, under the heatsink.",
     "Which byte {{U9}} and {{U16}} each take, and which pair of U11 to U14 is the lower flash bank.",
     "Whether the Z3805A's and Z3801A's J12 are the BDM header the 58503A's is ([[docs/hardware-investigations.md|item 13]]).",
-    "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them ([[docs/hardware-investigations.md|item 21]])."
+    "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them; on the bench 58503A /IRQ2 follows the DUART's interrupt output, measured powered ([[docs/hardware-investigations.md|item 21]])."
   ],
   "parts": [
     {

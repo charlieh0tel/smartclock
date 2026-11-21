@@ -557,6 +557,10 @@ Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
 The primary (`0x144d2` to `0x1459a`) writes the same 26 values, each `0x13f6a` above.
 <!-- end chip_selects.py -->
 
+On the bench 58503A (58503-60001 Rev C) /IRQ2 follows the DUART's
+interrupt output, measured on 2026-11-21
+(`../hardware-investigations.md` item 21).
+
 CS10 is set up as 4.8.3 asks for a 16-bit port: base all ones, a
 2 KiB block so that ADDR[19:16] are compared, read only, the lower
 byte, the one an acknowledge at an odd address is.  Its DSACK is

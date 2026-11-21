@@ -211,7 +211,7 @@
       "marking_confidence": "board",
       "note": "",
       "ref": "J12",
-      "role": "The processor's background debug mode (BDM) header, by the 58503A's: on the bench 58503A (58503-60001 Rev C) J12 is the standard 10-pin BDM header of MC68331UM 5.10.2.8, Figure 5-11, measured ([[docs/hardware-investigations.md|item 13]]); the Z3805A's is not checked.  At the board edge beside U33, partly behind a bracket.  On the 58503A pin 2 is the pin nearest the two closest board edges, the corner pin, and pin 1 is inboard of pin 2.",
+      "role": "The processor's background debug mode (BDM) header, by the 58503A's: on the bench 58503A (58503-60001 Rev C) J12 is the standard 10-pin BDM header of MC68331UM 5.10.2.8, Figure 5-11, measured ([[docs/58503a-bdm.md|J12]]); the Z3805A's is not checked.  At the board edge beside U33, partly behind a bracket.  On the 58503A pin 2 is the pin nearest the two closest board edges, the corner pin, and pin 1 is inboard of pin 2.",
       "role_confidence": "inferred",
       "type": "Pin header, 2 x 5, 0.100 in pitch",
       "z3801a": {

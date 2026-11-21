@@ -1329,7 +1329,7 @@
           945
         ]
       ],
-      "source": "On the bench 58503A, with the power off, J12 pins 4, 8 and 10 buzz to U33 pins 56, 55 and 54, BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO; pins 6 and 7, FREEZE and RESET, were not buzzed but behaved so in use, and pins 1 and 2, DS and BERR, were not checked ([[docs/hardware-investigations.md|item 13]]).",
+      "source": "On the bench 58503A, with the power off, J12 pins 4, 8 and 10 buzz to U33 pins 56, 55 and 54, BKPT/DSCLK, IFETCH/DSI and IPIPE/DSO; pins 6 and 7, FREEZE and RESET, were not buzzed but behaved so in use, and pins 1 and 2, DS and BERR, were not checked ([[docs/58503a-bdm.md|J12]]).",
       "to": "j12"
     },
     {

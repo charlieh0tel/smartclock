@@ -1,3 +1,37 @@
+smartclockmon (1.9.1-1) unstable; urgency=low
+
+  * The terminal monitor is gone: an upgrade removes
+    /usr/bin/smartclockmon.  The package keeps its name and carries the
+    daemon, the web view, the exporter and the sensor logger as before;
+    the web view is the live view.
+  * The web view and the exporter serve HTTP with tiny_http.  They keep
+    a connection open for its next request, answer a request whose
+    headers arrive after its request line where the old server reset
+    the connection, and send Date and Server headers.  A body past
+    64 KiB is still refused with 413.  The caps on requests in flight,
+    on slow clients and on the request line went with the old server,
+    and so did its 411 and 431 refusals.
+  * `smartclock-cli simulate-loop` runs the disciplining loop's update
+    law at an image's time constant and gain, closed around an
+    oscillator, against phase steps, frequency steps and drifts, and
+    prints the time interval and the EFC as TSV, beside a snapshot
+    log's when given one (docs/firmware/loop.md, "Simulating it").  It
+    needs no receiver.
+  * smartclockd asks a Z3817A its predicted-visible satellite count, so
+    its log fills not_tracking, the web view charts the satellites not
+    tracked, and the exporter gives smartclock_satellites_visible for
+    it.
+  * The web view's status page shows a Z3815A's card state, Active,
+    Standby, Unlocked, Blocked or ALARM, read from its status screen.
+    The screen's "Predict: --" is read as no holdover prediction.
+  * `smartclock-cli dump-pforth` finds an image's diagnostic table by
+    dmessage rather than loop_time, so it reads an image whose table
+    has no loop_time.
+  * The logs stay at schema 13: a 1.9.0 daemon still opens a log this
+    one has written.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Fri, 20 Nov 2026 21:00:45 -0800
+
 smartclockmon (1.9.0-1) unstable; urgency=low
 
   * smartclockd reads a Z3817A.  It asks it only what the command table

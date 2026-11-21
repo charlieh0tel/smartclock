@@ -6,12 +6,22 @@ flash_routine.S, through any Target (target.py): the whole procedure,
 from a reset entry to a verified image, and the refusals that keep it
 off the boot code and installer (tools/bdm/README.md, "The host").
 
-    python3 -I tools/bdm/flash_host.py --plan CURRENT IMAGE [--allow-low] [--unchecked]
+    python3 -I tools/bdm/flash_host.py --plan CURRENT IMAGE [--allow-low]
 
 prints, from a dump of the flash and the image to program, the sector
 pairs a run would erase, or why it would refuse; no target is touched.
-A pod's run is flash() with the pod's adapter; the model's is in
-test_flash.py.
+
+    python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
+        (--dry-run | --identify | --write --restore-to FILE) [--expect-sha256 SHA256] [--allow-low]
+
+runs the procedure below on a pod (pod_target.py) or on the modeled
+board holding FLASH (model_target.py): --dry-run steps 1-4 and 6,
+sending the flash no command and running no code; --identify steps
+1-6, the routine's identify the only code run; --write all of it, the
+dump saved to FILE first, and with --expect-sha256 refused unless the
+dump has that SHA-256.  It writes exactly the image it is given: its
+lane sums are reported, never refused.  It never starts the firmware:
+it ends with the CPU in background mode.
 
 The procedure, each step's failure fatal, never retried:
 
@@ -23,7 +33,9 @@ The procedure, each step's failure fatal, never retried:
 4. Load the vector table and the routine into RAM and read them back.
 5. Identify both pairs; refuse unless both lanes of both are AMD
    Am29F010s and no sector pair to be written is protected.
-6. Dump the flash: its SHA-256 is the restore image's.
+6. Dump the flash: its SHA-256 is the restore image's.  Save it if
+   asked, and refuse to go on if a SHA-256 is expected and it has
+   another.
 7. For each sector pair that differs from the image: erase (with the
    routine's blank check), program, verify.
 8. Dump the flash again and compare it with the image.
@@ -35,6 +47,7 @@ outside the routine: it has no way to resume the firmware.
 """
 
 import argparse
+import contextlib
 import hashlib
 import json
 import math
@@ -49,6 +62,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "firmware"))
 from board import FLASH_SIZE, PAIR_SIZE, READ_SELECTS, SECTOR_PAIR_SIZE, WORD, WRITE_SELECTS  # noqa: E402
 from lane_sums import BYTE_BITS, STORED_SIZE, lane_sums  # noqa: E402
+from pod_target import PodTarget  # noqa: E402
 from target import Entry, Target, TargetError, TargetTimeout  # noqa: E402
 
 ROUTINE_SYMBOLS = HERE.parents[1] / "target" / "bdm" / "flash_routine.json"
@@ -82,6 +96,9 @@ VECTORS, VECTOR_SIZE = 256, 4
 # (MC68331UM 5.2.4.1).  Level 7 is not maskable; a level 7 interrupt goes
 # to the vector table like any exception.
 SR_SUPERVISOR_MASKED = 0x2700
+# BGND, $4AFA, one word (MC68331UM 5.10.2.2.2): after the routine's,
+# PC is its address plus this (target.py, read_register).
+BGND_SIZE = 2
 # A call's outputs: D1 and D2 hold words; an exception's format and
 # vector word holds the vector's offset in bits 11-0 (CPU32RM 6.4).
 WORD_MASK = 0xFFFF
@@ -303,17 +320,25 @@ def system_hz(syncr: int) -> int:
     return REFERENCE_HZ * 4 * ((syncr >> SYNCR_Y_SHIFT & SYNCR_Y_MASK) + 1) * 2 ** (2 * w + x)
 
 
-def check_image(image: bytes, unchecked: bool = False) -> None:
-    """Refuses an image that is not the whole flash, or whose lane sums
-    do not hold unless unchecked says they deliberately do not."""
+def check_image(image: bytes) -> None:
+    """Refuses an image that is not the whole flash."""
     if len(image) != FLASH_SIZE:
         raise Refused(f"the image is {len(image)} bytes, not {FLASH_SIZE}")
-    if unchecked:
-        return
+
+
+def lane_sum_report(image: bytes) -> list[str]:
+    """Whether each LANE_SUM_SPANS span's lane sums hold, and what it
+    means if one does not: the boot check fails and the unit boots into
+    the installer, not the primary (docs/firmware/restart.md, "The
+    installer", Boot check)."""
+    lines = []
     for start, end in LANE_SUM_SPANS:
         computed, stored = lane_sums(image, start, end)
-        if computed != stored:
-            raise Refused(f"the lane sums of {start:#x}-{end:#x} are {computed}, but it stores {stored}")
+        verdict = "hold" if computed == stored else f"DO NOT HOLD: computed {computed}, stored {stored}"
+        lines.append(f"image lane sums of {start:#x}-{end:#x} {verdict}")
+    if any("DO NOT HOLD" in line for line in lines):
+        lines.append("WARNING: an image whose lane sums fail boots into the installer, not the primary")
+    return lines
 
 
 def with_lane_sums(image: bytes) -> bytes:
@@ -353,14 +378,18 @@ def differing_ranges(one: bytes, other: bytes) -> list[tuple[int, int]]:
 
 @dataclass
 class Options:
-    """allow_low: erase and program below PROTECTED_END; unchecked: the
-    image's lane sums deliberately do not hold; dry_run: stop after the
-    dump, reporting the plan; program_time and erase_time: the
-    routine's limits, seconds."""
+    """allow_low: erase and program below PROTECTED_END; dry_run: stop after the
+    dump, reporting the plan; identify_only: likewise after identify;
+    restore_path: a new file to save the dump to, before any write;
+    expected_restore_sha256: if given, refuse to go on unless the dump
+    has it;
+    program_time and erase_time: the routine's limits, seconds."""
 
     allow_low: bool = False
-    unchecked: bool = False
     dry_run: bool = False
+    identify_only: bool = False
+    restore_path: Path | None = None
+    expected_restore_sha256: str | None = None
     program_time: float = PROGRAM_TIME
     erase_time: float = ERASE_TIME
 
@@ -476,8 +505,8 @@ class Session:
         timeout = steps * STEP_CLOCKS_MAX / self.hz + WAIT_MARGIN
         entry = target.wait_for_bdm(timeout)
         pc = target.read_register("PC")
-        if entry != Entry.BACKGROUND or not ROUTINE <= pc < ROUTINE + len(self.routine.code):
-            raise Failed(f"background mode entered by {entry.value} at {pc:#x}, not the routine's BGND")
+        if entry != Entry.BACKGROUND or pc != ROUTINE + self.routine.labels["halt"] + BGND_SIZE:
+            raise Failed(f"background mode entered by {entry.value} with PC {pc:#x}, not after the routine's BGND")
         result = Result(
             target.read_register("D0"),
             target.read_register("A0"),
@@ -518,12 +547,15 @@ class Session:
         words = len(data) // WORD
         polls = self.limit(self.options.erase_time)
         self.call(routine.OPERATION_ERASE, base, 0, floor, polls, polls + words * PASSES_PER_WORD)
+        self.log(f"sector pair {base:#07x} erased")
         self.target.write_block(BUFFER, data)
         if self.target.read_block(BUFFER, len(data)) != data:
             raise Failed(f"the buffer does not read back for {base:#x}")
         polls = self.limit(self.options.program_time)
         self.call(routine.OPERATION_PROGRAM, base, words, floor, polls, words * (polls + PASSES_PER_WORD))
+        self.log(f"sector pair {base:#07x} programmed")
         self.call(routine.OPERATION_VERIFY, base, words, floor, 1, words * PASSES_PER_WORD)
+        self.log(f"sector pair {base:#07x} verified")
 
     def reset_flash(self) -> None:
         """Both pairs to reading array data, through the write selects."""
@@ -538,7 +570,9 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
     for a test."""
     options = options or Options()
     routine = routine or Routine.load()
-    check_image(image, options.unchecked)
+    check_image(image)
+    for line in lane_sum_report(image):
+        log(line)
     report = Report()
     session = session or Session(target, routine, log, options)
     floor = 0 if options.allow_low else PROTECTED_END
@@ -549,11 +583,23 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         report.restore = target.read_block(0, FLASH_SIZE)
         report.restore_sha256 = hashlib.sha256(report.restore).hexdigest()
         log(f"restore image SHA-256 {report.restore_sha256}")
+        if options.restore_path is not None:
+            try:
+                with options.restore_path.open("xb") as restore:
+                    restore.write(report.restore)
+            except OSError as error:
+                raise Refused(f"cannot save the restore image: {error}") from error
+            log(f"restore image saved to {options.restore_path}")
+        expected = options.expected_restore_sha256
+        if expected is not None and report.restore_sha256 != expected.lower():
+            raise Refused(f"the flash's SHA-256 is {report.restore_sha256}, not the expected {expected}")
         report.plan = plan(report.restore, image, options.allow_low)
         log(f"sector pairs to write: {', '.join(f'{base:#x}' for base in report.plan) or 'none'}")
-        if options.dry_run:
+        protected = [base for base in report.plan if protection.get(base, UNPROTECTED_BOTH) != UNPROTECTED_BOTH]
+        if options.dry_run or options.identify_only:
+            if protected:
+                log(f"sector pairs to write that are protected: {', '.join(f'{base:#x}' for base in protected)}")
             return report
-        protected = [base for base in report.plan if protection[base] != UNPROTECTED_BOTH]
         if protected:
             raise Refused(f"sector pairs to write are protected: {', '.join(f'{base:#x}' for base in protected)}")
         for base in report.plan:
@@ -562,10 +608,11 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
             log(f"sector pair {base:#x} written")
         final = target.read_block(0, FLASH_SIZE)
         report.final_sha256 = hashlib.sha256(final).hexdigest()
+        log(f"flash SHA-256 {report.final_sha256}")
         report.differing = differing_ranges(final, image)
         if report.differing:
-            raise Failed(f"the flash differs from the image at {[(hex(a), hex(b)) for a, b in report.differing]}")
-        log(f"flash SHA-256 {report.final_sha256}, the image's")
+            raise Failed(f"the flash differs from the image at {', '.join(f'{a:#x}-{b:#x}' for a, b in report.differing)}")
+        log(f"the flash is the image, SHA-256 {hashlib.sha256(image).hexdigest()}")
         return report
     except (TargetError, Failed, Refused) as error:
         if isinstance(error, TargetTimeout):
@@ -583,20 +630,100 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         raise
 
 
-def main() -> None:
+# What a bench run ends in, said last: the host never resumes the CPU.
+STOPPED = "the CPU is stopped in background mode; the firmware has not run, and this tool does not run it"
+UNKNOWN_STATE = "the target failed: the CPU may be running; reset the unit into BDM before anything else"
+
+
+def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--plan", nargs=2, metavar=("CURRENT", "IMAGE"), required=True)
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--plan", nargs=2, metavar=("CURRENT", "IMAGE"), help="offline: the sector pairs a run would write")
+    modes.add_argument("--dry-run", action="store_true", help="set-up, dump and plan: no flash command, no code run")
+    modes.add_argument("--identify", action="store_true", help="the dry run and the routine's identify")
+    modes.add_argument("--write", action="store_true", help="the whole procedure")
+    targets = parser.add_mutually_exclusive_group()
+    targets.add_argument("--pod", metavar="POD", help="the pod, as mc683xx_bdm.Pod names it: usb, usb:SERIAL")
+    targets.add_argument("--model", metavar="FLASH", type=Path, help="the modeled board, its flash holding FLASH")
+    parser.add_argument("--image", type=Path, help="the image to program")
+    parser.add_argument("--expect-sha256", metavar="SHA256", help="the SHA-256 the unit's flash must have now")
+    parser.add_argument("--restore-to", metavar="FILE", type=Path, help="a new file to save the unit's flash to")
     parser.add_argument("--allow-low", action="store_true", help=f"allow writing below {PROTECTED_END:#x}")
-    parser.add_argument("--unchecked", action="store_true", help="the image's lane sums deliberately do not hold")
-    arguments = parser.parse_args()
-    current, image = (Path(path).read_bytes() for path in arguments.plan)
+    parsed = parser.parse_args()
+    bench_options = (
+        ("--pod or --model", parsed.pod or parsed.model),
+        ("--image", parsed.image),
+        ("--expect-sha256", parsed.expect_sha256),
+        ("--restore-to", parsed.restore_to),
+    )
+    if parsed.plan:
+        given = [name for name, value in bench_options if value]
+        if given:
+            parser.error(f"--plan touches no target, so takes no {', '.join(given)}")
+    else:
+        for name, value in bench_options[:2]:
+            if not value:
+                parser.error(f"{name} is required")
+    if parsed.write and not parsed.restore_to:
+        parser.error("--write requires --restore-to")
+    return parsed
+
+
+def bench(parsed: argparse.Namespace, image: bytes, routine: Routine) -> None:
+    """A run on the target parsed names, ending in what it left."""
+    options = Options(
+        allow_low=parsed.allow_low,
+        dry_run=parsed.dry_run,
+        identify_only=parsed.identify,
+        restore_path=parsed.restore_to,
+        expected_restore_sha256=parsed.expect_sha256,
+    )
+    if parsed.model:
+        from am29f010 import BoardFlash
+        from model_target import ModelTarget, timing
+
+        opened = contextlib.nullcontext(ModelTarget(BoardFlash.from_image(parsed.model.read_bytes(), timing())))
+    else:
+        opened = PodTarget.open(parsed.pod)
     try:
-        check_image(current, unchecked=True)
-        check_image(image, arguments.unchecked)
-        pairs = plan(current, image, arguments.allow_low)
+        with opened as target:
+            report = flash(target, image, options, routine)
+    except Failed as error:
+        print(f"FAILED: {error}")
+        raise SystemExit(UNKNOWN_STATE if isinstance(error.__cause__, TargetError) else STOPPED) from error
+    except TargetError as error:
+        # flash() makes its own TargetErrors Failed: this is the pod's
+        # opening or closing
+        raise SystemExit(f"pod: {error}") from error
     except Refused as error:
+        print(f"refused: {error}")
+        raise SystemExit(STOPPED) from error
+    if parsed.write:
+        print(f"success: the flash is the image, SHA-256 {report.final_sha256}")
+    print(STOPPED)
+
+
+def main() -> None:
+    parsed = arguments()
+    paths = parsed.plan or [parsed.image]
+    try:
+        *current, image = (Path(path).read_bytes() for path in paths)
+        check_image(image)
+        if parsed.plan:
+            check_image(current[0])
+            print("\n".join(lane_sum_report(image)))
+            pairs = plan(current[0], image, parsed.allow_low)
+            print("\n".join(f"{base:#07x}" for base in pairs) or "nothing to write")
+            return
+        if parsed.restore_to and parsed.restore_to.exists():
+            raise Refused(f"{parsed.restore_to} exists")
+        try:
+            routine = Routine.load()
+        except OSError as error:
+            raise Refused(f"no routine, which make bdm-routine builds: {error}") from error
+    except (Refused, OSError) as error:
         raise SystemExit(f"refused: {error}") from error
-    print("\n".join(f"{base:#07x}" for base in pairs) or "nothing to write")
+    bench(parsed, image, routine)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 """What flash_host.py needs of a BDM target, in one place: an adapter
-for a pod, or for mc683xx's MC68331 (model_target.py), is a class with
-these methods (tools/bdm/README.md, "The target interface").
+for a pod (pod_target.py), or for mc683xx's MC68331 (model_target.py), is
+a class with these methods (tools/bdm/README.md, "The target
+interface").
 
 Every method acts at once or raises TargetError; a TargetError is
 fatal to the procedure, which never retries.  Memory is supervisor
@@ -63,8 +64,11 @@ class Target(Protocol):
         ...
 
     def read_register(self, name: str) -> int:
-        """A register by name: D0-D7, A0-A7 (A7 the supervisor stack
-        pointer, the CPU being in supervisor mode), PC, SR or VBR."""
+        """A register by name: D0-D7, A0-A7, PC, SR or VBR.  A7 is the
+        stack pointer SR's S bit selects, the supervisor's once SR is
+        written with S set, so the host writes SR before A7.  PC is the
+        return program counter, RPC, where GO resumes (MC68331UM
+        5.10.2.5.2): after a BGND entry, the address after the BGND."""
         ...
 
     def write_register(self, name: str, value: int) -> None:
@@ -78,5 +82,5 @@ class Target(Protocol):
     def wait_for_bdm(self, timeout: float) -> Entry:
         """Waits until the CPU is in background mode again, up to timeout
         seconds of the target's time; TargetTimeout after that, the CPU
-        left running.  A reset meanwhile is a TargetError."""
+        left running, never halted.  A reset meanwhile is a TargetError."""
         ...

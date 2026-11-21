@@ -23,7 +23,7 @@ stop it before using one of these directly.
 
 | Tool | What it is |
 | ---- | ---------- |
-| `tools/bdm/` | programs a 58503A's flash over the CPU's background debug mode, with a routine the host loads into RAM and calls; tested only on mc683xx's MC68331, with no pod adapter yet (`make test-bdm`; [`README.md`](../tools/bdm/README.md)) |
+| `tools/bdm/` | programs a 58503A's flash over the CPU's background debug mode, with a routine the host loads into RAM and calls; tested only on mc683xx's MC68331, its pod adapter against a stand-in for the pod (`make test-bdm`; [`README.md`](../tools/bdm/README.md)) |
 
 ## Reading an image
 

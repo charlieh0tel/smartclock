@@ -715,7 +715,7 @@
     },
     {
       "58503a": {
-        "note": "the same row",
+        "note": "the same row; on the bench 58503A the six are the DUART's OP2 to OP7, counted from the right, OP2 the green heartbeat, measured on 2026-11-21 ([[docs/hardware-investigations.md|item 17]])",
         "status": "same"
       },
       "at": {

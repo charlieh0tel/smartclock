@@ -163,7 +163,9 @@ the connector is needs the board or a unit.
 
 ### The heartbeat
 
-One LED of the bank on a Z3805A's board is a heartbeat.  Every image times it the same way: `hmon_task` counts
+One LED of the bank on a Z3805A's board is a heartbeat; on the bench
+58503A's it is OP2, green, measured (`../hardware-investigations.md`
+item 17).  Every image times it the same way: `hmon_task` counts
 its passes, one every ten 1024 Hz ticks (`restart.md`), and every
 `0x70`, about 1.09 s, flips one output bit, so the LED changes state
 about every 1.1 s.  All but the 58503B flip a DUART output bit through
@@ -221,9 +223,11 @@ OP0 and OP1, which the two routines `duart_op0_set` and
 The 58503A (3633, 3704) and Z3801A write the same values at matching
 places.  The 58503B, Z3815A and Z3816A do not: the last two write
 OP7 at three places of their own (`0x24e24`, `0x2495c` and on), and
-their bank was not traced.  The polarity is the inference above, not
-an observation: a unit or the board's LED circuit settles it, as
-it does the bank's order.
+their bank was not traced.  On the bench 58503A (58503-60001 Rev C)
+the six LEDs are OP2 to OP7, counted from the right, measured on
+2026-11-21 (`../hardware-investigations.md` item 17).  The polarity is
+the inference above, not an observation: a unit or the board's LED
+circuit settles it.
 
 ## The FPGA bitstreams
 

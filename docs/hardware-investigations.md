@@ -253,8 +253,8 @@ left the firmware running: RSR unchanged, and `watchdog_countdown`
 (`0x100b90`; `firmware/restart.md`, "The watchdog") read `0x0007`.
 Writing SIMCR `0x614a`, FRZSW and FRZBM set, before a long halt froze
 the watchdog: a 15 s halt, then SIMCR restored to `0x014a` and
-resume, with no reset.  The receiver's log recorded that halt as
-`Holdover started, invalid GPS 1PPS`.  With `0x614a` a debugger read
+resume, with no reset.  The receiver's log recorded that halt, as it
+records long halts, as `Holdover started, invalid GPS 1PPS`.  With `0x614a` a debugger read
 past the top of RAM hung the CPU until a probe reset; with `0x414a`,
 FRZSW alone, it did not.  Each was seen once.
 
@@ -482,17 +482,18 @@ limit 650 after 4.489 per ADC count, unit unknown.
 *Open item:* the firmware keeps its loop state across a reset when
 the reset-status register shows neither EXT nor POW and the RAM
 checksum holds.  Exercised on the 58503A on 2026-11-21
-("Measured, resets on the 58503A", below): an external reset is cold
-and a watchdog reset warm, as the code says.
+("Measured, resets on the 58503A", below): a power-up and an external
+reset are cold and a watchdog reset warm, as the code says.
 
 - [x] External reset on the 58503A (58503-60001 Rev C, 3704),
   2026-11-21: cold, RSR `0x80`; a watchdog reset is
   warm, RSR `0x20` (below).
 - [ ] TODO: watch whether τ and the aging fit read back unchanged
   across a warm (watchdog) restart.
-- [ ] TODO: RSR after a true power-up, POW alone or with EXT.
-- [ ] TODO: RSR after the firmware restarts from an exception, to say
-  by which mechanism it restarts.
+- [x] RSR after a true power-up on the 58503A, 2026-11-21: `0x40`, POW
+  alone (below).
+- [x] RSR after the firmware restarts from an exception on the 58503A,
+  2026-11-21: `0x10`, HLT, a halt-monitor reset (below).
 
 - Both software restarts in the image discard that state before
   resetting (`docs/firmware/restart.md`, "Restarting"): `:SYSTem:PON` zeroes
@@ -519,11 +520,14 @@ read after each:
 
 | Reset | RSR | `warm_start` | Receiver's log |
 | ----- | --- | ------------ | -------------- |
+| Power-up | `0x40`, POW | not read | `Power on` |
 | External, from the probe | `0x80`, EXT | `0x00` | `Power on` |
 | Software watchdog | `0x20`, SW | `0x01` | `Re-boot` |
+| Halt asked for with background mode off | `0x10`, HLT | not read | `Re-boot`; `Exception: ... vector 2030` in the reset records |
 
-- *External.*  Cold, as the start-up's test of `RSR & 0xc0` says
-  (`firmware/restart.md`, "Restarting"): EXT alone does not count as
+- *Power-up and external.*  Cold, as the start-up's test of `RSR &
+  0xc0` says (`firmware/restart.md`, "Restarting"): POW alone at a
+  power-up, EXT alone at an external reset, and neither counts as
   warm.
 - *Watchdog.*  The firmware was halted without freezing the watchdog
   (SIMCR `0x014a`, FRZSW clear; "Register reads over BDM" above) and
@@ -551,13 +555,12 @@ read after each:
   2030, PC = ...` entries dated 2026-11-20, at 22:30:50, 23:14:14 and
   23:29:58 by the receiver's clock: format/vector word `0x2030`, frame
   format 2, vector offset `0x030`, vector 12.  The receiver's log
-  records each such restart as `Re-boot`.
+  records each such restart as `Re-boot`.  The firmware crashes, and
+  RSR after the restart read `0x10`, HLT alone, on 2026-11-21: a
+  halt-monitor reset (MC68331UM D.3.4, 4.2.8), not the watchdog's.
 
-Not established: RSR at a true power-up, POW alone or with EXT; and
-by which mechanism the firmware restarts after such an exception, as
-the RSR after one was not read.  Whether τ and the aging fit read
-back unchanged after the warm start was not checked; the code
-restores them with the region.
+Not established: whether τ and the aging fit read back unchanged
+after the warm start; the code restores them with the region.
 
 *Changes:* confirms which reset sources keep the loop's state, and
 whether `*TST?` is one of them.

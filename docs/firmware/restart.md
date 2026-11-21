@@ -514,7 +514,7 @@ check-chip-selects` fails when the tables here, in `README.md` and
 there drift from the images).  On the bench 58503A (58503-60001 Rev
 C), running 3704, on 2026-11-20, every chip-select register read over
 the BDM header J12 as `chip-selects.md`'s 3704 tables give it
-(`../hardware-investigations.md`, "Register reads over BDM").  The
+(`../58503a-bdm.md`, "The chip selects").  The
 Z3801A 3543's map is the Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
 reset state, its BYTE field disabled (MC68331UM 4.8.4), and 3633's
 boot code makes the CS4 pin a discrete output, PC1, which no image

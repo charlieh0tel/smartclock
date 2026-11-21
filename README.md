@@ -268,6 +268,7 @@ inside its own frame; the pages workflow runs it too.
 | [`docs/efc.md`](docs/efc.md) | how the receiver reports its control voltage, measured at the oscillator's EFC pin |
 | [`docs/ocxo.md`](docs/ocxo.md) | the oscillator |
 | [`docs/58503a-second-10mhz.md`](docs/58503a-second-10mhz.md) | enabling the 58503A's 10 MHz OUT B, J15 |
+| [`docs/58503a-bdm.md`](docs/58503a-bdm.md) | the 58503A through its MC68331's background debug mode, on J12: the header, the registers at a reset entry and in a halt |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
 | [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the eight images in C |

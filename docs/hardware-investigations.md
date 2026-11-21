@@ -874,9 +874,10 @@ words read the same at every position, as in the 3704 image:
 stored lane sums, and `0x10000` `0x0010fffe`, the primary's first
 vector.  So S1 does not gate the flash's reads (hypothesis 1 rejected
 for that board).  The positions were changed while the firmware ran,
-and the byte followed each at once; no reset was taken with a
-position OFF.  The 3704 primary and its USA installer never read the
-byte, so on that unit S1 has no effect; what it would set under
+and the byte followed each at once.  S1 has no effect at reset
+either, measured on the same unit on 2026-11-21.  The 3704 primary
+and its USA installer never read the byte, so on that unit S1 has no
+effect; what it would set under
 3633's Oman installer is in `firmware/restart.md`, "The switch byte
 at `0x302000`".  The Z3805A's and Z3801A's S1 are not checked.
 
@@ -905,7 +906,7 @@ receiver was accessed.  Results recorded on 2026-09-28.
 
 | Hypothesis | Mechanism | Current evidence |
 | ---------- | --------- | ---------------- |
-| 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  Rejected on the 58503A: no S1 position changes the flash's reads.  The Z3801A's and Z3805A's S1 wiring is unknown. |
+| 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  Rejected on the 58503A: no S1 position changes the flash's reads, and S1 has no effect at reset.  The Z3801A's and Z3805A's S1 wiring is unknown. |
 | 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; BDM access through J12 is established on the 58503A, not checked on the Z3801A and Z3805A; recovery is untested.  A switch alone does not select INSTALL. |
 | 3. Select alternate boot storage | Bank selection changes the reset vectors or startup code presented to the CPU. | No alternate recovery image or selection circuit identified. |
 | 4. S1 is the byte at `0x302000` | An 8-bit input in CS5's window that software reads. | Only the Oman installer reads it, to override host-port settings; no firmware on the bench units reads it.  Holds on the 58503A: position n is bit n − 1, ON 0.  Not checked on the Z3801A and Z3805A. |
@@ -1028,8 +1029,8 @@ electrical circuit, an S1 assignment, an installer session, or recovery
 of a real unit.  Those remain open.
 
 On the 58503A it is rejected without a trace: S1 is the switch byte,
-and the flash read the same at every position, measured on
-2026-11-21 ("Measured, S1 on the 58503A", above).  The Z3801A and
+the flash read the same at every position, and S1 has no effect at
+reset, measured on 2026-11-21 ("Measured, S1 on the 58503A", above).  The Z3801A and
 Z3805A are not checked.
 
 ### 2. Enable background debugging

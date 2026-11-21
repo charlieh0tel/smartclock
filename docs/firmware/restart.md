@@ -641,7 +641,7 @@ On the bench 58503A's main board (58503-60001 Rev C) the byte at
 58503A"): with all eight positions ON, as the switch marks them, it
 reads `0x00`, and position n OFF sets bit n − 1, `0x01` for position
 1 to `0x80` for position 8; ON reads 0, OFF reads 1.  S1 does not
-change what the flash reads.  That mapping is measured on that board
+change what the flash reads, and has no effect at reset.  That mapping is measured on that board
 alone.  For every other board below it is an assumption, and each
 position named for another model's image rests on it; whether the
 byte is S1 at all on those boards has not been established.
@@ -742,7 +742,9 @@ is most likely found in:
   way.
 - 58503A 3704, Z3801A 3543, Z3805A 3543B and 1.01.03, Z3817A 3752:
   the same either way.  So on a 58503A running 3704 with its own USA
-  installer, as the bench unit's flash is, S1 has no effect.
+  installer, as the bench unit's flash is, S1 has no effect, running
+  or at reset: measured on that unit
+  (`../hardware-investigations.md` item 13).
 - 58503B 1.01.04: the same either way; the byte is read at every EFC
   write and dropped.
 - Z3816A 4001: all ON, G −2.125 × 10⁻¹²; all OFF, −1.25 × 10⁻¹².

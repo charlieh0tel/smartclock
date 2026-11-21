@@ -708,7 +708,9 @@ dump on 2026-09-28; PRIMARY boot and the recorded settings were
 verified.  See [the flasher](firmware/restart.md#the-flasher) for the
 procedure, checks and limits.  Other models and revision changes have
 simulator coverage, not hardware validation.  Which flash part holds
-which byte lane is unknown.
+which byte lane is measured on a Z3805A board, the 58503A's layout:
+the lower bank is U14 (1M, the high byte) and U12 (1L), the upper
+U13 (2M) and U11 (2L) (`firmware/restart.md`, "The chip selects").
 
 An interrupted load that leaves invalid primary checksums enters the
 protected installer at power-up.  Recovery after Ctrl-C mid-record is
@@ -941,7 +943,9 @@ CPU byte addresses, not individual flash-chip addresses.
 MC68331UM sections 4.8.1.2 and 4.8.1.3, tables 4-21 and 4-22, decode
 these settings: 256 KiB blocks, both byte lanes, reads or writes only,
 one internally generated wait state, supervisor and user spaces.
-How those selects connect to the flash parts is not yet traced.
+On a Z3805A board, the 58503A's layout, CSBOOT and CS6 are the /OE
+and /WE of U14 and U12, and CS1 and CS7 those of U13 and U11, measured
+on 2026-11-21 (`firmware/restart.md`, "The chip selects").
 
 The low bank contains both the protected installer and part of PRIMARY:
 

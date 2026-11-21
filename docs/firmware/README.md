@@ -263,8 +263,10 @@ Not pursued further, each with the limit of what was checked.
   debug console, in user mode, reads as zero; reading it takes
   supervisor access, such as the CPU's background debug port on an
   open board.  On the bench 58503A that port, J12, read RSR `0x20`,
-  SW alone, after a watchdog reset, but the RSR after a restart from
-  an exception was not read (`../hardware-investigations.md` item 7).
+  SW alone, after a watchdog reset, and `0x10`, HLT alone, a
+  halt-monitor reset, after the restart from a breakpoint exception
+  (`../hardware-investigations.md` item 7); the Z3801A's crashes were
+  not read.
 - The DUART's command registers are written fast enough apart.  The
   SCC68692's data sheet (`third_party/philips/SCC68692.pdf`, 2004 Mar
   03) asks "at least three edges of the X1 clock between writes" to

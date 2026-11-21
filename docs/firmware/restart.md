@@ -64,9 +64,10 @@ over the BDM header J12
 the receiver's log recorded `Power on`; after a watchdog reset RSR
 read `0x20`, SW alone, and `warm_start` `0x01`, a warm start, logged
 `Re-boot`, with the region's first four bytes `93 6c 00 01`, its
-checksum and the flag word 1.  RSR holds only the last reset's
-source: SW alone after a watchdog reset that followed an external
-one.  RSR at a true power-up was not read.
+checksum and the flag word 1; after a power-up RSR read `0x40`, POW
+alone, a cold start, logged `Power on`.  RSR holds only the last
+reset's source: SW alone after a watchdog reset that followed an
+external one.
 
 Two actions reach it, and the SCPI handlers that name them, through
 six-byte action entries at `0x44c9a` to `0x44cb2` (a word and a
@@ -195,9 +196,10 @@ on 2026-11-20 the EEPROM's reset records (`0x400200` in 3704,
 `58503a-3704.md`) gained three `Exception: ROOT, vector 2030, PC =
 ...` entries, format/vector word `0x2030`, frame format 2 and vector
 offset `0x030`, and the log recorded each restart as `Re-boot`
-(`../hardware-investigations.md` item 7).  By which mechanism the
-firmware restarted -- the watchdog, as above, or another -- was not
-established: the RSR after it was not read.
+(`../hardware-investigations.md` item 7).  The firmware crashes, and
+it is not the watchdog that restarts it: RSR after the restart, read
+on 2026-11-21, was `0x10`, HLT alone, a halt-monitor reset
+(MC68331UM D.3.4, 4.2.8).
 
 The console word `n crash` is the same code in every image, a jump
 table on n from 0 to 4 (Z3801A `0x1bd84`; above 4 it does nothing):

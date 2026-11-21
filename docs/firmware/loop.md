@@ -456,8 +456,8 @@ initialization routine `FUN_00022c7c` fills that block one of two ways:
   (`FUN_00041180(0x1b)`, `0x4b196`) when it is not.  So a warm start
   logs `Re-boot`, a cold one `Power on`, and only the restart after a
   preset `System preset`.  The 58503A's log shows it so on hardware: a
-  watchdog reset's warm start logged `Re-boot` and an external
-  reset's cold start `Power on`
+  watchdog reset's warm start logged `Re-boot`, and a power-up's and
+  an external reset's cold starts `Power on`
   (`../hardware-investigations.md` item 7, "Measured, resets on the
   58503A").
 

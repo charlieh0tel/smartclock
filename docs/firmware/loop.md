@@ -445,10 +445,21 @@ initialization routine `FUN_00022c7c` fills that block one of two ways:
   (the other bits are SW, HLT, LOC, SYS and TST; `FUN_00022c7c` at
   `0x22dc4` also requires the register to be exactly SYS, a RESET
   instruction).  Then the loop block, the health-monitor records and
-  the τ block are restored, event 0x19 is posted (`FUN_0003ec76`) and
-  `Power on` is logged (`FUN_00041180(1)`, `0x4b188`).  Otherwise the
-  defaults are loaded and `System preset` is logged
-  (`FUN_00041180(0x1b)`, `0x4b196`).
+  the τ block are restored; otherwise the defaults are loaded.  The
+  log entry is the pllp task's, as it starts (`FUN_0004b088`), from
+  the loop block's stage byte (`0x10282c`): not 0, as a restored
+  block's is, and it logs `Re-boot` (`FUN_00041180(2)`, `0x4b1c6`);
+  0, as the defaults leave it, and it logs `Power on`, after posting
+  event 0x19 (`FUN_0003ec76`, `0x4b17e`; `FUN_00041180(1)`,
+  `0x4b188`), when the flag word at `0x100002` is 1, as every start
+  but `:SYSTem:PRESet`'s restart leaves it, and `System preset`
+  (`FUN_00041180(0x1b)`, `0x4b196`) when it is not.  So a warm start
+  logs `Re-boot`, a cold one `Power on`, and only the restart after a
+  preset `System preset`.  The 58503A's log shows it so on hardware: a
+  watchdog reset's warm start logged `Re-boot` and an external
+  reset's cold start `Power on`
+  (`../hardware-investigations.md` item 7, "Measured, resets on the
+  58503A").
 
 So a value set with `loop_time` survives a reset that leaves RAM
 intact, and the loop uses the ROM's 500 s after a power-up.  How long

@@ -136,7 +136,7 @@
     "What decodes the QSPI's PCS0 to PCS3 into its devices ([[docs/firmware/structures.md|The QSPI's devices]]), and whether {{U48}} and {{U50}} take device 7's word to {{U56}}.",
     "Which rail feeds {{U37}}'s VDD ([[docs/hardware-investigations.md|item 23]]); {{U40}}, a 78L12, sits beside it.",
     "{{U51}} and {{U57}}, under the heatsink.",
-    "Which byte {{U9}} and {{U16}} each take, and which pair of U11 to U14 is the lower flash bank.",
+    "Which byte {{U9}} and {{U16}} each take.",
     "Whether the Z3805A's and Z3801A's J12 are the BDM header the 58503A's is ([[docs/hardware-investigations.md|item 13]]).",
     "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them; on the bench 58503A /IRQ2 follows the DUART's interrupt output, measured powered ([[docs/hardware-investigations.md|item 21]])."
   ],
@@ -1161,7 +1161,7 @@
     },
     {
       "58503a": {
-        "note": "fitted (recalled, not photographed)",
+        "note": "fitted (recalled, not photographed); the 58503A's parts answer autoselect as AMD Am29F010s, no sector protected, measured on 2026-11-21 ([[docs/firmware/restart.md|The installer]])",
         "status": "fitted"
       },
       "at": {
@@ -1175,10 +1175,10 @@
       "id_confidence": "board",
       "marking": "label: Z3805-80001 U11/2L REV. C, W5",
       "marking_confidence": "board",
-      "note": "Which pair is which bank was not read.",
+      "note": "Its /OE (pin 24) is on CS1 and its /WE (pin 31) on CS7, read with a meter on 2026-11-21 ([[docs/firmware/restart.md|The chip selects]]).",
       "ref": "U11",
-      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
-      "role_confidence": "read",
+      "role": "Flash, the upper bank's low byte.",
+      "role_confidence": "board",
       "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
       "z3801a": {
         "note": "",
@@ -1187,7 +1187,7 @@
     },
     {
       "58503a": {
-        "note": "fitted (recalled, not photographed)",
+        "note": "fitted (recalled, not photographed); the 58503A's parts answer autoselect as AMD Am29F010s, no sector protected, measured on 2026-11-21 ([[docs/firmware/restart.md|The installer]])",
         "status": "fitted"
       },
       "at": {
@@ -1201,10 +1201,10 @@
       "id_confidence": "board",
       "marking": "label: Z3805-80002 U12/1L REV C, W5",
       "marking_confidence": "board",
-      "note": "Which pair is which bank was not read.",
+      "note": "Its /OE (pin 24) is on CSBOOT and its /WE (pin 31) on CS6, read with a meter on 2026-11-21 ([[docs/firmware/restart.md|The chip selects]]).",
       "ref": "U12",
-      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
-      "role_confidence": "read",
+      "role": "Flash, the lower bank's low byte.",
+      "role_confidence": "board",
       "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
       "z3801a": {
         "note": "",
@@ -1213,7 +1213,7 @@
     },
     {
       "58503a": {
-        "note": "fitted (recalled, not photographed)",
+        "note": "fitted (recalled, not photographed); the 58503A's parts answer autoselect as AMD Am29F010s, no sector protected, measured on 2026-11-21 ([[docs/firmware/restart.md|The installer]])",
         "status": "fitted"
       },
       "at": {
@@ -1227,10 +1227,10 @@
       "id_confidence": "board",
       "marking": "label: Z3805-80003 U13/2M REV C, W5",
       "marking_confidence": "board",
-      "note": "Which pair is which bank was not read.",
+      "note": "Its /OE (pin 24) is on CS1 and its /WE (pin 31) on CS7, read with a meter on 2026-11-21 ([[docs/firmware/restart.md|The chip selects]]).",
       "ref": "U13",
-      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
-      "role_confidence": "read",
+      "role": "Flash, the upper bank's high byte.",
+      "role_confidence": "board",
       "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
       "z3801a": {
         "note": "",
@@ -1239,7 +1239,7 @@
     },
     {
       "58503a": {
-        "note": "fitted (recalled, not photographed)",
+        "note": "fitted (recalled, not photographed); the 58503A's parts answer autoselect as AMD Am29F010s, no sector protected, measured on 2026-11-21 ([[docs/firmware/restart.md|The installer]])",
         "status": "fitted"
       },
       "at": {
@@ -1253,10 +1253,10 @@
       "id_confidence": "board",
       "marking": "label: Z3805-80004 U14/1M REV C, W5",
       "marking_confidence": "board",
-      "note": "Which pair is which bank was not read.",
+      "note": "Its /OE (pin 24) is on CSBOOT and its /WE (pin 31) on CS6, read with a meter on 2026-11-21 ([[docs/firmware/restart.md|The chip selects]]).",
       "ref": "U14",
-      "role": "Firmware: one byte of a 16-bit word in one of two banks.",
-      "role_confidence": "read",
+      "role": "Flash, the lower bank's high byte.",
+      "role_confidence": "board",
       "type": "Flash, PLCC-32 in a socket; the chip's own marking is under the label",
       "z3801a": {
         "note": "",

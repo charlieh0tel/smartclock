@@ -300,10 +300,15 @@ unpacked into `0x100400` to `0x10ac50`.
   5-89 to 5-91.
 - *Flash.*  Z3801A, Z3805A and 58503A: AM29F010s in word-interleaved
   pairs, labeled 1L, 1M, 2L and 2M (U12, U14, U11 and U13 on a
-  58503A): the M part holds the even bytes and the L part the odd;
+  58503A; their selects are measured, "The chip selects" below): the
+  M part holds the even bytes and the L part the odd;
   pair 1 is `0x0`--`0x3ffff` and pair 2 `0x40000`--`0x7ffff`, the
   order that reproduces `third_party/firmware/images/58503a-3633.bin` and
-  `58503a-3704.bin` from their chip dumps (`third_party/NOTICE`).
+  `58503a-3704.bin` from their chip dumps (`third_party/NOTICE`).  On
+  the bench 58503A (58503-60001 Rev C), on 2026-11-21, the parts
+  answered autoselect over J12 as AMD Am29F010s, manufacturer `0x01`
+  and device `0x20` (Am29F010B data sheet, Table 3), with no sector
+  protected.
   `smartclock-cli join-chips` puts four dumps together that way and
   `split-chips` takes an image apart, whatever the bytes hold, and
   each then says what it finds rather than refusing: whose reset vector
@@ -395,8 +400,9 @@ can be retried over the serial port, from the installer the next
 power-up lands in.  Valid checksums do not show that the primary can
 run or accept the command to enter INSTALL; that case is below.  A
 dump written back a lane per part carries its own valid sums.
-`:DIAGnostic:TEST? 1` names the failing lane.  Not established: which
-part is which lane on the board, and how the new primary resets the
+`:DIAGnostic:TEST? 1` names the failing lane, and the lane names the
+part: the high byte of the lower bank is U14, measured ("The chip
+selects", below).  Not established: how the new primary resets the
 settings after an upgrade, which 097-59551-02 appendix C says it does.
 
 ## Forced installer entry with an unusable primary
@@ -541,10 +547,10 @@ Pins: CSPAR0 `0x2bff` at `0x568`, CSPAR1 `0x03af` at `0x570`.
 
 | Window | Select | Pin | CSBAR, CSOR; written at | Port | BYTE, R/W, DSACK | Device |
 | ------ | ------ | --- | ----------------------- | ---- | ---------------- | ------ |
-| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x578`, `0x580` | 16-bit | both, read, 1 wait | flash, lower bank: two of U11 to U14 (Am29F010, 128 K × 8), a word's two bytes |
-| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x5e8`, `0x5f0` | 16-bit | both, write, 1 wait | the same parts' writes: command cycles and programming |
-| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x598`, `0x5a0` | 16-bit | both, read, 1 wait | flash, upper bank: the other two |
-| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x5f8`, `0x600` | 16-bit | both, write, 1 wait | the upper bank's writes |
+| `0x000000`--`0x03ffff`, 256 KiB | CSBOOT | 112 | `0x0005`, `0x6870`; `0x578`, `0x580` | 16-bit | both, read, 1 wait | flash, lower bank: U14 (1M, the high byte) and U12 (1L) (Am29F010, 128 K × 8), on their /OE, measured (below) |
+| the same | CS6 | 121, PC3/ADDR19 | `0x0005`, `0x7070`; `0x5e8`, `0x5f0` | 16-bit | both, write, 1 wait | the same parts' writes, on their /WE: command cycles and programming |
+| `0x040000`--`0x07ffff`, 256 KiB | CS1 | 114, BG | `0x0405`, `0x6870`; `0x598`, `0x5a0` | 16-bit | both, read, 1 wait | flash, upper bank: U13 (2M) and U11 (2L), on their /OE |
+| the same | CS7 | 122, PC4/ADDR20 | `0x0405`, `0x7070`; `0x5f8`, `0x600` | 16-bit | both, write, 1 wait | the upper bank's writes, on their /WE |
 | `0x100000`--`0x10ffff`, 64 KiB | CS0 | 113, BR | `0x1003`, `0x6830`; `0x588`, `0x590` | 16-bit | both, read, 0 wait | RAM, read: the two M5M51008B (128 K × 8), of whose 256 KiB the selects reach 64 KiB (*The RAM*, below) |
 | the same | CS2 | 115, BGACK | `0x1003`, `0x5030`; `0x5a8`, `0x5b0` | 16-bit | upper, write, 0 wait | RAM, writes to the upper byte (even addresses, DATA15 to DATA8) |
 | the same | CS3 | 118, PC0/FC0 | `0x1003`, `0x3030`; `0x5b8`, `0x5c0` | 16-bit | lower, write, 0 wait | RAM, writes to the lower byte |
@@ -577,8 +583,13 @@ Z3815A's `0x13`, DS, DSACK1 and DSACK0 (`0x24c26`), the 58503B's
 `0x10`, DS alone (`0x2468c`).  The flash and
 RAM selects split one window between reads and writes, or between
 the bytes of a word, so that each part's /OE and /WE can take a chip
-select directly; that wiring was not traced.  Which pair of U11 to
-U14 is the lower bank was not read from the photos.
+select directly.  For the flash they do, read with a meter on the
+open Z3805A board, the 58503A's layout, on 2026-11-21: /OE (pin 24)
+of U11 and U13 is on U33 pin 114, CS1, and of U12 and U14 on pin 112,
+CSBOOT; /WE (pin 31) of U11 and U13 on pin 122, CS7, and of U12 and
+U14 on pin 121, CS6.  So the lower bank is U14, labeled 1M, the high
+byte, and U12, 1L; the upper bank U13, 2M, and U11, 2L.  The RAM's
+wiring was not traced.
 
 *The RAM.*  The Z3805A carries 256 KiB, two M5M51008B (128 K × 8),
 a word's two bytes, of which CS0, CS2 and CS3 reach 64 KiB, `0x100000`

@@ -118,34 +118,6 @@ PARITY_VARIABLE = "SMARTCLOCK_CPU_PARITY"
 PARITY = os.environ.get(PARITY_VARIABLE, "1") != "0"
 
 
-# A long's store, move.l d0,(LONG_PROBE).l, and its address: the probe
-# of whether a hook sees a long once (check_module).
-LONG_PROBE = 0x1000
-LONG_STORE = bytes.fromhex("23c0") + LONG_PROBE.to_bytes(4, "big")
-LONG_SIZE = 4
-# Whether check_module has found the module new enough.
-checked: list[bool] = []
-
-
-def check_module(mc683xx) -> None:
-    """Stops with a message if mc683xx's module is older than the harness
-    needs: a bare Machine (mc683xx's known-good-6), and memory hooks that
-    see a long once, as one access of 4, as Unicorn's do."""
-    if checked:
-        return
-    stale = f"{mc683xx.__file__}: older than the harness needs"
-    if not hasattr(mc683xx, "Machine"):
-        raise SystemExit(f"{stale} (no bare Machine)")
-    probe = mc683xx.Machine()
-    probe.map(0, 2 * LONG_PROBE, contents=LONG_STORE)
-    sizes: list[int] = []
-    probe.add_write_hook(lambda access: sizes.append(access.size), LONG_PROBE, LONG_PROBE + LONG_SIZE - 1)
-    probe.run_limited(begin=0, instructions=1)
-    if sizes != [LONG_SIZE]:
-        raise SystemExit(f"{stale} (a hook sees a long as {sizes})")
-    checked.append(True)
-
-
 def new_cpu() -> "Uc | Mc683xx":
     """A CPU of the chosen backend, nothing mapped.  Unicorn has no
     CPU32; its 68020 stands in (PLAN.md, "A rebuild that runs")."""
@@ -321,7 +293,6 @@ class Mc683xx:
     def __init__(self):
         import mc683xx
 
-        check_module(mc683xx)
         self.cpu = mc683xx.Machine()
         self.stop_request = self.cpu.stop_request()
         self.cpu.set_stop_on_fault(True)

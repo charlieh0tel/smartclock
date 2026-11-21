@@ -2112,14 +2112,12 @@ bare CPU32, `mc683xx.Machine` (its `docs/python.md`, "Bare CPU"), with
 `new_cpu` gives Unicorn's `Uc` or a class that answers the part of
 Unicorn's API the harness uses on the `Machine`, so that both run from the
 same code; `unicorn_check.py` stays Unicorn's alone.  mc683xx's Python
-module is its PyPI release, `mc683xx==0.2.0`, pinned exactly in each
+module is its PyPI release, `mc683xx==0.7.0`, pinned exactly in each
 harness script's inline metadata beside Unicorn and bumped only on
 purpose, which `uv run` installs; `CPU=mc683xx` has the function check
-run on it.  A module older than the harness needs, with no bare
-`Machine` or one whose hooks see a long as two word cycles, stops the
-run with a message saying so.  To try an unreleased mc683xx, build its
-wheel (its `docs/python.md`) and, for the run, change the pin by hand
-to `mc683xx @ file:///PATH/TO/WHEEL`:
+run on it.  To try an unreleased mc683xx, build its wheel (its
+`docs/python.md`) and, for the run, change the pin by hand to
+`mc683xx @ file:///PATH/TO/WHEEL`:
 
     make report-decompiled CPU=mc683xx
     SMARTCLOCK_CPU=mc683xx uv run tools/firmware/libc_check.py \

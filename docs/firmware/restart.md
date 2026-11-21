@@ -586,7 +586,7 @@ Z3815A's `0x13`, DS, DSACK1 and DSACK0 (`0x24c26`), the 58503B's
 RAM selects split one window between reads and writes, or between
 the bytes of a word, so that each part's /OE and /WE can take a chip
 select directly.  For the flash they do, read with a meter on the
-open Z3805A board, the 58503A's layout, on 2026-11-21: /OE (pin 24)
+bench Z3805A's board (3625A01487), the 58503A's layout, on 2026-11-21: /OE (pin 24)
 of U11 and U13 is on U33 pin 114, CS1, and of U12 and U14 on pin 112,
 CSBOOT; /WE (pin 31) of U11 and U13 on pin 122, CS7, and of U12 and
 U14 on pin 121, CS6.  So the lower bank is U14, labeled 1M, the high

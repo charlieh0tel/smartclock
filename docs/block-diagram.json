@@ -1261,7 +1261,7 @@
           758
         ]
       ],
-      "source": "CSBOOT and CS1 read the two banks, CS6 and CS7 write them, read from the image; each select on its parts' /OE or /WE, measured with a meter on the Z3805A ([[docs/firmware/restart.md|The chip selects]]).",
+      "source": "CSBOOT and CS1 read the two banks, CS6 and CS7 write them, read from the image; each select on its parts' /OE or /WE, measured with a meter on the bench Z3805A, 3625A01487 ([[docs/firmware/restart.md|The chip selects]]).",
       "to": "flash"
     },
     {

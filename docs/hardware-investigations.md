@@ -714,7 +714,8 @@ dump on 2026-09-28; PRIMARY boot and the recorded settings were
 verified.  See [the flasher](firmware/restart.md#the-flasher) for the
 procedure, checks and limits.  Other models and revision changes have
 simulator coverage, not hardware validation.  Which flash part holds
-which byte lane is measured on a Z3805A board, the 58503A's layout:
+which byte lane is measured on the bench Z3805A's board (3625A01487),
+the 58503A's layout:
 the lower bank is U14 (1M, the high byte) and U12 (1L), the upper
 U13 (2M) and U11 (2L) (`firmware/restart.md`, "The chip selects").
 
@@ -957,7 +958,8 @@ CPU byte addresses, not individual flash-chip addresses.
 MC68331UM sections 4.8.1.2 and 4.8.1.3, tables 4-21 and 4-22, decode
 these settings: 256 KiB blocks, both byte lanes, reads or writes only,
 one internally generated wait state, supervisor and user spaces.
-On a Z3805A board, the 58503A's layout, CSBOOT and CS6 are the /OE
+On the bench Z3805A's board (3625A01487), the 58503A's layout,
+CSBOOT and CS6 are the /OE
 and /WE of U14 and U12, and CS1 and CS7 those of U13 and U11, measured
 on 2026-11-21 (`firmware/restart.md`, "The chip selects").
 
@@ -1274,7 +1276,7 @@ or U33.  Nothing else on DIR or /OE is ruled out.  Whether pins 14 and
 83 carry the same signal is not settled.  The nets are tabled in
 `board-atlas.html`.
 
-*Measured on the open Z3805A board, 2026-11-21,* power off, with a
+*Measured on the bench Z3805A, 3625A01487, 2026-11-21,* power off, with a
 meter, J4's path again: U32 pin 14 reaches U17 pin 9, A8; 100 Ω lies
 between the transceiver and J4; U17 pin 19 and U18 pin 19 are one
 net, 10 kΩ to ground, so the outputs are enabled (the 2026-10-30

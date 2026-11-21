@@ -284,6 +284,10 @@ CS8 `0x2000`, `0x3bf0`; CS9 `0x4001`, `0x78f0`; CS10 `0xfff8`,
 Z3801A and Z3805A the address is in chip select 5's window instead,
 `firmware/restart.md`, "The chip selects"), which picks
 −1.25 × 10⁻¹² or −2.125 × 10⁻¹² per EFC unit on the Z3816A.
+Bit 8 of the word is bit 0 of the byte at `0x302000`, on DATA8; on
+the 58503A's board that bit is S1's position 1, measured (item 13,
+"Measured, S1 on the 58503A").  Whether the Z3816A's board wires S1
+the same way is not checked.
 
 - [ ] TODO: needs a Z3816A, which the bench lacks: trace CS7 to the
   device it strobes and what feeds its D8.

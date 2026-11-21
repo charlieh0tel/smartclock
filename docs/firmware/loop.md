@@ -499,6 +499,11 @@ in the image -- every other form of the address was searched for --
 and only bit 8 is examined.  So it is an input port the processor reads once, when the
 loop task starts; what drives bit 8 -- a link, a switch, or a signal
 from the oscillator or DAC board -- is on the board, not in the image.
+Bit 8 of the word is bit 0 of the byte at `0x302000`, which on the
+58503A's board is S1's position 1, OFF reading 1, measured
+(`restart.md`, "The switch byte at `0x302000`"); if the Z3816A's
+board wires S1 the same way, position 1 OFF gives −1.25 × 10⁻¹² and
+ON −2.125 × 10⁻¹², but no Z3816A board has been checked.
 Nothing the EEPROM holds changes it ("G and the calibration block",
 below).  In the Z3801A the address is only inside chip select 5's 64 KiB
 window, with the latch and the FPGA (`restart.md`, "The chip

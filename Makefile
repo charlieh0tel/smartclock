@@ -359,6 +359,18 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@
 
+# The 58503A's flash programmer over BDM (tools/bdm/README.md):
+# bdm-routine assembles the CPU32 routine into target/bdm, with its
+# symbols and listing; test-bdm assembles it and runs it, and the host
+# that drives it, on mc683xx's MC68331 with a model of the board's
+# flash.  They need the m68k binutils and uv; neither is part of ci.
+.PHONY: bdm-routine test-bdm
+bdm-routine:
+	python3 -I tools/bdm/build_routine.py
+
+test-bdm:
+	uv run -q tools/bdm/test_flash.py
+
 clean:
 	$(CARGO) clean
 

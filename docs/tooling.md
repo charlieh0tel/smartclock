@@ -19,6 +19,12 @@ stop it before using one of these directly.
 | `smartclock-cli sweep` | tries each command in a file, for finding those no manual documents ([`scpi/undocumented.md`](scpi/undocumented.md)) |
 | `smartclock-cli --capture` | records a whole exchange as a JSONL transcript ([`sessions/`](sessions/README.md)) |
 
+## Over BDM
+
+| Tool | What it is |
+| ---- | ---------- |
+| `tools/bdm/` | programs a 58503A's flash over the CPU's background debug mode, with a routine the host loads into RAM and calls; tested only on mc683xx's MC68331, with no pod adapter yet (`make test-bdm`; [`README.md`](../tools/bdm/README.md)) |
+
 ## Reading an image
 
 `smartclock-cli`'s commands that read a flash image and need no

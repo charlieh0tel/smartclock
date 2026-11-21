@@ -56,8 +56,8 @@ complement, so a zeroed region fails it.  So `:SYSTem:PRESet`, which
 clears the flag, restarts into the defaults, and `:SYSTem:PON`, which
 zeroes the region, restarts cold.  No console word reaches `trap #12`.
 
-Measured on the bench 58503A (58503-60001 Rev C, 3704), on 2026-11-20
-and 2026-11-21, over the BDM header J12
+Measured on the bench 58503A (58503-60001 Rev C, 3704), on 2026-11-21,
+over the BDM header J12
 (`../hardware-investigations.md` item 7, "Measured, resets on the
 58503A"): after an external reset RSR read `0x80`, EXT alone, and
 `warm_start` (`0x1039af`, `structures.md`) `0x00`, a cold start, and
@@ -174,8 +174,8 @@ frequency, 32.768 kHz (`README.md`, SYNCR; PITR `0x0008` gives the
 the same SYPCR and PITR.  On the bench 58503A the time-out measured
 about 8 s: every image's SIMCR, `0x014a`, leaves FRZSW clear, so the
 watchdog counts on while the CPU is in background mode (MC68331UM
-D.3.1), and halted over J12 the CPU reset itself about 8 s into the
-halt (`../hardware-investigations.md` item 7).  That reset goes through the boot code and its checksums, and
+D.3.1), and halted over J12 on 2026-11-21 the CPU reset itself about
+8 s into the halt (`../hardware-investigations.md` item 7).  That reset goes through the boot code and its checksums, and
 with the region good and the flag set it is a warm start, which writes
 the pending exception, fatal message or `Watchdog timeout: clk ... gps
 ... mon ... pll ... spl ...` to the EEPROM log at `0x4001c0`
@@ -502,8 +502,8 @@ reset code and writes `chip-selects.md` with each image's tables and
 how each map differs from the Z3805A's (`make chip-selects`; `make
 check-chip-selects` fails when the tables here, in `README.md` and
 there drift from the images).  On the bench 58503A (58503-60001 Rev
-C), running 3704, every chip-select register read over the BDM
-header J12 as `chip-selects.md`'s 3704 tables give it
+C), running 3704, on 2026-11-20, every chip-select register read over
+the BDM header J12 as `chip-selects.md`'s 3704 tables give it
 (`../hardware-investigations.md`, "Register reads over BDM").  The
 Z3801A 3543's map is the Z3805A's.  The 58503A writes no CSBAR4 or CSOR4, so CS4 keeps its
 reset state, its BYTE field disabled (MC68331UM 4.8.4), and 3633's

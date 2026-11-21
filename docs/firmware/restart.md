@@ -487,7 +487,9 @@ parser stopped working; either way the primary itself must start.
 How S1, a flash-read fault or the CPU's background debug mode might
 reach the installer without a working primary is speculative, but for
 the 58503A's S1, which is the switch byte and leaves the flash's reads
-alone; see
+alone.  On the 58503A the flash was erased and programmed over its
+BDM header, J12, with the firmware stopped, and the primary booted
+after, so there a primary can be rewritten without the installer; see
 [the recovery hypotheses](../hardware-investigations.md#recovery-hypotheses).
 
 ## The chip selects

@@ -847,9 +847,17 @@ the corner pin; pin 1 is inboard of pin 2.  Buzzed with the power off:
 
 Powered, a BDM probe on J12 reset the CPU into background mode and
 read the whole flash, which matched the 3704 image.  So BDM access
-through J12 is established on that board; whether a unit can be
-reflashed that way is not (hypothesis 2).  The Z3805A's and Z3801A's
+through J12 is established on that board.  The Z3805A's and Z3801A's
 J12 are not checked.
+
+*Measured, flash over J12 on the 58503A.*  On the same board, on
+2026-11-21, the flash was erased and programmed over J12 with the
+firmware stopped: a word programmed and a sector erased in a blank
+region, then a sector of the image erased and programmed again.
+After that the whole flash hashed to the `58503a-3704.bin` image, and
+the primary booted and locked.  So a unit can be reflashed over BDM,
+without the installer or a working primary (hypothesis 2,
+established).  The Z3805A and Z3801A are not checked.
 
 *Measured, S1 on the 58503A.*  On the bench 58503A's main board
 (58503-60001 Rev C), running 3704, on 2026-11-21, a BDM probe on J12
@@ -912,7 +920,7 @@ receiver was accessed.  Results recorded on 2026-09-28.
 | Hypothesis | Mechanism | Current evidence |
 | ---------- | --------- | ---------------- |
 | 1. Alter primary flash reads | Address aliasing or select gating makes primary checksums fail while protected boot code remains readable. | Fits the reset code; modeled against both dumps below.  Rejected on the 58503A: no S1 position changes the flash's reads, and S1 has no effect at reset.  The Z3801A's and Z3805A's S1 wiring is unknown. |
-| 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; BDM access through J12 is established on the 58503A, not checked on the Z3801A and Z3805A; recovery is untested.  A switch alone does not select INSTALL. |
+| 2. Enable background debugging | A contact enables BDM through BKPT at reset; a debugger redirects execution to the protected installer. | MCU support and installer entry are established; BDM access through J12 is established on the 58503A, not checked on the Z3801A and Z3805A.  Recovery over BDM is established on the 58503A by erasing and programming the flash directly; redirecting execution to the installer is untested.  A switch alone does not select INSTALL. |
 | 3. Select alternate boot storage | Bank selection changes the reset vectors or startup code presented to the CPU. | No alternate recovery image or selection circuit identified. |
 | 4. S1 is the byte at `0x302000` | An 8-bit input in CS5's window that software reads. | Only the Oman installer reads it, to override host-port settings; no firmware on the bench units reads it.  Holds on the 58503A: position n is bit n − 1, ON 0.  Not checked on the Z3801A and Z3805A. |
 
@@ -1054,8 +1062,13 @@ inference from the CPU manual and firmware, not a tested procedure.
 BDM access through J12 is now established on the 58503A: J12 is the
 standard BDM header, and a BDM probe on it reset the CPU into
 background mode and read the whole flash ("Measured, J12 on the
-58503A", above).  Whether a unit can be reflashed that way is not
-established, and the Z3805A's and Z3801A's J12 are not checked.
+58503A", above).  A unit can be reflashed that way: on the 58503A,
+on 2026-11-21, the flash was erased and programmed over J12 with the
+firmware stopped, and the primary booted and locked after ("Measured,
+flash over J12 on the 58503A", above).  So a checksum-valid primary
+that cannot accept commands can be rewritten without the installer;
+redirecting to `0xa58` is not needed, and stays untried.  The
+Z3805A's and Z3801A's J12 are not checked.
 
 ### 4. S1 is the byte at `0x302000`
 

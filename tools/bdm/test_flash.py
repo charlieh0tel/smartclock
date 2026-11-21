@@ -13,12 +13,18 @@ am29f010.py).  mc683xx is pinned as the firmware's checks pin it.
 (build_routine.py), with the m68k binutils.
 """
 
+import contextlib
 import hashlib
+import io
+import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import build_routine
 import flash_host
+import trial_image
 from am29f010 import DQ5, DQ7, PART_SIZE, BoardFlash, Hazard, State
 from board import FLASH_SIZE, PAIR_SIZE, SECTOR_PAIR_SIZE, WORD
 from model_target import WINDOW_SECONDS, ModelTarget, clocks, timing
@@ -269,7 +275,7 @@ class Procedure(unittest.TestCase):
         image[0x8000] ^= 0xFF
         target, model = board()
         with self.assertRaisesRegex(Refused, "differs below 0x10000, at 0x8000"):
-            run(target, bytes(image), unchecked=True)
+            run(target, bytes(image))
         self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
         self.assertEqual(model.image(), IMAGE_3704)
 
@@ -279,15 +285,17 @@ class Procedure(unittest.TestCase):
             run(target, IMAGE_3704[:-2])
         self.assertEqual(target.runs, 0)
 
-    def test_refuses_bad_sums(self):
+    def test_bad_sums_reported_and_written(self):
         image = bytearray(IMAGE_3704)
         image[0x50000] ^= 1
         target, model = board()
-        with self.assertRaisesRegex(Refused, "lane sums of 0x40000-0x80000"):
-            run(target, bytes(image))
-        # deliberately unchecked, it is programmed
-        run(target, bytes(image), unchecked=True)
+        lines: list[str] = []
+        flash_host.flash(target, bytes(image), Options(erase_time=TEST_ERASE_LIMIT), ROUTINE, lines.append)
+        self.assertIn("image lane sums of 0x10000-0x40000 hold", lines)
+        self.assertTrue(any(line.startswith("image lane sums of 0x40000-0x80000 DO NOT HOLD") for line in lines))
+        self.assertIn("WARNING: an image whose lane sums fail boots into the installer, not the primary", lines)
         self.assertEqual(model.image(), bytes(image))
+        clean(self, model)
 
     def test_refuses_unexpected_ids(self):
         target, model = board()
@@ -378,6 +386,149 @@ class Model(unittest.TestCase):
         _, model = board()
         self.assertEqual(model.image(), IMAGE_3704)
         self.assertEqual(len(model.pairs[0][0].cells), PART_SIZE)
+
+
+class Trial(unittest.TestCase):
+    def test_trial_plan(self):
+        image = trial_image.trial(IMAGE_3704)
+        flash_host.check_image(image)
+        self.assertEqual(flash_host.differing_ranges(IMAGE_3704, image)[0], (0x70000, 0x70002))
+        self.assertEqual(flash_host.plan(IMAGE_3704, image), [0x70000, 0x78000])
+
+    def test_trial_refusals(self):
+        for address in (0x8000, 0x70001, 0x80000, 0x3FFFC, 0x7FFFE):
+            with self.subTest(address=address), self.assertRaisesRegex(Refused, "not an even address"):
+                trial_image.trial(IMAGE_3704, address)
+        with self.assertRaisesRegex(Refused, "already holds"):
+            trial_image.trial(IMAGE_3704, 0x70000, 0xFFFF)
+
+
+class Modes(unittest.TestCase):
+    def test_identify_only(self):
+        target, model = board()
+        report = run(target, variant(IMAGE_3704, 0x60000), identify_only=True)
+        self.assertEqual(report.plan, [0x60000, 0x78000])
+        self.assertEqual(target.runs, 2)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+        clean(self, model)
+
+    def test_restore_saved_and_expected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            restore = Path(folder) / "restore.bin"
+            target, model = board()
+            with self.assertRaisesRegex(Refused, "not the expected"):
+                run(target, variant(IMAGE_3704, 0x60000), restore_path=restore, expected_restore_sha256="0" * 64)
+            self.assertEqual(restore.read_bytes(), IMAGE_3704)
+            self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+            with self.assertRaisesRegex(Refused, "cannot save"):
+                run(target, variant(IMAGE_3704, 0x60000), restore_path=restore)
+
+    def test_each_step_logged(self):
+        target, model = board()
+        lines: list[str] = []
+        flash_host.flash(target, trial_image.trial(IMAGE_3704), Options(erase_time=TEST_ERASE_LIMIT), ROUTINE, lines.append)
+        for base in ("0x70000", "0x78000"):
+            for step in ("erased", "programmed", "verified"):
+                self.assertIn(f"sector pair {base} {step}", lines)
+
+
+class CommandLine(unittest.TestCase):
+    def main(self, *arguments: str) -> tuple[str, str | None]:
+        """flash_host's main on arguments: its output, and its exit's."""
+        output = io.StringIO()
+        with mock.patch.object(sys, "argv", ["flash_host.py", *arguments]), contextlib.redirect_stdout(output):
+            try:
+                flash_host.main()
+            except SystemExit as error:
+                return output.getvalue(), str(error.code)
+        return output.getvalue(), None
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.addCleanup(self.folder.cleanup)
+        self.path = Path(self.folder.name)
+        self.unit = self.path / "unit.bin"
+        self.unit.write_bytes(IMAGE_3704)
+        self.trial = self.path / "trial.bin"
+        self.trial.write_bytes(trial_image.trial(IMAGE_3704))
+        self.short = self.path / "short.bin"
+        self.short.write_bytes(IMAGE_3704[:-2])
+        self.original = str(IMAGES / "58503a-3704.bin")
+
+    def test_dry_run(self):
+        output, code = self.main("--model", str(self.unit), "--image", str(self.trial), "--dry-run")
+        self.assertIsNone(code)
+        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
+        self.assertIn("sector pairs to write: 0x70000, 0x78000", output)
+        self.assertIn("image lane sums of 0x40000-0x80000 hold", output)
+        self.assertIn(flash_host.STOPPED, output)
+
+    def test_identify(self):
+        output, code = self.main("--model", str(self.unit), "--image", self.original, "--identify")
+        self.assertIsNone(code)
+        self.assertIn("manufacturer 0x0101, device 0x2020", output)
+        self.assertIn("sector pairs to write: none", output)
+
+    def test_write_and_back(self):
+        restore = self.path / "restore.bin"
+        output, code = self.main(
+            "--model", str(self.unit), "--image", str(self.trial), "--write", "--restore-to", str(restore),
+        )
+        self.assertIsNone(code, output)
+        self.assertEqual(restore.read_bytes(), IMAGE_3704)
+        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
+        trial_sha256 = hashlib.sha256(self.trial.read_bytes()).hexdigest()
+        self.assertIn(f"success: the flash is the image, SHA-256 {trial_sha256}", output)
+        self.assertIn("sector pair 0x78000 verified", output)
+        self.assertTrue(output.rstrip().endswith(flash_host.STOPPED))
+
+    def test_write_refused_on_another_flash(self):
+        restore = self.path / "restore.bin"
+        output, code = self.main(
+            "--model", str(self.unit), "--image", self.original, "--write",
+            "--expect-sha256", "0" * 64, "--restore-to", str(restore),
+        )
+        self.assertEqual(code, flash_host.STOPPED)
+        self.assertIn("refused: the flash's SHA-256", output)
+        self.assertTrue(restore.exists())
+
+    def test_refusals_before_any_target(self):
+        restore = self.path / "restore.bin"
+        restore.write_bytes(b"")
+        unit, original = str(self.unit), self.original
+        for arguments, message in (
+            (("--model", unit, "--image", original), "one of the arguments"),
+            (("--image", original, "--dry-run"), "--pod or --model is required"),
+            (("--model", unit, "--dry-run"), "--image is required"),
+            (("--pod", "usb", "--model", unit, "--image", original, "--dry-run"), "not allowed with"),
+            (("--model", unit, "--image", original, "--write"), "--write requires --restore-to"),
+            (("--model", unit, "--image", original, "--write", "--expect-sha256", SHA256_3704), "--write requires"),
+            (("--model", unit, "--image", original[:-4] + "-missing.bin", "--dry-run"), "No such file"),
+            (("--plan", unit, original, "--pod", "usb"), "--plan touches no target"),
+            (("--model", unit, "--image", str(self.short), "--dry-run"), "not 524288"),
+            (("--model", unit, "--image", original, "--dry-run", "--restore-to", str(restore)), "exists"),
+        ):
+            with self.subTest(arguments=arguments):
+                stderr = io.StringIO()
+                with contextlib.redirect_stderr(stderr):
+                    output, code = self.main(*arguments)
+                self.assertIsNotNone(code)
+                self.assertIn(message, (code or "") + stderr.getvalue())
+
+    def test_plan(self):
+        output, code = self.main("--plan", str(self.unit), str(self.trial))
+        self.assertIsNone(code)
+        self.assertIn("hold\n0x70000\n0x78000", output)
+
+    def test_bad_sums_written(self):
+        image = bytearray(IMAGE_3704)
+        image[0x70000] = 0
+        bad = self.path / "bad.bin"
+        bad.write_bytes(bytes(image))
+        output, code = self.main("--model", str(self.unit), "--image", str(bad), "--write", "--restore-to", str(self.path / "r.bin"))
+        self.assertIsNone(code, output)
+        self.assertLess(output.index("WARNING: an image whose lane sums fail"), output.index("sector pair 0x70000 erased"))
+        self.assertIn("success: the flash is the image", output)
 
 
 if __name__ == "__main__":

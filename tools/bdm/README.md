@@ -8,31 +8,74 @@ bulk-writes the routine and a sector pair's data into RAM, sets the
 registers and calls it, and the routine makes the scattered command
 writes and status polls at bus speed and returns to background mode.
 
-It has run only on mc683xx's MC68331.  Nothing here touches a serial port, a
-pod or a receiver.
+It is a tool for someone who knows what they are loading: it writes
+exactly the image it is given, judging nothing of its content.  What
+it refuses is physical, or protects the way back: an image not the
+size of the flash, parts that are not the expected ones, a chip-select
+decode with a hazard, any write below `0x10000` unless told, and any
+target error.  It never starts the firmware.
+
+It has run only on mc683xx's MC68331.  `pod_target.py` adapts it to the
+mc683xx BDM pod, but nothing here has yet run on a pod or a receiver,
+and the tests touch neither.
 
 | File | What it is |
 | ---- | ---------- |
 | `flash_routine.S` | the routine, CPU32 assembly; its interface in its header |
 | `build_routine.py` | assembles it with the m68k binutils into `target/bdm/`: bytes, symbols (JSON) and listing |
 | `target.py` | the target interface the host needs, the one place an adapter is written against |
-| `flash_host.py` | the procedure, its refusals and the chip-select hazard check; `--plan` offline |
+| `flash_host.py` | the procedure, its refusals and the chip-select hazard check; the command line: `--plan` offline, `--dry-run`, `--identify` and `--write` on a target |
 | `board.py` | the board's flash wiring, which the host and the model share |
 | `am29f010.py` | the flash model: the parts' command state machine and the board's selects |
 | `model_target.py` | the target interface on mc683xx's MC68331, the model wired to its selects |
-| `test_flash.py` | the tests |
+| `pod_target.py` | the target interface on the mc683xx BDM pod's Python module, `mc683xx_bdm` |
+| `trial_image.py` | a bench trial's image: one word changed, the lane sums fixed |
+| `test_pod_target.py` | the pod adapter's tests, against a stand-in for the pod's module |
+| `test_flash.py` | the routine's, the host's and the command line's tests, on the model target |
 
 ## Running it
 
 ```
 make bdm-routine     # target/bdm/flash_routine.{bin,json,lst}
-make test-bdm        # assembles it, then the tests on the model target
+make test-bdm        # the pod adapter's tests; assembles the routine, then the tests on the model target
 python3 -I tools/bdm/flash_host.py --plan CURRENT.bin IMAGE.bin
 ```
 
 `--plan` reads a dump and an image and prints the sector pairs a run
 would erase and program, or why it would refuse.  The routine's size
 and code are in `target/bdm/flash_routine.json` and `.lst`.
+
+On a target, every run is one reset entry, and the options say
+everything; none defaults to writing:
+
+```
+flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
+```
+
+| Option | Meaning |
+| ------ | ------- |
+| `--pod POD` | the pod, as `mc683xx_bdm.Pod` names it: `usb`, `usb:SERIAL` |
+| `--model FLASH` | the modeled board, its flash holding the file FLASH; needs `mc683xx` (`uv run --with mc683xx==0.7.0`, as `test_flash.py` pins it) |
+| `--image IMAGE` | the image to program, which the plan is against |
+| `--dry-run` | set-up, the dump and its SHA-256, the plan: no flash command, no code run on the CPU |
+| `--identify` | the dry run and the routine's identify: the first code the CPU runs, sending only autoselect and read/reset |
+| `--write` | the whole procedure; requires `--restore-to` |
+| `--restore-to FILE` | save the dump to FILE, which must not exist, before any write; any mode |
+| `--expect-sha256 SHA256` | optional: refuse to go on unless the dump has this SHA-256; any mode |
+| `--allow-low` | allow erasing and programming below `0x10000`, the reset vectors, boot code and installer |
+
+Every run on a target, and `--plan`, first reports whether each bank's
+lane sums hold, the boot check's (`tools/firmware/lane_sums.py`, over
+`0x10000`-`0x3ffff` and `0x40000`-`0x7ffff`), and if one does not, warns
+that the image will boot into the installer, not the primary.  It
+writes the image all the same.
+
+`--write` prints each sector pair as it is erased, programmed and
+verified, then the whole flash's SHA-256 and either success or the
+ranges that differ.  Every run ends with the CPU stopped in background
+mode, and says so; none resets or resumes it.  After a target failure
+it says instead that the CPU may be running, and that the unit must be
+reset into BDM before anything else.
 
 `make test-bdm` needs the m68k binutils (`m68k-linux-gnu-gcc`, as the
 firmware's checks do; [`docs/firmware/README.md`](../../docs/firmware/README.md))
@@ -120,12 +163,10 @@ call.
 ## The host
 
 `flash_host.flash()` runs the procedure in its docstring.  Each
-target error is fatal; nothing is retried.  It refuses:
+target error is fatal; nothing is retried.  It reports the image's
+lane sums and writes it whether they hold or not.  It refuses:
 
 - an image not exactly 512 KiB;
-- an image whose lane sums (`tools/firmware/lane_sums.py`, over
-  `0x10000`-`0x3ffff` and `0x40000`-`0x7ffff`) do not hold, unless
-  `unchecked` says the image deliberately does not;
 - any sector pair below `0x10000` that would change, unless
   `allow_low`: the vectors, boot code and installer, which only a
   programmer could restore;
@@ -135,11 +176,14 @@ target error is fatal; nothing is retried.  It refuses:
 - a chip-select write that adds a hazard to the decode;
 - parts that do not give AMD's and the Am29F010B's codes in both lanes
   of both pairs, and a protected sector pair it would write;
-- a return to background mode that is not the routine's BGND.
+- a return to background mode that is not the routine's BGND, with PC
+  just after it;
+- with `expected_restore_sha256`, a dump of another SHA-256, and with
+  `restore_path`, a dump it cannot save to a new file there.
 
 `dry_run` stops after the dump and reports the plan: it sends the flash
-no command at all and runs no code.  The host never sets PC outside the
-routine, so it cannot start the firmware; a pod's "reset and run" is
+no command at all and runs no code.  `identify_only` stops there too,
+after identify.  The host never sets PC outside the routine, so it cannot start the firmware; a pod's "reset and run" is
 the person's step, after the host returns.
 
 **The chip-select order.**  The host writes the 3704 boot code's flash
@@ -178,10 +222,56 @@ these methods; every one acts at once or raises `TargetError`.
 | `write_memory(address, width, value)` | one write likewise |
 | `read_block(address, length)` | a bulk read (DUMP), even address and length |
 | `write_block(address, data)` | a bulk write (FILL), even address and length |
-| `read_register(name)` | D0-D7, A0-A7 (A7 the supervisor stack pointer), PC, SR, VBR |
+| `read_register(name)` | D0-D7, A0-A7, PC, SR, VBR; A7 the stack pointer SR's S bit selects, PC the return PC (RPC), after a BGND the address after it |
 | `write_register(name, value)` | likewise |
 | `go()` | leave background mode, running from PC |
-| `wait_for_bdm(timeout)` | block until background mode again; returns the entry (BGND, breakpoint, double bus fault, MC68331UM Table 5-4); `TargetTimeout` after timeout seconds; a reset meanwhile is a `TargetError` |
+| `wait_for_bdm(timeout)` | block until background mode again; returns the entry (BGND, breakpoint, double bus fault, MC68331UM Table 5-4); `TargetTimeout` after timeout seconds, the CPU never halted; a reset meanwhile is a `TargetError` |
+
+Two conventions are stated because both adapters must keep them.  PC
+is RPC, where GO resumes (MC68331UM 5.10.2.5.2), so after the routine's
+BGND it is the BGND's address plus its one word; the host requires
+exactly that, which mc683xx and the pod's bindings both give.
+A7 is whichever stack pointer SR selects, so the host writes SR, with
+S set, before A7.
+
+## The pod adapter
+
+`pod_target.py` implements the interface on a `Pod` of the pod's
+Python module, `mc683xx_bdm` (the pod's repository, `crates/py`: its
+README and its type stub, `python/mc683xx_bdm/__init__.pyi`).  It
+imports the module only when it opens a pod, so the tests and the
+model path need none.
+
+| Method | Pod calls |
+| ------ | --------- |
+| `reset_into_bdm()` | `reset_with_breakpoint()`, then `background` must not be `None` |
+| `read_memory(address, width)` | `bus_read(address, width, 5)` |
+| `write_memory(address, width, value)` | `bus_write(address, width, value, 5)` |
+| `read_block(address, length)` | `read_memory(address, length, size=, function_code=5)`, longs where the address and length allow, a word before and after otherwise |
+| `write_block(address, data)` | `write_memory(address, data, size=, function_code=5)`, likewise |
+| `read_register(name)`, `write_register(name, value)` | the same calls by the same names: the pod takes `PC` for RPC and `A7` as SR selects it |
+| `go()` | `background` must not be `None`, then `go()` |
+| `wait_for_bdm(timeout)` | polls `background`, and while it is `None` `pins().reset`, until an entry, RESET low, or the time-out |
+
+Function code 5 is supervisor data.  Every exception a pod call raises
+(`TransportError`, `ProtocolError`, `TargetError`, `BusError`, and
+`ValueError` for an argument the pod rejects) becomes the host's
+`TargetError`, with the original's type and message and the original
+as its cause.  An entry the interface does not name (the pod's
+`Entry.Unknown`) is a `TargetError`.  The adapter never calls `halt()`:
+on a time-out the host touches the target no more, and a halt of a CPU
+that a reset left running with BDM off would reach the firmware as a
+breakpoint exception.  The pod reports no reset while the CPU runs, so
+the adapter reads the RESET line between polls and calls it low a
+reset while running; a reset shorter than a poll goes unseen and ends
+in the time-out instead.
+
+On a bench machine the module comes as the pod project says: a wheel
+built in its repository (`cd crates/py && uv build --wheel`, its
+README), installed into an environment of this checkout's own, for
+example `uv venv target/bdm-venv` and `uv pip install --python
+target/bdm-venv/bin/python WHEEL`.  The bench steps below call that
+environment's Python `$PY`.
 
 ## The model target and the flash model
 
@@ -226,45 +316,115 @@ stuck lane in erase and in program; a time-out; a bus error mid-erase
 returning through the vector table; the poll and step clock bounds; a
 whole image from blank, from a variant of itself and from the 3633
 image (refused below `0x10000`, then written with `allow_low`); a dry
-run; refusals of a low sector pair, a short image, bad lane sums (and
-the same image written with `unchecked`), unexpected IDs and a
-protected sector; the watchdog reset without SYPCR; the bench order
+run; refusals of a low sector pair, a short image, unexpected IDs
+and a protected sector; bad lane sums reported and the image written; the watchdog reset without SYPCR; the bench order
 adding no hazard; the reset decode's hazards; the mirror on the model;
-and four changed orders refused.
+four changed orders refused; the trial image and its refusals; identify only, the restore dump saved and its SHA-256
+checked, each step logged; and the command line on the model
+target: a dry run, identify, a trial written, an image with failing
+sums written after its warning, a write refused on another flash's
+SHA-256, and its refusals before any target.
+
+`test_pod_target.py`, against a stand-in pod that records each call,
+answers `background` from a script, reports a RESET level and raises
+any of the pod's exceptions: each method's pod calls, the access
+widths, each of the wait's outcomes (each entry, an unknown entry, the
+time-out with no `halt`, RESET low), and every pod exception from
+every call becoming a `TargetError`.
 
 ## A bench trial
 
-It needs: a pod adapter for `target.py`; `make bdm-routine`; the
-owner's choice of unit, a spare first being the safer; the
-unit's own image as the restore image, checked by SHA-256 against the
-catalog's.  One reset entry, in this order:
+The rule: the firmware never runs mid-procedure.  Every run begins
+with its own reset entry (RESET with BKPT held), and none resets the
+unit to run or resumes it; between runs the unit stays stopped, and no
+one starts it until the last step.  If the firmware does run between
+steps, the next run's reset entry still starts clean, but the run that
+was interrupted is suspect: begin again at step 1.
 
-1. A dry run with the unit's own image: SYPCR, the chip selects read
-   back, the routine and table loaded and read back, the dump's SHA-256
-   the catalog's, nothing to write.  No flash command, no code run.
-2. Identify, through the routine: the first code the CPU runs, sending
-   only autoselect and read/reset.  It proves the call: registers,
-   VBR, BGND, the return PC.
-3. The unit's image with one word of the blank sector pair `0x70000`
-   changed and the lane sums fixed: a plan of `0x70000` and `0x78000`,
-   pair 2's blank pair and its sums, the sector pairs the bench's
-   manual stages B and C already erased and programmed.
-4. The unit's own image again: the same two sector pairs back, the
-   final SHA-256 the catalog's.
-5. Then, by hand, the pod's reset and run: the primary boots.
+It needs: `make bdm-routine`; the pod module in an environment (above);
+the owner's choice of unit, a spare first being the safer; and the
+unit's own image, which step 1 confirms.  With the unit's image (the
+3704, say) and a folder for the dumps:
 
-Recovery: the host never writes below `0x10000`, so the vectors, boot
-code and installer stay; a failure leaves pair 2's sums wrong at worst,
-and the unit boots into the installer, which `smartclock-cli flash`
-can reflash, or BDM can again from a reset entry.  A part busy after a
-time-out finishes on its own (no RESET pin): reset into BDM and poll
-before reading.  Last resort: the parts are socketed.
+```
+PY=target/bdm-venv/bin/python
+IMAGE=third_party/firmware/images/58503a-3704.bin
+SHA=$(sha256sum "$IMAGE" | cut -d' ' -f1)
+mkdir -p captures/bdm
+```
 
-What the model cannot show: the pod's semantics (register names, A7
-against SSP, the PC after BGND, FILL and DUMP widths, whether `go`
-after a reset entry needs anything more); real poll and erase timing,
-and the DQ7 lag the routine already allows for; the wiring of WE#;
-any interrupt line asserted at level 7; electrical behavior.
+1. **Dry run.**
+
+   ```
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --dry-run --restore-to captures/bdm/1.bin
+   ```
+
+   Success: the SIM's entry state and every chip select read back, the
+   routine and vector table read back, the image's lane sums holding,
+   the restore image's SHA-256 `$SHA`, "sector pairs to write: none",
+   and the last line saying the CPU is stopped in background mode.  No
+   flash command, no code run.  If the SHA-256 is another image's
+   (`sha256sum third_party/firmware/images/58503a-*.bin`), that image
+   is the unit's: use it as `$IMAGE` from here on.
+
+2. **Identify.**
+
+   ```
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --identify --expect-sha256 "$SHA" --restore-to captures/bdm/2.bin
+   ```
+
+   Success: as step 1, and for both pairs manufacturer `0x0101`,
+   device `0x2020` and protection all zero.  It is the first code the
+   CPU runs, sending only autoselect and read/reset, and proves the
+   call: registers, VBR, the run, BGND and the PC after it.
+
+3. **A trial write**: the unit's image with the first word of the blank
+   sector pair `0x70000` changed and the lane sums fixed.
+
+   ```
+   python3 -I tools/bdm/trial_image.py "$IMAGE" captures/bdm/trial.bin
+   python3 -I tools/bdm/flash_host.py --plan captures/bdm/2.bin captures/bdm/trial.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image captures/bdm/trial.bin --write --expect-sha256 "$SHA" --restore-to captures/bdm/3.bin
+   ```
+
+   Success: the lane sums hold; the plan is `0x70000` and `0x78000`, pair 2's blank pair
+   and the one holding its sums; each is erased, programmed and
+   verified; the flash's SHA-256 is the trial image's and the run says
+   success, then that the CPU is stopped.
+
+4. **The original back.**
+
+   ```
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --write --expect-sha256 "$(sha256sum captures/bdm/trial.bin | cut -d' ' -f1)" --restore-to captures/bdm/4.bin
+   ```
+
+   Success: the same two sector pairs, the flash's SHA-256 `$SHA`,
+   success, the CPU stopped.
+
+5. Then, by hand and only then, the pod's reset and run: the primary
+   boots.
+
+**Recovery.**  The host never writes below `0x10000` without
+`--allow-low`, which none of these steps gives, so the vectors, the
+boot code and the installer are never touched.  A step that fails
+leaves pair 2's two sector pairs at worst erased or half written and
+its sums wrong: the boot check then fails, and the unit boots into the
+installer, which `smartclock-cli flash` can reflash.  BDM does not
+need valid flash: a reset entry stops the CPU before its first
+instruction, so the host can always start again from step 1 and write
+the image back with step 4's command, the saved restore dump's SHA-256
+as `--expect-sha256`.  After a time-out or a reset while running, the
+CPU may still run the routine and a part may still be erasing, which
+a reset does not stop (the parts have no RESET pin): reset into BDM,
+and trust no read until a dry run's dump is stable.  Last resort: the
+parts are socketed.
+
+What the model cannot show: the pod's own behavior (whether the RESET
+line can be read between polls, what closing the pod leaves the CPU
+in, whether `go` after a reset entry needs anything more), the bulk
+widths' speed on this board, real poll and erase timing, and the DQ7
+lag the routine already allows for; the wiring of WE#; any interrupt
+line asserted at level 7; electrical behavior.
 
 ## Adversarial review
 
@@ -276,9 +436,10 @@ its own faults, and the host's timeout.  A routine that never returns
 waiting out its timeout and then touching nothing; only a reset ends
 it, and a part erasing then keeps erasing.  A bug in the range checks
 could erase below `0x10000`: the host's plan and the routine's floor
-each forbid it, and the tests hold both.  The lane sums prove an image
-self-consistent, not that it is a 58503A's: unlike `smartclock-cli
-flash`, this takes any image whose sums hold, a Z3801A's included.
+each forbid it, and the tests hold both.  Nothing checks that an
+image is a 58503A's: the tool writes what it is given, a Z3801A's
+included, and the lane sums, which prove an image only
+self-consistent, are reported, not enforced.
 
 **What it costs.**  Each trial is a reset entry, a cold start of the
 oscillator loop.  The poll limits assume the fastest possible poll, so

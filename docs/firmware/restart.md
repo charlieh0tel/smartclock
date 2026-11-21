@@ -635,15 +635,63 @@ which wants one too.
 
 ## The switch byte at `0x302000`
 
-In the Z3801A, Z3805A and 58503A the byte lies in CS5's window ("The
-chip selects", above); in the Z3816A and Z3815A primaries it is chip
-select 7's own block (CSBAR7 `0x3020`, CSOR7 `0x6870`: Z3816A
-`0x24706`, `0x2470e`; Z3815A `0x24bce`, `0x24bd6`).
+On the bench 58503A's main board (58503-60001 Rev C) the byte at
+`0x302000` is S1, measured on 2026-11-21 over the BDM header J12
+(`../hardware-investigations.md` item 13, "Measured, S1 on the
+58503A"): with all eight positions ON, as the switch marks them, it
+reads `0x00`, and position n OFF sets bit n − 1, `0x01` for position
+1 to `0x80` for position 8; ON reads 0, OFF reads 1.  S1 does not
+change what the flash reads.  That mapping is measured on that board
+alone.  For every other board below it is an assumption, and each
+position named for another model's image rests on it; whether the
+byte is S1 at all on those boards has not been established.
 
-The only read of `0x302000` in any installer is in the Oman installer
-that 58503A 3633 carries (unpacked address `0x108290`).  The installer
-first loads its host-port settings from the EEPROM record or its
-defaults, then reads the byte and overrides them:
+*Which select.*  In the Z3801A, both Z3805As and both 58503As the byte
+lies in CS5's 64 KiB window, an 8-bit port, so a byte read there is
+one cycle on DATA15 to DATA8 ("The chip selects", above).  The
+Z3816A's and Z3815A's primaries make it chip select 7's own 2 KiB
+block, a 16-bit read-only port (CSBAR7 `0x3020`, CSOR7 `0x6870`:
+Z3816A `0x24706`, `0x2470e`; Z3815A `0x24bce`, `0x24bd6`), and the
+58503B's the same block as an 8-bit port (`0x24644`, `0x2464c`; its
+CSPAR1 `0x00ab`).  The Z3817A's primary moves CS7 to a write-only
+block at `0x306000`, so nothing selects `0x302000` there, nor in the
+boot code's map these four models' installers run on
+(`chip-selects.md`).
+
+*Byte lanes.*  The CPU32 is big-endian: a word read at `0x302000`
+takes the byte at `0x302000` as its high half, DATA15 to DATA8, and
+the byte at `0x302001` as its low half.  So bit 8 of the word is bit
+0 of the byte, position 1; bit 12 is bit 4, position 5; and bits 7 to
+0 are the byte at `0x302001`, which on a 16-bit port is whatever
+drives DATA7 to DATA0 in that cycle.  What `0x302001` reads on any
+board is not established.  The Z3816A and Z3815A read the word; the
+3633 installer and the 58503B read the byte.
+
+*Who reads it.*  Every image, primaries and the installers' records
+alike, holds thirteen absolute operands `0x302000`, each a read, and
+none `0x302001`; no other instruction addresses CS5's window or CS7's
+block where the switch could answer, and the only register base in
+the window is the FPGA's `0x304000`, indexed by a byte.  Not ruled
+out, as for the chip selects: an address computed or read from
+memory.  Positions are the 58503A's wiring, assumed:
+
+| Image | Code | Read | When | Position 1 | Position 2 | Position 3 | Position 4 | Position 5 | Positions 6 to 8 |
+| ----- | ---- | ---- | ---- | ---------- | ---------- | ---------- | ---------- | ---------- | ---------------- |
+| 58503A 3633 | Oman installer | byte, `0x108290` | each time the installer starts; not kept | ON: the host port's settings come from positions 2 to 5, over the EEPROM's record or 9600 8N1; OFF: they do not (`0x10829c`) | with position 3, the baud rate (`0x1082a2`): both ON 1200, 2 OFF 2400, 3 OFF 9600, both OFF 19200 | see position 2 | OFF: 7 data bits, odd parity; ON: 8 bits, no parity (`0x1082b0`) | OFF: XON/XOFF pacing on; ON: off (`0x1082d6`) | not tested |
+| 58503A 3633 | primary | -- | -- | not read | not read | not read | not read | not read | not read |
+| 58503A 3704 | primary, USA installer | -- | -- | not read | not read | not read | not read | not read | not read |
+| Z3801A 3543, Z3805A 3543B | primary, Peru installer | -- | -- | not read | not read | not read | not read | not read | not read |
+| Z3805A 1.01.03 | primary, Peru installer | -- | -- | not read | not read | not read | not read | not read | not read |
+| Z3817A 3752 | primary, Vatican installer | -- | -- | not read; no select maps the address | not read | not read | not read | not read | not read |
+| 58503B 1.01.04 | primary | byte, `0x2dbc8` in `efc_write` (`0x2dba0`) | at every EFC write, the loop's and the console word `efc_write`'s | read, no bit tested: the byte is stored to the argument's stack slot, which no caller reads (`0x2dbce`) | the same | the same | the same | the same | the same |
+| 58503B 1.01.04 | Vatican installer | -- | -- | not read | not read | not read | not read | not read | not read |
+| Z3816A 4001 | primary | word bit 8, `0x4b14c` | once, as the pllp task starts | OFF: G −1.25 × 10⁻¹²; ON: G −2.125 × 10⁻¹² (`0x4b156`) | not tested | not tested | not tested | not tested | not tested |
+| Z3816A 4001 | USA installer | -- | -- | not read | not read | not read | not read | not read | not read |
+| Z3815A 4010 | primary | word, ten reads, `0x33c02` to `0x50bf2` | positions 1 to 4 and 7 each tick of the backp task; position 5 at start-up, at each restart of the loop, while the OCXO warms and each tick; position 6 while the antenna current is below 10 | word bit 8.  OFF: the output's active state disabled each tick (`0x3470e`), so the controller blocks it, logging the cause as another card's (`monitors_from_active`, `0x3490c`); bit 5 of `:DIAGnostic:INPut:DATA?` | word bit 9: kept at `0x10217f` (`0x34744`), which nothing reads | word bit 10.  OFF: the ES message's error bit 0 (`0x23f50`) and the status screen's first field (`0x55eaa`); bit 6 of `:DIAGnostic:INPut:DATA?` | word bit 11.  OFF: a holdover past `:OUTPut:ACTive:HOLDover:DURation:THReshold` makes the active output inactive, with word bit 7 clear (`0x3490c`); in n3 lock, with `standby_from_unlock`, `:KENneth:PREDicted?` answers (`0x4bc88`) and the aging fit collects (`0x4a622`); bit 4 of `:DIAGnostic:INPut:DATA?`, with which `n3_lock_efc_set` holds the EFC at its end for 20 passes (`0x51732`) | word bit 12.  OFF: the OCXO's warmth is the puck's (`0x33c4a`), its silence an `OCXO Communication Fail` (`0x3431e`, `0x3434e`), `:ASLOPe`'s default +1.2 × 10⁻¹² (`0x45044`) and τ 1000 s (`0x50bfe`).  ON: warmth from the oven monitor past 0.9 (`0x33c56`), `:ASLOPe` −2.125 × 10⁻¹², `:BSLOPe` 0, τ 500 s and the EFC's compensation off (`0x45050`, `0x50c0a` to `0x50c24`) | 6, word bit 13.  OFF: an antenna current below 10 is an antenna fault, while `:DIAGnostic:GPS:ACURrent`'s alarm is on (`0x33c08`).  7, word bit 14: compared with `power_ok` (`0x1021af`); ON with the power good sets bit 8 of the output's status word, written to the latch at `0x300000` (`0x34db6`, `0x34dfc`); OFF with it good, clear.  8, word bit 15: kept at `0x102185` (`0x3477e`), which nothing reads |
+| Z3815A 4010 | Vatican installer | -- | -- | not read | not read | not read | not read | not read | not read |
+
+The Oman installer first loads its host-port settings from the EEPROM
+record or its defaults, then reads the byte and overrides them:
 
 ```
 108290  move.b  $302000,d1
@@ -662,36 +710,61 @@ XON/XOFF pacing.  One stop bit is forced; bits 5 to 7 are not tested.
 The installer writes the ACR once, `0xb0` (`0x346e`, `0x3476` in the
 unpacked image), selecting the 68681's baud-rate set 2, in which those
 codes are 1200, 2400, 9600 and 19200 baud at the part's standard
-3.6864 MHz clock; the board's crystal was not checked.  The byte is
-read each time the installer starts and is not stored.
+3.6864 MHz clock; the board's crystal was not checked.
 
-The Peru installer (Z3801A 3543, Z3805A 3543B) and the USA installer
-(58503A 3704, Z3816A 4001) do not read `0x302000`, nor does the
-Vatican installer (Z3815A 4010, 58503B 1.01.04).  Of the primaries, the Z3801A,
-Z3805A and both 58503As never read it.  The Z3816A reads bit 8 of the
-word there once, to pick G (see `loop.md`, "τ and G").  The Z3815A
-reads the word in ten places (`0x33c04` to `0x50bf4`), testing bits 7,
-12, 13 and 14; bit 12 picks its τ and G (`loop.md`, "In every image").
-The 58503B reads the byte once in its EFC writer, `0x2dba0`, after
-sending the value to the DAC over the QSPI and pulsing port E bit 7;
-the console word `efc_write` and the loop's EFC conversion (`0x32cd0`)
-call it, so the byte is read at every EFC write, and what that read
-does was not traced.  So no firmware on the bench units reads this
-byte.
-097-55300-01 figures 3-14 and 3-15A give the related 55300A's S1 B1 as
-"Preset All Serial Ports at Powerup", the same kind of function.
+The 58503B's `efc_write` reads the byte after sending the value to the
+DAC over the QSPI and pulsing port E bit 7, and its callers, the
+console word and `efc_write_dithered` (`0x32cd0`), drop it: the value
+is never used.  Whether the read cycle itself does something on the
+board -- CS7 asserted once after each DAC load -- is not established.
 
-On the bench 58503A (58503-60001 Rev C) the byte is S1, measured on
-2026-11-21 over the BDM header J12 (`../hardware-investigations.md`
-item 13, "Measured, S1 on the 58503A"): position n is bit n − 1, and
-a position reads 0 ON, by the switch's marking, and 1 OFF.  With every
-position ON the byte reads `0x00`, which under the Oman installer, by
-the reading above, enables the override (bit 0 clear) and selects the
-first baud code, `0x66`, 1200 baud at the standard clock, 8 bits, no
-parity, no pacing; the board's crystal was not checked.  That unit
-runs 3704, whose primary and USA installer do not read the byte: on a
-58503A running 3704 with its own installer, S1 has no effect.  Whether
-the Z3801A's and Z3805A's S1 drive the byte has not been established.
+In the Z3815A, positions 1 and 4 count only while bits 4 and 5 of the
+word, the byte at `0x302001`, are not both set: then the decoder
+clears their cells with bits 4 to 7 (`0x346a4`).  The
+`:DIAGnostic:INPut:DATA?` reads take the word afresh (`0x34158`); the
+rest go
+through the cells `switch_word_decode` (`0x34676`) fills from
+`0x102176` each tick of the backp task (`0x34e1e`), or read it where
+they test it.  So a change to positions 1 to 4, 6 and 7 counts within
+a tick, and to position 5 for the alarm and the warm-up at once but
+for τ and G only from the next start or restart of the loop
+(`loop.md`, "In every image").  The 3633 installer and the Z3816A take
+a change only at their next start; the 58503B's read changes nothing
+the firmware keeps.  The byte at `0x302001`'s uses are
+`z3815a-4010.md`'s.
+
+*All ON and all OFF*, the byte `0x00` and `0xff`, the states a board
+is most likely found in:
+
+- 58503A 3633: all ON, the installer talks 1200 baud, 8 bits, no
+  parity, no pacing, whatever the EEPROM holds; all OFF, it keeps the
+  EEPROM's settings, or 9600 8N1.  The primary is the same either
+  way.
+- 58503A 3704, Z3801A 3543, Z3805A 3543B and 1.01.03, Z3817A 3752:
+  the same either way.  So on a 58503A running 3704 with its own USA
+  installer, as the bench unit's flash is, S1 has no effect.
+- 58503B 1.01.04: the same either way; the byte is read at every EFC
+  write and dropped.
+- Z3816A 4001: all ON, G −2.125 × 10⁻¹²; all OFF, −1.25 × 10⁻¹².
+- Z3815A 4010: all ON, the output is not disabled by the word, the ES
+  error bit 0 is clear, the paths on word bit 11 are off, the OCXO is
+  judged by the oven monitor with τ 500 s and G −2.125 × 10⁻¹², a low
+  antenna current is not a fault, and with the power good bit 8 of the
+  output's status is set; all OFF, the output's active state is
+  disabled every tick unless word bits 4 and 5 are both set, the ES
+  error bit 0 is set, the OCXO is the puck's with τ 1000 s and
+  G +1.2 × 10⁻¹² (or the calibration block's), a low antenna current
+  is a fault, and status bit 8 is clear.  Neither state is plainly the
+  quiet one, which suggests the Z3815A's word is not, or not only, a
+  switch; what drives it on that board is not established.
+
+097-55300-01, the guide to a different instrument, the 55300A,
+describes that unit's S1, for comparison only: figures 3-14, 3-15A and
+3-15B give B1 "Preset All Serial Ports at Powerup", ON restoring every
+serial port's factory settings at each power-up, and B2 "Password
+Required = ON; No Password Required = OFF"; B3 to B8 are drawn and not
+described.  B1 is the 3633 installer's position 1 in kind, and in
+sense: ON acts.
 
 ## The flasher
 

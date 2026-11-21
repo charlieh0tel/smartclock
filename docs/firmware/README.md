@@ -237,7 +237,10 @@ following, and how.
   58503A's was not photographed, and no Z3816A board has been seen.
 - What drives bit 8 of the read-only port at `0x302000`, which
   chooses between the Z3816A's two values of G.  The image reads it
-  once and examines nothing else in that block.
+  once and examines nothing else in that block.  Bit 8 is bit 0 of
+  the byte at `0x302000`, which on the 58503A's board is S1's
+  position 1, measured (`restart.md`, "The switch byte at
+  `0x302000`"); the Z3816A's board is not checked.
 - That the SCI is the port wired to J3: the firmware's SCPI port is the
   one it creates `sciR` and `sciW` for, but the board was not traced.
 - What drives the 59551A's PORT 2.  DUART channel B, idle here, is the

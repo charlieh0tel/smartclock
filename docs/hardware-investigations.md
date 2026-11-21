@@ -433,10 +433,18 @@ limit 650 after 4.489 per ADC count, unit unknown.
 
 *Open item:* the firmware keeps its loop state across a reset when
 the reset-status register shows neither EXT nor POW and the RAM
-checksum holds.  Read, not exercised.
+checksum holds.  Exercised on the 58503A on 2026-11-20 and 2026-11-21
+("Measured, resets on the 58503A", below): an external reset is cold
+and a watchdog reset warm, as the code says.
 
-- [ ] TODO: on a spare unit, apply a brief external reset and watch
-  whether tau and the aging fit survive.
+- [x] External reset on the 58503A (58503-60001 Rev C, 3704),
+  2026-11-20 and 2026-11-21: cold, RSR `0x80`; a watchdog reset is
+  warm, RSR `0x20` (below).
+- [ ] TODO: watch whether τ and the aging fit read back unchanged
+  across a warm (watchdog) restart.
+- [ ] TODO: RSR after a true power-up, POW alone or with EXT.
+- [ ] TODO: RSR after the firmware restarts from an exception, to say
+  by which mechanism it restarts.
 
 - Both software restarts in the image discard that state before
   resetting (`docs/firmware/restart.md`, "Restarting"): `:SYSTem:PON` zeroes
@@ -452,6 +460,55 @@ checksum holds.  Read, not exercised.
   a RESET-instruction restart with the flag intact.
 - Watch whether τ (loop time constant) and the aging fit survive: the
   EFC should not jump and the drift term should not go to zero.
+
+*Measured, resets on the 58503A.*  On the bench 58503A's main board
+(58503-60001 Rev C), running 3704, on 2026-11-20 and 2026-11-21, a
+BDM probe on J12 (item 13) reset the CPU or let the watchdog reset
+it, then read RSR (`0xfffa07`), `warm_start` (`0x1039af`, set when
+the start-up restores the preserved region; `firmware/structures.md`)
+and the preserved region at `0x100000`; the receiver's own log was
+read after each:
+
+| Reset | RSR | `warm_start` | Receiver's log |
+| ----- | --- | ------------ | -------------- |
+| External, from the probe | `0x80`, EXT | `0x00` | `Power on` |
+| Software watchdog | `0x20`, SW | `0x01` | `Re-boot` |
+
+- *External.*  Cold, as the start-up's test of `RSR & 0xc0` says
+  (`firmware/restart.md`, "Restarting"): EXT alone does not count as
+  warm.
+- *Watchdog.*  The firmware was halted without freezing the watchdog
+  (SIMCR `0x014a`, FRZSW clear) and the CPU reset itself about 8 s into the halt:
+  FREEZE dropped between 00:17:48 and 00:17:49 UTC for a halt begun
+  at 00:17:41, matching SYPCR `0xcc` (`firmware/restart.md`, "The
+  watchdog").  The log recorded `Re-boot` at that time and `GPS lock
+  started` 74 s later.  `warm_start` read `0x01`, and the region's
+  first four bytes `93 6c 00 01`: its checksum as sum and complement,
+  and the flag word at `0x100002` 1.
+- *Watchdog, entered in background mode.*  In a second run the probe
+  held BKPT low, so that the CPU entered background mode at that
+  reset before its first instruction: RSR `0x20` alone, no other bit;
+  SIMCR `0x60cf`, SYPCR `0x80`, RPC `0x00000550`, the boot code's
+  reset entry, and VBR 0.  Let run, the firmware left `warm_start`
+  `0x01`, and RSR still read `0x20`.  RSR is not cumulative: SW alone
+  after a watchdog reset that followed an external one ("RSR is
+  updated when the MCU comes out of reset", MC68331UM D.3.4).
+- *A halt with background mode off.*  A halt asked for while
+  background mode is off, as when the CPU has come out of reset with
+  BKPT high, after a power-up, is taken by the firmware as a
+  breakpoint exception (MC68331UM 5.10.2.2.1: "If BDM is disabled, a
+  breakpoint exception (vector $0C) is acknowledged").  The EEPROM's
+  reset records (`0x400200`) gained three `Exception: ROOT, vector
+  2030, PC = ...` entries dated 2026-11-20, at 22:30:50, 23:14:14 and
+  23:29:58 by the receiver's clock: format/vector word `0x2030`, frame
+  format 2, vector offset `0x030`, vector 12.  The receiver's log
+  records each such restart as `Re-boot`.
+
+Not established: RSR at a true power-up, POW alone or with EXT; and
+by which mechanism the firmware restarts after such an exception, as
+the RSR after one was not read.  Whether τ and the aging fit read
+back unchanged after the warm start was not checked; the code
+restores them with the region.
 
 *Changes:* confirms which reset sources keep the loop's state, and
 whether `*TST?` is one of them.

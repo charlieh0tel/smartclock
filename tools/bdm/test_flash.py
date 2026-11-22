@@ -462,16 +462,15 @@ class Modes(unittest.TestCase):
         self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
         clean(self, model)
 
-    def test_restore_saved_and_expected(self):
+    def test_restore_saved(self):
         with tempfile.TemporaryDirectory() as folder:
             restore = Path(folder) / "restore.bin"
             target, model = board()
-            with self.assertRaisesRegex(Refused, "not the expected"):
-                run(target, variant(IMAGE_3704, 0x60000), restore_path=restore, expected_restore_sha256="0" * 64)
+            run(target, variant(IMAGE_3704, 0x60000), restore_path=restore, dry_run=True)
             self.assertEqual(restore.read_bytes(), IMAGE_3704)
-            self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
             with self.assertRaisesRegex(Refused, "cannot save"):
                 run(target, variant(IMAGE_3704, 0x60000), restore_path=restore)
+            self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
 
     def test_each_step_logged(self):
         target, model = board()
@@ -538,16 +537,6 @@ class CommandLine(unittest.TestCase):
         self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
         self.assertNotIn("restore image saved", output)
         self.assertIn("sector pair 0x78000 verified", output)
-
-    def test_write_refused_on_another_flash(self):
-        restore = self.path / "restore.bin"
-        output, code = self.main(
-            "--model", str(self.unit), "--image", self.original, "--write",
-            "--expect-sha256", "0" * 64, "--restore-to", str(restore),
-        )
-        self.assertEqual(code, flash_host.STOPPED)
-        self.assertIn("refused: the flash's SHA-256", output)
-        self.assertTrue(restore.exists())
 
     def test_refusals_before_any_target(self):
         restore = self.path / "restore.bin"

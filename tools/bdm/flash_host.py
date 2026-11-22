@@ -12,16 +12,14 @@ prints, from a dump of the flash and the image to program, the sector
 pairs a run would erase, or why it would refuse; no target is touched.
 
     python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
-        (--dry-run | --identify | --write) [--restore-to FILE]
-        [--expect-sha256 SHA256] [--any-entry-state]
+        (--dry-run | --identify | --write) [--restore-to FILE] [--any-entry-state]
 
 runs the procedure below on a pod (pod_target.py) or on the modeled
 board holding FLASH (model_target.py): --dry-run steps 1-4 and 6,
 sending the flash no command and running no code; --identify steps
 1-6, the routine's identify the only code run; --write all of it.  In
-any mode the dump's SHA-256 is printed, the dump is saved to FILE
-first with --restore-to, and with --expect-sha256 the run is refused
-unless the dump has that SHA-256.  It writes exactly the image it is given: its
+any mode the dump's SHA-256 is printed, and with --restore-to the dump
+is saved to FILE first.  It writes exactly the image it is given: its
 lane sums are reported, never refused.  It never starts the firmware:
 it ends with the CPU in background mode.
 
@@ -36,8 +34,7 @@ The procedure, each step's failure fatal, never retried:
 5. Identify both pairs; refuse unless both lanes of both are AMD
    Am29F010s and no sector pair to be written is protected.
 6. Dump the flash: its SHA-256 is the restore image's.  Save it if
-   asked, and refuse to go on if a SHA-256 is expected and it has
-   another.
+   asked.
 7. For each sector pair that differs from the image: erase (with the
    routine's blank check), program, verify.
 8. Dump the flash again and compare it with the image.
@@ -392,15 +389,12 @@ class Options:
     reset's; dry_run: stop after the dump, reporting the plan;
     identify_only: likewise after identify;
     restore_path: a new file to save the dump to, before any write;
-    expected_restore_sha256: if given, refuse to go on unless the dump
-    has it;
     program_time and erase_time: the routine's limits, seconds."""
 
     any_entry_state: bool = False
     dry_run: bool = False
     identify_only: bool = False
     restore_path: Path | None = None
-    expected_restore_sha256: str | None = None
     program_time: float = PROGRAM_TIME
     erase_time: float = ERASE_TIME
 
@@ -601,9 +595,6 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
             except OSError as error:
                 raise Refused(f"cannot save the restore image: {error}") from error
             log(f"restore image saved to {options.restore_path}")
-        expected = options.expected_restore_sha256
-        if expected is not None and report.restore_sha256 != expected.lower():
-            raise Refused(f"the flash's SHA-256 is {report.restore_sha256}, not the expected {expected}")
         report.plan = plan(report.restore, image)
         log(f"sector pairs to write: {', '.join(f'{base:#x}' for base in report.plan) or 'none'}")
         protected = [base for base in report.plan if protection.get(base, UNPROTECTED_BOTH) != UNPROTECTED_BOTH]
@@ -657,7 +648,6 @@ def arguments() -> argparse.Namespace:
     targets.add_argument("--pod", metavar="POD", help="the pod, as mc683xx_bdm.Pod names it: usb, usb:SERIAL")
     targets.add_argument("--model", metavar="FLASH", type=Path, help="the modeled board, its flash holding FLASH")
     parser.add_argument("--image", type=Path, help="the image to program")
-    parser.add_argument("--expect-sha256", metavar="SHA256", help="the SHA-256 the unit's flash must have now")
     parser.add_argument("--restore-to", metavar="FILE", type=Path, help="a new file to save the unit's flash to")
     parser.add_argument(
         "--any-entry-state",
@@ -668,7 +658,6 @@ def arguments() -> argparse.Namespace:
     bench_options = (
         ("--pod or --model", parsed.pod or parsed.model),
         ("--image", parsed.image),
-        ("--expect-sha256", parsed.expect_sha256),
         ("--restore-to", parsed.restore_to),
         ("--any-entry-state", parsed.any_entry_state),
     )
@@ -690,7 +679,6 @@ def bench(parsed: argparse.Namespace, image: bytes, routine: Routine) -> None:
         dry_run=parsed.dry_run,
         identify_only=parsed.identify,
         restore_path=parsed.restore_to,
-        expected_restore_sha256=parsed.expect_sha256,
     )
     if parsed.model:
         from am29f010 import BoardFlash

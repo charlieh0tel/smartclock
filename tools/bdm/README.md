@@ -63,7 +63,6 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | `--identify` | the dry run and the routine's identify: the first code the CPU runs, sending only autoselect and read/reset |
 | `--write` | the whole procedure |
 | `--restore-to FILE` | optional: save the dump to FILE, which must not exist, before any write; any mode |
-| `--expect-sha256 SHA256` | optional: refuse to go on unless the dump has this SHA-256; any mode |
 | `--any-entry-state` | go on from a reset entry whose SIM is not a fresh reset's, reporting what it read |
 
 Every run on a target, and `--plan`, first reports whether each bank's
@@ -178,8 +177,7 @@ lane sums and writes it whether they hold or not.  It refuses:
   of both pairs, and a protected sector pair it would write;
 - a return to background mode that is not the routine's BGND, with PC
   just after it;
-- with `expected_restore_sha256`, a dump of another SHA-256, and with
-  `restore_path`, a dump it cannot save to a new file there.
+- with `restore_path`, a dump it cannot save to a new file there.
 
 `dry_run` stops after the dump and reports the plan: it sends the flash
 no command at all and runs no code.  `identify_only` stops there too,
@@ -329,12 +327,12 @@ and a protected sector; bad lane sums reported and the image written; the watchd
 not a fresh reset's refused, and with `any_entry_state` written
 through, or refused at SYPCR's read-back if SYPCR was written; the bench order
 adding no hazard; the reset decode's hazards; the mirror on the model;
-four changed orders refused; the trial image and its refusals; identify only, the restore dump saved and its SHA-256
-checked, each step logged; and the command line on the model
-target: a dry run, identify, a trial written with and without
-`--restore-to`, an image with failing
-sums written after its warning, a write refused on another flash's
-SHA-256, and its refusals before any target.
+four changed orders refused; the trial image and its refusals;
+identify only, the restore dump saved and never overwritten, each step
+logged; and the command line on the model target: a dry run,
+identify, a trial written with and without `--restore-to`, an image
+with failing sums written after its warning, and its refusals before
+any target.
 
 `test_pod_target.py`, against a stand-in pod that records each call,
 answers `background` from a script, reports a RESET level and raises
@@ -381,7 +379,7 @@ mkdir -p captures/bdm
 2. **Identify.**
 
    ```
-   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --identify --expect-sha256 "$SHA" --restore-to captures/bdm/2.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --identify --restore-to captures/bdm/2.bin
    ```
 
    Success: as step 1, and for both pairs manufacturer `0x0101`,
@@ -395,22 +393,23 @@ mkdir -p captures/bdm
    ```
    python3 -I tools/bdm/trial_image.py "$IMAGE" captures/bdm/trial.bin
    python3 -I tools/bdm/flash_host.py --plan captures/bdm/2.bin captures/bdm/trial.bin
-   $PY -I tools/bdm/flash_host.py --pod usb --image captures/bdm/trial.bin --write --expect-sha256 "$SHA" --restore-to captures/bdm/3.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image captures/bdm/trial.bin --write --restore-to captures/bdm/3.bin
    ```
 
-   Success: the lane sums hold; the plan is `0x70000` and `0x78000`, pair 2's blank pair
-   and the one holding its sums; each is erased, programmed and
-   verified; the flash's SHA-256 is the trial image's and the run says
+   Success: the lane sums hold; the restore image's SHA-256 `$SHA`;
+   the plan is `0x70000` and `0x78000`, pair 2's blank pair and the one
+   holding its sums; each is erased, programmed and verified; the flash's SHA-256 is the trial image's and the run says
    success, then that the CPU is stopped.
 
 4. **The original back.**
 
    ```
-   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --write --expect-sha256 "$(sha256sum captures/bdm/trial.bin | cut -d' ' -f1)" --restore-to captures/bdm/4.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --write --restore-to captures/bdm/4.bin
    ```
 
-   Success: the same two sector pairs, the flash's SHA-256 `$SHA`,
-   success, the CPU stopped.
+   Success: the restore image's SHA-256 the trial image's, the same
+   two sector pairs, the flash's SHA-256 `$SHA`, success, the CPU
+   stopped.
 
 5. Then, by hand and only then, the pod's reset and run: the primary
    boots.
@@ -422,11 +421,10 @@ or half written and the sums wrong: the boot check then fails, and the
 unit boots into the installer, which `smartclock-cli flash` can
 reflash.  An image that differs below `0x10000` is written there too;
 a failed write of those sector pairs leaves a unit that only BDM, or
-pulling the socketed parts, can recover.  BDM does not
-need valid flash: a reset entry stops the CPU before its first
-instruction, so the host can always start again from step 1 and write
-the image back with step 4's command, the saved restore dump's SHA-256
-as `--expect-sha256`.  After a time-out or a reset while running, the
+pulling the socketed parts, can recover.  BDM does not need valid
+flash: a reset entry stops the CPU before its first instruction, so
+the host can always start again from step 1 and write the image back
+with step 4's command.  After a time-out or a reset while running, the
 CPU may still run the routine and a part may still be erasing, which
 a reset does not stop (the parts have no RESET pin): reset into BDM,
 and trust no read until a dry run's dump is stable.  Last resort: the
@@ -434,7 +432,7 @@ parts are socketed.
 
 ## Seen on the bench
 
-On 2026-11-22 steps 1 to 5 ran as written, in order, each passing, on
+On 2026-11-22 steps 1 to 5 ran in order, each passing, on
 a 58503A with firmware 3704-C, through the mc683xx BDM pod: its Python
 module `mc683xx_bdm` 0.3.0, protocol 11, opened on Linux as
 `Pod("usb")`, DSCLK at the pod's default, 1 MHz (this unit's limit is

@@ -527,6 +527,12 @@ read after each:
   records each such restart as `Re-boot`.  The firmware crashes, and
   RSR after the restart read `0x10`, HLT alone, on 2026-11-21: a
   halt-monitor reset (MC68331UM D.3.4, 4.2.8), not the watchdog's.
+- *State after the probe's reset* (step R2), read in a halt before the
+  firmware ran: RSR `0x80`, `warm_start` 0, the region's first word
+  `0xde21` (its checksum) and the flag word 1, `nv_settings_defaulted`
+  (`0x102276`) 0 and `crash_message` (`0x100b2e`) empty.  The reset
+  records at `0x400200` (32 of `0x5c` bytes) held `Log cleared`,
+  dated 2007, and the `vector 2030` records above.
 
 Not established: whether τ and the aging fit read back unchanged
 after the warm start; the code restores them with the region.
@@ -815,8 +821,8 @@ without the installer or a working primary (hypothesis 2,
 established).  The Z3805A and Z3801A are not checked.
 
 *Measured, S1 on the 58503A.*  On the bench 58503A's main board
-(58503-60001 Rev C), running 3704, on 2026-11-21, a BDM probe on J12
-read the byte at `0x302000`, the CPU halted only for each read, while
+(58503-60001 Rev C), running 3704, on 2026-11-21 (step R1), a BDM
+probe on J12 read the byte at `0x302000`, the CPU halted only for each read, while
 S1's positions were changed with the power on.  With all eight
 positions ON, by the switch's own marking, the byte read `0x00`,
 twice, and CSBAR5 and CSOR5 read `0x3003` and `0x7b30`, the reset
@@ -843,7 +849,14 @@ stored lane sums, and `0x10000` `0x0010fffe`, the primary's first
 vector.  So S1 does not gate the flash's reads (hypothesis 1 rejected
 for that board).  The positions were changed while the firmware ran,
 and the byte followed each at once.  S1 has no effect at reset
-either, measured on the same unit on 2026-11-21.  The 3704 primary
+either, measured on the same unit on 2026-11-21 (step R12): with all
+eight positions OFF as RESET rose, and again at a power-up into
+background mode, the reset state's SIM registers (SIMCR `0x60cf`,
+SYPCR `0x80`, CSPAR0 `0x3fff`, CSPAR1 `0x03ff`, CSBARBT `0x0007`,
+CSORBT `0x7b70`), RPC `0x550`, the vectors and the whole flash read as
+with all ON (`58503a-bdm.md`, "At a reset entry").  The byte shows
+only at `0x302000`, which needs CS5 set (CSPAR0 `0x2bff`, CSBAR5
+`0x3003`, CSOR5 `0x7b30`): `0xff` all OFF, `0x00` all ON.  The 3704 primary
 and its USA installer never read the byte, so on that unit S1 has no
 effect; what it would set under
 3633's Oman installer is in `firmware/restart.md`, "The switch byte

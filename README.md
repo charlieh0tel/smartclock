@@ -207,7 +207,8 @@ client:
 
 Installed, the web view and exporter need no options: they find every
 daemon under `/run/smartclockd` and every log under
-`/var/lib/smartclockd`.  A client on another host names a daemon
+`/var/lib/smartclockd`; `smartclock-cli daemons` lists those daemons
+and the socket each takes as `--daemon`.  A client on another host names a daemon
 started with `--listen HOST:PORT` as `--daemon tcp://HOST:PORT`.
 [`docs/views.md`](docs/views.md) says what each view shows and why.
 

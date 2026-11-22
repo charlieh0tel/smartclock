@@ -6,13 +6,13 @@ flash_routine.S, through any Target (target.py): the whole procedure,
 from a reset entry to a verified image, and the refusals that keep it
 off the boot code and installer (tools/bdm/README.md, "The host").
 
-    python3 -I tools/bdm/flash_host.py --plan CURRENT IMAGE [--allow-low]
+    python3 -I tools/bdm/flash_host.py --plan CURRENT IMAGE
 
 prints, from a dump of the flash and the image to program, the sector
 pairs a run would erase, or why it would refuse; no target is touched.
 
     python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
-        (--dry-run | --identify | --write --restore-to FILE) [--expect-sha256 SHA256] [--allow-low]
+        (--dry-run | --identify | --write --restore-to FILE) [--expect-sha256 SHA256]
         [--any-entry-state]
 
 runs the procedure below on a pod (pod_target.py) or on the modeled
@@ -68,16 +68,20 @@ from target import Entry, Target, TargetError, TargetTimeout  # noqa: E402
 
 ROUTINE_SYMBOLS = HERE.parents[1] / "target" / "bdm" / "flash_routine.json"
 
-# Below PROTECTED_END are the reset vectors, the boot code and the
+# Below BOOT_REGION_END are the reset vectors, the boot code and the
 # installer, which neither the boot checksum nor the installer's
-# writable range covers and which only a programmer could restore
-# (docs/firmware/restart.md, "The installer";
+# writable range covers (docs/firmware/restart.md, "The installer";
 # installer_scpi_diagnostic.h, INSTALLER_SCPI_DIAGNOSTIC_FLASH_START).
-PROTECTED_END = 0x10000
+# The host writes there as anywhere else; a failed write there leaves
+# a unit that only BDM, or pulling the socketed parts, can recover.
+BOOT_REGION_END = 0x10000
 # The spans each pair's lane sums cover, the sums in each span's last
 # four bytes (docs/firmware/restart.md, "The installer", Boot check;
 # firmware.rs Layout::AmdLanes).
-LANE_SUM_SPANS = ((PROTECTED_END, PAIR_SIZE), (PAIR_SIZE, FLASH_SIZE))
+LANE_SUM_SPANS = ((BOOT_REGION_END, PAIR_SIZE), (PAIR_SIZE, FLASH_SIZE))
+# The floor the host passes the routine in D2: none, the whole flash
+# writable.
+FLOOR = 0
 
 # RAM, the CS0/CS2/CS3 block, all of it free since the firmware never
 # runs; the vector table and routine above the firmware's preserved
@@ -360,18 +364,13 @@ def with_lane_sums(image: bytes) -> bytes:
     return bytes(fixed)
 
 
-def plan(current: bytes, image: bytes, allow_low: bool = False) -> list[int]:
-    """The sector pairs where current and image differ; refused if one
-    is below PROTECTED_END and allow_low is not given."""
-    differing = [
+def plan(current: bytes, image: bytes) -> list[int]:
+    """The sector pairs where current and image differ."""
+    return [
         base
         for base in range(0, FLASH_SIZE, SECTOR_PAIR_SIZE)
         if current[base : base + SECTOR_PAIR_SIZE] != image[base : base + SECTOR_PAIR_SIZE]
     ]
-    low = [base for base in differing if base < PROTECTED_END]
-    if low and not allow_low:
-        raise Refused(f"the image differs below {PROTECTED_END:#x}, at {', '.join(f'{base:#x}' for base in low)}")
-    return differing
 
 
 def differing_ranges(one: bytes, other: bytes) -> list[tuple[int, int]]:
@@ -388,16 +387,14 @@ def differing_ranges(one: bytes, other: bytes) -> list[tuple[int, int]]:
 
 @dataclass
 class Options:
-    """allow_low: erase and program below PROTECTED_END; any_entry_state:
-    go on from a reset entry whose SIM is not a fresh reset's; dry_run:
-    stop after the dump, reporting the plan; identify_only: likewise
-    after identify;
+    """any_entry_state: go on from a reset entry whose SIM is not a fresh
+    reset's; dry_run: stop after the dump, reporting the plan;
+    identify_only: likewise after identify;
     restore_path: a new file to save the dump to, before any write;
     expected_restore_sha256: if given, refuse to go on unless the dump
     has it;
     program_time and erase_time: the routine's limits, seconds."""
 
-    allow_low: bool = False
     any_entry_state: bool = False
     dry_run: bool = False
     identify_only: bool = False
@@ -555,20 +552,20 @@ class Session:
                 protection[base + index * SECTOR_PAIR_SIZE] = word
         return protection
 
-    def write_pair(self, base: int, data: bytes, floor: int) -> None:
+    def write_pair(self, base: int, data: bytes) -> None:
         """Step 7 for one sector pair: erase, program, verify."""
         routine = self.routine
         words = len(data) // WORD
         polls = self.limit(self.options.erase_time)
-        self.call(routine.OPERATION_ERASE, base, 0, floor, polls, polls + words * PASSES_PER_WORD)
+        self.call(routine.OPERATION_ERASE, base, 0, FLOOR, polls, polls + words * PASSES_PER_WORD)
         self.log(f"sector pair {base:#07x} erased")
         self.target.write_block(BUFFER, data)
         if self.target.read_block(BUFFER, len(data)) != data:
             raise Failed(f"the buffer does not read back for {base:#x}")
         polls = self.limit(self.options.program_time)
-        self.call(routine.OPERATION_PROGRAM, base, words, floor, polls, words * (polls + PASSES_PER_WORD))
+        self.call(routine.OPERATION_PROGRAM, base, words, FLOOR, polls, words * (polls + PASSES_PER_WORD))
         self.log(f"sector pair {base:#07x} programmed")
-        self.call(routine.OPERATION_VERIFY, base, words, floor, 1, words * PASSES_PER_WORD)
+        self.call(routine.OPERATION_VERIFY, base, words, FLOOR, 1, words * PASSES_PER_WORD)
         self.log(f"sector pair {base:#07x} verified")
 
     def reset_flash(self) -> None:
@@ -589,7 +586,6 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         log(line)
     report = Report()
     session = session or Session(target, routine, log, options)
-    floor = 0 if options.allow_low else PROTECTED_END
     try:
         session.set_up()
         # a dry run sends the flash no command, not even autoselect
@@ -607,7 +603,7 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         expected = options.expected_restore_sha256
         if expected is not None and report.restore_sha256 != expected.lower():
             raise Refused(f"the flash's SHA-256 is {report.restore_sha256}, not the expected {expected}")
-        report.plan = plan(report.restore, image, options.allow_low)
+        report.plan = plan(report.restore, image)
         log(f"sector pairs to write: {', '.join(f'{base:#x}' for base in report.plan) or 'none'}")
         protected = [base for base in report.plan if protection.get(base, UNPROTECTED_BOTH) != UNPROTECTED_BOTH]
         if options.dry_run or options.identify_only:
@@ -617,7 +613,7 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         if protected:
             raise Refused(f"sector pairs to write are protected: {', '.join(f'{base:#x}' for base in protected)}")
         for base in report.plan:
-            session.write_pair(base, image[base : base + SECTOR_PAIR_SIZE], floor)
+            session.write_pair(base, image[base : base + SECTOR_PAIR_SIZE])
             report.done.append(base)
             log(f"sector pair {base:#x} written")
         final = target.read_block(0, FLASH_SIZE)
@@ -662,7 +658,6 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--image", type=Path, help="the image to program")
     parser.add_argument("--expect-sha256", metavar="SHA256", help="the SHA-256 the unit's flash must have now")
     parser.add_argument("--restore-to", metavar="FILE", type=Path, help="a new file to save the unit's flash to")
-    parser.add_argument("--allow-low", action="store_true", help=f"allow writing below {PROTECTED_END:#x}")
     parser.add_argument(
         "--any-entry-state",
         action="store_true",
@@ -692,7 +687,6 @@ def arguments() -> argparse.Namespace:
 def bench(parsed: argparse.Namespace, image: bytes, routine: Routine) -> None:
     """A run on the target parsed names, ending in what it left."""
     options = Options(
-        allow_low=parsed.allow_low,
         any_entry_state=parsed.any_entry_state,
         dry_run=parsed.dry_run,
         identify_only=parsed.identify,
@@ -733,7 +727,7 @@ def main() -> None:
         if parsed.plan:
             check_image(current[0])
             print("\n".join(lane_sum_report(image)))
-            pairs = plan(current[0], image, parsed.allow_low)
+            pairs = plan(current[0], image)
             print("\n".join(f"{base:#07x}" for base in pairs) or "nothing to write")
             return
         if parsed.restore_to and parsed.restore_to.exists():

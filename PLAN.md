@@ -620,11 +620,12 @@ the image it is given: no catalog of known images, unlike
 `smartclock-cli flash`, and the lane sums reported, not enforced (an
 image whose sums fail boots into the installer).  It refuses only what
 is physical or protects the way back: the image's size, the parts'
-IDs, a chip-select hazard, and any write below `0x10000` unless told.
-It refuses a reset entry that is not a fresh reset's unless told.  It
-never starts the firmware; a pod adapter (`pod_target.py`) drives
-the mc683xx pod, through which a bench trial on a 58503A passed on
-2026-11-22.  `tools/bdm/README.md`.
+IDs and a chip-select hazard.  It writes below `0x10000`, the vectors,
+boot code and installer, as anywhere else.  It refuses a reset entry
+that is not a fresh reset's unless told.  It never starts the
+firmware; a pod adapter (`pod_target.py`) drives the mc683xx pod,
+through which a bench trial on a 58503A passed on 2026-11-22.
+`tools/bdm/README.md`.
 
 ### The firmware in C
 

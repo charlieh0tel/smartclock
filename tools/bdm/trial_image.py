@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from board import FLASH_SIZE, WORD  # noqa: E402
-from flash_host import LANE_SUM_SPANS, PROTECTED_END, Refused, check_image, with_lane_sums  # noqa: E402
+from flash_host import LANE_SUM_SPANS, Refused, check_image, with_lane_sums  # noqa: E402
 from lane_sums import STORED_SIZE  # noqa: E402
 
 TRIAL_ADDRESS = 0x70000
@@ -27,12 +27,12 @@ TRIAL_WORD = 0x0000
 
 def trial(image: bytes, address: int = TRIAL_ADDRESS, word: int = TRIAL_WORD) -> bytes:
     """image with word at address and the lane sums fixed; refused for
-    an address below PROTECTED_END, odd, past the flash or in the sums,
-    or holding word already."""
+    an address odd, past the flash or in the sums, or holding word
+    already."""
     check_image(image)
     sums = [end - STORED_SIZE for _, end in LANE_SUM_SPANS]
-    if address % WORD or not PROTECTED_END <= address < FLASH_SIZE or any(at <= address < at + STORED_SIZE for at in sums):
-        raise Refused(f"{address:#x} is not an even address of the flash above {PROTECTED_END:#x} outside the sums")
+    if address % WORD or not 0 <= address < FLASH_SIZE or any(at <= address < at + STORED_SIZE for at in sums):
+        raise Refused(f"{address:#x} is not an even address of the flash outside the sums")
     old = int.from_bytes(image[address : address + WORD], "big")
     if old == word:
         raise Refused(f"{address:#x} already holds {word:#06x}")

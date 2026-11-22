@@ -61,8 +61,8 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | `--image IMAGE` | the image to program, which the plan is against |
 | `--dry-run` | set-up, the dump and its SHA-256, the plan: no flash command, no code run on the CPU |
 | `--identify` | the dry run and the routine's identify: the first code the CPU runs, sending only autoselect and read/reset |
-| `--write` | the whole procedure; requires `--restore-to` |
-| `--restore-to FILE` | save the dump to FILE, which must not exist, before any write; any mode |
+| `--write` | the whole procedure |
+| `--restore-to FILE` | optional: save the dump to FILE, which must not exist, before any write; any mode |
 | `--expect-sha256 SHA256` | optional: refuse to go on unless the dump has this SHA-256; any mode |
 | `--any-entry-state` | go on from a reset entry whose SIM is not a fresh reset's, reporting what it read |
 
@@ -331,7 +331,8 @@ through, or refused at SYPCR's read-back if SYPCR was written; the bench order
 adding no hazard; the reset decode's hazards; the mirror on the model;
 four changed orders refused; the trial image and its refusals; identify only, the restore dump saved and its SHA-256
 checked, each step logged; and the command line on the model
-target: a dry run, identify, a trial written, an image with failing
+target: a dry run, identify, a trial written with and without
+`--restore-to`, an image with failing
 sums written after its warning, a write refused on another flash's
 SHA-256, and its refusals before any target.
 

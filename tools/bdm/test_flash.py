@@ -532,6 +532,13 @@ class CommandLine(unittest.TestCase):
         self.assertIn("sector pair 0x78000 verified", output)
         self.assertTrue(output.rstrip().endswith(flash_host.STOPPED))
 
+    def test_write_without_restore_to(self):
+        output, code = self.main("--model", str(self.unit), "--image", str(self.trial), "--write")
+        self.assertIsNone(code, output)
+        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
+        self.assertNotIn("restore image saved", output)
+        self.assertIn("sector pair 0x78000 verified", output)
+
     def test_write_refused_on_another_flash(self):
         restore = self.path / "restore.bin"
         output, code = self.main(
@@ -551,8 +558,6 @@ class CommandLine(unittest.TestCase):
             (("--image", original, "--dry-run"), "--pod or --model is required"),
             (("--model", unit, "--dry-run"), "--image is required"),
             (("--pod", "usb", "--model", unit, "--image", original, "--dry-run"), "not allowed with"),
-            (("--model", unit, "--image", original, "--write"), "--write requires --restore-to"),
-            (("--model", unit, "--image", original, "--write", "--expect-sha256", SHA256_3704), "--write requires"),
             (("--model", unit, "--image", original[:-4] + "-missing.bin", "--dry-run"), "No such file"),
             (("--plan", unit, original, "--pod", "usb"), "--plan touches no target"),
             (("--plan", unit, original, "--any-entry-state"), "--plan touches no target"),

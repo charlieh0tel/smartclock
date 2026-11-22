@@ -1705,8 +1705,10 @@ reset and never writes it again.
   (below).
 
 *Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
-2026-11-21: the rear Alarm jack follows MCU port F bit 5, PF5, and
-reads 5 V with no alarm.  So PF5 is the rear Alarm output (the first
+2026-11-21 (step W3): the rear Alarm jack follows MCU port F bit 5,
+PF5 (PORTF0 bit 5, not `led_alarm`): 5 V with PF5 high, no alarm, and
+0.6 mV with PF5 written low over J12, read at the jack; U33 pin 73 was
+not measured.  So PF5 is the rear Alarm output (the first
 hypothesis below), and FPGA register 3 bit 2 is not.
 
 *Photos:* of the five SMB jacks at the board's edge, J4 (silkscreen

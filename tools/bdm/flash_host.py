@@ -12,15 +12,16 @@ prints, from a dump of the flash and the image to program, the sector
 pairs a run would erase, or why it would refuse; no target is touched.
 
     python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
-        (--dry-run | --identify | --write --restore-to FILE) [--expect-sha256 SHA256]
-        [--any-entry-state]
+        (--dry-run | --identify | --write) [--restore-to FILE]
+        [--expect-sha256 SHA256] [--any-entry-state]
 
 runs the procedure below on a pod (pod_target.py) or on the modeled
 board holding FLASH (model_target.py): --dry-run steps 1-4 and 6,
 sending the flash no command and running no code; --identify steps
-1-6, the routine's identify the only code run; --write all of it, the
-dump saved to FILE first, and with --expect-sha256 refused unless the
-dump has that SHA-256.  It writes exactly the image it is given: its
+1-6, the routine's identify the only code run; --write all of it.  In
+any mode the dump's SHA-256 is printed, the dump is saved to FILE
+first with --restore-to, and with --expect-sha256 the run is refused
+unless the dump has that SHA-256.  It writes exactly the image it is given: its
 lane sums are reported, never refused.  It never starts the firmware:
 it ends with the CPU in background mode.
 
@@ -679,8 +680,6 @@ def arguments() -> argparse.Namespace:
         for name, value in bench_options[:2]:
             if not value:
                 parser.error(f"{name} is required")
-    if parsed.write and not parsed.restore_to:
-        parser.error("--write requires --restore-to")
     return parsed
 
 

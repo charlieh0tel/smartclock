@@ -1,6 +1,6 @@
 # /// script
-# requires-python = ">=3.11"
-# dependencies = ["mc683xx==0.7.0", "unicorn==2.1.4"]
+# requires-python = ">=3.12"
+# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
 # ///
 """Confirms the decompiled C's bindings by running them: each function
 the hand-written bindings/ headers define under the name and prototype

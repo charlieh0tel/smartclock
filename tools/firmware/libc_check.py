@@ -1,6 +1,6 @@
 # /// script
-# requires-python = ">=3.11"
-# dependencies = ["mc683xx==0.7.0", "unicorn==2.1.4"]
+# requires-python = ">=3.12"
+# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
 # ///
 """Confirms the C library routines named in docs/firmware/libc.md by running
 them: each is called in the harness's 68k emulator, Unicorn's or

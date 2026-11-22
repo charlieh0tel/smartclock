@@ -160,9 +160,9 @@ PROGRAM_SPACES = (2, 6)
 # Unicorn's permissions as mc683xx's letters.
 PERMISSION_LETTERS = ((UC_PROT_READ, "r"), (UC_PROT_WRITE, "w"), (UC_PROT_EXEC, "x"))
 # Unicorn's invalid access kinds and errors, by mc683xx's cycle kind
-# (its CycleKind's number: fetch, read, write) and whether anything is
-# mapped there; and for an address error where something is, Unicorn's
-# for an unaligned access, which it never raises.
+# (its CycleKind's member, `cycle_kind`: fetch, read, write) and whether
+# anything is mapped there; and for an address error where something is,
+# Unicorn's for an unaligned access, which it never raises.
 FETCH, READ, WRITE = range(3)
 UNALIGNED = {
     FETCH: (UC_MEM_FETCH, UC_ERR_FETCH_UNALIGNED),
@@ -177,6 +177,12 @@ INVALID = {
     (READ, True): (UC_MEM_READ_PROT, UC_ERR_READ_PROT),
     (WRITE, True): (UC_MEM_WRITE_PROT, UC_ERR_WRITE_PROT),
 }
+
+
+def cycle_kind(mc683xx, cycle) -> int:
+    """mc683xx's CycleKind `cycle` as this module's FETCH, READ or WRITE,
+    by member: its `int` is outside mc683xx's semver."""
+    return {mc683xx.CycleKind.FETCH: FETCH, mc683xx.CycleKind.READ: READ, mc683xx.CycleKind.WRITE: WRITE}[cycle]
 
 
 def permissions(perms: int) -> str:
@@ -484,15 +490,16 @@ class Mc683xx:
         if self.unhooked is not None:
             raise UcError(UC_ERR_EXCEPTION)
         if isinstance(end, mc683xx.End.Fault):
-            (fault,) = end
+            fault = end.fault
             mapped = self.region(fault.address) is not None
+            cycle = cycle_kind(mc683xx, fault.cycle)
             if mapped and fault.cause == mc683xx.FaultCause.ADDRESS_ERROR:
-                kind, error = UNALIGNED[int(fault.cycle)]
+                kind, error = UNALIGNED[cycle]
             else:
-                kind, error = INVALID[(int(fault.cycle), mapped)]
+                kind, error = INVALID[(cycle, mapped)]
             for hook in self.hooks:
                 if hook.kind & UC_HOOK_MEM_INVALID and hook.covers(fault.address):
                     hook.callback(self, kind, fault.address, fault.size, 0, hook.data)
             raise UcError(error)
-        if isinstance(end, mc683xx.End.Stop) and isinstance(end[0], mc683xx.Stop.Halted):
+        if isinstance(end, mc683xx.End.Stop) and isinstance(end.stop, mc683xx.Stop.Halted):
             raise UcError(UC_ERR_EXCEPTION)

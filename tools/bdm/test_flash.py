@@ -1,6 +1,6 @@
 # /// script
-# requires-python = ">=3.11"
-# dependencies = ["mc683xx==0.7.0"]
+# requires-python = ">=3.12"
+# dependencies = ["mc683xx==0.8.0"]
 # ///
 """Tests of the BDM flash routine and its host on the model target:
 the routine as CPU32 code on mc683xx's MC68331, its BDM and SIM, the

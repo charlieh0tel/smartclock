@@ -907,7 +907,7 @@ the check is against the model, not the board.
 ## Reproducing
 
 Tools: Ghidra 12.1.4 (only to export again), `git-lfs` for the archive;
-`m68k-linux-gnu-gcc` and binutils; `clang-format`; Python 3.11+ with uv
+`m68k-linux-gnu-gcc` and binutils; `clang-format`; Python 3.12+ with uv
 (Unicorn, Capstone); Rust (`cargo`, for `smartclock-cli dump-scpi`).
 The checks need no Ghidra: the export is checked in.
 

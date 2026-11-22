@@ -9,11 +9,12 @@ registers and calls it, and the routine makes the scattered command
 writes and status polls at bus speed and returns to background mode.
 
 It is a tool for someone who knows what they are loading: it writes
-exactly the image it is given, judging nothing of its content.  What
+exactly the image it is given, judging nothing of its content, the
+reset vectors, boot code and installer below `0x10000` included.  What
 it refuses is physical, or protects the way back: an image not the
 size of the flash, parts that are not the expected ones, a chip-select
-decode with a hazard, any write below `0x10000` unless told, and any
-target error.  It never starts the firmware.
+decode with a hazard, and any target error.  It never starts the
+firmware.
 
 `pod_target.py` adapts it to the mc683xx BDM pod.  The bench trial
 below ran on a 58503A through the pod on 2026-11-22, every step
@@ -64,7 +65,6 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | `--restore-to FILE` | save the dump to FILE, which must not exist, before any write; any mode |
 | `--expect-sha256 SHA256` | optional: refuse to go on unless the dump has this SHA-256; any mode |
 | `--any-entry-state` | go on from a reset entry whose SIM is not a fresh reset's, reporting what it read |
-| `--allow-low` | allow erasing and programming below `0x10000`, the reset vectors, boot code and installer |
 
 Every run on a target, and `--plan`, first reports whether each bank's
 lane sums hold, the boot check's (`tools/firmware/lane_sums.py`, over
@@ -130,8 +130,8 @@ pairs, then BGND.
 - **Equal words** are skipped.
 - **Range.**  The routine refuses an erase or program below D2, an
   odd address, an erase not on a sector pair, and a run past its pair.
-  The host passes `0x10000` in D2 unless told otherwise: two checks of
-  one rule.
+  The host passes 0 in D2, the whole flash writable; the floor stays
+  in the interface for a caller that wants one.
 - **Failure.**  Any failure stops at once; there are no tries.
 
 ## Exceptions, the watchdog, interrupts
@@ -169,9 +169,6 @@ target error is fatal; nothing is retried.  It reports the image's
 lane sums and writes it whether they hold or not.  It refuses:
 
 - an image not exactly 512 KiB;
-- any sector pair below `0x10000` that would change, unless
-  `allow_low`: the vectors, boot code and installer, which only a
-  programmer could restore;
 - a reset entry whose SIM is not a fresh reset's (SYPCR unwritten,
   CSBOOT and the pin assignments at their reset values), unless
   `any_entry_state`;
@@ -326,8 +323,8 @@ skipped; verify's mismatch; lanes finishing at different times; a
 stuck lane in erase and in program; a time-out; a bus error mid-erase
 returning through the vector table; the poll and step clock bounds; a
 whole image from blank, from a variant of itself and from the 3633
-image (refused below `0x10000`, then written with `allow_low`); a dry
-run; refusals of a low sector pair, a short image, unexpected IDs
+image (its boot region among the pairs written); a dry
+run; a low sector pair written; refusals of a short image, unexpected IDs
 and a protected sector; bad lane sums reported and the image written; the watchdog reset without SYPCR; an entry
 not a fresh reset's refused, and with `any_entry_state` written
 through, or refused at SYPCR's read-back if SYPCR was written; the bench order
@@ -417,12 +414,14 @@ mkdir -p captures/bdm
 5. Then, by hand and only then, the pod's reset and run: the primary
    boots.
 
-**Recovery.**  The host never writes below `0x10000` without
-`--allow-low`, which none of these steps gives, so the vectors, the
-boot code and the installer are never touched.  A step that fails
-leaves pair 2's two sector pairs at worst erased or half written and
-its sums wrong: the boot check then fails, and the unit boots into the
-installer, which `smartclock-cli flash` can reflash.  BDM does not
+**Recovery.**  These steps write only pair 2's sector pairs
+`0x70000` and `0x78000`, never the vectors, boot code and installer
+below `0x10000`.  A step that fails leaves those two at worst erased
+or half written and the sums wrong: the boot check then fails, and the
+unit boots into the installer, which `smartclock-cli flash` can
+reflash.  An image that differs below `0x10000` is written there too;
+a failed write of those sector pairs leaves a unit that only BDM, or
+pulling the socketed parts, can recover.  BDM does not
 need valid flash: a reset entry stops the CPU before its first
 instruction, so the host can always start again from step 1 and write
 the image back with step 4's command, the saved restore dump's SHA-256
@@ -475,12 +474,12 @@ on), interrupts masked, every vector to BGND, finish's guard against
 its own faults, and the host's timeout.  A routine that never returns
 (a fault in the handler's own stack, a level-7 storm) leaves the host
 waiting out its timeout and then touching nothing; only a reset ends
-it, and a part erasing then keeps erasing.  A bug in the range checks
-could erase below `0x10000`: the host's plan and the routine's floor
-each forbid it, and the tests hold both.  Nothing checks that an
-image is a 58503A's: the tool writes what it is given, a Z3801A's
-included, and the lane sums, which prove an image only
-self-consistent, are reported, not enforced.
+it, and a part erasing then keeps erasing.  Nothing guards the boot
+region below `0x10000`: an image that differs there is written there,
+and a failure mid-write leaves the unit to BDM or the socketed parts.
+Nothing checks that an image is a 58503A's: the tool writes what it is
+given, a Z3801A's included, and the lane sums, which prove an image
+only self-consistent, are reported, not enforced.
 
 **What it costs.**  Each trial is a reset entry, a cold start of the
 oscillator loop.  The poll limits assume the fastest possible poll, so

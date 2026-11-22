@@ -8,20 +8,19 @@ off the boot code and installer (tools/bdm/README.md, "The host").
 
     python3 -I tools/bdm/flash_host.py --plan CURRENT IMAGE
 
-prints, from a dump of the flash and the image to program, the sector
+prints, from what the flash holds and the image to program, the sector
 pairs a run would erase, or why it would refuse; no target is touched.
 
     python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
-        (--dry-run | --identify | --write) [--restore-to FILE] [--any-entry-state]
+        (--dry-run | --identify | --write) [--any-entry-state]
 
 runs the procedure below on a pod (pod_target.py) or on the modeled
 board holding FLASH (model_target.py): --dry-run steps 1-4 and 6,
 sending the flash no command and running no code; --identify steps
 1-6, the routine's identify the only code run; --write all of it.  In
-any mode the dump's SHA-256 is printed, and with --restore-to the dump
-is saved to FILE first.  It writes exactly the image it is given: its
-lane sums are reported, never refused.  It never starts the firmware:
-it ends with the CPU in background mode.
+any mode the dump's SHA-256 is printed.  It writes exactly the image
+it is given: its lane sums are reported, never refused.  It never
+starts the firmware: it ends with the CPU in background mode.
 
 The procedure, each step's failure fatal, never retried:
 
@@ -33,8 +32,7 @@ The procedure, each step's failure fatal, never retried:
 4. Load the vector table and the routine into RAM and read them back.
 5. Identify both pairs; refuse unless both lanes of both are AMD
    Am29F010s and no sector pair to be written is protected.
-6. Dump the flash: its SHA-256 is the restore image's.  Save it if
-   asked.
+6. Dump the flash and report its SHA-256.
 7. For each sector pair that differs from the image: erase (with the
    routine's blank check), program, verify.
 8. Dump the flash again and compare it with the image.
@@ -388,25 +386,22 @@ class Options:
     """any_entry_state: go on from a reset entry whose SIM is not a fresh
     reset's; dry_run: stop after the dump, reporting the plan;
     identify_only: likewise after identify;
-    restore_path: a new file to save the dump to, before any write;
     program_time and erase_time: the routine's limits, seconds."""
 
     any_entry_state: bool = False
     dry_run: bool = False
     identify_only: bool = False
-    restore_path: Path | None = None
     program_time: float = PROGRAM_TIME
     erase_time: float = ERASE_TIME
 
 
 @dataclass
 class Report:
-    """What a run did: the restore image's SHA-256 (the flash as found),
+    """What a run did: the dump's SHA-256 (the flash as found),
     the sector pairs it erased and programmed, the flash's SHA-256 at
     the end, and where it still differs from the image."""
 
-    restore_sha256: str = ""
-    restore: bytes = b""
+    dump_sha256: str = ""
     plan: list[int] = field(default_factory=list)
     done: list[int] = field(default_factory=list)
     final_sha256: str = ""
@@ -585,17 +580,10 @@ def flash(target: Target, image: bytes, options: Options | None = None, routine:
         session.set_up()
         # a dry run sends the flash no command, not even autoselect
         protection = {} if options.dry_run else session.identify()
-        report.restore = target.read_block(0, FLASH_SIZE)
-        report.restore_sha256 = hashlib.sha256(report.restore).hexdigest()
-        log(f"restore image SHA-256 {report.restore_sha256}")
-        if options.restore_path is not None:
-            try:
-                with options.restore_path.open("xb") as restore:
-                    restore.write(report.restore)
-            except OSError as error:
-                raise Refused(f"cannot save the restore image: {error}") from error
-            log(f"restore image saved to {options.restore_path}")
-        report.plan = plan(report.restore, image)
+        dump = target.read_block(0, FLASH_SIZE)
+        report.dump_sha256 = hashlib.sha256(dump).hexdigest()
+        log(f"dump SHA-256 {report.dump_sha256}")
+        report.plan = plan(dump, image)
         log(f"sector pairs to write: {', '.join(f'{base:#x}' for base in report.plan) or 'none'}")
         protected = [base for base in report.plan if protection.get(base, UNPROTECTED_BOTH) != UNPROTECTED_BOTH]
         if options.dry_run or options.identify_only:
@@ -648,7 +636,6 @@ def arguments() -> argparse.Namespace:
     targets.add_argument("--pod", metavar="POD", help="the pod, as mc683xx_bdm.Pod names it: usb, usb:SERIAL")
     targets.add_argument("--model", metavar="FLASH", type=Path, help="the modeled board, its flash holding FLASH")
     parser.add_argument("--image", type=Path, help="the image to program")
-    parser.add_argument("--restore-to", metavar="FILE", type=Path, help="a new file to save the unit's flash to")
     parser.add_argument(
         "--any-entry-state",
         action="store_true",
@@ -658,7 +645,6 @@ def arguments() -> argparse.Namespace:
     bench_options = (
         ("--pod or --model", parsed.pod or parsed.model),
         ("--image", parsed.image),
-        ("--restore-to", parsed.restore_to),
         ("--any-entry-state", parsed.any_entry_state),
     )
     if parsed.plan:
@@ -678,7 +664,6 @@ def bench(parsed: argparse.Namespace, image: bytes, routine: Routine) -> None:
         any_entry_state=parsed.any_entry_state,
         dry_run=parsed.dry_run,
         identify_only=parsed.identify,
-        restore_path=parsed.restore_to,
     )
     if parsed.model:
         from am29f010 import BoardFlash
@@ -717,8 +702,6 @@ def main() -> None:
             pairs = plan(current[0], image)
             print("\n".join(f"{base:#07x}" for base in pairs) or "nothing to write")
             return
-        if parsed.restore_to and parsed.restore_to.exists():
-            raise Refused(f"{parsed.restore_to} exists")
         try:
             routine = Routine.load()
         except OSError as error:

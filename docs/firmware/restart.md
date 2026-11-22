@@ -308,7 +308,7 @@ unpacked into `0x100400` to `0x10ac50`.
   the bench 58503A (58503-60001 Rev C), on 2026-11-21, the parts
   answered autoselect over J12 as AMD Am29F010s, manufacturer `0x01`
   and device `0x20` (Am29F010B data sheet, Table 3), with no sector
-  protected.
+  protected (`../58503a-bdm.md`, "Programming the flash").
   `smartclock-cli join-chips` puts four dumps together that way and
   `split-chips` takes an image apart, whatever the bytes hold, and
   each then says what it finds rather than refusing: whose reset vector

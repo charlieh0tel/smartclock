@@ -816,7 +816,8 @@ that board.  The Z3805A's and Z3801A's J12 are not checked.
 firmware stopped: a word programmed and a sector erased in a blank
 region, then a sector of the image erased and programmed again.
 After that the whole flash hashed to the `58503a-3704.bin` image, and
-the primary booted and locked.  So a unit can be reflashed over BDM,
+the primary booted and locked.  The command words and selects are in
+[`58503a-bdm.md`](58503a-bdm.md#programming-the-flash).  So a unit can be reflashed over BDM,
 without the installer or a working primary (hypothesis 2,
 established).  The Z3805A and Z3801A are not checked.
 

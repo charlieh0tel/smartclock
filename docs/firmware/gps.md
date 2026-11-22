@@ -1024,6 +1024,9 @@ is first seen or changes.
 The Z3801A's engine answered while tracking no satellites on an
 antenna the 58503A tracks on.
 
+The engine's own board, its MC68331's test points and how a BDM
+header wires to them, is `../oncore-vp-board.md`.
+
 ## Where the sawtooth is read
 
 In the Z3816A, the one reader of offset 26 found is `FUN_0004c062`,

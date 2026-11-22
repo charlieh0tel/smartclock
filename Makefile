@@ -178,7 +178,7 @@ docs:
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
-HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03
+HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03 oncore-vp-test-points
 PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage \
 	58501a-prototype
 NEW_PAGE := gps-architecture

@@ -349,23 +349,66 @@ impl Daemons {
     pub fn instances(&self) -> Vec<Instance> {
         match self {
             Self::Listed(listed) => listed.clone(),
-            Self::Dir(dir) => {
-                let Ok(entries) = std::fs::read_dir(dir) else {
-                    return Vec::new();
-                };
-                let mut sockets: Vec<Instance> = entries
-                    .filter_map(|entry| entry.ok())
-                    .map(|entry| Instance {
-                        name: entry.file_name().to_string_lossy().into_owned(),
-                        endpoint: entry.path().join("socket"),
-                    })
-                    .filter(|instance| instance.endpoint.exists())
-                    .collect();
-                sockets.sort();
-                sockets
-            }
+            Self::Dir(dir) => scan(dir)
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|found| found.socket == Presence::Present)
+                .map(|found| found.instance)
+                .collect(),
         }
     }
+}
+
+/// The name of a daemon's socket in its instance directory.
+const SOCKET: &str = "socket";
+
+/// Whether an instance directory holds its socket.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Presence {
+    /// Something is where the socket goes; whether a daemon answers on
+    /// it is the caller's to find out.
+    Present,
+    /// Nothing is.
+    Absent,
+    /// The directory could not be looked into, and why: most often
+    /// permission, for a user outside the daemon's group.
+    Unreadable(std::io::ErrorKind),
+}
+
+/// One instance directory under a run directory.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Found {
+    /// Its name, and where its socket is or would be.
+    pub instance: Instance,
+    /// Whether the socket is there.
+    pub socket: Presence,
+}
+
+/// Every instance directory under `dir`, in name order, and whether
+/// each holds its socket.  Anything that is not a directory is not an
+/// instance and is skipped.
+pub fn scan(dir: &Path) -> Result<Vec<Found>> {
+    let mut found: Vec<Found> = std::fs::read_dir(dir)?
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.path().is_dir())
+        .map(|entry| {
+            let endpoint = entry.path().join(SOCKET);
+            let socket = match std::fs::metadata(&endpoint) {
+                Ok(_) => Presence::Present,
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Presence::Absent,
+                Err(e) => Presence::Unreadable(e.kind()),
+            };
+            Found {
+                instance: Instance {
+                    name: entry.file_name().to_string_lossy().into_owned(),
+                    endpoint,
+                },
+                socket,
+            }
+        })
+        .collect();
+    found.sort_by(|a, b| a.instance.cmp(&b.instance));
+    Ok(found)
 }
 
 /// How often the daemon polls each tier, from its [`Daemon::info`]
@@ -405,11 +448,15 @@ mod tests {
     use super::Daemon;
     use super::Daemons;
     use super::Instance;
+    use super::Presence;
     use super::cadence;
     use super::identity;
+    use super::scan;
     use crate::link::listen_scratch;
     use crate::task::Cadence;
     use std::io::Write as _;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt as _;
     use std::time::Duration;
     use std::time::Instant;
 
@@ -433,7 +480,59 @@ mod tests {
     #[test]
     fn sockets_of_a_missing_directory_is_empty() {
         let dir = std::env::temp_dir().join("smartclock-daemons-does-not-exist");
-        assert!(Daemons::Dir(dir).instances().is_empty());
+        assert!(Daemons::Dir(dir.clone()).instances().is_empty());
+        assert!(
+            scan(&dir).is_err(),
+            "a missing directory is not an empty one"
+        );
+    }
+
+    #[test]
+    fn a_scan_says_which_instances_hold_their_socket() {
+        let dir = std::env::temp_dir().join(format!("smartclock-scan-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        for name in ["running", "stopped"] {
+            std::fs::create_dir_all(dir.join(name)).expect("instance directory");
+        }
+        std::fs::write(dir.join("running").join("socket"), b"").expect("socket stand-in");
+        std::fs::write(dir.join("not-an-instance"), b"").expect("a stray file");
+        let found = scan(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let found: Vec<(&str, Presence)> = found
+            .as_deref()
+            .expect("scan")
+            .iter()
+            .map(|f| (f.instance.name.as_str(), f.socket))
+            .collect();
+        assert_eq!(
+            found,
+            [
+                ("running", Presence::Present),
+                ("stopped", Presence::Absent)
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_scan_says_which_instances_it_cannot_look_into() {
+        let dir = std::env::temp_dir().join(format!("smartclock-scan-shut-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let shut = dir.join("shut");
+        std::fs::create_dir_all(&shut).expect("instance directory");
+        std::fs::write(shut.join("socket"), b"").expect("socket stand-in");
+        std::fs::set_permissions(&shut, std::fs::Permissions::from_mode(0o000)).expect("chmod");
+        // Root looks into anything, so there the case cannot be made.
+        let root = std::fs::metadata(shut.join("socket")).is_ok();
+        let found = scan(&dir);
+        std::fs::set_permissions(&shut, std::fs::Permissions::from_mode(0o700)).expect("chmod");
+        let _ = std::fs::remove_dir_all(&dir);
+        if !root {
+            assert_eq!(
+                found.expect("scan")[0].socket,
+                Presence::Unreadable(std::io::ErrorKind::PermissionDenied)
+            );
+        }
     }
 
     #[test]

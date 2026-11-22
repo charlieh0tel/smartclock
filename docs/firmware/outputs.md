@@ -225,9 +225,8 @@ OP7 at three places of their own (`0x24e24`, `0x2495c` and on), and
 their bank was not traced.  On the bench 58503A (58503-60001 Rev C)
 the six LEDs are OP2 to OP7, OP2 nearest the middle of the board
 and OP7 nearest its edge, measured on
-2026-11-21 (`../hardware-investigations.md` item 17).  The polarity is
-the inference above, not an observation: a unit or the board's LED
-circuit settles it.
+2026-11-21 (`../hardware-investigations.md` item 17): OP2 green, the
+rest red, each lit by a high pin, as inferred above.
 
 ## The FPGA bitstreams
 

@@ -323,6 +323,57 @@ class Procedure(unittest.TestCase):
             flash_host.flash(target, image, Options(erase_time=TEST_ERASE_LIMIT), ROUTINE, quiet, built)
 
 
+def entering(target: ModelTarget, writes: tuple[tuple[int, int, int], ...]) -> ModelTarget:
+    """target, its reset entry followed by writes (address, width,
+    value): an entry that is not a fresh reset's."""
+    reset = target.reset_into_bdm
+
+    def reset_and_write() -> None:
+        reset()
+        for address, width, value in writes:
+            target.write_memory(address, width, value)
+
+    target.reset_into_bdm = reset_and_write
+    return target
+
+
+class EntryState(unittest.TestCase):
+    # the boot selects already as the bench order leaves them, SYPCR
+    # already the host's value: not a fresh reset's
+    NOT_FRESH = ((flash_host.SYPCR, 1, flash_host.SYPCR_VALUE), (flash_host.CSORBT, 2, 0x6870), (flash_host.CSBARBT, 2, 0x0005))
+
+    def test_not_fresh_refused(self):
+        target, model = board()
+        lines: list[str] = []
+        options = Options(erase_time=TEST_ERASE_LIMIT)
+        with self.assertRaisesRegex(Refused, "SYPCR reads 0x4 at entry, not a fresh reset's 0x80"):
+            flash_host.flash(entering(target, self.NOT_FRESH), trial_image.trial(IMAGE_3704), options, ROUTINE, lines.append)
+        self.assertIn("at entry SYPCR 0x04, CSPAR0 0x3fff, CSPAR1 0x03ff, CSBARBT 0x0005, CSORBT 0x6870", lines)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+
+    def test_fresh_reset_entry_passes(self):
+        target, model = board()
+        lines: list[str] = []
+        flash_host.flash(target, IMAGE_3704, Options(dry_run=True), ROUTINE, lines.append)
+        self.assertIn("at entry SYPCR 0x80, CSPAR0 0x3fff, CSPAR1 0x03ff, CSBARBT 0x0007, CSORBT 0x7b70", lines)
+
+    def test_any_entry_state_goes_on(self):
+        target, model = board()
+        image = trial_image.trial(IMAGE_3704)
+        report = run(entering(target, self.NOT_FRESH), image, any_entry_state=True)
+        self.assertEqual(report.differing, [])
+        self.assertEqual(report.final_sha256, hashlib.sha256(image).hexdigest())
+        clean(self, model)
+
+    def test_any_entry_state_sypcr_written_before(self):
+        # SYPCR is write-once: the host's write does not take, and its
+        # read-back refuses
+        target, model = board()
+        with self.assertRaisesRegex(Refused, "SYPCR reads 0x00 after writing 0x04"):
+            run(entering(target, ((flash_host.SYPCR, 1, 0x00),)), IMAGE_3704, any_entry_state=True)
+        self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
+
+
 class ChipSelectOrder(unittest.TestCase):
     def test_bench_order_adds_no_hazard(self):
         target, model = board()
@@ -331,7 +382,7 @@ class ChipSelectOrder(unittest.TestCase):
         self.assertEqual(model.hazards, [])
 
     def test_reset_decode_has_the_mirror(self):
-        registers = {address: value for address, _, value in flash_host.ENTRY_STATE}
+        registers = {address: value for _, address, _, value in flash_host.ENTRY_STATE}
         for name in flash_host.SELECTS[1:]:
             registers[flash_host.csbar(int(name[2:]))] = registers[flash_host.csor(int(name[2:]))] = 0
         found = {hazard for hazard, _ in hazards(registers)}
@@ -505,6 +556,7 @@ class CommandLine(unittest.TestCase):
             (("--model", unit, "--image", original, "--write", "--expect-sha256", SHA256_3704), "--write requires"),
             (("--model", unit, "--image", original[:-4] + "-missing.bin", "--dry-run"), "No such file"),
             (("--plan", unit, original, "--pod", "usb"), "--plan touches no target"),
+            (("--plan", unit, original, "--any-entry-state"), "--plan touches no target"),
             (("--model", unit, "--image", str(self.short), "--dry-run"), "not 524288"),
             (("--model", unit, "--image", original, "--dry-run", "--restore-to", str(restore)), "exists"),
         ):

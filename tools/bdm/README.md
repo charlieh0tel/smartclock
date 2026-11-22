@@ -63,6 +63,7 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | `--write` | the whole procedure; requires `--restore-to` |
 | `--restore-to FILE` | save the dump to FILE, which must not exist, before any write; any mode |
 | `--expect-sha256 SHA256` | optional: refuse to go on unless the dump has this SHA-256; any mode |
+| `--any-entry-state` | go on from a reset entry whose SIM is not a fresh reset's, reporting what it read |
 | `--allow-low` | allow erasing and programming below `0x10000`, the reset vectors, boot code and installer |
 
 Every run on a target, and `--plan`, first reports whether each bank's
@@ -172,7 +173,8 @@ lane sums and writes it whether they hold or not.  It refuses:
   `allow_low`: the vectors, boot code and installer, which only a
   programmer could restore;
 - a reset entry whose SIM is not a fresh reset's (SYPCR unwritten,
-  CSBOOT and the pin assignments at their reset values);
+  CSBOOT and the pin assignments at their reset values), unless
+  `any_entry_state`;
 - a SIM write that does not read back;
 - a chip-select write that adds a hazard to the decode;
 - parts that do not give AMD's and the Am29F010B's codes in both lanes
@@ -186,6 +188,14 @@ lane sums and writes it whether they hold or not.  It refuses:
 no command at all and runs no code.  `identify_only` stops there too,
 after identify.  The host never sets PC outside the routine, so it cannot start the firmware; a pod's "reset and run" is
 the person's step, after the host returns.
+
+**The entry state.**  The host reports the SIM's state at its reset
+entry (SYPCR, the pin assignments, CSBOOT's registers) and refuses one
+that is not a fresh reset's; `--any-entry-state` has it go on, the
+hazard check starting from the selects it read and the host writing
+every select and both pin assignment registers itself.  SYPCR is
+write-once, so after an entry where it was already written to another
+value the run stops at SYPCR's read-back.
 
 **The chip-select order.**  The host writes the 3704 boot code's flash
 and RAM selects in the order that worked on the bench: CSORBT read-only
@@ -318,7 +328,9 @@ returning through the vector table; the poll and step clock bounds; a
 whole image from blank, from a variant of itself and from the 3633
 image (refused below `0x10000`, then written with `allow_low`); a dry
 run; refusals of a low sector pair, a short image, unexpected IDs
-and a protected sector; bad lane sums reported and the image written; the watchdog reset without SYPCR; the bench order
+and a protected sector; bad lane sums reported and the image written; the watchdog reset without SYPCR; an entry
+not a fresh reset's refused, and with `any_entry_state` written
+through, or refused at SYPCR's read-back if SYPCR was written; the bench order
 adding no hazard; the reset decode's hazards; the mirror on the model;
 four changed orders refused; the trial image and its refusals; identify only, the restore dump saved and its SHA-256
 checked, each step logged; and the command line on the model

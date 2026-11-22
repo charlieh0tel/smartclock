@@ -1391,8 +1391,13 @@ measured (below).
   /IACK.
 
 *Measured on the bench 58503A* (58503-60001 Rev C, 3704), on
-2026-11-21: the MC68331's /IRQ2 follows the DUART's interrupt output,
-so the DUART's interrupt is level 2, as CS10's acknowledge says.
+2026-11-21 (step W7): the MC68331's /IRQ2 follows the DUART's
+interrupt output, so the DUART's interrupt is level 2, as CS10's
+acknowledge says.  In a halt PF2, /IRQ2's pin, was made a discrete
+input for the read (DDRF `0xf3`, then PFPAR `0x00`; restored with
+PFPAR `0x04`, then DDRF `0xf7`, so that the pin was never driven):
+it read 1 while the DUART's ISR AND IMR was `0x00` and 0 while it was
+`0x02`.
 Whether another source shares the line, and whether U29 is between
 them, is not settled.
 

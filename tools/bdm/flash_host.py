@@ -13,6 +13,7 @@ pairs a run would erase, or why it would refuse; no target is touched.
 
     python3 -I tools/bdm/flash_host.py (--pod POD | --model FLASH) --image IMAGE
         (--dry-run | --identify | --write --restore-to FILE) [--expect-sha256 SHA256] [--allow-low]
+        [--any-entry-state]
 
 runs the procedure below on a pod (pod_target.py) or on the modeled
 board holding FLASH (model_target.py): --dry-run steps 1-4 and 6,
@@ -25,8 +26,8 @@ it ends with the CPU in background mode.
 
 The procedure, each step's failure fatal, never retried:
 
-1. Reset into BDM; read the SIM's entry state and refuse anything but
-   a fresh reset's.
+1. Reset into BDM; read and report the SIM's entry state, and refuse
+   anything but a fresh reset's unless told (--any-entry-state).
 2. Write SYPCR once: watchdog off, bus monitor on (SYPCR_VALUE).
 3. Write the chip selects in CHIP_SELECTS's order, each read back,
    refusing any step that adds a hazard to the decode (hazards()).
@@ -130,11 +131,20 @@ def csor(select: int) -> int:
 # SIMCR's MM: the modules at $FFF000 (MC68331UM D.3.1), which every
 # address here assumes.
 SIMCR_MM = 0x0040
-# A fresh reset's SIM, as the bench unit read it at a reset entry on
+# The SIM registers the host reads and reports at entry, each with a
+# fresh reset's value, as the bench unit read it at a reset entry on
 # 2026-11-21 and as MC68331UM D.3.12 and D.3.23-D.3.26 give the reset
 # values for its DATA pins: SYPCR still unwritten (it is write-once),
 # CSBOOT over 1 MiB for reads and writes, every pin a 16-bit select.
-ENTRY_STATE = ((SYPCR, 1, 0x80), (CSPAR0, 2, 0x3FFF), (CSPAR1, 2, 0x03FF), (CSBARBT, 2, 0x0007), (CSORBT, 2, 0x7B70))
+# The host refuses any other unless told (any_entry_state); either way
+# the hazard check starts from what it reads.
+ENTRY_STATE = (
+    ("SYPCR", SYPCR, 1, 0x80),
+    ("CSPAR0", CSPAR0, 2, 0x3FFF),
+    ("CSPAR1", CSPAR1, 2, 0x03FF),
+    ("CSBARBT", CSBARBT, 2, 0x0007),
+    ("CSORBT", CSORBT, 2, 0x7B70),
+)
 # SYPCR, written once (MC68331UM D.3.12): SWE 0, the watchdog off, which
 # would otherwise reset the CPU 2^9 crystal periods (16 ms) into the
 # routine, SWP being 0 on this board (bench SYPCR $80; Table D-6); HME
@@ -378,14 +388,17 @@ def differing_ranges(one: bytes, other: bytes) -> list[tuple[int, int]]:
 
 @dataclass
 class Options:
-    """allow_low: erase and program below PROTECTED_END; dry_run: stop after the
-    dump, reporting the plan; identify_only: likewise after identify;
+    """allow_low: erase and program below PROTECTED_END; any_entry_state:
+    go on from a reset entry whose SIM is not a fresh reset's; dry_run:
+    stop after the dump, reporting the plan; identify_only: likewise
+    after identify;
     restore_path: a new file to save the dump to, before any write;
     expected_restore_sha256: if given, refuse to go on unless the dump
     has it;
     program_time and erase_time: the routine's limits, seconds."""
 
     allow_low: bool = False
+    any_entry_state: bool = False
     dry_run: bool = False
     identify_only: bool = False
     restore_path: Path | None = None
@@ -440,11 +453,12 @@ class Session:
         self.log(f"SIMCR {simcr:#06x} at entry")
         if not simcr & SIMCR_MM:
             raise Refused(f"SIMCR {simcr:#06x}: the modules are not at $FFF000")
-        registers = {}
-        for address, width, expected in ENTRY_STATE:
-            registers[address] = value = self.read(address, width)
-            if value != expected:
-                raise Refused(f"{address:#x} reads {value:#x} at entry, not a fresh reset's {expected:#x}")
+        registers = {address: self.read(address, width) for _, address, width, _ in ENTRY_STATE}
+        self.log("at entry " + ", ".join(f"{name} {registers[address]:#0{2 + 2 * width}x}" for name, address, width, _ in ENTRY_STATE))
+        if not self.options.any_entry_state:
+            for name, address, width, expected in ENTRY_STATE:
+                if registers[address] != expected:
+                    raise Refused(f"{name} reads {registers[address]:#x} at entry, not a fresh reset's {expected:#x}")
         for name in SELECTS[1:]:
             number = int(name[2:])
             registers[csbar(number)] = self.read(csbar(number), 2)
@@ -649,12 +663,18 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--expect-sha256", metavar="SHA256", help="the SHA-256 the unit's flash must have now")
     parser.add_argument("--restore-to", metavar="FILE", type=Path, help="a new file to save the unit's flash to")
     parser.add_argument("--allow-low", action="store_true", help=f"allow writing below {PROTECTED_END:#x}")
+    parser.add_argument(
+        "--any-entry-state",
+        action="store_true",
+        help="go on from a reset entry whose SIM is not a fresh reset's, reporting what it read",
+    )
     parsed = parser.parse_args()
     bench_options = (
         ("--pod or --model", parsed.pod or parsed.model),
         ("--image", parsed.image),
         ("--expect-sha256", parsed.expect_sha256),
         ("--restore-to", parsed.restore_to),
+        ("--any-entry-state", parsed.any_entry_state),
     )
     if parsed.plan:
         given = [name for name, value in bench_options if value]
@@ -673,6 +693,7 @@ def bench(parsed: argparse.Namespace, image: bytes, routine: Routine) -> None:
     """A run on the target parsed names, ending in what it left."""
     options = Options(
         allow_low=parsed.allow_low,
+        any_entry_state=parsed.any_entry_state,
         dry_run=parsed.dry_run,
         identify_only=parsed.identify,
         restore_path=parsed.restore_to,

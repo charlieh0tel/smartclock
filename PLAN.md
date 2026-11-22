@@ -621,7 +621,8 @@ the image it is given: no catalog of known images, unlike
 image whose sums fail boots into the installer).  It refuses only what
 is physical or protects the way back: the image's size, the parts'
 IDs, a chip-select hazard, and any write below `0x10000` unless told.
-It never starts the firmware; a pod adapter (`pod_target.py`) drives
+It refuses a reset entry that is not a fresh reset's unless told.  It
+never starts the firmware; a pod adapter (`pod_target.py`) drives
 the mc683xx pod, through which a bench trial on a 58503A passed on
 2026-11-22.  `tools/bdm/README.md`.
 

@@ -1151,8 +1151,11 @@ of the bank").
 2026-11-21: the six LEDs are the DUART's output port bits OP2 to
 OP7 in order from the middle of the board outward: OP2, the
 heartbeat and green, is the LED nearest the middle, and OP7 the one
-nearest the board edge.
-The other LEDs' colors and the polarity are not recorded here.
+nearest the board edge (step W1).  OP3 to OP7 are red.  A pin driven
+high, by a write to ROPBC (`0x20001f`), lit its LED, and driven low,
+by SOPBC (`0x20001d`), put it out: the polarity `firmware/outputs.md`
+infers.  Both addresses were only written: a read starts or stops the
+DUART's counter ("Register reads through the console").
 
 *Photos:* the Z3805A and Z3801A carry the same row of six
 surface-mount LEDs at the board's rear edge, beside the RAM at U8 and

@@ -15,9 +15,10 @@ size of the flash, parts that are not the expected ones, a chip-select
 decode with a hazard, any write below `0x10000` unless told, and any
 target error.  It never starts the firmware.
 
-It has run only on mc683xx's MC68331.  `pod_target.py` adapts it to the
-mc683xx BDM pod, but nothing here has yet run on a pod or a receiver,
-and the tests touch neither.
+`pod_target.py` adapts it to the mc683xx BDM pod.  The bench trial
+below ran on a 58503A through the pod on 2026-11-22, every step
+passing ("Seen on the bench").  The tests touch neither pod nor
+receiver.
 
 | File | What it is |
 | ---- | ---------- |
@@ -266,10 +267,10 @@ the adapter reads the RESET line between polls and calls it low a
 reset while running; a reset shorter than a poll goes unseen and ends
 in the time-out instead.
 
-On a bench machine the module comes as the pod project says: a wheel
-built in its repository (`cd crates/py && uv build --wheel`, its
-README), installed into an environment of this checkout's own, for
-example `uv venv target/bdm-venv` and `uv pip install --python
+On a bench machine the module comes as the pod's repository
+documents (`crates/py`, its README): a wheel, installed into an
+environment of this checkout's own with a Python the module supports,
+for example `uv venv target/bdm-venv` and `uv pip install --python
 target/bdm-venv/bin/python WHEEL`.  The bench steps below call that
 environment's Python `$PY`.
 
@@ -419,12 +420,40 @@ a reset does not stop (the parts have no RESET pin): reset into BDM,
 and trust no read until a dry run's dump is stable.  Last resort: the
 parts are socketed.
 
-What the model cannot show: the pod's own behavior (whether the RESET
-line can be read between polls, what closing the pod leaves the CPU
-in, whether `go` after a reset entry needs anything more), the bulk
-widths' speed on this board, real poll and erase timing, and the DQ7
-lag the routine already allows for; the wiring of WE#; any interrupt
-line asserted at level 7; electrical behavior.
+## Seen on the bench
+
+On 2026-11-22 steps 1 to 5 ran as written, in order, each passing, on
+a 58503A with firmware 3704-C, through the mc683xx BDM pod: its Python
+module `mc683xx_bdm` 0.3.0, protocol 11, opened on Linux as
+`Pod("usb")`, DSCLK at the pod's default, 1 MHz (this unit's limit is
+3 MHz).
+
+1. Dry run: the dump's SHA-256 that of `58503a-3704.bin`.
+2. Identify: for both pairs manufacturer `0x0101`, device `0x2020`,
+   protection all zero.
+3. Trial write: sector pairs `0x70000` and `0x78000` erased,
+   programmed and verified; the flash's SHA-256 the trial image's.
+4. The original back: the same two pairs; the flash's SHA-256 the
+   3704 image's again, which a further dry run confirmed.
+5. The pod's reset: the primary booted and answered `*IDN?`.
+
+SIMCR read `0x60cf` at every reset entry; the system clock was
+8388608 Hz.  In that run a dry run or an identify, each with its
+512 KiB dump, took about 10 s, and each two-pair write, with its dump
+before and the whole flash's hash after, about 25 s: times seen at the
+bench, not figures any check gives.
+
+The pod's behavior, unknown until then: the routine's BGND comes back
+as an entry of its own, distinct from a breakpoint and a double bus
+fault; closing the pod leaves the CPU stopped in background mode, as
+it did across the five runs; and `go` after a reset entry needs
+nothing beyond the host's own setup.
+
+Not yet seen: a reset while the routine runs (the adapter's polling of
+the RESET line), any failure path on hardware, a write below
+`0x10000`, a whole-image write.  Nor anything a passing run cannot
+show: the poll and erase margins and the DQ7 lag the routine allows
+for, the wiring of WE#, an interrupt at level 7, electrical behavior.
 
 ## Adversarial review
 

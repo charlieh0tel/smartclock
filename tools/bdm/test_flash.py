@@ -235,7 +235,7 @@ class Procedure(unittest.TestCase):
         # all but the image's two blank sector pairs
         self.assertEqual(report.plan, [base for base in range(0, FLASH_SIZE, SECTOR_PAIR_SIZE) if base not in (0x68000, 0x70000)])
         self.assertEqual(report.final_sha256, SHA256_3704)
-        self.assertEqual(report.restore_sha256, hashlib.sha256(BLANK).hexdigest())
+        self.assertEqual(report.dump_sha256, hashlib.sha256(BLANK).hexdigest())
         self.assertEqual(model.image(), IMAGE_3704)
         clean(self, model)
 
@@ -244,7 +244,7 @@ class Procedure(unittest.TestCase):
         target, model = board()
         report = run(target, image)
         self.assertEqual(report.plan, [0x10000, 0x38000, 0x68000, 0x78000])
-        self.assertEqual(report.restore_sha256, SHA256_3704)
+        self.assertEqual(report.dump_sha256, SHA256_3704)
         self.assertEqual(model.image(), image)
         clean(self, model)
 
@@ -462,16 +462,6 @@ class Modes(unittest.TestCase):
         self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
         clean(self, model)
 
-    def test_restore_saved(self):
-        with tempfile.TemporaryDirectory() as folder:
-            restore = Path(folder) / "restore.bin"
-            target, model = board()
-            run(target, variant(IMAGE_3704, 0x60000), restore_path=restore, dry_run=True)
-            self.assertEqual(restore.read_bytes(), IMAGE_3704)
-            with self.assertRaisesRegex(Refused, "cannot save"):
-                run(target, variant(IMAGE_3704, 0x60000), restore_path=restore)
-            self.assertEqual([part.operations for part in model.parts()], [[]] * 4)
-
     def test_each_step_logged(self):
         target, model = board()
         lines: list[str] = []
@@ -507,7 +497,7 @@ class CommandLine(unittest.TestCase):
     def test_dry_run(self):
         output, code = self.main("--model", str(self.unit), "--image", str(self.trial), "--dry-run")
         self.assertIsNone(code)
-        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
+        self.assertIn(f"dump SHA-256 {SHA256_3704}", output)
         self.assertIn("sector pairs to write: 0x70000, 0x78000", output)
         self.assertIn("image lane sums of 0x40000-0x80000 hold", output)
         self.assertIn(flash_host.STOPPED, output)
@@ -518,29 +508,16 @@ class CommandLine(unittest.TestCase):
         self.assertIn("manufacturer 0x0101, device 0x2020", output)
         self.assertIn("sector pairs to write: none", output)
 
-    def test_write_and_back(self):
-        restore = self.path / "restore.bin"
-        output, code = self.main(
-            "--model", str(self.unit), "--image", str(self.trial), "--write", "--restore-to", str(restore),
-        )
+    def test_write(self):
+        output, code = self.main("--model", str(self.unit), "--image", str(self.trial), "--write")
         self.assertIsNone(code, output)
-        self.assertEqual(restore.read_bytes(), IMAGE_3704)
-        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
+        self.assertIn(f"dump SHA-256 {SHA256_3704}", output)
         trial_sha256 = hashlib.sha256(self.trial.read_bytes()).hexdigest()
         self.assertIn(f"success: the flash is the image, SHA-256 {trial_sha256}", output)
         self.assertIn("sector pair 0x78000 verified", output)
         self.assertTrue(output.rstrip().endswith(flash_host.STOPPED))
 
-    def test_write_without_restore_to(self):
-        output, code = self.main("--model", str(self.unit), "--image", str(self.trial), "--write")
-        self.assertIsNone(code, output)
-        self.assertIn(f"restore image SHA-256 {SHA256_3704}", output)
-        self.assertNotIn("restore image saved", output)
-        self.assertIn("sector pair 0x78000 verified", output)
-
     def test_refusals_before_any_target(self):
-        restore = self.path / "restore.bin"
-        restore.write_bytes(b"")
         unit, original = str(self.unit), self.original
         for arguments, message in (
             (("--model", unit, "--image", original), "one of the arguments"),
@@ -551,7 +528,6 @@ class CommandLine(unittest.TestCase):
             (("--plan", unit, original, "--pod", "usb"), "--plan touches no target"),
             (("--plan", unit, original, "--any-entry-state"), "--plan touches no target"),
             (("--model", unit, "--image", str(self.short), "--dry-run"), "not 524288"),
-            (("--model", unit, "--image", original, "--dry-run", "--restore-to", str(restore)), "exists"),
         ):
             with self.subTest(arguments=arguments):
                 stderr = io.StringIO()
@@ -570,7 +546,7 @@ class CommandLine(unittest.TestCase):
         image[0x70000] = 0
         bad = self.path / "bad.bin"
         bad.write_bytes(bytes(image))
-        output, code = self.main("--model", str(self.unit), "--image", str(bad), "--write", "--restore-to", str(self.path / "r.bin"))
+        output, code = self.main("--model", str(self.unit), "--image", str(bad), "--write")
         self.assertIsNone(code, output)
         self.assertLess(output.index("WARNING: an image whose lane sums fail"), output.index("sector pair 0x70000 erased"))
         self.assertIn("success: the flash is the image", output)

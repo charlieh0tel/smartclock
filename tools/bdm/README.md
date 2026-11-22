@@ -43,9 +43,10 @@ make test-bdm        # the pod adapter's tests; assembles the routine, then the 
 python3 -I tools/bdm/flash_host.py --plan CURRENT.bin IMAGE.bin
 ```
 
-`--plan` reads a dump and an image and prints the sector pairs a run
-would erase and program, or why it would refuse.  The routine's size
-and code are in `target/bdm/flash_routine.json` and `.lst`.
+`--plan` reads a file of what the flash holds and an image and prints
+the sector pairs a run would erase and program, or why it would
+refuse.  The routine's size and code are in
+`target/bdm/flash_routine.json` and `.lst`.
 
 On a target, every run is one reset entry, and the options say
 everything; none defaults to writing:
@@ -62,7 +63,6 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | `--dry-run` | set-up, the dump and its SHA-256, the plan: no flash command, no code run on the CPU |
 | `--identify` | the dry run and the routine's identify: the first code the CPU runs, sending only autoselect and read/reset |
 | `--write` | the whole procedure |
-| `--restore-to FILE` | optional: save the dump to FILE, which must not exist, before any write; any mode |
 | `--any-entry-state` | go on from a reset entry whose SIM is not a fresh reset's, reporting what it read |
 
 Every run on a target, and `--plan`, first reports whether each bank's
@@ -176,8 +176,7 @@ lane sums and writes it whether they hold or not.  It refuses:
 - parts that do not give AMD's and the Am29F010B's codes in both lanes
   of both pairs, and a protected sector pair it would write;
 - a return to background mode that is not the routine's BGND, with PC
-  just after it;
-- with `restore_path`, a dump it cannot save to a new file there.
+  just after it.
 
 `dry_run` stops after the dump and reports the plan: it sends the flash
 no command at all and runs no code.  `identify_only` stops there too,
@@ -328,9 +327,8 @@ not a fresh reset's refused, and with `any_entry_state` written
 through, or refused at SYPCR's read-back if SYPCR was written; the bench order
 adding no hazard; the reset decode's hazards; the mirror on the model;
 four changed orders refused; the trial image and its refusals;
-identify only, the restore dump saved and never overwritten, each step
-logged; and the command line on the model target: a dry run,
-identify, a trial written with and without `--restore-to`, an image
+identify only, each step logged; and the command line on the model
+target: a dry run, identify, a trial written, an image
 with failing sums written after its warning, and its refusals before
 any target.
 
@@ -353,7 +351,7 @@ was interrupted is suspect: begin again at step 1.
 It needs: `make bdm-routine`; the pod module in an environment (above);
 the owner's choice of unit, a spare first being the safer; and the
 unit's own image, which step 1 confirms.  With the unit's image (the
-3704, say) and a folder for the dumps:
+3704, say) and a folder for the trial image:
 
 ```
 PY=target/bdm-venv/bin/python
@@ -365,12 +363,12 @@ mkdir -p captures/bdm
 1. **Dry run.**
 
    ```
-   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --dry-run --restore-to captures/bdm/1.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --dry-run
    ```
 
    Success: the SIM's entry state and every chip select read back, the
    routine and vector table read back, the image's lane sums holding,
-   the restore image's SHA-256 `$SHA`, "sector pairs to write: none",
+   the dump's SHA-256 `$SHA`, "sector pairs to write: none",
    and the last line saying the CPU is stopped in background mode.  No
    flash command, no code run.  If the SHA-256 is another image's
    (`sha256sum third_party/firmware/images/58503a-*.bin`), that image
@@ -379,7 +377,7 @@ mkdir -p captures/bdm
 2. **Identify.**
 
    ```
-   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --identify --restore-to captures/bdm/2.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --identify
    ```
 
    Success: as step 1, and for both pairs manufacturer `0x0101`,
@@ -388,15 +386,16 @@ mkdir -p captures/bdm
    call: registers, VBR, the run, BGND and the PC after it.
 
 3. **A trial write**: the unit's image with the first word of the blank
-   sector pair `0x70000` changed and the lane sums fixed.
+   sector pair `0x70000` changed and the lane sums fixed.  Step 1 showed
+   the flash holds `$IMAGE`, so the plan is against it.
 
    ```
    python3 -I tools/bdm/trial_image.py "$IMAGE" captures/bdm/trial.bin
-   python3 -I tools/bdm/flash_host.py --plan captures/bdm/2.bin captures/bdm/trial.bin
-   $PY -I tools/bdm/flash_host.py --pod usb --image captures/bdm/trial.bin --write --restore-to captures/bdm/3.bin
+   python3 -I tools/bdm/flash_host.py --plan "$IMAGE" captures/bdm/trial.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image captures/bdm/trial.bin --write
    ```
 
-   Success: the lane sums hold; the restore image's SHA-256 `$SHA`;
+   Success: the lane sums hold; the dump's SHA-256 `$SHA`;
    the plan is `0x70000` and `0x78000`, pair 2's blank pair and the one
    holding its sums; each is erased, programmed and verified; the flash's SHA-256 is the trial image's and the run says
    success, then that the CPU is stopped.
@@ -404,10 +403,10 @@ mkdir -p captures/bdm
 4. **The original back.**
 
    ```
-   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --write --restore-to captures/bdm/4.bin
+   $PY -I tools/bdm/flash_host.py --pod usb --image "$IMAGE" --write
    ```
 
-   Success: the restore image's SHA-256 the trial image's, the same
+   Success: the dump's SHA-256 the trial image's, the same
    two sector pairs, the flash's SHA-256 `$SHA`, success, the CPU
    stopped.
 

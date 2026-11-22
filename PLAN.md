@@ -87,6 +87,12 @@ independently.
   hold its client.  Windows uses TCP on `127.0.0.1:9978`.
 - A bare `HOST:PORT` given as `--daemon` is refused rather than looked
   for as a file; TCP is `tcp://HOST:PORT`.
+- `smartclock-cli daemons` finds daemons by the run directory alone,
+  the same scan the exporter and web view make, and asks each the
+  existing `info` and `latest`, both answered from the daemon's memory:
+  no new request, and nothing reaches a receiver.  A daemon on a socket
+  outside the run directory, or on TCP alone, cannot be discovered and
+  is not listed.
 - History is read from the SQLite file, read-only, beside the daemon's
   single writer (WAL).  A read-only reader needs `-shm` and cannot
   create it in `/var/lib/smartclockd`, so the daemon sets persistent

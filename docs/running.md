@@ -83,6 +83,27 @@ sensors in `/etc/default/smartclock-sensord` first, then
 `sudo systemctl enable --now smartclock-sensord`, and check it with
 `smartclock-cli sensors`; `docs/sensors.md` has the details.
 
+### Finding a daemon
+
+`smartclock-cli daemons` lists the instances under `/run/smartclockd`,
+one line each: the instance, the socket to give `--daemon`, and what
+it found there:
+
+    ttyUSB0 /run/smartclockd/ttyUSB0/socket: running, 58503A serial 0000A00000 firmware 3704-C
+    ttyUSB1 /run/smartclockd/ttyUSB1/socket: running, receiver not answering (last ...; link down: ...)
+    ttyS0 /run/smartclockd/ttyS0/socket: not running (no socket)
+    ttyS1 /run/smartclockd/ttyS1/socket: not running (stale socket: connection refused)
+    ttyS2 /run/smartclockd/ttyS2/socket: cannot tell (permission denied; are you in its group?)
+    ttyS3 /run/smartclockd/ttyS3/socket: not answering (it did not answer within ...)
+
+The receiver is the daemon's own account, from memory, so nothing is
+sent to it.  A daemon opens its socket only once a receiver has
+answered, so "no socket" is also a daemon still waiting for its first.
+`--run-dir` looks elsewhere; a daemon given a `--socket` outside any
+run directory, or only `--listen`, is not found.  Where there are no
+Unix sockets it asks the default daemon, `tcp://127.0.0.1:9978`.
+With nothing found it says so and succeeds.
+
 ### Upgrading
 
 On opening a log written by an earlier version, the daemon upgrades it
@@ -325,6 +346,8 @@ the oscillator's serial -- goes into its log through the daemon:
     smartclock-cli --daemon /run/smartclockd/ttyUSB0/socket note added a 20 dB LNA
     smartclock-cli --daemon ... note --at 2026-09-25T14:00:00-07:00 ran master_reset
     smartclock-cli --daemon ... fact ocxo.model 10811-60159
+
+`smartclock-cli daemons` lists the sockets to give `--daemon`.
 
 Both are filed under the receiver attached now; nothing is sent to it.
 Notes show in the web view's journal, and as dashed lines across its

@@ -15,6 +15,8 @@ use std::time::Duration;
 
 use anyhow::Context as _;
 use anyhow::Result;
+use clap::CommandFactory as _;
+use clap::FromArgMatches as _;
 use clap::Parser;
 use clap::Subcommand;
 use jiff::Timestamp;
@@ -23,12 +25,15 @@ use signal_hook::consts::SIGINT;
 use smartclock::attach::answering;
 use smartclock::client::Daemon;
 use smartclock::client::Filed;
+use smartclock::client::no_run_dir;
 use smartclock::command::Class;
 use smartclock::command::Dialect;
 use smartclock::console;
 use smartclock::console::Progress;
 use smartclock::console::Region;
 use smartclock::control::forbidden;
+use smartclock::defaults::DAEMON;
+use smartclock::defaults::RUN_DIR;
 use smartclock::defaults::SENSORD;
 use smartclock::device::Device;
 use smartclock::device::dialect_for;
@@ -251,6 +256,17 @@ enum Command {
         #[arg(long, default_value = SENSORD)]
         sensord: PathBuf,
     },
+    /// List the receiver daemons on this host, one line each: the
+    /// instance, the socket to give `--daemon`, and the receiver it is
+    /// attached to, asked of the daemon, which answers from what it
+    /// holds.  Needs neither a receiver nor `--daemon`; nothing is sent
+    /// to a receiver.
+    Daemons {
+        /// Where the daemons' sockets are: one instance per
+        /// subdirectory, `<run-dir>/<instance>/socket`.
+        #[arg(long, default_value = RUN_DIR)]
+        run_dir: Option<PathBuf>,
+    },
 }
 
 /// Where a console read goes and what happens after it, shared by the
@@ -330,6 +346,7 @@ fn address(text: &str) -> std::result::Result<u32, String> {
     parsed.map_err(|e| format!("{text} is not an address: {e}"))
 }
 
+mod daemons;
 mod dump_oncore;
 mod dump_pforth;
 mod dump_scpi;
@@ -338,8 +355,22 @@ mod image;
 mod registers;
 mod simulate_loop;
 
+/// The command line.  Where there are no Unix sockets there is no run
+/// directory either, and `daemons` lists the one at [`DAEMON`].
+fn parse() -> Cli {
+    let command = match DAEMON {
+        None => Cli::command(),
+        Some(_) => Cli::command().mut_subcommand("daemons", |daemons| {
+            daemons.mut_arg("run_dir", |arg| {
+                arg.hide(true).default_value(None).value_parser(no_run_dir)
+            })
+        }),
+    };
+    Cli::from_arg_matches(&command.get_matches()).unwrap_or_else(|e| e.exit())
+}
+
 fn main() -> Result<()> {
-    let cli = Cli::parse();
+    let cli = parse();
 
     // Reading the table needs no receiver, so this runs before the port
     // is opened rather than failing for want of hardware.
@@ -349,6 +380,9 @@ fn main() -> Result<()> {
     }
     if let Command::Sensors { sensord } = &cli.command {
         return sensors(sensord);
+    }
+    if let Command::Daemons { run_dir } = &cli.command {
+        return daemons::run(run_dir.as_deref());
     }
     if let Command::JoinChips(args) = &cli.command {
         return flash::chips::run_join(args);
@@ -379,7 +413,10 @@ fn main() -> Result<()> {
         return through_daemon(&daemon, &cli.command);
     }
     if matches!(cli.command, Command::Note { .. } | Command::Fact { .. }) {
-        anyhow::bail!("notes and facts are written to the log by the daemon; give --daemon");
+        anyhow::bail!(
+            "notes and facts are written to the log by the daemon; give --daemon \
+             (`smartclock-cli daemons` lists the daemons here)"
+        );
     }
     // Before the port is opened, so a refused list sends nothing at
     // all rather than the commands ahead of the refused one.  What is
@@ -617,7 +654,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         }
         // Handled before the port is opened.
         Command::Commands => Ok(()),
-        Command::Sensors { .. } => Ok(()),
+        Command::Sensors { .. } | Command::Daemons { .. } => Ok(()),
     };
     // Errors read off the queue so that no command was judged by them
     // (docs/protocol.md, "The error prompt"): the receiver raised them,
@@ -653,7 +690,8 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::SimulateLoop(_)
         | Command::Note { .. }
         | Command::Fact { .. }
-        | Command::Sensors { .. } => Vec::new(),
+        | Command::Sensors { .. }
+        | Command::Daemons { .. } => Vec::new(),
     })
 }
 
@@ -1051,6 +1089,7 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
             Ok(())
         }
         Command::Sensors { sensord } => sensors(sensord),
+        Command::Daemons { run_dir } => daemons::run(run_dir.as_deref()),
         Command::JoinChips(args) => flash::chips::run_join(args),
         Command::SplitChips(args) => flash::chips::run_split(args),
         Command::DumpScpi(args) => dump_scpi::run(args),

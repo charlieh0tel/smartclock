@@ -228,8 +228,8 @@ int32_t fit_constant(aging_curve_state* curve) {
 static const int32_t PLL_AGING_MORE_THAN_HELD = 100;
 
 /* Fits whichever of a line and a log curve fits better, the log curve
- * unless the line's rms is under three quarters of it and 14 entries
- * or more are well weighted. */
+ * when its rms is under three quarters of the line's or fewer than 14
+ * entries are well weighted. */
 static uint32_t pll_aging_fit_best(uint8_t minimum_weight,
                                    int32_t well_weighted) {
   static const float LINE_ADVANTAGE = 0.75f;

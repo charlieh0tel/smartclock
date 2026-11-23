@@ -6,8 +6,9 @@
 //! around an oscillator of a given sensitivity.  It starts at rest, or
 //! at a given time interval, or where a logged run stood, and runs no
 //! `startup_pll` or holdover; its integrator is fed an aging slope, a
-//! constant, a given fit's, or the 58503A 3704's aging fit's as it
-//! learns.  A replay drives it with what a logged
+//! constant, a given fit's, the 58503A 3704's aging fit's as it
+//! learns, or the receiver's, estimated from a logged run.  A replay
+//! drives it with what a logged
 //! run's oscillator did, recovered from the log's time interval and
 //! EFC (`docs/firmware/loop.md`, "Simulating it").
 
@@ -24,9 +25,12 @@ use jiff::Timestamp;
 use serde_json::Value;
 use smartclock::aging::Mode;
 use smartclock::discipline::BLOCK_SECONDS;
+use smartclock::discipline::CURRENT_WEIGHT;
 use smartclock::discipline::ClosedLoop;
 use smartclock::discipline::Disturbance;
+use smartclock::discipline::EFC_TOP;
 use smartclock::discipline::ENTRY_SECONDS;
+use smartclock::discipline::Gains;
 use smartclock::discipline::Reference;
 use smartclock::discipline::Update;
 use smartclock::types::EfcPercent;
@@ -54,6 +58,10 @@ const NORMAL_FFOM: f64 = 0.0;
 /// The prefilter's time constants, 1/a updates each, over which a
 /// replay runs it on the log before its start.
 const WARM_UP: f64 = 5.0;
+
+/// `--aging-window`'s default, seconds: the aging fit's window, the
+/// interval at which a new fit can change d.
+const ESTIMATE_WINDOW: u32 = smartclock::aging::ENTRY_SECONDS;
 
 /// EFC counts in one percent of the EFC's range: −100 % to +100 % is
 /// the 20-bit range (`EfcPercent::from_raw`).
@@ -173,6 +181,15 @@ pub(crate) struct SimulateLoopArgs {
     /// the loop with what its oscillator did.
     #[arg(long, requires = "log")]
     replay: bool,
+    /// Estimates from the log the aging slope d the receiver fed its
+    /// integrator at each update, printed beside it; a replay feeds it
+    /// to the loop in place of the aging fit's.
+    #[arg(long, requires = "log", conflicts_with_all = ["aging_slope", "fit_b", "fit_c", "aging_fit"])]
+    estimate_aging: bool,
+    /// The window, seconds, over which `--estimate-aging` averages the
+    /// slope it finds at each update, centered on the update.
+    #[arg(long, default_value_t = ESTIMATE_WINDOW, requires = "estimate_aging")]
+    aging_window: u32,
 }
 
 /// An `AT:VALUE`: seconds and a number.
@@ -385,21 +402,22 @@ fn logged_state(rows: &[Logged], from: f64, second: u32) -> Result<(f64, f64)> {
 
 /// The updates [`BLOCK_SECONDS`] apart from `start`, `count` of them,
 /// as the log saw them: at each, the latest row within [`LOG_GAP`] if
-/// it is `usable` and has a time interval, with f, the prefilter run
-/// over the time intervals from the first of a stretch without a gap,
-/// where it starts at that update's.
+/// it is `usable` at the update's time and has a time interval, with
+/// f, the prefilter run over the time intervals from the first of a
+/// stretch without a gap, where it starts at that update's.
 fn walk(
     rows: &[Logged],
     start: f64,
     count: u32,
     weight: f64,
-    usable: impl Fn(&Logged) -> bool,
+    usable: impl Fn(&Logged, f64) -> bool,
 ) -> Vec<Option<(Logged, f64)>> {
     let seconds = f64::from(BLOCK_SECONDS);
     let mut filtered: Option<f64> = None;
     (0..count)
         .map(|index| {
-            let row = latest(rows, start + f64::from(index) * seconds).filter(&usable);
+            let at = start + f64::from(index) * seconds;
+            let row = latest(rows, at).filter(|row| usable(row, at));
             filtered = row.and_then(|row| row.interval).map(|interval| {
                 filtered.map_or(interval, |f| (1.0 - weight) * f + weight * interval)
             });
@@ -414,7 +432,7 @@ fn walk(
 fn warm_up(rows: &[Logged], from: f64, weight: f64) -> Option<f64> {
     let blocks = warm_up_blocks(weight);
     let start = from - f64::from(blocks) * f64::from(BLOCK_SECONDS);
-    walk(rows, start, blocks + 1, weight, |_| true)
+    walk(rows, start, blocks + 1, weight, |_, _| true)
         .last()
         .copied()
         .flatten()
@@ -432,6 +450,140 @@ fn warm_up_blocks(weight: f64) -> u32 {
     blocks
 }
 
+/// Whether a row is the update at `at` of `pll_normal`, whose law the
+/// estimate of the aging slope runs backward: logged since the update
+/// before, FFOM 0 where the log has it, and an EFC inside the range,
+/// which the loop clamps u to.
+fn in_normal_loop(row: &Logged, at: f64) -> bool {
+    at - row.at < f64::from(BLOCK_SECONDS)
+        && row.ffom.is_none_or(|ffom| ffom == NORMAL_FFOM)
+        && row
+            .efc
+            .is_some_and(|efc| counts(efc) > 0.0 && counts(efc) < EFC_TOP)
+}
+
+/// One update of the log as the estimate of the aging slope rebuilds
+/// the receiver's state at it.
+#[derive(Debug, Clone, Copy)]
+struct Rebuilt {
+    /// B + I, u − c·s − K·f, counts.
+    held: f64,
+    /// f, seconds.
+    filtered: f64,
+    /// s, the monitor's average of the log's oscillator current, where
+    /// the log has it.
+    current: Option<f64>,
+    /// Whether the prefilter has run its [`WARM_UP`] time constants
+    /// since the stretch without a gap began.
+    warm: bool,
+}
+
+/// What `--estimate-aging` finds in the log over a run.
+#[derive(Debug, Clone)]
+struct AgingEstimate {
+    /// d at each update, counts a window, or nothing where the log is
+    /// too thin.
+    slopes: Vec<Option<f64>>,
+    /// f at the run's start, as the estimate rebuilt it.
+    filtered: Option<f64>,
+    /// s at the run's start, as the estimate rebuilt it.
+    current: Option<f64>,
+}
+
+/// d, the aging slope the receiver fed its integrator at each update of
+/// a run of `seconds` from `from`, estimated from the log (`loop.md`,
+/// "Simulating it"), counts a window.  At each update the law run
+/// backward, [`Gains::applied_slope`], gives d from B + I, u − c·s − K·f,
+/// before and after it, u the logged EFC, c the log's, s the monitor's
+/// average of the log's oscillator current and f the prefilter run over
+/// the log, once the prefilter has run [`WARM_UP`] time constants into
+/// a stretch without a gap; an update's estimate is the mean of those
+/// within half of `window` either side, where at least half of them
+/// are.
+fn estimate_slopes(
+    rows: &[Logged],
+    from: f64,
+    seconds: u32,
+    window: u32,
+    gains: Gains<f64>,
+) -> Result<AgingEstimate> {
+    if !rows.iter().any(|row| row.coefficient.is_some()) {
+        bail!("the log has no oven_tempco, the receiver's c, which --estimate-aging needs");
+    }
+    let warm_up = warm_up_blocks(gains.filter_weight);
+    let half = window / (2 * BLOCK_SECONDS);
+    let updates = seconds / BLOCK_SECONDS;
+    let lead = warm_up + half + 1;
+    let block = f64::from(BLOCK_SECONDS);
+    let start = from - f64::from(lead) * block;
+    let mut average: Option<f64> = None;
+    let mut stretch: u32 = 0;
+    let rebuilt: Vec<Option<Rebuilt>> = walk(
+        rows,
+        start,
+        lead + updates + half + 1,
+        gains.filter_weight,
+        in_normal_loop,
+    )
+    .into_iter()
+    .zip(0_u32..)
+    .map(|(seen, index)| {
+        let at = start + f64::from(index) * block;
+        let fresh = seen.and_then(|_| last(rows, at, |row| row.current));
+        average = fresh.map(|fresh| {
+            average.map_or(fresh, |s| {
+                CURRENT_WEIGHT * fresh + (1.0 - CURRENT_WEIGHT) * s
+            })
+        });
+        stretch = if seen.is_some() { stretch + 1 } else { 0 };
+        let (row, filtered) = seen?;
+        let coefficient = last(rows, at, |row| row.coefficient)?;
+        let term = if coefficient == 0.0 {
+            0.0
+        } else {
+            coefficient * average?
+        };
+        Some(Rebuilt {
+            held: counts(row.efc?) - term - gains.proportional * filtered,
+            filtered,
+            current: average,
+            warm: stretch > warm_up,
+        })
+    })
+    .collect();
+    // The estimate at each update but the walk's first, from its own
+    // and the one before.
+    let applied: Vec<Option<f64>> = rebuilt
+        .windows(2)
+        .map(|pair| {
+            let (before, after) = (pair[0]?, pair[1]?);
+            after
+                .warm
+                .then(|| gains.applied_slope(before.held, after.held, after.filtered))
+        })
+        .collect();
+    let (lead, half) = (lead as usize, half as usize);
+    let slopes = (0..updates as usize)
+        .map(|update| {
+            let center = lead + update;
+            let found: Vec<f64> = applied[center - half..=center + half]
+                .iter()
+                .flatten()
+                .copied()
+                .collect();
+            #[expect(clippy::cast_precision_loss, reason = "a few hundred updates")]
+            let mean = found.iter().sum::<f64>() / found.len() as f64;
+            (found.len() > half).then_some(mean)
+        })
+        .collect();
+    let at_start = rebuilt[lead];
+    Ok(AgingEstimate {
+        slopes,
+        filtered: at_start.map(|state| state.filtered),
+        current: at_start.and_then(|state| state.current),
+    })
+}
+
 /// A cell: the value to `places` decimals, or empty.
 fn cell(value: Option<f64>, places: usize) -> String {
     value.map_or_else(String::new, |value| format!("{value:.places$}"))
@@ -445,11 +597,14 @@ fn seconds(at: Timestamp) -> f64 {
 }
 
 /// The loop at its start: at rest or at `--ti`, or where the log stood
-/// at `from` for a replay; and for a replay, whether s is the log's.
+/// at `from` for a replay, with the f and s an estimate of the aging
+/// slope rebuilt where there is one; and for a replay, whether s is the
+/// log's.
 fn start(
     args: &SimulateLoopArgs,
     loop_at: impl Fn(f64) -> ClosedLoop,
     replay: Option<(&[Logged], f64)>,
+    estimate: Option<&AgingEstimate>,
 ) -> Result<(ClosedLoop, bool)> {
     let Some((rows, from)) = replay else {
         let mut closed = loop_at(counts(args.efc)).with_current_term(
@@ -469,13 +624,18 @@ fn start(
         Some(current) => (current, false),
         None if coefficient == 0.0 => (0.0, false),
         None => (
-            last(rows, from, |row| row.current)
+            estimate
+                .and_then(|estimate| estimate.current)
+                .or_else(|| last(rows, from, |row| row.current))
                 .context("the log has no oven_current at or before --from; give --oven-current")?,
             true,
         ),
     };
     let mut closed = loop_at(counts(efc)).with_current_term(coefficient, current);
-    let filtered = warm_up(rows, from, closed.gains().filter_weight).unwrap_or(interval);
+    let filtered = estimate
+        .and_then(|estimate| estimate.filtered)
+        .or_else(|| warm_up(rows, from, closed.gains().filter_weight))
+        .unwrap_or(interval);
     closed.resume(0.0, filtered);
     Ok((closed, logged_current))
 }
@@ -495,6 +655,7 @@ fn simulate(
     let sensitivity = args.sensitivity.map_or(gain, |s| s / per_percent);
     let slope = args.aging_slope * per_percent * ENTRY_SECONDS / DAY;
     let replay = log.filter(|_| args.replay);
+    let estimate = estimate(args, replay)?;
     let (closed, logged_current) = start(
         args,
         |efc| {
@@ -505,6 +666,7 @@ fn simulate(
             )
         },
         replay,
+        estimate.as_ref(),
     )?;
     let mut closed = if args.aging_fit {
         closed.with_aging_fit()
@@ -514,6 +676,17 @@ fn simulate(
     let disturbances = disturbances(args);
     (0..args.seconds / BLOCK_SECONDS)
         .map(|block| {
+            if let Some(estimate) = &estimate {
+                let slope = estimate.slopes[block as usize].with_context(|| {
+                    format!(
+                        "no estimate of the aging slope at second {} of the replay: the log has \
+                         fewer than half the updates within half of --aging-window of it, as \
+                         near a gap, which the replay cannot cross",
+                        (block + 1) * BLOCK_SECONDS
+                    )
+                })?;
+                closed.hold_slope(slope);
+            }
             let update = step(&mut closed, &disturbances, replay, logged_current, block)?;
             if let Some(error) = closed.fit_error() {
                 bail!("at second {}: {error}", update.second);
@@ -521,6 +694,31 @@ fn simulate(
             Ok((update, closed.curve().map(|curve| curve.mode)))
         })
         .collect()
+}
+
+/// What `--estimate-aging` finds in the log over the run, when it is
+/// given.
+fn estimate(
+    args: &SimulateLoopArgs,
+    log: Option<(&[Logged], f64)>,
+) -> Result<Option<AgingEstimate>> {
+    let Some((rows, from)) = log.filter(|_| args.estimate_aging) else {
+        return Ok(None);
+    };
+    let (tau, gain) = tau_and_gain(args)?;
+    estimate_slopes(
+        rows,
+        from,
+        args.seconds,
+        args.aging_window,
+        Gains::new(gain, tau),
+    )
+    .map(Some)
+}
+
+/// An aging slope in counts a window as EFC percent a day.
+fn per_day(slope: f64) -> f64 {
+    slope / counts_per_percent() * DAY / ENTRY_SECONDS
 }
 
 /// One block of the run, `block` from the start, against the model's
@@ -566,7 +764,15 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
         args,
         log.as_ref().map(|(rows, from)| (rows.as_slice(), *from)),
     )?;
-    let fitting = args.aging_fit || args.fit_b.is_some() || args.fit_c.is_some();
+    let estimates = estimate(
+        args,
+        log.as_ref().map(|(rows, from)| (rows.as_slice(), *from)),
+    )?
+    .map(|estimate| estimate.slopes);
+    let fitting = args.aging_fit
+        || args.fit_b.is_some()
+        || args.fit_c.is_some()
+        || (args.estimate_aging && args.replay);
     let mut out = std::io::stdout().lock();
     write!(out, "second\tti_ns\tefc_percent")?;
     if log.is_some() {
@@ -578,16 +784,22 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
     if args.aging_fit {
         write!(out, "\tfit_mode")?;
     }
+    if estimates.is_some() {
+        write!(out, "\testimated_aging_slope_percent_per_day")?;
+    }
     writeln!(out)?;
     for (
-        Update {
-            second,
-            interval,
-            efc,
-            slope,
-        },
-        mode,
-    ) in updates
+        index,
+        (
+            Update {
+                second,
+                interval,
+                efc,
+                slope,
+            },
+            mode,
+        ),
+    ) in updates.into_iter().enumerate()
     {
         write!(
             out,
@@ -609,11 +821,7 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
             )?;
         }
         if fitting {
-            write!(
-                out,
-                "\t{:.6}",
-                slope / counts_per_percent() * DAY / ENTRY_SECONDS
-            )?;
+            write!(out, "\t{:.6}", per_day(slope))?;
         }
         if args.aging_fit {
             write!(
@@ -622,6 +830,9 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
                 mode.map_or_else(String::new, |mode| (mode as u8).to_string())
             )?;
         }
+        if let Some(estimates) = &estimates {
+            write!(out, "\t{}", cell(estimates[index].map(per_day), 6))?;
+        }
         writeln!(out)?;
     }
     Ok(())
@@ -629,27 +840,36 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::Result;
     use serde_json::Value;
     use smartclock::discipline::BLOCK_SECONDS;
     use smartclock::discipline::FILTER_SCALE;
+    use smartclock::discipline::Gains;
     use smartclock::discipline::INTEGRAL_SCALE;
+    use smartclock::discipline::step_limit;
 
     use smartclock::discipline::ClosedLoop;
     use smartclock::discipline::Disturbance;
     use smartclock::discipline::Update;
 
     use super::CONSTANTS;
+    use super::ESTIMATE_WINDOW;
     use super::Logged;
     use super::SimulateLoopArgs;
     use super::counts;
     use super::counts_per_percent;
+    use super::estimate;
     use super::latest;
     use super::percent;
     use super::simulate;
     use super::timed;
+    use super::warm_up_blocks;
 
     /// The 58503A 3704's G, fractional frequency a count.
     const GAIN: f64 = 6.25e-13;
+
+    /// The 58503A 3704's τ, seconds.
+    const TAU: f64 = 700.0;
 
     /// The run's length, seconds.
     const SECONDS: u32 = 30_000;
@@ -681,12 +901,16 @@ mod tests {
             log: None,
             from: None,
             replay: false,
+            estimate_aging: false,
+            aging_window: super::ESTIMATE_WINDOW,
         }
     }
 
-    /// The oscillator current at a second: a swing over a few hours.
+    /// The oscillator current at a second: steady until [`from`], so
+    /// that runs with any c agree until then, and a swing over a few
+    /// hours from there.
     fn current(second: u32) -> f64 {
-        110.0 + 3.0 * (f64::from(second) / 5000.0).sin()
+        110.0 + 3.0 * (f64::from(second.saturating_sub(from())) / 5000.0).sin()
     }
 
     /// What the free oscillator does.
@@ -712,18 +936,27 @@ mod tests {
 
     /// [`logged`], with the loop `aging` makes of it.
     fn logged_with(coefficient: f64, aging: impl Fn(ClosedLoop) -> ClosedLoop) -> Vec<Logged> {
+        logged_run(coefficient, aging).0
+    }
+
+    /// [`logged_with`], and the run's updates.
+    fn logged_run(
+        coefficient: f64,
+        aging: impl Fn(ClosedLoop) -> ClosedLoop,
+    ) -> (Vec<Logged>, Vec<Update>) {
         let rest = counts(30.0);
         let mut closed = aging(
-            ClosedLoop::new(GAIN, 700.0, GAIN, rest, 0.0)
-                .with_current_term(coefficient, current(0)),
+            ClosedLoop::new(GAIN, TAU, GAIN, rest, 0.0).with_current_term(coefficient, current(0)),
         );
         let mut state = (0.0, rest);
         let mut rows = Vec::new();
+        let mut updates = Vec::new();
         for second in 0..=SECONDS {
             if second > 0 && second % 10 == 0 {
                 closed.read_current(current(second));
                 let update = closed.block(&disturbances());
                 state = (update.interval, update.efc);
+                updates.push(update);
             }
             rows.push(Logged {
                 at: f64::from(second),
@@ -734,7 +967,7 @@ mod tests {
                 ffom: Some(0.0),
             });
         }
-        rows
+        (rows, updates)
     }
 
     fn replay(rows: &[Logged], coefficient: Option<f64>) -> Vec<Update> {
@@ -850,6 +1083,272 @@ mod tests {
                 update.interval
             );
         }
+    }
+
+    /// Where the estimates' runs at a window of `window` seconds start
+    /// in the log, seconds: where the estimate's walk, the prefilter's
+    /// warm-up and half a window before its first update, begins at the
+    /// log's start, from rest, so that it rebuilds f exactly.
+    fn from_at(window: u32) -> u32 {
+        let warm_up = warm_up_blocks(Gains::new(GAIN, TAU).filter_weight);
+        (warm_up + window / (2 * BLOCK_SECONDS) + 1) * BLOCK_SECONDS
+    }
+
+    /// [`from_at`] the default window, the latest of them.
+    fn from() -> u32 {
+        from_at(ESTIMATE_WINDOW)
+    }
+
+    /// The arguments for a run from [`from`] to the log's end with
+    /// `--estimate-aging` at a window of `window` seconds.
+    fn estimating(window: u32) -> SimulateLoopArgs {
+        SimulateLoopArgs {
+            estimate_aging: true,
+            aging_window: window,
+            seconds: SECONDS - from_at(window),
+            ..arguments()
+        }
+    }
+
+    /// `--estimate-aging`'s estimates over a run from [`from`].
+    fn estimated(rows: &[Logged], window: u32) -> Vec<Option<f64>> {
+        estimate(
+            &estimating(window),
+            Some((rows, f64::from(from_at(window)))),
+        )
+        .expect("estimates")
+        .expect("asked for")
+        .slopes
+    }
+
+    /// The index in a logged run's updates of the `index`th estimate at
+    /// a window of `window` seconds.
+    fn logged_index(window: u32, index: usize) -> usize {
+        (from_at(window) / BLOCK_SECONDS) as usize + index
+    }
+
+    /// The largest difference between estimates and what they estimate.
+    fn worst(estimates: &[Option<f64>], truth: impl Fn(usize) -> f64) -> f64 {
+        estimates
+            .iter()
+            .enumerate()
+            .map(|(index, estimate)| (estimate.expect("an estimate") - truth(index)).abs())
+            .fold(0.0, f64::max)
+    }
+
+    /// The log as the receiver reports it: u a whole DAC count, and
+    /// `:EFControl:RELative?` to four decimals (`docs/efc.md`).
+    fn quantized(rows: &[Logged]) -> Vec<Logged> {
+        rows.iter()
+            .map(|row| Logged {
+                efc: row
+                    .efc
+                    .map(|efc| (percent(counts(efc).round()) * 1e4).round() / 1e4),
+                ..*row
+            })
+            .collect()
+    }
+
+    /// The estimates' tolerance on a log quantized as the receiver
+    /// reports it, counts a window, at the default window: the error's
+    /// standard deviation is √2·σ·270/N, σ about 0.33 counts from the
+    /// two roundings and N the updates found in the window, 271 but
+    /// half that at the log's end; this is about three times that at
+    /// the end.
+    const QUANTIZED_TOLERANCE: f64 = 3.0;
+
+    /// The tolerance on an exact log, counts a window: rounding alone.
+    const EXACT_TOLERANCE: f64 = 1e-6;
+
+    /// The window of one update: the estimate of each update alone.
+    const ONE_UPDATE: u32 = BLOCK_SECONDS;
+
+    /// A run whose d is constant gives it back, update by update from an
+    /// exact log, and averaged over the window from a quantized one, on
+    /// which a single update's estimate is noise.
+    #[test]
+    fn the_estimate_recovers_a_constant_slope() {
+        let rows = logged_with(COEFFICIENT, |closed| closed.with_aging(FIT_B, 0.0, UPTIME));
+        for window in [ONE_UPDATE, ESTIMATE_WINDOW] {
+            let error = worst(&estimated(&rows, window), |_| FIT_B);
+            assert!(error < EXACT_TOLERANCE, "window {window}: {error}");
+        }
+        let quantized = quantized(&rows);
+        let error = worst(&estimated(&quantized, ESTIMATE_WINDOW), |_| FIT_B);
+        assert!(error < QUANTIZED_TOLERANCE, "{error}");
+        let error = worst(&estimated(&quantized, ONE_UPDATE), |_| FIT_B);
+        assert!(error > 10.0 * QUANTIZED_TOLERANCE, "{error}");
+    }
+
+    /// The window's mean of each update's d in a run.
+    fn window_mean(updates: &[Update], index: usize) -> f64 {
+        let half = (ESTIMATE_WINDOW / (2 * BLOCK_SECONDS)) as usize;
+        let window = &updates[index.saturating_sub(half)..=(index + half).min(updates.len() - 1)];
+        #[expect(clippy::cast_precision_loss, reason = "a few hundred updates")]
+        let count = window.len() as f64;
+        window.iter().map(|update| update.slope).sum::<f64>() / count
+    }
+
+    /// A log of the 58503A 3704's fit as it learns, and the run's d.
+    fn learning() -> (Vec<Logged>, Vec<Update>) {
+        logged_run(COEFFICIENT, |closed| {
+            closed.with_aging(FIT_B, FIT_C, UPTIME).with_aging_fit()
+        })
+    }
+
+    /// The fit's d, stepping at each fit and moving with q between,
+    /// comes back update by update, and as its window's mean.
+    #[test]
+    fn the_estimate_follows_the_3704_fit() {
+        let (rows, updates) = learning();
+        let error = worst(&estimated(&rows, ONE_UPDATE), |index| {
+            updates[logged_index(ONE_UPDATE, index)].slope
+        });
+        assert!(error < EXACT_TOLERANCE, "{error}");
+        let mean = |index| window_mean(&updates, logged_index(ESTIMATE_WINDOW, index));
+        let error = worst(&estimated(&rows, ESTIMATE_WINDOW), mean);
+        assert!(error < EXACT_TOLERANCE, "{error}");
+        let error = worst(&estimated(&quantized(&rows), ESTIMATE_WINDOW), mean);
+        assert!(error < QUANTIZED_TOLERANCE, "{error}");
+    }
+
+    /// A replay feeding the estimate, at a window of `window` and c
+    /// `coefficient`, the log's if none.
+    fn replay_estimating(
+        rows: &[Logged],
+        coefficient: Option<f64>,
+        window: u32,
+    ) -> Result<Vec<Update>> {
+        let args = SimulateLoopArgs {
+            tc_coefficient: coefficient,
+            replay: true,
+            ..estimating(window)
+        };
+        Ok(simulate(&args, Some((rows, f64::from(from_at(window)))))?
+            .into_iter()
+            .map(|(update, _)| update)
+            .collect())
+    }
+
+    /// The largest difference, seconds, between the time intervals of
+    /// [`replay_estimating`] `rows` and those `against` logged.
+    fn departure(
+        rows: &[Logged],
+        against: &[Logged],
+        coefficient: Option<f64>,
+        window: u32,
+    ) -> f64 {
+        replay_estimating(rows, coefficient, window)
+            .expect("a replay")
+            .iter()
+            .map(|update| {
+                let row = against[(from_at(window) + update.second) as usize];
+                (update.interval - row.interval.expect("an interval")).abs()
+            })
+            .fold(0.0, f64::max)
+    }
+
+    /// How far a replay may depart from the run it should be, seconds,
+    /// where it should be that run but for rounding.
+    const EXACT_DEPARTURE: f64 = 1e-15;
+
+    /// How far a replay on the window's mean of a smooth d may depart
+    /// from the log, seconds.
+    const SMOOTH_DEPARTURE: f64 = 1e-10;
+
+    /// How far a replay on the window's mean of the learning fit's d,
+    /// which steps at each fit, may depart from the log, seconds.
+    const STEPPING_DEPARTURE: f64 = 1e-8;
+
+    /// Fed each update's estimate alone, a replay is the log by
+    /// construction, whatever d was; fed the window's mean, it departs
+    /// from it where d changes within the window, little where d moves
+    /// smoothly with q and more where it steps at a fit.
+    #[test]
+    fn a_replay_on_the_estimate_is_the_log() {
+        let (rows, _) = learning();
+        let error = departure(&rows, &rows, None, ONE_UPDATE);
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
+        let error = departure(&rows, &rows, None, ESTIMATE_WINDOW);
+        assert!(error < STEPPING_DEPARTURE, "{error:e}");
+        let rows = logged_with(COEFFICIENT, |closed| {
+            closed.with_aging(FIT_B, FIT_C, UPTIME)
+        });
+        let error = departure(&rows, &rows, None, ESTIMATE_WINDOW);
+        assert!(error < SMOOTH_DEPARTURE, "{error:e}");
+    }
+
+    /// With another c, a replay on the estimate is the run with that c
+    /// and the receiver's d.
+    #[test]
+    fn a_replay_on_the_estimate_with_another_coefficient_is_that_run() {
+        let aging = |closed: ClosedLoop| closed.with_aging(FIT_B, FIT_C, UPTIME);
+        let rows = logged_with(COEFFICIENT, aging);
+        let counterfactual = logged_with(0.0, aging);
+        let error = departure(&rows, &counterfactual, Some(0.0), ONE_UPDATE);
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
+        let error = departure(&rows, &counterfactual, Some(0.0), ESTIMATE_WINDOW);
+        assert!(error < SMOOTH_DEPARTURE, "{error:e}");
+        let moved = departure(&rows, &rows, Some(0.0), ESTIMATE_WINDOW);
+        assert!(
+            moved > 100.0 * SMOOTH_DEPARTURE,
+            "the counterfactual moved {moved:e}"
+        );
+    }
+
+    /// Across a gap there is no estimate, nor until the prefilter has
+    /// warmed up again and half the window is past it.  Before it, the
+    /// estimate is exact until the window reaches the row before the
+    /// gap, which may stand for an update twice; after it, the
+    /// prefilter's warm-up leaves e⁻⁵ of its error at the restart.  A
+    /// replay still stops at it.
+    #[test]
+    fn the_estimate_stops_at_a_gap() {
+        let gap = 15_000..18_000;
+        let rows: Vec<Logged> =
+            logged_with(COEFFICIENT, |closed| closed.with_aging(FIT_B, 0.0, UPTIME))
+                .into_iter()
+                .filter(|row| !gap.contains(&(row.at as u32)))
+                .collect();
+        let warm_up = warm_up_blocks(Gains::new(GAIN, TAU).filter_weight) * BLOCK_SECONDS;
+        let near = ESTIMATE_WINDOW / 2 + warm_up;
+        let mut after = 0;
+        for (index, estimate) in estimated(&rows, ESTIMATE_WINDOW).into_iter().enumerate() {
+            let second = from() + (index as u32 + 1) * BLOCK_SECONDS;
+            if second > gap.start && second < gap.end {
+                assert_eq!(estimate, None, "second {second}");
+            }
+            let Some(estimate) = estimate else {
+                continue;
+            };
+            after += usize::from(second > gap.end);
+            let error = (estimate - FIT_B).abs();
+            let tolerance = if second + near < gap.start {
+                EXACT_TOLERANCE
+            } else {
+                FIT_B / f64::from(ESTIMATE_WINDOW / (2 * BLOCK_SECONDS))
+            };
+            assert!(error < tolerance, "second {second}: {estimate}");
+        }
+        assert!(after > 0);
+        let error = replay_estimating(&rows, None, ESTIMATE_WINDOW).expect_err("a gap");
+        assert!(error.to_string().contains("gap"), "{error}");
+    }
+
+    /// d beyond ±M is applied at M, and the estimate finds M.
+    #[test]
+    fn the_estimate_finds_the_clamp() {
+        let limit = step_limit(GAIN);
+        let rows = logged_with(COEFFICIENT, |closed| {
+            closed.with_aging(2.0 * limit, 0.0, UPTIME)
+        });
+        let error = worst(&estimated(&rows, ESTIMATE_WINDOW), |_| limit);
+        assert!(error < EXACT_TOLERANCE, "{error}");
+        for update in replay_estimating(&rows, None, ESTIMATE_WINDOW).expect("a replay") {
+            assert!(update.slope <= limit);
+        }
+        let error = departure(&rows, &rows, None, ESTIMATE_WINDOW);
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
     }
 
     #[test]

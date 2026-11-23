@@ -958,9 +958,9 @@ The log's columns, by what needs them:
 | Column | Needed |
 | ------ | ------ |
 | `at`, `time_interval_s`, `efc_percent` | always |
-| `oven_tempco` | by a replay without `--tc-coefficient`: the latest at or before `--from` is c |
-| `oven_current` | by a replay with c not 0 and without `--oven-current`: the latest at or before each update is the fresh reading fed to s |
-| `ffom` | read where present; a replayed update whose row is not 0, `normal pll`, stops the replay |
+| `oven_tempco` | by a replay without `--tc-coefficient`: the latest at or before `--from` is c; by `--estimate-aging`, the latest at or before each update |
+| `oven_current` | by a replay with c not 0 and without `--oven-current`, and by `--estimate-aging` where the log's c is not 0: the latest at or before each update is the fresh reading fed to s |
+| `ffom` | read where present; a replayed update whose row is not 0, `normal pll`, stops the replay; `--estimate-aging` takes no estimate from it |
 
 What a replay assumes:
 
@@ -973,7 +973,8 @@ What a replay assumes:
   measured"), not G's, where it is known.
 - The aging slope.  The receiver's d comes from its aging fit, whose
   p, r and q the log does not hold; reproducing the log needs the d
-  the receiver had, from `--fit-b`, `--fit-c` and `--uptime`, and a
+  the receiver had, from `--fit-b`, `--fit-c` and `--uptime`, or
+  estimated from the log with `--estimate-aging` (below), and a
   difference in d shows as a drift between the two.  The fit's history
   is not in the log either, so `--aging-fit` can replay a cleared fit
   but not the receiver's own as it went on.
@@ -988,6 +989,87 @@ What a replay assumes:
   fresh conversion (`:DIAGnostic:ROSCillator:CURRent?`), read less
   often than every update and held between readings; the receiver
   averages its own readings, so s is an estimate of the receiver's.
+
+**Estimating the aging slope from the log.**  `--estimate-aging`, with
+`--log` and `--from`, finds the d the receiver fed its integrator by
+running the update backward.  B is fixed within the stage, so B + I is
+u − c·s − K·f, and I grows by 10·k·f + 10·d/2700 an update:
+
+    d = 2700·(Δ(u − c·s − K·f)/10 − k·f)
+
+u the logged EFC, c the log's `oven_tempco` at each update, s the
+monitor's average of the log's `oven_current` formed as the replay
+forms it, and f the prefilter run over the logged x̄.  It takes K and
+k from the image's τ and G, which the firmware holds exactly; S does
+not enter.  A change of c in the log moves u by Δc·s at once, and the
+c·s term takes it out.  The output gains the estimate at each update,
+`estimated_aging_slope_percent_per_day`, EFC percent a day like
+`--aging-slope`; a replay feeds it to the loop as d, r the estimate
+and p 0, within ±M, in place of `--fit-b` and `--fit-c`, and starts
+from the f and s the estimate rebuilt at `--from`, so that the two
+agree.
+
+One update's estimate alone differences a rounded number: an error of
+one count in u is 270 counts a window in d.  u is a whole DAC count,
+and `:EFControl:RELative?` reports four decimals of a percent, about
+half a count (`../efc.md`); together they leave an error of about a
+third of a count rms in each logged u.  An update's estimate is therefore
+the mean of the updates' within half of `--aging-window` either side.
+The changes of B + I in that mean add up to its change across the
+window, so the rounding enters only at the window's two ends and the
+mean's error is √2·σ·270/N counts a window rms, σ that error and N the
+updates in the window.  The default window is 2700 s, the aging fit's
+own: a new fit can change d at most once in it, so the mean smears a
+fit's step over one window and no further, and its 271 updates bring
+the rounding's share down to about √2·σ, under half a count a window.
+A longer window lowers that and smears steps further; `--aging-window
+10` gives each update's estimate alone.  An error δd in the d fed to a
+replay stands its time interval off from the log's by
+4·G·τ²·δd/2700, as a drift does (below).
+
+What the log must hold, and what its rows do to the estimate:
+
+- Each update needs a row of its own, logged in the 10 s before it; a
+  log whose rows come less often gives no estimate.  The grid of
+  updates is `--from`'s, not the receiver's, so a row may stand for
+  the update before; where that changes from one update to the next,
+  one update is counted twice and its neighbor missed, which moves
+  the window's sum only by 10·k times the difference of their f,
+  since the changes of B + I still add up to the change across it.
+- A row missing, out of `normal pll` (`ffom` not 0) or with u at
+  either end of its range, which the loop clamps u to, breaks the
+  walk: f and s start again after it, and no update's estimate is
+  taken until the prefilter has run five time constants, which leaves
+  e⁻⁵ of its starting error.  An update's estimate needs more than
+  half the window's updates; with fewer, as across a gap, there is
+  none, and a replay stops there.  The row before a gap can stand for
+  the update after it, whose d is then missed from the window's mean.
+- `oven_tempco` is required: the estimate needs the receiver's c, not
+  `--tc-coefficient`'s.  A wrong c, or an s off from the receiver's,
+  moves B + I and so the estimate, by 270/N times the change of the
+  error in c·s across the window.
+- d beyond ±M was applied at ±M, and the estimate finds the value
+  applied.
+
+What a replay on the estimate shows:
+
+- Fed each update's estimate alone, a replay with the log's c
+  reproduces the log by construction, whatever d was: the estimate
+  takes up every change of B + I the law does not explain -- the
+  receiver's d, and with it an error in s, a c the log does not hold
+  or the DAC's rounding -- so the reproduction tests nothing.  Fed the
+  window's mean, it departs from the log by what the mean does not
+  explain, which tests that the integrator's unexplained climb is slow,
+  as an aging slope is.
+- With another c the replay is still a difference from the log, and
+  the law is linear, so a d equal to the receiver's cancels and the
+  departure is the response to the change of c alone; the estimate
+  keeps a wrong d from adding a drift to it.  It holds d as the
+  receiver had it, which the receiver with the other c would not have
+  kept: its fit samples u − c·s, which moves with c through what the
+  integrator takes up, so over a span in which the fit would have
+  reacted, a new entry each 2700 s in a ring of 64, the counterfactual
+  assumes a d the other receiver would not have had.
 
 From the law, as `crates/smartclock/src/discipline.rs`'s tests check:
 a frequency step Δy moves u by Δy / S and the time interval back to 0;

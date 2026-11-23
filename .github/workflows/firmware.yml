@@ -53,8 +53,8 @@ jobs:
     # Z3805A 1.01.03's an eighth, which took a pull request's full run
     # past 90 minutes on 2026-11-16.  On mc683xx's CPU32 since
     # 2026-11-22, the Z3815A 4010's, Z3817A 3752's, Z3816A 4001's and
-    # 58503B 1.01.04's take about three times as long as on Unicorn,
-    # which ran report-decompiled in 47 to 80 minutes on four CPUs; near
+    # 58503B 1.01.04's take about three times as long as on the 68020
+    # the check ran on before, 47 to 80 minutes on four CPUs; near
     # GitHub's cap of 360.
     timeout-minutes: 340
     permissions:
@@ -79,7 +79,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y --no-install-recommends
           gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT" "$CLANG"
           iverilog yosys poppler-utils
-      # The tools' script dependencies, mc683xx, Unicorn and Capstone, are each
+      # The tools' script dependencies, mc683xx and Capstone, are each
       # script's own inline metadata, pinned there, which `uv run`
       # resolves; uv itself is pinned here, and the cache is keyed on
       # the scripts.

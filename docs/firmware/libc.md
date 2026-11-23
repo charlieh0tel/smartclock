@@ -11,9 +11,6 @@ the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
-`SMARTCLOCK_CPU=unicorn` runs it on Unicorn instead (`README.md`, "The CPU backend"), with the
-same results.
-
 `strlen`, `strcpy` and `strcmp` are not in the block; the compiler
 expands them in line.
 

@@ -1,55 +1,45 @@
-"""The CPU the harness runs the image on: mc683xx's bare CPU32, the
-default, or Unicorn's 68020, chosen by SMARTCLOCK_CPU (BACKEND_VARIABLE),
-and the one seam between them (docs/firmware/README.md, "The CPU
-backend").
+"""The CPU the harness runs the image on, mc683xx's bare CPU32
+(docs/firmware/README.md, "The CPU").
 
-new_cpu gives a Unicorn Uc, or a Mc683xx, which answers the part of
-Unicorn's API the harness and its checks use -- mem_map, mem_read,
-mem_write, mem_protect, reg_read, reg_write, context_save, hook_add,
-hook_del, emu_start, emu_stop, ctl_flush_tb -- on mc683xx.Machine, a CPU32
+new_cpu gives a Mc683xx, which answers the API the harness and its
+checks are written against -- mem_map, mem_read, mem_write,
+mem_protect, reg_read, reg_write, hook_add, hook_del, emu_start,
+emu_stop, the UC_ constants and UcError -- on mc683xx.Machine, a CPU32
 on flat memory with 32 address lines (mc683xx's docs/python.md, "Bare
-CPU"), so that both run from the same code.  Where the two differ,
-Mc683xx keeps Unicorn's meaning:
+CPU").  What the API means, where the Machine alone would differ:
 
 - Memory.  A region that a read or write hook added before the first
   run covers is a device of the harness's own, its bytes kept here, a
-  hook covering a cycle there called before the cycle, as Unicorn's
-  are, a read reading what it left: the devices, the EEPROM and the
-  installer's flash.  Any other region is the Machine's memory, as is
-  every region where the memory hooks only watch (watch_only).
-- Hooks.  A code or block hook is Unicorn's: before its instruction,
-  free to read and write the CPU, a write of PC redirecting.  A memory
-  hook's callback runs once its instruction has ended, given an InRun
-  in place of the CPU, which reads the registers as the instruction
-  began, as Unicorn's do from part way through it; it is not called
-  for the writes of an exception's frame, which Unicorn never makes.
-  A long operand is one access, as Unicorn's, at a device and to a
-  hook alike.  An interrupt hook is called from mc683xx's intercept,
-  before anything is stacked, PC at the instruction that raised the
-  exception, but for the vectors native_vectors lets the CPU take
-  itself.
-- Faults.  A bus error, nothing mapped or a page's permissions
-  refusing the cycle, stops the run (set_stop_on_fault), the registers as
-  its instruction began: the invalid access hooks are called, and
-  emu_start raises Unicorn's UcError for it; for an address error where
-  something is mapped, Unicorn's for an unaligned access, which it
-  never raises.
+  hook covering a cycle there called before the cycle, a read reading
+  what it left: the devices, the EEPROM and the installer's flash.  Any
+  other region is the Machine's memory, as is every region where the
+  memory hooks only watch (watch_only).
+- Hooks.  A code or block hook runs before its instruction, free to
+  read and write the CPU, a write of PC redirecting.  A memory hook's
+  callback runs once its instruction has ended, given an InRun in place
+  of the CPU, which reads the registers as the instruction began; it is
+  not called for the writes of an exception's frame.  A long operand is
+  one access, at a device and to a hook alike.  An interrupt hook is
+  called from mc683xx's intercept, before anything is stacked, PC at
+  the instruction that raised the exception, but for the vectors
+  native_vectors lets the CPU take itself.
+- Faults.  A bus error, nothing mapped or a page's permissions refusing
+  the cycle, stops the run (set_stop_on_fault), the registers as its
+  instruction began: the invalid access hooks are called, and emu_start
+  raises UcError for it; for an address error where something is
+  mapped, the error of an unaligned access.
 - Alignment and tracing.  The Machine is the CPU32 as it is: a word or
   long at an odd address is an address error (CPU32RM 6.2.3), and the
-  trace bits trace (6.2.10), where Unicorn's 68020 reads and writes on
-  and does not trace.
+  trace bits trace (6.2.10).
 """
 
 import bisect
-import os
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from unicorn import UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, Uc, UcError
-from unicorn.m68k_const import UC_CPU_M68K_M68020
-
-# Unicorn 2.1.4's names and values, which the harness and its checks
-# use: a hook's kind (hook_add) ...
+# The API's names and values, as the harness and its checks use them,
+# and the scripts' reports and known differences quote them: a hook's
+# kind (hook_add) ...
 UC_HOOK_INTR = 1
 UC_HOOK_CODE = 4
 UC_HOOK_BLOCK = 8
@@ -82,7 +72,7 @@ UC_ERR_READ_UNALIGNED = 16
 UC_ERR_WRITE_UNALIGNED = 17
 UC_ERR_FETCH_UNALIGNED = 18
 UC_ERR_EXCEPTION = 21
-# ... and a register (reg_read, reg_write).
+# ... a register (reg_read, reg_write) ...
 UC_M68K_REG_A0 = 1
 UC_M68K_REG_A1 = 2
 UC_M68K_REG_A2 = 3
@@ -103,28 +93,39 @@ UC_M68K_REG_SR = 17
 UC_M68K_REG_PC = 18
 UC_M68K_REG_CR_VBR = 21
 
-# The environment variable that chooses the backend, and its values;
-# mc683xx when it is unset.
-BACKEND_VARIABLE = "SMARTCLOCK_CPU"
-UNICORN = "unicorn"
-MC683XX = "mc683xx"
-BACKEND = os.environ.get(BACKEND_VARIABLE, MC683XX)
-if BACKEND not in (UNICORN, MC683XX):
-    raise SystemExit(f"{BACKEND_VARIABLE}={BACKEND}: not {UNICORN} or {MC683XX}")
-ON_MC683XX = BACKEND == MC683XX
+# ... and each error's message, str(UcError).
+ERROR_MESSAGES = {
+    UC_ERR_READ_UNMAPPED: "Invalid memory read (UC_ERR_READ_UNMAPPED)",
+    UC_ERR_WRITE_UNMAPPED: "Invalid memory write (UC_ERR_WRITE_UNMAPPED)",
+    UC_ERR_FETCH_UNMAPPED: "Invalid memory fetch (UC_ERR_FETCH_UNMAPPED)",
+    UC_ERR_WRITE_PROT: "Write to write-protected memory (UC_ERR_WRITE_PROT)",
+    UC_ERR_READ_PROT: "Read from non-readable memory (UC_ERR_READ_PROT)",
+    UC_ERR_FETCH_PROT: "Fetch from non-executable memory (UC_ERR_FETCH_PROT)",
+    UC_ERR_READ_UNALIGNED: "Read from unaligned memory (UC_ERR_READ_UNALIGNED)",
+    UC_ERR_WRITE_UNALIGNED: "Write to unaligned memory (UC_ERR_WRITE_UNALIGNED)",
+    UC_ERR_FETCH_UNALIGNED: "Fetch from unaligned memory (UC_ERR_FETCH_UNALIGNED)",
+    UC_ERR_EXCEPTION: "Unhandled CPU exception (UC_ERR_EXCEPTION)",
+}
 
 
-def new_cpu() -> "Uc | Mc683xx":
-    """A CPU of the chosen backend, nothing mapped.  Unicorn has no
-    CPU32; its 68020 stands in (PLAN.md, "A rebuild that runs")."""
-    if ON_MC683XX:
-        return Mc683xx()
-    uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
-    uc.ctl_set_cpu_model(UC_CPU_M68K_M68020)
-    return uc
+class UcError(Exception):
+    """A fault that stopped a run, or an access of nothing mapped: its
+    code, one of the UC_ERR_ constants."""
+
+    def __init__(self, errno: int):
+        super().__init__()
+        self.errno = errno
+
+    def __str__(self) -> str:
+        return ERROR_MESSAGES[self.errno]
 
 
-# Unicorn's registers by mc683xx's names.
+def new_cpu() -> "Mc683xx":
+    """A CPU, nothing mapped."""
+    return Mc683xx()
+
+
+# The registers by mc683xx's names.
 REGISTER_NAMES = {
     UC_M68K_REG_D0: "D0",
     UC_M68K_REG_D1: "D1",
@@ -153,12 +154,12 @@ VECTORS = 256
 # Function codes of program space, user and supervisor (CPU32RM 3.4):
 # a fetch.
 PROGRAM_SPACES = (2, 6)
-# Unicorn's permissions as mc683xx's letters.
+# The permissions as mc683xx's letters.
 PERMISSION_LETTERS = ((UC_PROT_READ, "r"), (UC_PROT_WRITE, "w"), (UC_PROT_EXEC, "x"))
-# Unicorn's invalid access kinds and errors, by mc683xx's cycle kind
-# (its CycleKind's member, `cycle_kind`: fetch, read, write) and whether
+# The invalid access kinds and errors, by mc683xx's cycle kind (its
+# CycleKind's member, `cycle_kind`: fetch, read, write) and whether
 # anything is mapped there; and for an address error where something is,
-# Unicorn's for an unaligned access, which it never raises.
+# an unaligned access's.
 FETCH, READ, WRITE = range(3)
 UNALIGNED = {
     FETCH: (UC_MEM_FETCH, UC_ERR_FETCH_UNALIGNED),
@@ -182,7 +183,7 @@ def cycle_kind(mc683xx, cycle) -> int:
 
 
 def permissions(perms: int) -> str:
-    """Unicorn's permission bits as mc683xx's letters."""
+    """The permission bits as mc683xx's letters."""
     return "".join(letter for bit, letter in PERMISSION_LETTERS if perms & bit)
 
 
@@ -217,16 +218,6 @@ class HookEntry:
         return self.begin <= address <= self.end
 
 
-class Context:
-    """context_save's: the registers, readable as Unicorn's are."""
-
-    def __init__(self, registers: dict[str, int]):
-        self.registers = registers
-
-    def reg_read(self, register: int) -> int:
-        return self.registers[REGISTER_NAMES[register]]
-
-
 class InRun:
     """The CPU as a memory hook's callback sees it: the registers as the
     access's instruction began, else the CPU's own; memory and
@@ -241,9 +232,6 @@ class InRun:
             return self.cpu.reg_read(register)
         return self.registers[REGISTER_NAMES[register]]
 
-    def context_save(self) -> Context:
-        return Context(self.registers) if self.registers is not None else self.cpu.context_save()
-
     def mem_read(self, address: int, size: int) -> bytearray:
         return self.cpu.mem_read(address, size)
 
@@ -257,9 +245,9 @@ class InRun:
 class Device:
     """A region of the harness's own, as mc683xx's Machine reaches it: each
     cycle a read or write of its bytes, a read hook covering it run
-    before a read and a write hook before a write, as Unicorn's are; an
-    exception's frame written as the CPU stacks it, shown no hook, as
-    Unicorn makes none; a cycle its permissions refuse, a bus error."""
+    before a read and a write hook before a write; an exception's frame
+    written as the CPU stacks it, shown no hook; a cycle its permissions
+    refuse, a bus error."""
 
     def __init__(self, cpu: "Mc683xx", region: Region):
         self.cpu = cpu
@@ -287,7 +275,7 @@ class Device:
 
 
 class Mc683xx:
-    """Unicorn's API, as the harness uses it, on mc683xx's bare CPU32:
+    """The API the harness uses, on mc683xx's bare CPU32:
     the regions mapped, and placed in the Machine or kept as devices at the
     first run (place); native_vectors the exceptions the CPU takes
     itself, which no interrupt hook is called for; watch_only, set where
@@ -409,17 +397,11 @@ class Mc683xx:
         self.place()
         self.cpu.write_register(REGISTER_NAMES[register], value & LONG_MASK)
 
-    def context_save(self) -> Context:
-        self.place()
-        return Context(self.cpu.registers())
-
-    def ctl_flush_tb(self) -> None:
-        """Unicorn's translation blocks; mc683xx has none."""
-
     # hooks
 
     def hook_add(self, kind: int, callback: Callable, user_data: object = None, begin: int = 1, end: int = 0):
-        """Unicorn's hook_add, begin past end for every address."""
+        """A hook of a kind on the addresses begin to end, begin past end
+        for every address."""
         if begin > end:
             begin, end = 0, LONG_MASK
         hook = HookEntry(kind, callback, user_data, begin, end)
@@ -454,8 +436,8 @@ class Mc683xx:
             self.cpu.remove_hook(hook.native)
 
     def before(self, kind: int, access: int, address: int, size: int, value: int) -> None:
-        """A device's cycle: the hooks of kind covering it, as Unicorn's
-        run before the access."""
+        """A device's cycle: the hooks of kind covering it, run before the
+        access."""
         self.in_device = True
         try:
             for hook in self.hooks:
@@ -466,8 +448,8 @@ class Mc683xx:
 
     def intercepted(self, interception) -> bool:
         """An exception the CPU raised, before anything is stacked: to
-        the interrupt hooks, as Unicorn gives it them in place of taking
-        it; with none, the run stops, as Unicorn's does."""
+        the interrupt hooks, in place of taking it; with none, the run
+        stops."""
         interrupts = [hook for hook in self.hooks if hook.kind == UC_HOOK_INTR]
         if not interrupts:
             self.unhooked = interception.vector

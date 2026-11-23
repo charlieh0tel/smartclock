@@ -933,10 +933,10 @@ startup ramp it computes from each τ, as the tests above do.
 
 A software floating-point library does the arithmetic; the decompiler
 shows it only as calls with the operands hidden.  Each routine was
-identified by running it in an emulator (Unicorn, on a 68000 core) on
-known inputs (`softfloat.md` has the routines and their operands in
-every image), and the update above was transcribed from the
-disassembly of `0x4850c` to `0x48674`.
+identified by running it in an emulator on known inputs
+(`softfloat.md` has the routines and their operands in every image),
+and the update above was transcribed from the disassembly of
+`0x4850c` to `0x48674`.
 
 The constants, as single-precision floats: `0x41ee0000` is 29.75,
 `0x4528c000` 2700, `0x40800000` 4, `0x41200000` 10, `0x302bcc77`

@@ -61,8 +61,6 @@ import re
 import struct
 from dataclasses import dataclass
 
-from unicorn import Uc
-
 import record_access
 from backend import UC_HOOK_CODE, UC_M68K_REG_A7, UC_M68K_REG_SR, Mc683xx, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
@@ -384,7 +382,7 @@ def console_requests(image: str, rom: bytes, codes: set[int]) -> dict[int, tuple
     uc.mem_map(RAM, RAM_SIZE)
     posted: list[tuple[int, int]] = []
 
-    def hook(uc: Uc | Mc683xx, address: int, size: int, data: object) -> None:
+    def hook(uc: Mc683xx, address: int, size: int, data: object) -> None:
         sp = uc.reg_read(UC_M68K_REG_A7)
         posted.append((struct.unpack('>H', uc.mem_read(sp + FRAME_CODE, 2))[0], uc.mem_read(sp + FRAME_MODE, 1)[0]))
 

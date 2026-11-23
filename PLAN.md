@@ -704,18 +704,21 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   quote its figures (decided 2026-11-22): a word or long at an odd
   address is an address error and the trace bits trace, as on the
   image's CPU.  Was Unicorn's 68020, which has no CPU32 and stood in,
-  since the image uses none of the instructions either has alone; it
-  stays by hand (`CPU=unicorn`) until it is removed, its figures
-  quoted nowhere.  Because a 68020 runs what a CPU32 traps on, the link
-  takes a libgcc built for the CPU32 with soft
-  float from GCC's source (`tools/firmware/cpu32_libgcc.py`, vendored in
-  `third_party/gcc/`), not the toolchain's 68020/68881 one, and the
-  build fails on any instruction the CPU32 lacks.
-- Unicorn's m68k status register bugs are checked by behavior, not by
-  version (`make check-unicorn`), since `dev` still calls itself 2.1.4;
-  a Unicorn that differs fails, so the workarounds are revisited rather
-  than kept by habit (`docs/firmware/README.md`), until Unicorn is
-  removed.
+  since the image uses none of the instructions either has alone.
+  Unicorn was removed (decided 2026-11-22): mc683xx's CPU32 is the
+  reference, and Unicorn's status register bugs (its read spoiling
+  QEMU's lazy condition codes, a code hook's write of PC losing them)
+  had needed a probe of the condition codes, traps and `rtr` taken by
+  hand and a check of the bugs by behavior, all gone with it.  The
+  cost: no second CPU checks mc683xx now, so a bug of mc683xx's that
+  both copies of a function meet alike passes unseen.  The harness
+  keeps the API it was written against, Unicorn's names, constants
+  and error messages, which the reports and the known differences'
+  patterns quote, in `backend.py`.  The link takes a libgcc built for
+  the CPU32 with soft float from GCC's source
+  (`tools/firmware/cpu32_libgcc.py`, vendored in `third_party/gcc/`),
+  not the toolchain's 68020/68881 one, which uses what a CPU32 traps
+  on, and the build fails on any instruction the CPU32 lacks.
 - A routine that returns in the condition codes or in registers beside
   its result is called through one register-bound asm statement, not a
   generated bridge: the bridges kept those results in globals, which
@@ -2025,8 +2028,8 @@ stands in for one.
   `SKY`, leaving out satellites that are not GPS, and what stands in
   for the receiver's own time integrity.  The raw provider stays, as
   the test of the u-blox path against a live receiver.
-- **Firmware C:** remove Unicorn, its backend, `check-unicorn` and
-  the probe, then rename what is named for it.  Give the firmware routines their file's prefix, as the hand-written
+- **Firmware C:** rename what is named for Unicorn: `uc`, `UcError`,
+  the `UC_` constants and the error text the reports quote.  Give the firmware routines their file's prefix, as the hand-written
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.

@@ -3,10 +3,9 @@
 Every image does its arithmetic in a software floating-point library;
 the decompiler shows it only as calls with the operands hidden.  The
 routines were identified in the Z3816A by running each in an emulator
-(Unicorn, on a 68000 core) on known inputs, and found in the other
-images by their bytes: each image's routine matches the Z3816A's over
-its first 24 bytes with absolute addresses and branch displacements
-masked, at the same offset from the library's divide.  A few routines
+on known inputs, and found in the other images by their bytes: each
+image's routine matches the Z3816A's over its first 24 bytes with
+absolute addresses and branch displacements masked, at the same offset from the library's divide.  A few routines
 also have a copy in the boot code (the Z3816A's multiply at
 `0x108f6`); the table gives the primary's.
 

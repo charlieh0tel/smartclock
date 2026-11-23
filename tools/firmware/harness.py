@@ -20,9 +20,7 @@ the harness's own for each parameter that points at one, whose calls
 are effects; and the
 image's own object for a parameter whose callers pass one.  The harness
 stands in for what lies outside memory, the same for both calls: traps
-#1 and #7 run the image's own handlers, and on Unicorn rtr, which it
-lacks, is done in its place, as is its read of the status register,
-which spoils the condition codes (PROBE); the kernel's traps, #3 and #4, are answered by a
+#1 and #7 run the image's own handlers; the kernel's traps, #3 and #4, are answered by a
 model of each service, and in a pForth console session the console's
 reads by its lines (READ); a trap that never returns, a zero divide, a
 write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
@@ -31,9 +29,7 @@ instruction other than the one that read it (SPLIT), end a call; a case may
 take an interrupt part way, after an event of its own instructions
 (Interrupt); and the kernel calls and device reads and writes a call
 makes, in order, are its effects, compared as RAM is.
-The CPU is mc683xx's CPU32 (backend.py); on Unicorn, which has none,
-the 68020 stands in, and the image uses none of the instructions
-either has alone (PLAN.md, "A rebuild that runs").
+The CPU is mc683xx's CPU32 (backend.py).
 """
 
 import bisect
@@ -44,10 +40,7 @@ import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from unicorn import Uc, UcError
-
 from backend import (
-    ON_MC683XX,
     UC_HOOK_BLOCK,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
@@ -77,6 +70,8 @@ from backend import (
     UC_PROT_EXEC,
     UC_PROT_READ,
     UC_PROT_WRITE,
+    Mc683xx,
+    UcError,
 )
 from decompiled_check import installer_records
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
@@ -236,25 +231,8 @@ BUS_ERROR = 2
 # return address and the format and vector offset word.
 FRAME_FORMAT = ">HIH"
 FRAME_FORMAT_SHIFT = 12
-# What QEMU, under Unicorn, raises for an rte, which the interrupt hook
-# is then called with in place of the processor's return (EXCP_RTE).
-RETURN_FROM_EXCEPTION = 0x100
-# rtr, which pops the condition codes and then the return address
-# (MC68331UM, table 5-1): QEMU, under Unicorn, takes it for an illegal
-# instruction, vector 4, at it, and the harness does it in its place.
-# pForth's code words end with it (forth_compile_code, 0x19338).
-ILLEGAL_INSTRUCTION = 4
-RETURN_AND_RESTORE = bytes.fromhex("4e77")
-# move (SP)+,SR, which pops the status register from the supervisor
-# stack (M68000PM, MOVE to SR: the source is read, then the status
-# register written): QEMU, under Unicorn, increments A7 after the write,
-# so that where it clears the supervisor bit, a task's move back after
-# trap #7 (set_gps_utc_offset, 0x139c6), the user stack is the one
-# incremented; the harness does it in its place, wherever the image's
-# code, in ROM or as RAM starts, holds it.
-STATUS_POP = bytes.fromhex("46df")
+# A status register's bytes, and its condition codes.
 STATUS_SIZE = 2
-RESTORED = struct.Struct(">HI")
 CONDITION_CODES = 0xFF
 
 
@@ -461,7 +439,7 @@ def qspi_widths(widths: dict[int, tuple[int, ...] | str], minor: int, count: int
     return widths_of_minor
 
 
-def qspi_write_data(uc: Uc, widths: dict[int, tuple[int, ...] | str], minor: int, count: int, buffer: int) -> bytes:
+def qspi_write_data(uc: Mc683xx, widths: dict[int, tuple[int, ...] | str], minor: int, count: int, buffer: int) -> bytes:
     """A QSPI write's transfers from its buffer, each the low bits of its
     word its width sends, in the fewest bytes that hold them, by an
     image's widths (QSPI_WIDTHS)."""
@@ -1223,7 +1201,7 @@ class Devices:
             if at in PORT_AT:
                 self.latches[PORT_AT[at].pins] = value >> 8 * (address + size - 1 - at) & BYTE_MASK
 
-    def port_value(self, uc: Uc, port: Port) -> int:
+    def port_value(self, uc: Mc683xx, port: Port) -> int:
         """What a port's data register reads as now (Port)."""
         latched = uc.mem_read(port.direction, 1)[0] | uc.mem_read(port.assignment, 1)[0]
         return self.latches[port.pins] & latched | getattr(self.case, port.pins) & ~latched & BYTE_MASK
@@ -1363,31 +1341,6 @@ VSPRINTF = 0x608FE
 RETURN_INSTRUCTION = bytes.fromhex("4e75")
 FORMATTING_START = bytes.fromhex("486f00082f2f00084879") + struct.pack(">I", ROUTINE_TEXT) + bytes.fromhex("4eb9")
 FORMATTING_END = bytes.fromhex("4fef000c") + RETURN_INSTRUCTION
-# Unicorn cannot read the status register without spoiling it: its m68k
-# register read (qemu/target/m68k/unicorn.c, UC_M68K_REG_SR) marks
-# QEMU's lazy condition codes as already computed before it computes
-# them, so it returns whatever the operands of the last instruction
-# that set them make read as flags, wrong between a compare and its
-# branch, and from an interrupt hook or after a run has stopped leaves
-# the CPU to go on with them.  A write of PC from a code hook loses
-# them as well, QEMU keeping which instruction set them in the block it
-# translated, not in the CPU's state, until the block ends or an
-# exception is raised; stopping the run keeps them.  The harness reads
-# the system byte from a copy of the CPU's state (system_status), which
-# the read spoils instead, and the condition codes with a probe of its
-# own on a page beside the routines': move.w ccr,(PROBE_SLOT).l, which
-# QEMU computes rightly, run to PROBE_END, where a hook goes on with
-# what an interrupt hook, a trap's, sent the CPU through it for
-# (RebuiltMachine.with_status), or where a run of its own stops, after
-# a call or between the runs of one that takes an interrupt
-# (RebuiltMachine.status).
-PROBE = ROUTINES + ROUTINES_SIZE
-PROBE_SIZE = 0x1000
-PROBE_SLOT = PROBE + PROBE_SIZE // 2
-# MOVE from CCR's opcode, its destination absolute long (M68000PM)
-MOVE_FROM_CCR_OPCODE = 0x42F9
-MOVE_FROM_CCR = struct.pack(">HI", MOVE_FROM_CCR_OPCODE, PROBE_SLOT)
-PROBE_END = PROBE + len(MOVE_FROM_CCR)
 VARIABLE = "..."
 FORMAT = "char *"
 CHAR_SLOT = "char_slot"
@@ -2505,7 +2458,7 @@ class RebuiltMachine(Machine):
         # that reads each instruction for it (traced), while tracing;
         # and the CPU as a path reads it
         self.tracing: Callable[[int], Trace] | None = None
-        self.path: tuple[Trace, Callable[[Uc, int], bool]] | None = None
+        self.path: tuple[Trace, Callable[[Mc683xx, int], bool]] | None = None
         self.tracing_hook = None
         self.reader = CpuReader(self.uc)
         # the routines at ROUTINES, by the address each records at
@@ -2515,23 +2468,9 @@ class RebuiltMachine(Machine):
         self.tree: list[TreeList] = []
         self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
         self.uc.hook_add(UC_HOOK_CODE, self.routine_call, begin=ROUTINES, end=ROUTINES + ROUTINES_SIZE - 1)
-        # the probe of the condition codes, and where a hook that sent
-        # the CPU through it had PC and what it goes on with, else None
-        # (with_status)
-        self.probing: tuple[int, Callable[[int], None]] | None = None
-        if ON_MC683XX:
-            # mc683xx reads the status register and does move (SP)+,SR,
-            # rtr and rte as the CPU32 does, and takes trap #1 and #7
-            # itself, through the profile's vectors (reset)
-            self.uc.native_vectors = HANDLED
-        else:
-            self.uc.mem_map(PROBE, PROBE_SIZE)
-            self.uc.mem_write(PROBE, MOVE_FROM_CCR)
-            self.uc.hook_add(UC_HOOK_CODE, self.probed, begin=PROBE_END, end=PROBE_END)
-            for base, contents in ((ROM, image), (RAM, profile.ram)):
-                for at in range(0, len(contents) - 1, len(STATUS_POP)):
-                    if contents[at : at + len(STATUS_POP)] == STATUS_POP:
-                        self.uc.hook_add(UC_HOOK_CODE, self.status_pop, begin=base + at, end=base + at)
+        # the CPU takes trap #1 and #7 itself, through the profile's
+        # vectors (reset)
+        self.uc.native_vectors = HANDLED
         # the devices' state in the running call, and the flash, the
         # profile's model of it, None for a profile that writes none
         self.devices = Devices()
@@ -2560,40 +2499,9 @@ class RebuiltMachine(Machine):
         self.uc.hook_add(UC_HOOK_MEM_WRITE, self.eeprom_write, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.eeprom_read, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
 
-    def with_status(self, uc: Uc, then: Callable[[int], None]) -> None:
-        """From an interrupt hook, which cannot run the probe, and where
-        QEMU has stored which instruction set the condition codes (PROBE):
-        sends the CPU through it, for probed to call then with the status
-        register, PC back where it was; on mc683xx, between runs, calls
-        it with the status register."""
-        if ON_MC683XX:
-            then(self.status())
-            return
-        self.probing = (uc.reg_read(UC_M68K_REG_PC), then)
-        uc.reg_write(UC_M68K_REG_PC, PROBE)
-
-    def probed(self, uc: Uc, address: int, size: int, _) -> None:
-        """At PROBE_END, past the probe a hook sent the CPU through
-        (with_status); a run of status's own stops here first."""
-        if self.probing is None:
-            return
-        pc, then = self.probing
-        self.probing = None
-        uc.reg_write(UC_M68K_REG_PC, pc)
-        then(system_status(uc) | probed_codes(uc))
-
     def status(self) -> int:
-        """The status register, outside a run, the probe run for its
-        condition codes, PC kept; on mc683xx, the register."""
-        if ON_MC683XX:
-            return self.uc.reg_read(UC_M68K_REG_SR)
-        pc = self.uc.reg_read(UC_M68K_REG_PC)
-        # written again each time: a gcc copy's stray write may have
-        # overwritten it (the 58503B 1.01.04's status_screen_print)
-        self.uc.mem_write(PROBE, MOVE_FROM_CCR)
-        self.uc.emu_start(PROBE, PROBE_END)
-        self.uc.reg_write(UC_M68K_REG_PC, pc)
-        return system_status(self.uc) | probed_codes(self.uc)
+        """The status register, outside a run."""
+        return self.uc.reg_read(UC_M68K_REG_SR)
 
     def as_image(self, value: int) -> int:
         """A value as the image's copy would have it: a C function's gcc
@@ -2604,7 +2512,7 @@ class RebuiltMachine(Machine):
         twin = self.twins.image_address(value)
         return value if twin is None else twin
 
-    def device_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def device_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         """Records a device read and, before it, sets each modeled
         register it covers to what it reads as."""
         self.effects.append(DeviceRead(address, size))
@@ -2619,12 +2527,12 @@ class RebuiltMachine(Machine):
             elif at in PORT_AT:
                 uc.mem_write(at, bytes([self.devices.port_value(uc, PORT_AT[at])]))
 
-    def device_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def device_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         value &= (1 << 8 * size) - 1
         self.effects.append(DeviceWrite(address, size, value))
         self.devices.written_to(address, size, value)
 
-    def eeprom_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def eeprom_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         """Records an EEPROM write and starts the write cycle of its last
         byte, finishing the cell written before it."""
         value &= (1 << 8 * size) - 1
@@ -2636,7 +2544,7 @@ class RebuiltMachine(Machine):
         devices.eeprom_polls = 0
         devices.eeprom_written = True
 
-    def eeprom_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def eeprom_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         """Records an EEPROM read from the call's first write on, and gives
         the cell being written its complement until its cycle is done."""
         devices = self.devices
@@ -2652,7 +2560,7 @@ class RebuiltMachine(Machine):
         if done:
             devices.eeprom_cell = None
 
-    def flash_write(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def flash_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         """Records a write to the flash and gives it to its parts.  The
         write lands in memory after the hook; the arrays are put back
         there before the next read of the flash or block of code run from
@@ -2667,13 +2575,13 @@ class RebuiltMachine(Machine):
             self.stray_write = True
             uc.emu_stop()
 
-    def flash_restore(self, uc: Uc, *_) -> None:
+    def flash_restore(self, uc: Mc683xx, *_) -> None:
         """Puts the arrays back where writes landed in memory."""
         for address, size in self.flash_written:
             uc.mem_write(address, self.flash.arrays(address, size))
         self.flash_written = []
 
-    def flash_read(self, uc: Uc, access: int, address: int, size: int, value: int, _) -> None:
+    def flash_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
         """Sets what a read of the flash reads as, before it, and records
         it where its code polls it, as its model has it (polled).  Until
         the call's first write, the flash reads its arrays, which memory
@@ -2686,19 +2594,7 @@ class RebuiltMachine(Machine):
         uc.mem_write(address, self.flash.read(address, size))
         self.flash_written.append((address, size))
 
-    def status_pop(self, uc: Uc, address: int, size: int, _) -> None:
-        """Does a move (SP)+,SR, STATUS_POP, in supervisor mode, as the
-        processor does; in user mode it is left to raise its privilege
-        violation."""
-        if not system_status(uc) & SUPERVISOR_BIT:
-            return
-        sp = uc.reg_read(UC_M68K_REG_A7)
-        popped = int.from_bytes(uc.mem_read(sp, STATUS_SIZE), "big")
-        uc.reg_write(UC_M68K_REG_A7, sp + STATUS_SIZE)
-        uc.reg_write(UC_M68K_REG_SR, popped)
-        uc.reg_write(UC_M68K_REG_PC, address + len(STATUS_POP))
-
-    def routine_call(self, uc: Uc, address: int, size: int, _) -> None:
+    def routine_call(self, uc: Mc683xx, address: int, size: int, _) -> None:
         """Records a call of a routine at ROUTINES, at the instruction it
         records at, and returns its result."""
         stub = self.stubs.get(address)
@@ -2781,18 +2677,16 @@ def rebuilt_machine(
 def trace(m: RebuiltMachine, tracing: Callable[[int], Trace] | None) -> None:
     """Traces each call's path, from tracing (RebuiltMachine.tracing),
     or with None no longer: one hook reads every instruction while it is
-    set, added once, not for each call, since a hook added flushes the
-    blocks Unicorn has translated."""
+    set, added once, not for each call."""
     m.tracing = tracing
     if tracing is not None and m.tracing_hook is None:
         m.tracing_hook = m.uc.hook_add(UC_HOOK_CODE, traced, m)
     elif tracing is None and m.tracing_hook is not None:
         m.uc.hook_del(m.tracing_hook)
         m.tracing_hook = None
-    m.uc.ctl_flush_tb()
 
 
-def traced(uc: Uc, address: int, size: int, m: RebuiltMachine) -> None:
+def traced(uc: Mc683xx, address: int, size: int, m: RebuiltMachine) -> None:
     """The tracing hook: the instruction about to run, to the running
     call's path, if it has one and the instruction is its own."""
     if m.path is not None and m.path[1](uc, address):
@@ -3294,37 +3188,14 @@ def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
         m.flash_touched = False
         m.stray_write = False
     m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-    if ON_MC683XX:
-        m.uc.reg_write(UC_M68K_REG_CR_VBR, m.profile.vectors)
+    m.uc.reg_write(UC_M68K_REG_CR_VBR, m.profile.vectors)
     for name, register in REGISTERS.items():
         m.uc.reg_write(register, m.starting_registers.get(name, STARTING[name]))
 
 
-def system_status(uc: Uc) -> int:
-    """The status register's system byte, its condition codes clear:
-    read from a copy of the CPU's state, which Unicorn's read spoils in
-    place of the CPU's own (PROBE); so safe in a hook."""
-    return uc.context_save().reg_read(UC_M68K_REG_SR) & SYSTEM_BYTE
-
-
-def probed_codes(uc: Uc) -> int:
-    """The condition codes the probe last stored (PROBE)."""
-    return int.from_bytes(uc.mem_read(PROBE_SLOT, STATUS_SIZE), "big") & CONDITION_CODES
-
-
-def take_exception(uc: Uc, vectors: int, vector: int, sr: int) -> None:
-    """Enters a vector's handler from status register sr as the
-    processor does: a format 0 frame on the supervisor stack, which
-    setting the supervisor bit makes A7 from a task's user stack,
-    returning past the trap, and the handler's address from a vector
-    table.  Unicorn calls the interrupt hook in place of doing this,
-    with PC at the trap."""
-    frame = struct.pack(FRAME_FORMAT, sr, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, vector * VECTOR_SIZE)
-    uc.reg_write(UC_M68K_REG_SR, sr | SUPERVISOR_BIT)
-    sp = uc.reg_read(UC_M68K_REG_A7) - len(frame)
-    uc.mem_write(sp, frame)
-    uc.reg_write(UC_M68K_REG_A7, sp)
-    uc.reg_write(UC_M68K_REG_PC, struct.unpack(">I", uc.mem_read(vectors + vector * VECTOR_SIZE, VECTOR_SIZE))[0])
+def system_status(uc: Mc683xx) -> int:
+    """The status register's system byte, its condition codes clear."""
+    return uc.reg_read(UC_M68K_REG_SR) & SYSTEM_BYTE
 
 
 @dataclass(frozen=True)
@@ -3379,7 +3250,7 @@ QSPI_LEVEL = 4
 UNMAPPED_FRAME = KERNEL_RESULT
 
 
-def take_interrupt(uc: Uc, vectors: int, interrupt: Interrupt, pc: int, sr: int) -> int:
+def take_interrupt(uc: Mc683xx, vectors: int, interrupt: Interrupt, pc: int, sr: int) -> int:
     """Enters an interrupt's handler from status register sr as the
     CPU32 does (MC68331UM, 5.8.2 and "Exception Stack Frames"): the
     status register copied, then supervisor mode, trace off and the mask
@@ -3398,21 +3269,7 @@ def take_interrupt(uc: Uc, vectors: int, interrupt: Interrupt, pc: int, sr: int)
     return sp
 
 
-def return_and_restore(uc: Uc) -> bool:
-    """Does an rtr at PC as the processor does; False, nothing done, if
-    the instruction there is another."""
-    pc = uc.reg_read(UC_M68K_REG_PC)
-    if bytes(uc.mem_read(pc, len(RETURN_AND_RESTORE))) != RETURN_AND_RESTORE:
-        return False
-    sp = uc.reg_read(UC_M68K_REG_A7)
-    ccr, address = RESTORED.unpack(uc.mem_read(sp, RESTORED.size))
-    uc.reg_write(UC_M68K_REG_A7, sp + RESTORED.size)
-    uc.reg_write(UC_M68K_REG_SR, system_status(uc) | ccr & CONDITION_CODES)
-    uc.reg_write(UC_M68K_REG_PC, address)
-    return True
-
-
-def return_from_exception(uc: Uc) -> bool:
+def return_from_exception(uc: Mc683xx) -> bool:
     """Returns from a format 0 frame as rte does; False, the frame left,
     if it is of another format."""
     sp = uc.reg_read(UC_M68K_REG_A7)
@@ -3425,7 +3282,7 @@ def return_from_exception(uc: Uc) -> bool:
     return True
 
 
-def string(uc: Uc, at: int) -> bytes | None:
+def string(uc: Mc683xx, at: int) -> bytes | None:
     """The NUL-terminated string at an address, without its NUL; None if
     it runs past LONGEST_BUFFER."""
     data = b""
@@ -3619,7 +3476,7 @@ class CpuReader(Cpu):
 
     REGISTERS = {**REGISTERS, "A7": UC_M68K_REG_A7}
 
-    def __init__(self, uc: Uc):
+    def __init__(self, uc: Mc683xx):
         self.uc = uc
 
     def word(self, at: int) -> int:
@@ -3650,12 +3507,11 @@ class Run:
 
     def __init__(self, m: RebuiltMachine, start: int, stack_arguments: bytes = b"", entry: bool = False):
         trapped, invalid, ended = [], [], []
-        # writes to an overlay's code, which Unicorn protects only by
-        # whole pages: each one's address and the bytes it overwrote
+        # writes to an overlay's code: each one's address and the bytes
+        # it overwrote
         written: list[tuple[int, bytes]] = []
         self.effects = m.effects = []
         self.calls = m.calls = []
-        m.probing = None
         kernel_calls = 0
 
         # the interrupts the case takes (Interrupt): each one's events
@@ -3668,9 +3524,7 @@ class Run:
         pending: list[int] = []
         frames: list[int] = []
         # the interrupt the run stopped before an instruction to take,
-        # if one, which the run takes between its runs: a write of PC
-        # in a code hook loses QEMU's lazy condition codes, as Unicorn's
-        # read of them does (PROBE), where stopping keeps them; and the
+        # if one, which the run takes between its runs; and the
         # instructions run so far, which the step hook counts, so that
         # the runs together run at most STEP_LIMIT
         due: list[Interrupt] = []
@@ -3688,11 +3542,9 @@ class Run:
                 pending.append(index)
 
         def step(uc, address, size, _):
-            # before each instruction but the probe's, the first
-            # interrupt due, if the mask lets it in
+            # before each instruction, the first interrupt due, if the
+            # mask lets it in
             nonlocal steps
-            if PROBE <= address < PROBE + PROBE_SIZE:
-                return
             steps += 1
             if not pending:
                 return
@@ -3718,18 +3570,9 @@ class Run:
                 return_from_exception(uc)
                 frames.pop()
                 return
-            if frames and number == RETURN_FROM_EXCEPTION and uc.reg_read(UC_M68K_REG_A7) == frames[-1]:
-                frames.pop()
-            if number in HANDLED:
-                m.with_status(uc, lambda sr: take_exception(uc, m.profile.vectors, number, sr))
-                return
             if number in ENDING:
                 ended.append(number)
                 uc.emu_stop()
-                return
-            if number == RETURN_FROM_EXCEPTION and return_from_exception(uc):
-                return
-            if number == ILLEGAL_INSTRUCTION and return_and_restore(uc):
                 return
             if number in KERNEL_TRAPS and kernel_calls == KERNEL_CALL_LIMIT:
                 ended.append(STILL_RUNNING)
@@ -3742,7 +3585,7 @@ class Run:
                 uc.emu_stop()
                 return
             if number in KERNEL_TRAPS:
-                m.with_status(uc, lambda sr: answered(uc, number, sr))
+                answered(uc, number, m.status())
                 return
             trapped.append(number)
             uc.emu_stop()
@@ -3767,13 +3610,9 @@ class Run:
             return False
 
         def code_write(uc, access, address, size, value, _):
-            # the write is made after the hook, and undone after the call;
-            # on mc683xx the hook is after it, the bytes it overwrote the
-            # call's start's
-            if ON_MC683XX:
-                written.append((address, code_start[address - m.profile.code[0] :][:size]))
-            else:
-                written.append((address, bytes(uc.mem_read(address, size))))
+            # the hook is after the write, undone after the call, the
+            # bytes it overwrote the call's start's
+            written.append((address, code_start[address - m.profile.code[0] :][:size]))
             if literal_region(m, uc.reg_read(UC_M68K_REG_PC)) is not None:
                 ended.append(BUS_ERROR)
             else:
@@ -3781,8 +3620,8 @@ class Run:
             uc.emu_stop()
 
         # the return address and frame of each interrupt taken, whose
-        # rte, on mc683xx the CPU's own, pops it once PC is at the
-        # address with the frame popped (returned)
+        # rte, the CPU's own, pops it once PC is at the address with the
+        # frame popped (returned)
         returns: dict[int, int] = {}
 
         def returning(uc, address):
@@ -3882,20 +3721,15 @@ class Run:
             kind = UC_HOOK_MEM_WRITE if interrupt.write else UC_HOOK_MEM_READ
             hooks.append(m.uc.hook_add(kind, watched, index, begin=at, end=at))
         if interrupts:
-            # every instruction, which a block translated before the hook
-            # would run without
             hooks.append(m.uc.hook_add(UC_HOOK_CODE, step))
-            m.uc.ctl_flush_tb()
-        if interrupts and ON_MC683XX:
             hooks.append(m.uc.hook_add(UC_HOOK_CODE, returned))
         if m.counter is not None:
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, counted, begin=m.counter[0], end=m.counter[0]))
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_READ, counter_read, begin=m.counter[0], end=m.counter[0]))
             hooks.append(m.uc.hook_add(UC_HOOK_CODE, counter_instruction))
-            m.uc.ctl_flush_tb()
         if m.protected and m.profile.code:
             code, size = m.profile.code
-            code_start = m.read(code, size) if ON_MC683XX else b""
+            code_start = m.read(code, size)
             hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, code_write, begin=code, end=code + size - 1))
         try:
             at = start
@@ -3916,8 +3750,6 @@ class Run:
         finally:
             for hook in hooks:
                 m.uc.hook_del(hook)
-            if interrupts:
-                m.uc.ctl_flush_tb()
             m.path = None
         if self.trace is not None:
             self.trace.settled(m.reader)
@@ -3947,15 +3779,7 @@ class Run:
         # memory another use has, where one is known: a pForth console
         # session's data stack, below its return stack (console_task_run)
         self.floor: int | None = None
-        # a run that leaves the CPU where the status probe itself faults
-        # (a gcc copy of the 58503B 1.01.04's status_screen_print) has
-        # stopped, its status none
-        try:
-            self.status = m.status()
-        except UcError as error:
-            self.status = 0
-            if self.stopped is None:
-                self.stopped = self.stop_reason = f"status probe: {error}"
+        self.status = m.status()
         self.memory = snapshot(m)
         self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
 

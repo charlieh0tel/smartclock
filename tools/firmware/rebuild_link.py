@@ -300,7 +300,7 @@ def misaligned_data(listing: str, placed: list[tuple[int, int, str]], aligned: d
     at an odd address, or that only a byte's alignment keeps from one:
     an object smartclock.h packs (#pragma pack(1)) may be put anywhere,
     and the CPU32 takes an address error on a word or long at an odd
-    address (MC68331UM, 4.4.4) where Unicorn's 68020 does not.  An
+    address (MC68331UM, 4.4.4) where a 68020 does not.  An
     access is seen absolute, or through an address register a lea or a
     move of the object's address loaded in the same function and
     nothing has written since but an increment."""

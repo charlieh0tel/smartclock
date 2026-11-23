@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.8.0"]
 # ///
 """Runs the disciplining loop's own code, each image's startup_pll and
 pll_normal, on backend.py's CPU on synthetic readings, and writes what
@@ -40,8 +40,6 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 
-from unicorn import Uc, UcError
-
 from backend import (
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
@@ -50,6 +48,7 @@ from backend import (
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
     Mc683xx,
+    UcError,
     new_cpu,
 )
 
@@ -256,7 +255,7 @@ class Machine:
     routines: dict[str, int]
     addresses: dict[str, int]
     layout: dict[str, tuple[int, int]]
-    uc: Uc | Mc683xx = field(init=False)
+    uc: Mc683xx = field(init=False)
     fault: str | None = field(init=False, default=None)
 
     def __post_init__(self) -> None:
@@ -275,12 +274,12 @@ class Machine:
             (address, name) for name, address in self.routines.items() if RUN.match(name) or name in STUBS
         )
 
-    def invalid(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> bool:
+    def invalid(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> bool:
         pc = uc.reg_read(UC_M68K_REG_PC)
         self.fault = f'{self.image}: access {access} of {size} bytes at {address:#x} from {pc:#x}'
         return False
 
-    def trap(self, uc: Uc, number: int, data: object) -> None:
+    def trap(self, uc: Mc683xx, number: int, data: object) -> None:
         pc = uc.reg_read(UC_M68K_REG_PC)
         self.fault = f'{self.image}: exception {number} at {pc:#x}'
         uc.emu_stop()

@@ -1431,8 +1431,8 @@ address, where the image's is at an even one, is
 multipliers, the OS reports' local texts, `timecode_update`'s next
 time of day, `reset_record_write`'s record, `gpsm_task`'s two
 request entries, `status_screen`'s mode lines and the error messages'
-table.  mc683xx's strict CPU32 mode, which takes an address error for
-a misaligned word or long, found those before the last; `rebuild_link.py` finds
+table.  mc683xx's CPU32, which takes an address error for a
+misaligned word or long, found those before the last; `rebuild_link.py` finds
 an access at an odd offset from the frame or stack pointer in gcc's
 code, as linked and compiled again with no function inlined
 (`-fno-inline`), since where a frame's objects lie changes with what
@@ -2141,20 +2141,21 @@ What differs, on mc683xx:
   to a hook alike, as on Unicorn.  The writes of an exception's frame,
   flagged as stacking, reach no hook.
 - A fault stops the run, as Unicorn's does, with Unicorn's error.
-- Unicorn's 68020 runs what the CPU32 refuses, and mc683xx runs as the
-  68020 does where it has a deviation for it (`set_deviations`), so
-  that the report is Unicorn's: words and longs at odd addresses, which the CPU32 takes as
-  an address error (CPU32RM 6.2.3), and the trace bits, which trace
-  (6.2.10).  `SMARTCLOCK_CPU_PARITY=0` runs as the CPU32 does instead,
-  and gives both images' figures too: only some cases are skipped,
-  stopping at the same address error in both copies
-  (`exception_name`, `diag_crash`, the installer's `exception_name`).
-  Such a report ends saying so, and `check-report-figures` checks it
-  against rewrite.md's strict figure of the cases compared, so that
-  the check passes whichever report was written last.
+- mc683xx runs as the CPU32 does, where Unicorn's 68020 runs on: a
+  word or long at an odd address is an address error (CPU32RM 6.2.3),
+  and the trace bits trace (6.2.10).  So its report skips cases that
+  Unicorn's compares, each stopping at the same exception in both
+  copies (every image's `exception_name`, `diag_crash` and
+  `installer_exception_name`, and the 58503B 1.01.04's
+  `command_log_add`), and fails none that Unicorn's passes.
+  Such a report ends saying so, and `check-report-figures` checks the
+  Z3805A 3543B's against rewrite.md's strict figure of the cases
+  compared, so that the check passes whichever backend wrote that
+  report; the documents' other figures are Unicorn's, which CI runs,
+  and the other images' reports on mc683xx fail the check, having no
+  strict figure.
 
-With them both images' reports are Unicorn's, line for line.  The
-58503A 3704's differed in two functions until the link took the
+The 58503A 3704's report differed in two functions until the link took the
 CPU32's libgcc ("Hand-written C"): `hmon_check_pll_stage`, then
 decompiled and since written by hand, and `hmon_task`, whose gcc
 copies call `__fixunssfsi`, whose 68881

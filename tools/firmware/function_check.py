@@ -78,7 +78,7 @@ from dataclasses import dataclass, field
 from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UcError
 from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
 
-from backend import ON_MC683XX, PARITY
+from backend import ON_MC683XX
 from harness import (
     ALLOCATIONS,
     BYTE_MASK,
@@ -854,7 +854,7 @@ JUMP_VALUES = [0, 1, -1, 0x12345678]
 # trace bits are cleared before the run, on both backends, since
 # setjmp, which fills the buffer, runs untraced.  A generated case's
 # buffer may set them (case 0's 0xc0, case 1's 0xe5), which mc683xx's
-# strict CPU32 then takes: each instruction after the restore traces to
+# CPU32 then takes: each instruction after the restore traces to
 # the handler, which prints its PC.
 JUMP_FUNCTIONS = ("longjmp", "installer_longjmp")
 JUMP_STATUS = 0x40
@@ -5583,9 +5583,8 @@ def main() -> int:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
         failed += counts["failed"] + registers["failed"] + paths["failed"]
-    # a strict run's cases are not the documented ones
-    # (report_figures.py)
-    if ON_MC683XX and not PARITY:
+    # the CPU32's cases are not Unicorn's (report_figures.py)
+    if ON_MC683XX:
         print(STRICT)
     return 1 if failed else 0
 

@@ -15,9 +15,9 @@ reading; and how many are assembly routines and thunks.  And the
 figures of the image's link check, link_check.py's summary line: how
 many functions it requires, and how many the hand-written C, the
 assembly and another routine's name define.  CHECKS lists, for each
-image, the sentences that quote them.  A report of mc683xx run strictly
-as the CPU32 (SMARTCLOCK_CPU_PARITY=0), which says so (STRICT), skips a
-few cases more, and is checked against rewrite.md's strict figure of
+image, the sentences that quote them, as Unicorn's report gives them.
+A report of mc683xx, which runs as the CPU32 and says so (STRICT), skips
+a few cases more, and is checked against rewrite.md's strict figure of
 them, the Z3805A's alone (STRICT_CHECKS).
 
     python3 -I tools/firmware/report_figures.py --image IMAGE --link SUMMARY REPORT [--write]
@@ -84,10 +84,10 @@ PATHS = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
-# function_check.py's line of a report of mc683xx run strictly as the
+# function_check.py's line of a report of mc683xx, which runs as the
 # CPU32, whose address errors stop some cases that Unicorn's 68020 runs
 # (docs/firmware/README.md, "The CPU backend")
-STRICT = 'cases run strictly as the CPU32: SMARTCLOCK_CPU_PARITY=0'
+STRICT = 'cases run strictly as the CPU32: SMARTCLOCK_CPU=mc683xx'
 # link_check.py's summary line: the image, the functions required, and
 # those the hand-written C, the assembly and another's name define
 LINK = re.compile(

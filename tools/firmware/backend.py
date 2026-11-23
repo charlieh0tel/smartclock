@@ -33,11 +33,10 @@ Mc683xx keeps Unicorn's meaning:
   emu_start raises Unicorn's UcError for it; for an address error where
   something is mapped, Unicorn's for an unaligned access, which it
   never raises.
-- Unicorn's 68020 reads and writes words and longs at odd addresses
-  and does not trace, which the CPU32 would refuse (an address error,
-  CPU32RM 6.2.3) and do (6.2.10): the Machine's parity deviations,
-  misaligned and untraced, make it do the same, unless
-  SMARTCLOCK_CPU_PARITY (PARITY_VARIABLE) is 0.
+- Alignment and tracing.  The Machine is the CPU32 as it is: a word or
+  long at an odd address is an address error (CPU32RM 6.2.3), and the
+  trace bits trace (6.2.10), where Unicorn's 68020 reads and writes on
+  and does not trace.
 """
 
 import bisect
@@ -112,10 +111,6 @@ BACKEND = os.environ.get(BACKEND_VARIABLE, UNICORN)
 if BACKEND not in (UNICORN, MC683XX):
     raise SystemExit(f"{BACKEND_VARIABLE}={BACKEND}: not {UNICORN} or {MC683XX}")
 ON_MC683XX = BACKEND == MC683XX
-# The environment variable that, 0, has mc683xx run as the CPU32 does
-# rather than as Unicorn's 68020 (Mc683xx).
-PARITY_VARIABLE = "SMARTCLOCK_CPU_PARITY"
-PARITY = os.environ.get(PARITY_VARIABLE, "1") != "0"
 
 
 def new_cpu() -> "Uc | Mc683xx":
@@ -302,7 +297,6 @@ class Mc683xx:
         self.cpu = mc683xx.Machine()
         self.stop_request = self.cpu.stop_request()
         self.cpu.set_stop_on_fault(True)
-        self.cpu.set_deviations(mc683xx.Deviations(misaligned=PARITY, untraced=PARITY))
         self.regions: list[Region] = []
         self.starts: list[int] = []
         self.hooks: list[HookEntry] = []

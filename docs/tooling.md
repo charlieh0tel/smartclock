@@ -41,7 +41,7 @@ receiver.
 
 | Tool | What it is |
 | ---- | ---------- |
-| `smartclock-cli simulate-loop` | the disciplining loop's TI and EFC for a phase step, frequency steps or a drift, at an image's τ and G, beside a snapshot log's ([`firmware/loop.md`](firmware/loop.md#simulating-it)).  Needs no receiver |
+| `smartclock-cli simulate-loop` | the disciplining loop's TI and EFC for a phase step, frequency steps or a drift, at an image's τ and G, beside a snapshot log's, or replaying a logged run with another c or disturbance ([`firmware/loop.md`](firmware/loop.md#simulating-it)).  Needs no receiver |
 
 ## Decompiling and the rewrite
 

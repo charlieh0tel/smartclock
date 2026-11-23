@@ -74,7 +74,13 @@ pub const STEP_LIMIT: f64 = 6.25e-10;
 
 /// The weight of a fresh reading in the health monitor's average of
 /// the oscillator current, s ← w·fresh + (1 − w)·s.
-pub const CURRENT_WEIGHT: f64 = 0.1;
+const CURRENT_WEIGHT: f64 = 0.1;
+
+/// The health monitor's average of the oscillator current, `average`,
+/// after a fresh reading: s ← w·fresh + (1 − w)·s.
+pub fn average_current(average: f64, fresh: f64) -> f64 {
+    CURRENT_WEIGHT * fresh + (1.0 - CURRENT_WEIGHT) * average
+}
 
 /// The EFC's top, counts; its bottom is 0.
 pub const EFC_TOP: f64 = 1_048_560.0;
@@ -414,7 +420,7 @@ impl ClosedLoop {
     /// A fresh reading of the oscillator current into s, the health
     /// monitor's average: s ← w·fresh + (1 − w)·s.
     pub fn read_current(&mut self, fresh: f64) {
-        self.current = CURRENT_WEIGHT * fresh + (1.0 - CURRENT_WEIGHT) * self.current;
+        self.current = average_current(self.current, fresh);
     }
 
     /// K, k and a.

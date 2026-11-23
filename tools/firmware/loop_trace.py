@@ -566,7 +566,7 @@ def trace(image: str) -> str:
     check_callees(machine)
     columns = ['scenario', *INPUTS, 'result', 'hold_causes', *(member for member, _, _ in OUTPUTS)]
     lines = [
-        f'# {image}: startup_pll and pll_normal run in Unicorn by tools/firmware/loop_trace.py;',
+        f"# {image}: startup_pll and pll_normal run on mc683xx's CPU32 by tools/firmware/loop_trace.py;",
         '# do not edit.  Floats are IEEE single bits in hex.',
     ]
     lines += run(machine, 'normal', normal_seconds(Random(1)), False)

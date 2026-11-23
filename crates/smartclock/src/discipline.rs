@@ -214,6 +214,21 @@ impl Disturbance {
     }
 }
 
+/// What the oscillator is measured against over a block: an EFC in
+/// force and the mean time interval it gave.  The simulated phase is
+/// kept as an offset from the reference's, moving by
+/// `y − S·(u − efc)` a second, so the block's mean time interval is the
+/// reference's plus the offset's mean.  The model's own reference is
+/// the undisturbed oscillator, on frequency at its rest EFC with time
+/// interval 0; a logged run's is what it logged.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Reference {
+    /// The EFC in force over the block, counts.
+    pub efc: f64,
+    /// The block's mean time interval, seconds.
+    pub interval: f64,
+}
+
 /// One update of a simulated loop.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Update {
@@ -229,7 +244,7 @@ pub struct Update {
 /// The normal loop, `pll_normal`, closed around an oscillator.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClosedLoop {
-    /// The time interval now, seconds.
+    /// The time interval now less the [`Reference`]'s, seconds.
     pub phase: f64,
     /// The update's state.
     pub steering: Steering<f64>,
@@ -267,8 +282,19 @@ impl ClosedLoop {
         }
     }
 
-    /// Ten seconds of readings and the update at their end.
+    /// Ten seconds of readings and the update at their end, against the
+    /// undisturbed oscillator.
     pub fn block(&mut self, disturbances: &[Disturbance]) -> Update {
+        let rest = Reference {
+            efc: self.rest,
+            interval: 0.0,
+        };
+        self.block_against(disturbances, rest)
+    }
+
+    /// Ten seconds of readings and the update at their end, against
+    /// `reference`.
+    pub fn block_against(&mut self, disturbances: &[Disturbance], reference: Reference) -> Update {
         let mut sum = 0.0;
         for _ in 0..BLOCK_SECONDS {
             self.second += 1;
@@ -276,10 +302,10 @@ impl ClosedLoop {
                 .iter()
                 .map(|disturbance| disturbance.phase(self.second))
                 .sum();
-            self.phase += free - self.sensitivity * (self.efc - self.rest);
+            self.phase += free - self.sensitivity * (self.efc - reference.efc);
             sum += self.phase;
         }
-        let interval = sum / f64::from(BLOCK_SECONDS);
+        let interval = reference.interval + sum / f64::from(BLOCK_SECONDS);
         // Neither c·s nor the clamp to the DAC's range: the oscillator
         // model is linear, and the current is not modeled.
         self.efc = self.steering.steer(self.gains, interval, self.slope);

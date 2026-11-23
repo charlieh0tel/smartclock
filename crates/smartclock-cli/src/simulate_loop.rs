@@ -44,6 +44,19 @@ fn counts_per_percent() -> f64 {
     f64::from(EfcPercent::FULL_SCALE) / 200.0
 }
 
+/// The bottom of the EFC's range, percent: count 0.
+const EFC_BOTTOM_PERCENT: f64 = -100.0;
+
+/// An EFC in percent as counts.
+fn counts(percent: f64) -> f64 {
+    (percent - EFC_BOTTOM_PERCENT) * counts_per_percent()
+}
+
+/// An EFC in counts as percent.
+fn percent(counts: f64) -> f64 {
+    counts / counts_per_percent() + EFC_BOTTOM_PERCENT
+}
+
 #[derive(Args)]
 pub(crate) struct SimulateLoopArgs {
     /// The image whose τ and G to take, as `docs/firmware/loop-constants.json`
@@ -267,7 +280,7 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
     let per_percent = counts_per_percent();
     let sensitivity = args.sensitivity.map_or(gain, |s| s / per_percent);
     let slope = args.aging_slope * per_percent * ENTRY_SECONDS / DAY;
-    let mut closed = ClosedLoop::new(gain, tau, sensitivity, 0.0, slope);
+    let mut closed = ClosedLoop::new(gain, tau, sensitivity, counts(args.efc), slope);
     let updates = closed.run(&disturbances(args), args.seconds);
     let log = match (&args.log, args.from) {
         (Some(path), Some(from)) => {
@@ -293,7 +306,7 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
             out,
             "{second}\t{:.3}\t{:.5}",
             interval * NANOSECONDS,
-            args.efc + efc / per_percent
+            percent(efc)
         )?;
         if let Some((rows, from)) = &log {
             #[expect(clippy::cast_precision_loss, reason = "milliseconds since 1970")]

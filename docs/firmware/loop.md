@@ -949,8 +949,9 @@ start, u the simulated EFC.  The replay computes it that way, as a
 difference from the log, so it needs neither u₀ nor the phase within a
 block, only each update's logged x̄ and u.  It starts with u the
 logged EFC at `--from`, f the prefilter run over the logged x̄ of the
-five filter time constants, 5/a updates, before it, I at 0 and B
-taking the rest, so u holds.  Synthetic disturbances add to the
+five filter time constants, 5/a updates, before it, s the monitor's
+average of the log's oscillator current over the same updates, I at 0
+and B taking the rest, so u holds.  Synthetic disturbances add to the
 recovered one.
 
 The log's columns, by what needs them:

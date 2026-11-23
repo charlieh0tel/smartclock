@@ -1197,7 +1197,7 @@ engine is a Furuno, the Z3815A 4010 and the Z3805A 1.01.03; the
   address an instruction names, or names.tsv labels, that has a
   descriptor's shape; one named only by a ROM table would be missed;
 - a **console** word that leaves a code in `gps_command`, which
-  `gps_command_send`, run in Unicorn on each code, maps to the request
+  `gps_command_send`, run on each code, maps to the request
   it posts.  `gps_change` and `gps_query` post whatever request they
   are given.
 
@@ -2220,7 +2220,7 @@ specification; in short:
   `int`'s are by parameter, each at field 2, where the images send it,
   the parameters coming in any order.  Each image's tables and records
   are where its exported C's globals and its `check-layout.c` place
-  them.  What each reads of each is measured the same way, in Unicorn: each
+  them.  What each reads of each is measured the same way: each
   field's decoder of the image's table is called with the field and its
   place, the commit last, as `nmea_sentence_decode` calls them, on a
   second of the model's sentences, and a field read is one whose

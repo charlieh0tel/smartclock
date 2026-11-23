@@ -894,7 +894,7 @@ compare it with the Z3805A 3543B's and 58503A 3704's images
 - They read each constant above from its image at the cited address,
   and match it to that receiver's row.
 - `tools/firmware/loop_trace.py` runs each image's own `startup_pll`
-  and `pll_normal` in Unicorn, once per second of synthetic readings.
+  and `pll_normal` in an emulator, once per second of synthetic readings.
   The image's soft-float runs as it is; only the routines that reach
   outside the loop are stood in for, and any other call fails the run.
   `make check-loop-trace` regenerates the traces and compares them with

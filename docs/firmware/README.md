@@ -2106,17 +2106,19 @@ it.
 ## The CPU backend
 
 The harness and its checks (`function_check.py`, `libc_check.py`,
-`app_check.py`) run on Unicorn's 68020 by default, or on mc683xx's
-bare CPU32, `mc683xx.Machine` (its `docs/python.md`, "Bare CPU"), with
-`SMARTCLOCK_CPU=mc683xx`.  `tools/firmware/backend.py` is the one seam:
+`app_check.py`), the loop trace (`loop_trace.py`) and the GPS fields
+(`gps_fields.py`, and `gps_paths.py` beneath it) run on Unicorn's 68020
+by default, or on mc683xx's bare CPU32, `mc683xx.Machine` (its
+`docs/python.md`, "Bare CPU"), with `SMARTCLOCK_CPU=mc683xx`.  `tools/firmware/backend.py` is the one seam:
 `new_cpu` gives Unicorn's `Uc` or a class that answers the part of
 Unicorn's API the harness uses on the `Machine`, so that both run from the
 same code; `unicorn_check.py` stays Unicorn's alone.  mc683xx's Python
 module is its PyPI release, `mc683xx==0.8.0`, pinned exactly in each
-harness script's inline metadata beside Unicorn and bumped only on
-purpose, which `uv run` installs; `CPU=mc683xx` has the function check
-run on it.  To try an unreleased mc683xx, build its wheel (its
-`docs/python.md`) and, for the run, change the pin by hand to
+script's inline metadata beside Unicorn and bumped only on purpose,
+which `uv run` installs; `CPU=mc683xx` has the function check,
+`check-loop-trace` and `check-gps-fields` run on it.  To try an
+unreleased mc683xx, build its wheel (its `docs/python.md`) and, for the
+run, change the pin by hand to
 `mc683xx @ file:///PATH/TO/WHEEL`:
 
     make report-decompiled CPU=mc683xx
@@ -2141,6 +2143,11 @@ What differs, on mc683xx:
   to a hook alike, as on Unicorn.  The writes of an exception's frame,
   flagged as stacking, reach no hook.
 - A fault stops the run, as Unicorn's does, with Unicorn's error.
+- The loop trace and the GPS fields give the same output on both.  The
+  GPS fields' trap #7 is taken by the CPU through the image's vectors,
+  and its `rte` is the CPU's, where the script stacks and unstacks the
+  frame itself on Unicorn; its memory hooks only note what is read
+  (`watch_only`), so they make no device: RAM stays the `Machine`'s.
 - mc683xx runs as the CPU32 does, where Unicorn's 68020 runs on: a
   word or long at an odd address is an address error (CPU32RM 6.2.3),
   and the trace bits trace (6.2.10).  So its report skips cases that
@@ -2232,7 +2239,7 @@ block-diagram` and `make coverage`, which need only Python: the board
 atlas, the block diagram and the coverage by model built from their
 data, and every file and section that data cites checked.
 `check-loop-trace` runs both images' own
-`startup_pll` and `pll_normal` in Unicorn on synthetic readings, the
+`startup_pll` and `pll_normal` on synthetic readings, the
 routines that reach outside the loop's arithmetic stood in for
 (`tools/firmware/loop_trace.py`), and fails if the traces
 `crates/smartclock/tests/loop_firmware.rs` replays against `loop.md`'s
@@ -2246,7 +2253,7 @@ for where each image's G comes from and whether the EEPROM's
 calibration block can change it, `loop-gain.json`, and decodes every
 EEPROM in `third_party/firmware/images/eeprom/` by its unit's image's
 rules for the tables' last column (`tools/firmware/loop_gain.py`).  `check-gps-fields` runs each
-Oncore image's own message decoders in Unicorn, notes the bytes of
+Oncore image's own message decoders, notes the bytes of
 each message they read and where they store them, scans the image for
 the functions that read them there, and fails if `gps-fields.tsv`, the
 fields of every message the GPS engine model speaks, names other

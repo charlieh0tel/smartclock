@@ -707,9 +707,7 @@ What a path does not see:
 - A callee the harness answers in its place (`STATES`) may leave no
   event in either copy.  A function called again from within its own
   callee, before that call returns, is not read rightly: a return is
-  known by its address alone, since Unicorn shows the registers at a
-  hook on an instruction that sets the register as that instruction
-  leaves them, and so the harness never reads SP there.
+  known by its address alone, the harness never reading SP there.
 - A write is compared by the system byte, not the condition codes,
   each copy's own; of the calls' arguments, only `set_interrupt_mask`'s
   mask.
@@ -882,12 +880,7 @@ the check is against the model, not the board.
   masked stretch, are not compared, and the reading's order is address
   against source where the paths do not reach every event and arm.
 - **Timing.**  No time is modeled: a poll's count and order are
-  compared, its duration is not.  On Unicorn, by hand
-  (`CPU=unicorn`), which has no CPU32, the 68020 stands in, the image
-  using none of the instructions where they differ (PLAN.md), and
-  Unicorn's read of the status register spoils the condition codes, as
-  does a write of PC from a code hook; there the harness reads them
-  with a probe of its own and takes an interrupt between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
+  compared, its duration is not.
 - **Untraced hardware.**  Which wires reach what (the DUART's interrupt
   level, the EEPROM's select line, the SCI's connector, the switch word
   at `0x302000`, measured to be S1 on the 58503A but not traced) is
@@ -908,13 +901,13 @@ the check is against the model, not the board.
 
 Tools: Ghidra 12.1.4 (only to export again), `git-lfs` for the archive;
 `m68k-linux-gnu-gcc` and binutils; `clang-format`; Python 3.12+ with uv
-(mc683xx, Unicorn, Capstone); Rust (`cargo`, for `smartclock-cli dump-scpi`).
+(mc683xx, Capstone); Rust (`cargo`, for `smartclock-cli dump-scpi`).
 The checks need no Ghidra: the export is checked in.
 
     make -C third_party/firmware check-types IMAGE=z3805a-3543b
-    make -C third_party/firmware check-decompiled IMAGE=z3805a-3543b    # about 15 s
-    make -C third_party/firmware check-link IMAGE=z3805a-3543b          # about 5 s
-    make -C third_party/firmware report-decompiled IMAGE=z3805a-3543b   # about 2.5 min
+    make -C third_party/firmware check-decompiled IMAGE=z3805a-3543b
+    make -C third_party/firmware check-link IMAGE=z3805a-3543b
+    make -C third_party/firmware report-decompiled IMAGE=z3805a-3543b
     make -C third_party/firmware check-scpi-tree IMAGE=z3805a-3543b
     make -C third_party/firmware check-format-c
     make -C third_party/firmware check-status-register
@@ -1012,7 +1005,7 @@ holder's.  The decompiled C is Ghidra's machine output, rewritten where
 it would not compile or would not do what the image does.  The pSOS
 manual consulted (Integrated Systems, *pSOSystem System Calls*,
 000-5070-002) is cited, not included.  The harness runs on mc683xx,
-or by hand on Unicorn, GPL-2.0-only, as a local tool.
+MIT or Apache-2.0, as a local tool.
 
 The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and

@@ -28,7 +28,7 @@ how many the hand-written C and the assembly define; exits nonzero if
 the link fails, the export's declarations define a function, or gcc's
 code reads a word or long of an object of the C's data that is at an
 odd address or aligned to a byte alone (rebuild_link.misaligned_data):
-the CPU32 faults on it, where Unicorn's 68020 does not.
+the CPU32 faults on it, where a 68020 does not.
 """
 
 import json

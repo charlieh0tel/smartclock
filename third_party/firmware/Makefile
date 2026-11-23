@@ -56,21 +56,12 @@ QUERY_TARGETS = record-access report-link
 TARGETS = format-c check-format-c check-module-figures module-figures check-image-diff image-diff \
 	check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-seed-names seed-names \
-	check-pforth-words pforth-words check-report-figures report-figures check-unicorn \
+	check-pforth-words pforth-words check-report-figures report-figures \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
 	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
-
-# The CPU the harness, the loop trace and the GPS fields run the image
-# on (tools/firmware/backend.py, docs/firmware/README.md, "The CPU
-# backend"): mc683xx, the bare CPU32 of mc683xx's Python module, which
-# uv takes from PyPI as the scripts pin it in their inline metadata, or
-# unicorn, Unicorn's 68020, whose function check the documents do not
-# quote.
-CPU ?= mc683xx
-HARNESS_RUN = SMARTCLOCK_CPU=$(CPU) uv run -q
 
 .PHONY: help $(IMAGE_TARGETS) $(QUERY_TARGETS) $(TARGETS)
 
@@ -247,13 +238,6 @@ check-pforth-words:
 pforth-words:
 	uv run -q $(ROOT)/tools/firmware/pforth_words.py --write
 
-# Fail if Unicorn's two m68k bugs the harness works around, its status
-# register read and a code hook's write of PC losing the condition
-# codes, no longer show as recorded, or if the harness's
-# workarounds do not give the right codes (docs/firmware/README.md).
-check-unicorn:
-	uv run -q $(ROOT)/tools/firmware/unicorn_check.py
-
 # Fail if the function check's reading of what a function does to the
 # status register, the image's instructions' and the hand-written C's
 # (status_register.py), fails its own tests.
@@ -276,10 +260,10 @@ chip-selects:
 # replays against docs/firmware/loop.md's update law, is not what the
 # images give; loop-trace rewrites them.
 check-loop-trace:
-	$(HARNESS_RUN) $(ROOT)/tools/firmware/loop_trace.py --check
+	uv run -q $(ROOT)/tools/firmware/loop_trace.py --check
 
 loop-trace:
-	$(HARNESS_RUN) $(ROOT)/tools/firmware/loop_trace.py
+	uv run -q $(ROOT)/tools/firmware/loop_trace.py
 
 # Fail if docs/firmware/loop-constants.json, the loop's τ, startup
 # constant, G and holdover-recovery threshold by model, disagrees with
@@ -318,10 +302,10 @@ loop-gain:
 # there, and the commands their request scripts send; gps-fields
 # rewrites the columns, the gaps and the fields used.
 check-gps-fields:
-	$(HARNESS_RUN) $(ROOT)/tools/firmware/gps_fields.py --check
+	uv run -q $(ROOT)/tools/firmware/gps_fields.py --check
 
 gps-fields:
-	$(HARNESS_RUN) $(ROOT)/tools/firmware/gps_fields.py
+	uv run -q $(ROOT)/tools/firmware/gps_fields.py
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument
@@ -470,13 +454,13 @@ record-access:
 # image's own bytes, alone or linked, gcc's code accesses a word or
 # long at an odd frame or stack offset or of data a byte's alignment may
 # put at an odd address, or a binding disagrees with its
-# routine; and first if the figures or Unicorn's recorded bugs drift.
-check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
+# routine; and first if the figures drift.
+check-decompiled: check-module-figures $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o $(WORK)/decompiled.o $(DECOMPILED)
 	python3 $(ROOT)/tools/firmware/decompiled_check.py $(DECOMPILED) $(IMAGE_BIN) $(WORK)/decompiled.o
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/rebuild_link.py $(DECOMPILED) $(IMAGE_BIN)
-	$(LINK_ENV) $(HARNESS_RUN) $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
+	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
 
 # Fail if a hand-written .c file does not compile alone after the
 # export's declarations and the hand-written headers: if it names what
@@ -505,7 +489,7 @@ report-link: $(CPU32_LIBGCC)
 
 report-decompiled: $(if $(filter $(IMAGE),$(REPORTED_IMAGES)),check-link) $(CPU32_LIBGCC)
 	mkdir -p $(WORK)
-	{ $(LINK_ENV) $(HARNESS_RUN) $(ROOT)/tools/firmware/function_check.py \
+	{ $(LINK_ENV) uv run -q $(ROOT)/tools/firmware/function_check.py \
 		$(DECOMPILED) $(IMAGE_BIN) $(if $(call unfinished,$(IMAGE)),|| [ $$? -eq 1 ]); } | tee $(WORK)/$(REPORT)
 	$(if $(filter $(IMAGE),$(FIGURED_IMAGES)),$(call report_figures,$(IMAGE)))
 

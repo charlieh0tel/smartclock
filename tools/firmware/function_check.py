@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.8.0"]
 # ///
 """Runs each decompiled C function, as gcc compiled it, against the
 image's own: in the rebuilt image (rebuild_link.py), the image's copy is
@@ -75,16 +75,14 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from unicorn import UcError
-
 from backend import (
-    ON_MC683XX,
     UC_HOOK_CODE,
     UC_HOOK_MEM_READ,
     UC_HOOK_MEM_WRITE,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
+    UcError,
 )
 from harness import (
     ALLOCATIONS,
@@ -171,7 +169,6 @@ from event_log import EEPROM_BASE, LOG_ENTRIES, LOG_PAGE_CHECKSUM, entry_argumen
 from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
 from image_diff import region_memories
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, preprocessed, symbols
-from report_figures import UNICORN_REPORT
 from status_register import (
     MASK_ARGUMENT,
     PRIMARY,
@@ -858,7 +855,7 @@ JUMP_VALUES = [0, 1, -1, 0x12345678]
 # The routines that restore a status register from their buffer, the
 # first argument, at JUMP_STATUS (libc_jump_buffer's sr), and the
 # offset: in every case of theirs, the generated ones' too, the word's
-# trace bits are cleared before the run, on both backends, since
+# trace bits are cleared before the run, since
 # setjmp, which fills the buffer, runs untraced.  A generated case's
 # buffer may set them (case 0's 0xc0, case 1's 0xe5), which mc683xx's
 # CPU32 then takes: each instruction after the restore traces to
@@ -4802,8 +4799,6 @@ def install_hooks(
 
         for address, gcc in ((image, False), (context.linked_symbols[hook.routine], True)):
             handles.append(m.uc.hook_add(UC_HOOK_CODE, answer, (hook, routine, gcc), begin=address, end=address))
-    # a block translated before its hook was added runs without it
-    m.uc.ctl_flush_tb()
     return handles
 
 
@@ -5042,7 +5037,6 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
     finally:
         for handle in handles:
             m.uc.hook_del(handle)
-        m.uc.ctl_flush_tb()
         if m.tracing is not None:
             trace(m, None)
         m.counter = None
@@ -5214,8 +5208,6 @@ def check_cases(
             m.starting_status = starting_status
         for handle in handles:
             m.uc.hook_del(handle)
-        if handles:
-            m.uc.ctl_flush_tb()
         description += POISONED if poisoned else ""
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
@@ -5313,7 +5305,6 @@ def record_accesses(m: Machine, accesses: Accesses) -> list[int]:
         m.uc.hook_add(kind, touched, kind, begin=RAM, end=RAM + RAM_SIZE - 1)
         for kind in (UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE)
     ]
-    m.uc.ctl_flush_tb()
     return handles
 
 
@@ -5590,9 +5581,6 @@ def main() -> int:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
         failed += counts["failed"] + registers["failed"] + paths["failed"]
-    # Unicorn's figures are not the documents' (report_figures.py)
-    if not ON_MC683XX:
-        print(UNICORN_REPORT)
     return 1 if failed else 0
 
 

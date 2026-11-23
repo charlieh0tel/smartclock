@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.8.0"]
 # ///
 """Confirms the C library routines named in docs/firmware/libc.md by running
-them: each is called in the harness's 68k emulator, Unicorn's or
-mc683xx's (backend.py), on known inputs and its result compared with
+them: each is called on the harness's CPU, mc683xx's CPU32
+(backend.py), on known inputs and its result compared with
 what the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin

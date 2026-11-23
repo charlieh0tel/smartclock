@@ -15,8 +15,7 @@ reading; and how many are assembly routines and thunks.  And the
 figures of the image's link check, link_check.py's summary line: how
 many functions it requires, and how many the hand-written C, the
 assembly and another routine's name define.  CHECKS lists, for each
-image, the sentences that quote them, as mc683xx's report gives them;
-one of Unicorn, which says so (UNICORN_REPORT), is refused.
+image, the sentences that quote them.
 
     python3 -I tools/firmware/report_figures.py --image IMAGE --link SUMMARY REPORT [--write]
     python3 -I tools/firmware/report_figures.py --image IMAGE --unfinished REPORT [--write]
@@ -82,10 +81,6 @@ PATHS = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
-# function_check.py's line of a report of Unicorn, whose 68020 runs some
-# cases that the CPU32's address errors stop (docs/firmware/README.md,
-# "The CPU backend"): the documents quote mc683xx's figures alone
-UNICORN_REPORT = 'cases run on Unicorn, not the CPU32: SMARTCLOCK_CPU=unicorn'
 # link_check.py's summary line: the image, the functions required, and
 # those the hand-written C, the assembly and another's name define
 LINK = re.compile(
@@ -510,9 +505,6 @@ def main():
     figures = report_figures(args.report, args.unfinished) | export
     if not args.unfinished:
         figures |= link_figures(args.link, args.image, export)
-    if re.search(f'^{re.escape(UNICORN_REPORT)}$', args.report.read_text(), re.M):
-        sys.exit(f"{args.report}: a report of Unicorn, whose figures the documents do not quote; "
-                 'run make report-decompiled on mc683xx')
     texts = {}
     drifted = False
     for document, pattern, want in CHECKS[args.image]:

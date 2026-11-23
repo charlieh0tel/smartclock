@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
+# dependencies = ["mc683xx==0.8.0"]
 # ///
 """Checks docs/firmware/gps-fields.tsv, the fields of every message the
 GPS engine of crates/smartclock-gps speaks, against what the images do:
@@ -185,12 +185,9 @@ import struct
 import sys
 from dataclasses import dataclass
 
-from unicorn import Uc, UcError
-
 import gps_paths
 import record_access
 from backend import (
-    ON_MC683XX,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
@@ -200,6 +197,8 @@ from backend import (
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
+    Mc683xx,
+    UcError,
     new_cpu,
 )
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
@@ -259,15 +258,9 @@ RECORD_ARGUMENT = 8
 WALK_BEFORE = 16
 # How many calls deep a pushed address is followed.
 FOLLOW_DEPTH = 6
-# Trap #7's vector, and a format 0 exception frame: status register,
-# return address, format and vector offset.
+# Trap #7's vector, and a vector's bytes.
 TRAP_7 = 39
-TRAP_SIZE = 2
 VECTOR_SIZE = 4
-FRAME = '>HIH'
-# What QEMU, under Unicorn, raises for an rte (EXCP_RTE), calling the
-# interrupt hook in place of returning.
-RETURN_FROM_EXCEPTION = 0x100
 
 COLUMNS = (
     'message',
@@ -471,7 +464,6 @@ class Machine:
         self.image = image
         self.vectors = IMAGES.get(image) or NMEA_IMAGES[image]
         self.fault: str | None = None
-        self.raised: int | None = None
         self.reads: set[int] | None = None
         self.watched: set[tuple[int, int]] | None = None
         self.uc = new_cpu()
@@ -482,29 +474,25 @@ class Machine:
         self.uc.hook_add(UC_HOOK_INTR, self.exception)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.read, begin=MESSAGE, end=MESSAGE + MESSAGE_SPACE - 1)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.watch, begin=RAM, end=MESSAGE - 1)
-        if ON_MC683XX:
-            # the CPU takes trap #7 through the image's vectors and
-            # returns by rte itself
-            self.uc.native_vectors = {TRAP_7}
-            self.uc.watch_only = True
-            self.uc.reg_write(UC_M68K_REG_CR_VBR, self.vectors)
+        # the CPU takes trap #7 through the image's vectors and returns
+        # by rte itself
+        self.uc.native_vectors = {TRAP_7}
+        self.uc.watch_only = True
+        self.uc.reg_write(UC_M68K_REG_CR_VBR, self.vectors)
 
-    def invalid(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> bool:
+    def invalid(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> bool:
         self.fault = f'access of {size} bytes at {address:#x} from {uc.reg_read(UC_M68K_REG_PC):#x}'
         return False
 
-    def exception(self, uc: Uc, number: int, data: object) -> None:
-        if number in (TRAP_7, RETURN_FROM_EXCEPTION):
-            self.raised = number
-        else:
-            self.fault = f'exception {number} at {uc.reg_read(UC_M68K_REG_PC):#x}'
+    def exception(self, uc: Mc683xx, number: int, data: object) -> None:
+        self.fault = f'exception {number} at {uc.reg_read(UC_M68K_REG_PC):#x}'
         uc.emu_stop()
 
-    def read(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> None:
+    def read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
         if self.reads is not None:
             self.reads.update(range(address - MESSAGE, address - MESSAGE + size))
 
-    def watch(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> None:
+    def watch(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
         if self.watched is not None:
             pc = uc.reg_read(UC_M68K_REG_PC)
             self.watched.update((pc, byte) for byte in range(address, address + size))
@@ -512,25 +500,6 @@ class Machine:
     def ram(self) -> bytes:
         """RAM below the message."""
         return bytes(self.uc.mem_read(RAM, MESSAGE - RAM))
-
-    def take_trap(self) -> None:
-        """Enters the image's trap #7 handler as the processor does, for
-        Unicorn, which raises it to the interrupt hook in place."""
-        sr = self.uc.reg_read(UC_M68K_REG_SR)
-        frame = struct.pack(FRAME, sr, self.uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, TRAP_7 * VECTOR_SIZE)
-        sp = self.uc.reg_read(UC_M68K_REG_A7) - len(frame)
-        self.uc.mem_write(sp, frame)
-        self.uc.reg_write(UC_M68K_REG_A7, sp)
-        handler = self.vectors + TRAP_7 * VECTOR_SIZE
-        self.uc.reg_write(UC_M68K_REG_PC, struct.unpack('>I', self.uc.mem_read(handler, VECTOR_SIZE))[0])
-
-    def leave_trap(self) -> None:
-        """Returns from the handler's format 0 frame as rte does."""
-        sp = self.uc.reg_read(UC_M68K_REG_A7)
-        sr, pc, _ = struct.unpack(FRAME, self.uc.mem_read(sp, struct.calcsize(FRAME)))
-        self.uc.reg_write(UC_M68K_REG_SR, sr)
-        self.uc.reg_write(UC_M68K_REG_A7, sp + struct.calcsize(FRAME))
-        self.uc.reg_write(UC_M68K_REG_PC, pc)
 
     def call(self, routine: int, *arguments: int) -> int:
         """Calls a routine with long arguments on the stack; its D0."""
@@ -546,22 +515,14 @@ class Machine:
         self.uc.reg_write(UC_M68K_REG_A7, sp)
         self.uc.reg_write(UC_M68K_REG_D0, 0)
         self.fault = None
-        at = routine
-        while at != RETURN:
-            self.raised = None
-            try:
-                self.uc.emu_start(at, RETURN, count=CALL_LIMIT)
-            except UcError as error:
-                sys.exit(f'{self.image}: {routine:#x}: {self.fault or error}')
-            if self.fault is not None:
-                sys.exit(f'{self.image}: {routine:#x}: {self.fault}')
-            if self.raised == TRAP_7:
-                self.take_trap()
-            elif self.raised == RETURN_FROM_EXCEPTION:
-                self.leave_trap()
-            elif self.uc.reg_read(UC_M68K_REG_PC) != RETURN:
-                sys.exit(f'{self.image}: {routine:#x} did not return, at {self.uc.reg_read(UC_M68K_REG_PC):#x}')
-            at = self.uc.reg_read(UC_M68K_REG_PC)
+        try:
+            self.uc.emu_start(routine, RETURN, count=CALL_LIMIT)
+        except UcError as error:
+            sys.exit(f'{self.image}: {routine:#x}: {self.fault or error}')
+        if self.fault is not None:
+            sys.exit(f'{self.image}: {routine:#x}: {self.fault}')
+        if self.uc.reg_read(UC_M68K_REG_PC) != RETURN:
+            sys.exit(f'{self.image}: {routine:#x} did not return, at {self.uc.reg_read(UC_M68K_REG_PC):#x}')
         return self.uc.reg_read(UC_M68K_REG_D0)
 
     def decode(self, entry: Entry, data: bytes) -> set[int]:
@@ -1247,13 +1208,13 @@ class NmeaMachine(Machine):
             self.uc.hook_add(UC_HOOK_CODE, self.stub, begin=known[stub], end=known[stub])
         self.uc.hook_add(UC_HOOK_MEM_READ, self.frame_read, begin=nmea.frame, end=nmea.frame + FRAME_TEXT - 1)
 
-    def stub(self, uc: Uc, address: int, size: int, data: object) -> None:
+    def stub(self, uc: Mc683xx, address: int, size: int, data: object) -> None:
         sp = uc.reg_read(UC_M68K_REG_A7)
         uc.reg_write(UC_M68K_REG_PC, struct.unpack('>I', uc.mem_read(sp, VECTOR_SIZE))[0])
         uc.reg_write(UC_M68K_REG_A7, sp + VECTOR_SIZE)
         uc.reg_write(UC_M68K_REG_D0, 0)
 
-    def frame_read(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> None:
+    def frame_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
         if self.frame_reads is not None:
             self.frame_reads.update(range(address - self.nmea.frame, address - self.nmea.frame + size))
 

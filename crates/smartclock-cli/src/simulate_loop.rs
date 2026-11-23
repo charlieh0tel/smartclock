@@ -640,6 +640,8 @@ fn start(
         return Ok((closed, false));
     };
     let (interval, efc) = logged_state(rows, from, 0)?;
+    let closed = loop_at(counts(efc));
+    let warmed = warm_up(rows, from, closed.gains().filter_weight);
     let coefficient = args
         .tc_coefficient
         .or_else(|| logged_coefficient(rows, from))
@@ -650,15 +652,15 @@ fn start(
         None => (
             estimate
                 .and_then(|estimate| estimate.current)
-                .or_else(|| last(rows, from, |row| row.current))
+                .or_else(|| warmed.and_then(|walked| walked.current))
                 .context("the log has no oven_current at or before --from; give --oven-current")?,
             true,
         ),
     };
-    let mut closed = loop_at(counts(efc)).with_current_term(coefficient, current);
+    let mut closed = closed.with_current_term(coefficient, current);
     let filtered = estimate
         .and_then(|estimate| estimate.filtered)
-        .or_else(|| warm_up(rows, from, closed.gains().filter_weight).map(|walked| walked.filtered))
+        .or_else(|| warmed.map(|walked| walked.filtered))
         .unwrap_or(interval);
     closed.resume(0.0, filtered);
     Ok((closed, logged_current))
@@ -995,16 +997,53 @@ mod tests {
     }
 
     fn replay(rows: &[Logged], coefficient: Option<f64>) -> Vec<Update> {
+        replay_from(rows, 0, coefficient)
+    }
+
+    /// A replay of `rows` from second `from` to their end, at c
+    /// `coefficient`, the log's if none.
+    fn replay_from(rows: &[Logged], from: u32, coefficient: Option<f64>) -> Vec<Update> {
         let args = SimulateLoopArgs {
             tc_coefficient: coefficient,
             replay: true,
+            seconds: SECONDS - from,
             ..arguments()
         };
-        simulate(&args, Some((rows, 0.0)))
+        simulate(&args, Some((rows, f64::from(from))))
             .expect("a replay")
             .into_iter()
             .map(|(update, _)| update)
             .collect()
+    }
+
+    /// The largest difference, seconds, between the time intervals of
+    /// a replay from second `from` and those `against` logged.
+    fn replay_departure(updates: &[Update], from: u32, against: &[Logged]) -> f64 {
+        updates
+            .iter()
+            .map(|update| {
+                let row = against[(from + update.second) as usize];
+                (update.interval - row.interval.expect("an interval")).abs()
+            })
+            .fold(0.0, f64::max)
+    }
+
+    /// How far a replay from the middle of a run may depart from the
+    /// log, seconds: the prefilter's warm-up leaves e⁻⁵ of its starting
+    /// error in f.  Starting s from one fresh reading instead, a replay
+    /// of [`logged`] departs by a hundred times this.
+    const WARM_UP_DEPARTURE: f64 = 2e-11;
+
+    /// Started where the current has been swinging, a replay starts s
+    /// from the monitor's average over the warm-up, as the receiver
+    /// held it, and is the log.
+    #[test]
+    fn a_replay_from_the_middle_of_a_run_starts_s_from_the_warm_up() {
+        let rows = logged(COEFFICIENT);
+        for start in [from() + 2000, from() + 5000, from() + 10_000] {
+            let error = replay_departure(&replay_from(&rows, start, None), start, &rows);
+            assert!(error < WARM_UP_DEPARTURE, "from {start}: {error:e}");
+        }
     }
 
     /// With the log's own c the replay is the logged run.

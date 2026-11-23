@@ -5,13 +5,13 @@ the ROM beside the floating-point library (`softfloat.md`): in the
 Z3805A 3543B from `0x5ec9e` to about `0x61900`, the order a C library
 lays its routines out.  The routines below were named by reading them,
 and those marked *run* were then confirmed by running them:
-`tools/firmware/libc_check.py` calls each in a Unicorn 68k emulator on
+`tools/firmware/libc_check.py` calls each on mc683xx's MC68331 on
 known inputs, edge cases among them, and compares the result with what
 the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
-`SMARTCLOCK_CPU=mc683xx` runs it on mc683xx's MC68331 instead (`README.md`, "The CPU backend"), with the
+`SMARTCLOCK_CPU=unicorn` runs it on Unicorn instead (`README.md`, "The CPU backend"), with the
 same results.
 
 `strlen`, `strcpy` and `strcmp` are not in the block; the compiler

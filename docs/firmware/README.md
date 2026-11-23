@@ -957,8 +957,8 @@ each in an asm statement of its own, its results staying in its
 caller's registers as in the image (`installer::0x102eda` to
 `0x102eee`), where a wrapper could hand them on only in globals, which
 another task's kernel call may overwrite between the call and its
-caller's reads.  `tools/firmware/bridge_check.py` runs each binding in
-Unicorn, through a check function gcc compiles in its own convention,
+caller's reads.  `tools/firmware/bridge_check.py` runs each binding on
+the CPU, through a check function gcc compiles in its own convention,
 against its routine called directly, from the registers the sidecar
 names, the installer's on the installer's machine (below): all 91 give
 the same result, RAM and effects, keep gcc's callee-saved registers,
@@ -1352,7 +1352,7 @@ instruction the CPU32 does not have.  A C function the assembly calls is the ima
 `__image_NAME`, so that the original's callers keep the original's
 callees and argument layout until a function is replaced; gcc's C calls
 gcc's.  `tools/firmware/function_check.py` (`make report-decompiled`)
-then calls each C function's image copy and gcc's copy in Unicorn, from
+then calls each C function's image copy and gcc's copy on mc683xx's CPU32, from
 the same RAM, and compares result and RAM; any function failing, in
 either image, fails it, and so CI (PLAN.md, "A rebuild that runs, in
 readable C").  Each case lists everything that differs, every run of
@@ -1462,8 +1462,8 @@ supervisor bit makes A7 from a task's user stack, and `rte` returns from
 it, which Unicorn leaves to its interrupt hook; and `rtr`, which ends
 pForth's code words (`forth_compile_code`, `0x19338`) and which Unicorn
 takes for an illegal instruction, pops the condition codes and the
-return address as the processor does (MC68331UM, table 5-1).  Nor
-does the harness read the status register through Unicorn: its m68k
+return address as the processor does (MC68331UM, table 5-1).  On
+Unicorn, nor does the harness read the status register through it: its m68k
 read (`qemu/target/m68k/unicorn.c`) marks QEMU's lazy condition codes
 as computed before it computes them, so that it returns the operands
 of the last compare read as flags and, from a trap's hook or after a
@@ -1473,7 +1473,7 @@ the status register shows the registers as that instruction leaves
 them, A7 past `move.w (%sp)+,%sr`'s pop (`0x13692`, mc683xx showing
 it before), so a status register's path reads what such an
 instruction left before the next one, and never SP at a return
-([`rewrite.md`](rewrite.md), "The status register").  The harness reads the system byte from a
+([`rewrite.md`](rewrite.md), "The status register").  There the harness reads the system byte from a
 copy of the CPU's state and the condition codes with a probe of its
 own, `move.w %ccr` to memory (`harness.PROBE`): a trap's hook sends
 the CPU through it before it takes the exception or answers the
@@ -1761,7 +1761,7 @@ old status register in D0's low word (`kernel_supervisor`,
 `0x158f6`); and `move (SP)+,SR`, after which Unicorn's QEMU
 increments A7, so that a move back to user mode increments the user
 stack in place of the supervisor's (`set_gps_utc_offset`, `0x139c6`),
-is done in its place.  A kernel call's argument, or a message's long, that is
+is done in its place on Unicorn.  A kernel call's argument, or a message's long, that is
 a C function's gcc copy is recorded as its image copy, the same
 routine: a task's entry for `psos_start`, `scpi_task_create` in
 `scpi_task_start`'s message.  ident finds every name, but in the
@@ -2015,7 +2015,7 @@ it (`0x100d20`), and a call's caller's first argument is that name,
 `0x900000`, outside RAM, which the installer's code fills, and are
 compared as RAM is, pointers to the same literal or function the same;
 the unpacked image is a place literals lie, as ROM is, and is kept
-read-only: Unicorn protects whole 4 KB pages, and the image shares its
+read-only: the harness protects whole 4 KB pages, as Unicorn needs, and the image shares its
 first and last with the vectors and its data, so a write there is
 undone and ends the call as one to ROM does.  The primary's other objects,
 from `aging_curve` to the kernel's exchanges, are not given; an SCPI
@@ -2107,25 +2107,26 @@ it.
 
 The harness and its checks (`function_check.py`, `libc_check.py`,
 `app_check.py`), the loop trace (`loop_trace.py`) and the GPS fields
-(`gps_fields.py`, and `gps_paths.py` beneath it) run on Unicorn's 68020
-by default, or on mc683xx's bare CPU32, `mc683xx.Machine` (its
-`docs/python.md`, "Bare CPU"), with `SMARTCLOCK_CPU=mc683xx`.  `tools/firmware/backend.py` is the one seam:
+(`gps_fields.py`, and `gps_paths.py` beneath it) run on mc683xx's bare
+CPU32, `mc683xx.Machine` (its `docs/python.md`, "Bare CPU"), or, with
+`SMARTCLOCK_CPU=unicorn`, on Unicorn's 68020, which is being removed
+(PLAN.md, "A rebuild that runs").  `tools/firmware/backend.py` is the one seam:
 `new_cpu` gives Unicorn's `Uc` or a class that answers the part of
 Unicorn's API the harness uses on the `Machine`, so that both run from the
 same code; `unicorn_check.py` stays Unicorn's alone.  mc683xx's Python
 module is its PyPI release, `mc683xx==0.8.0`, pinned exactly in each
 script's inline metadata beside Unicorn and bumped only on purpose,
-which `uv run` installs; `CPU=mc683xx` has the function check,
-`check-loop-trace` and `check-gps-fields` run on it.  To try an
+which `uv run` installs; `CPU=unicorn` has the function check, the
+bridge check, `check-loop-trace` and `check-gps-fields` run on Unicorn.  To try an
 unreleased mc683xx, build its wheel (its `docs/python.md`) and, for the
 run, change the pin by hand to
 `mc683xx @ file:///PATH/TO/WHEEL`:
 
-    make report-decompiled CPU=mc683xx
-    SMARTCLOCK_CPU=mc683xx uv run tools/firmware/libc_check.py \
+    make report-decompiled
+    uv run tools/firmware/libc_check.py \
         third_party/firmware/images/z3805a-3543b.bin
 
-What differs, on mc683xx:
+What differs, on mc683xx, from Unicorn:
 
 - Unicorn's bugs are not worked around: the status register is read
   and written as it is (no probe, `harness.PROBE`), and `move (SP)+,SR`,
@@ -2155,12 +2156,8 @@ What differs, on mc683xx:
   copies (every image's `exception_name`, `diag_crash` and
   `installer_exception_name`, and the 58503B 1.01.04's
   `command_log_add`), and fails none that Unicorn's passes.
-  Such a report ends saying so, and `check-report-figures` checks the
-  Z3805A 3543B's against rewrite.md's strict figure of the cases
-  compared, so that the check passes whichever backend wrote that
-  report; the documents' other figures are Unicorn's, which CI runs,
-  and the other images' reports on mc683xx fail the check, having no
-  strict figure.
+  The documents' figures are mc683xx's, which CI runs.  A report of
+  Unicorn ends saying so, and `check-report-figures` refuses it.
 
 The 58503A 3704's report differed in two functions until the link took the
 CPU32's libgcc ("Hand-written C"): `hmon_check_pll_stage`, then
@@ -2168,7 +2165,7 @@ decompiled and since written by hand, and `hmon_task`, whose gcc
 copies call `__fixunssfsi`, whose 68881
 `fmove.s` in the toolchain's libgcc is a line F exception on the
 CPU32, which has no FPU, and mc683xx has no switch for it.  Each
-report takes about as long on mc683xx as on Unicorn.
+report takes longer on mc683xx than on Unicorn.
 
 ## The checks in CI
 
@@ -2276,7 +2273,7 @@ On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu`, `clang-21`, which `check-magic-numbers`
 parses the C with, and the FPGA checks' Icarus Verilog, Yosys and
 poppler-utils, from the archive and uv 0.13.2 through
-`astral-sh/setup-uv`, whose cache holds Unicorn 2.1.4 and Capstone
+`astral-sh/setup-uv`, whose cache holds mc683xx 0.8.0, Unicorn 2.1.4 and Capstone
 5.0.9, each tool's inline dependencies, pinned in the scripts, keyed
 on `tools/firmware/*.py`.  26.04,
 not 24.04, for gcc 15, the one the C is developed with; 24.04's gcc 13

@@ -65,10 +65,11 @@ work = $(ROOT)/target/firmware/$(1)
 
 # The CPU the harness, the loop trace and the GPS fields run the image
 # on (tools/firmware/backend.py, docs/firmware/README.md, "The CPU
-# backend"): unicorn, Unicorn's 68020, or mc683xx, the bare CPU32 of
-# mc683xx's Python module, which uv takes from PyPI as the scripts pin it
-# in their inline metadata.
-CPU ?= unicorn
+# backend"): mc683xx, the bare CPU32 of mc683xx's Python module, which
+# uv takes from PyPI as the scripts pin it in their inline metadata, or
+# unicorn, Unicorn's 68020, whose function check the documents do not
+# quote.
+CPU ?= mc683xx
 HARNESS_RUN = SMARTCLOCK_CPU=$(CPU) uv run -q
 
 .PHONY: help $(IMAGE_TARGETS) $(QUERY_TARGETS) $(TARGETS)
@@ -346,7 +347,7 @@ $(CPU32_LIBGCC): $(ROOT)/tools/firmware/cpu32_libgcc.py $(GCC_VENDORED)
 	M68K_CC="$(M68K_CC)" python3 -I $< $@
 
 # How many of the decompiled C functions, as gcc compiles them, agree
-# with the image's own in the emulator; fails if any function fails, but
+# with the image's own on CPU; fails if any function fails, but
 # for an unfinished image (UNFINISHED_IMAGES).
 # The report is saved in the image's work folder, and report-decompiled
 # checks the figures the documents quote from it right after writing it.
@@ -475,7 +476,7 @@ check-decompiled: check-module-figures check-unicorn $(CPU32_LIBGCC)
 	$(M68K_CC) $(DECOMPILED_CFLAGS) -c -o $(WORK)/decompiled.o $(DECOMPILED)
 	python3 $(ROOT)/tools/firmware/decompiled_check.py $(DECOMPILED) $(IMAGE_BIN) $(WORK)/decompiled.o
 	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/rebuild_link.py $(DECOMPILED) $(IMAGE_BIN)
-	$(LINK_ENV) uv run -q $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
+	$(LINK_ENV) $(HARNESS_RUN) $(ROOT)/tools/firmware/bridge_check.py $(DECOMPILED) $(IMAGE_BIN)
 
 # Fail if a hand-written .c file does not compile alone after the
 # export's declarations and the hand-written headers: if it names what

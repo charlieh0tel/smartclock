@@ -9,6 +9,13 @@ name: web
 # others do not.  Narrowed to the files that can change what it tests:
 # smartclock-web, the workspace crates it links, the workspace manifest
 # and lock file, the compiler pin, and the Makefile whose target it runs.
+# On a push `paths` narrows it; on a pull request the `changed` job
+# does, since main's ruleset requires `pages` and a workflow filtered
+# out never reports.  A job skipped by its `if` passes a required
+# check.  The list is so in two places, `paths` and `changed`'s
+# pattern, kept alike by hand: `changed` reads one commit's difference,
+# right for a pull request's merge commit but not for a push of
+# several commits, which `paths` judges whole.
 on:
   push:
     branches: [main]
@@ -22,18 +29,33 @@ on:
       - "Makefile"
       - ".github/workflows/web.yml"
   pull_request:
-    paths:
-      - "crates/smartclock-web/**"
-      - "crates/smartclock/**"
-      - "crates/smartclock-log/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "rust-toolchain.toml"
-      - "Makefile"
-      - ".github/workflows/web.yml"
 
 jobs:
+  # Whether anything the push's `paths` name changed: always on a push,
+  # and on a pull request if its merge commit differs from main there.
+  changed:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      test: ${{ steps.diff.outputs.test }}
+    steps:
+      # The pin below; two commits deep, the merge commit and main.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - id: diff
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != pull_request ] ||
+            git diff --name-only HEAD^1 HEAD |
+            grep -qE '^(crates/(smartclock-web|smartclock|smartclock-log)/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|Makefile$|\.github/workflows/web\.yml$)'
+          then
+            echo test=true >> "$GITHUB_OUTPUT"
+          fi
+
   pages:
+    needs: changed
+    if: needs.changed.outputs.test
     runs-on: ubuntu-24.04
     permissions:
       contents: read

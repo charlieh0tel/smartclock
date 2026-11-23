@@ -901,11 +901,12 @@ TSV with columns `at` (nanoseconds since the Unix epoch),
 is printed beside it, for comparing a logged receiver with the law.
 
 The update's c·s term ("s, the oscillator current") is in: c is
-`--tc-coefficient`, s the oscillator current, `--oven-current` held
-constant or, in a replay, the log's.  s is the health monitor's
-average, s ← 0.1·fresh + 0.9·s, taken once an update, the ten-second
-pass `../efc.md`, "The regression", infers.  B is set to u − c·s at
-the start, as on the loop's entry, so a constant s moves nothing and c
+`--tc-coefficient` or, in a replay, by default the log's at each
+update, s the oscillator current, `--oven-current` held constant or,
+in a replay, the log's.  s is the health monitor's average,
+s ← 0.1·fresh + 0.9·s, taken once an update, the ten-second pass
+`../efc.md`, "The regression", infers.  B is set to u − c·s at the
+start, as on the loop's entry, so a constant s moves nothing and c
 acts only through changes of s.
 
 The aging feed-forward: `--fit-b` and `--fit-c` set the fit's b and c
@@ -954,13 +955,29 @@ average of the log's oscillator current over the same updates, I at 0
 and B taking the rest, so u holds.  Synthetic disturbances add to the
 recovered one.
 
+c is the log's at each update, the latest `oven_tempco` at or before
+it, unless `--tc-coefficient` holds one c for the whole run.  The
+receiver takes a new c at its next update without recomputing B
+(`console.md`, "The 58503A image"), so u steps by Δc·s there, and the
+replay with the log's c takes the same step at the same update and
+reproduces the log across it.  With `--tc-coefficient` the loop holds
+its c through the change and does not take the step.  The step is in
+u_log, which the recovery of the free oscillator adds back through S,
+so the oscillator the replay runs is the same either side of it, and
+the replay is the run that never changed c: its departure from the log
+after the change is minus the logged loop's response to the step, the
+time interval the step pushed and the loop's pull back from it.  A
+change the receiver made between two of the daemon's readings of
+`oven_tempco` reaches the log late, and the replay takes the step as
+late, departing from the log until it does.
+
 The log's columns, by what needs them:
 
 | Column | Needed |
 | ------ | ------ |
 | `at`, `time_interval_s`, `efc_percent` | always |
-| `oven_tempco` | by a replay without `--tc-coefficient`: the latest at or before `--from` is c; by `--estimate-aging`, the latest at or before each update |
-| `oven_current` | by a replay with c not 0 and without `--oven-current`, and by `--estimate-aging` where the log's c is not 0: the latest at or before each update is the fresh reading fed to s |
+| `oven_tempco` | by a replay without `--tc-coefficient` and by `--estimate-aging`: the latest at or before each update is c |
+| `oven_current` | by a replay with c not 0 at some update and without `--oven-current`, and by `--estimate-aging` where the log's c is not 0: the latest at or before each update is the fresh reading fed to s |
 | `ffom` | read where present; a replayed update whose row is not 0, `normal pll`, stops the replay; `--estimate-aging` takes no estimate from it |
 
 What a replay assumes:

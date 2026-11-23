@@ -406,6 +406,13 @@ impl ClosedLoop {
         self
     }
 
+    /// c from now on, B kept: as the receiver takes a new
+    /// `:DIAGnostic:ROSCillator:TCOefficient` without recomputing B, u
+    /// steps by Δc·s at the next update.
+    pub fn set_coefficient(&mut self, coefficient: f64) {
+        self.coefficient = coefficient;
+    }
+
     /// Picks up a running loop: time interval `interval`, filtered error
     /// f = `filtered`, and the integrator taken into B so that the EFC
     /// in force, K·f + B + I + c·s, is where it is.

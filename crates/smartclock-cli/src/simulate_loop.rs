@@ -121,11 +121,12 @@ pub(crate) struct SimulateLoopArgs {
     ti: f64,
     /// c, `:DIAGnostic:ROSCillator:TCOefficient?`, EFC counts a unit of
     /// oscillator current, for the update's c·s term.  A replay takes
-    /// the log's `oven_tempco` by default.
+    /// the log's `oven_tempco` at each update by default; given, c is
+    /// held through the log's changes of it.
     #[arg(long, allow_negative_numbers = true)]
     tc_coefficient: Option<f64>,
     /// s, the oscillator current, held constant.  A replay with c not 0
-    /// takes the log's `oven_current` by default.
+    /// at any update takes the log's `oven_current` by default.
     #[arg(long, allow_negative_numbers = true)]
     oven_current: Option<f64>,
     /// An aging slope fed to the integrator, EFC percent a day,
@@ -620,16 +621,26 @@ fn seconds(at: Timestamp) -> f64 {
     milliseconds / 1e3
 }
 
+/// What of the update's inputs a replay takes from the log at each
+/// update.
+#[derive(Debug, Clone, Copy, Default)]
+struct Following {
+    /// The fresh readings of the oscillator current, into s.
+    current: bool,
+    /// c, the latest `oven_tempco` at or before the update.
+    coefficient: bool,
+}
+
 /// The loop at its start: at rest or at `--ti`, or where the log stood
 /// at `from` for a replay, with the f and s an estimate of the aging
-/// slope rebuilt where there is one; and for a replay, whether s is the
-/// log's.
+/// slope rebuilt where there is one; and for a replay, what it follows
+/// of the log.
 fn start(
     args: &SimulateLoopArgs,
     loop_at: impl Fn(f64) -> ClosedLoop,
     replay: Option<(&[Logged], f64)>,
     estimate: Option<&AgingEstimate>,
-) -> Result<(ClosedLoop, bool)> {
+) -> Result<(ClosedLoop, Following)> {
     let Some((rows, from)) = replay else {
         let mut closed = loop_at(counts(args.efc)).with_current_term(
             args.tc_coefficient.unwrap_or_default(),
@@ -637,18 +648,25 @@ fn start(
         );
         let interval = args.ti / NANOSECONDS;
         closed.resume(interval, interval);
-        return Ok((closed, false));
+        return Ok((closed, Following::default()));
     };
     let (interval, efc) = logged_state(rows, from, 0)?;
     let closed = loop_at(counts(efc));
     let warmed = warm_up(rows, from, closed.gains().filter_weight);
+    let follows_coefficient = args.tc_coefficient.is_none();
     let coefficient = args
         .tc_coefficient
         .or_else(|| logged_coefficient(rows, from))
         .context("the log has no oven_tempco at or before --from; give --tc-coefficient")?;
-    let (current, logged_current) = match args.oven_current {
+    let end = from + f64::from(args.seconds);
+    let applied = coefficient != 0.0
+        || (follows_coefficient
+            && rows.iter().any(|row| {
+                row.at > from && row.at <= end && row.coefficient.is_some_and(|c| c != 0.0)
+            }));
+    let (current, follows_current) = match args.oven_current {
         Some(current) => (current, false),
-        None if coefficient == 0.0 => (0.0, false),
+        None if !applied => (0.0, false),
         None => (
             estimate
                 .and_then(|estimate| estimate.current)
@@ -663,7 +681,13 @@ fn start(
         .or_else(|| warmed.map(|walked| walked.filtered))
         .unwrap_or(interval);
     closed.resume(0.0, filtered);
-    Ok((closed, logged_current))
+    Ok((
+        closed,
+        Following {
+            current: follows_current,
+            coefficient: follows_coefficient,
+        },
+    ))
 }
 
 /// The updates the arguments give, with the aging fit's mode at each
@@ -682,7 +706,7 @@ fn simulate(
     let slope = args.aging_slope * per_percent * ENTRY_SECONDS / DAY;
     let replay = log.filter(|_| args.replay);
     let estimate = estimate(args, replay)?;
-    let (closed, logged_current) = start(
+    let (closed, following) = start(
         args,
         |efc| {
             ClosedLoop::new(gain, tau, sensitivity, efc, slope).with_aging(
@@ -713,7 +737,7 @@ fn simulate(
                 })?;
                 closed.hold_slope(slope);
             }
-            let update = step(&mut closed, &disturbances, replay, logged_current, block)?;
+            let update = step(&mut closed, &disturbances, replay, following, block)?;
             if let Some(error) = closed.fit_error() {
                 bail!("at second {}: {error}", update.second);
             }
@@ -748,12 +772,13 @@ fn per_day(slope: f64) -> f64 {
 }
 
 /// One block of the run, `block` from the start, against the model's
-/// reference or a replayed log's.
+/// reference or a replayed log's, taking from the log what the replay
+/// follows of it as at the update ending the block.
 fn step(
     closed: &mut ClosedLoop,
     disturbances: &[Disturbance],
     replay: Option<(&[Logged], f64)>,
-    logged_current: bool,
+    following: Following,
     block: u32,
 ) -> Result<Update> {
     match replay {
@@ -761,10 +786,16 @@ fn step(
         Some((rows, from)) => {
             let begun = block * BLOCK_SECONDS;
             let ended = begun + BLOCK_SECONDS;
-            if logged_current
-                && let Some(fresh) = last(rows, from + f64::from(ended), |row| row.current)
+            let at = from + f64::from(ended);
+            if following.current
+                && let Some(fresh) = last(rows, at, |row| row.current)
             {
                 closed.read_current(fresh);
+            }
+            if following.coefficient
+                && let Some(coefficient) = logged_coefficient(rows, at)
+            {
+                closed.set_coefficient(coefficient);
             }
             let (_, in_force) = logged_state(rows, from, begun)?;
             let (mean, _) = logged_state(rows, from, ended)?;
@@ -970,9 +1001,19 @@ mod tests {
         coefficient: f64,
         aging: impl Fn(ClosedLoop) -> ClosedLoop,
     ) -> (Vec<Logged>, Vec<Update>) {
+        logged_changing(|_| coefficient, aging)
+    }
+
+    /// [`logged_run`], with c `coefficient` at each second, set as the
+    /// receiver takes a new c: at the update after it, B kept.
+    fn logged_changing(
+        coefficient: impl Fn(u32) -> f64,
+        aging: impl Fn(ClosedLoop) -> ClosedLoop,
+    ) -> (Vec<Logged>, Vec<Update>) {
         let rest = counts(30.0);
         let mut closed = aging(
-            ClosedLoop::new(GAIN, TAU, GAIN, rest, 0.0).with_current_term(coefficient, current(0)),
+            ClosedLoop::new(GAIN, TAU, GAIN, rest, 0.0)
+                .with_current_term(coefficient(0), current(0)),
         );
         let mut state = (0.0, rest);
         let mut rows = Vec::new();
@@ -980,6 +1021,7 @@ mod tests {
         for second in 0..=SECONDS {
             if second > 0 && second % 10 == 0 {
                 closed.read_current(current(second));
+                closed.set_coefficient(coefficient(second));
                 let update = closed.block(&disturbances());
                 state = (update.interval, update.efc);
                 updates.push(update);
@@ -989,7 +1031,7 @@ mod tests {
                 interval: Some(state.0),
                 efc: Some(percent(state.1)),
                 current: Some(current(second)),
-                coefficient: Some(coefficient),
+                coefficient: Some(coefficient(second)),
                 ffom: Some(0.0),
             });
         }
@@ -1026,6 +1068,73 @@ mod tests {
                 (update.interval - row.interval.expect("an interval")).abs()
             })
             .fold(0.0, f64::max)
+    }
+
+    /// The second, between updates, at which [`changing`] changes c.
+    const CHANGE: u32 = 15_005;
+
+    /// A log whose c is [`COEFFICIENT`] until [`CHANGE`] and 0 from
+    /// then on, as setting `:DIAGnostic:ROSCillator:TCOefficient` to 0
+    /// leaves it, with the loop `aging` makes.
+    fn changing(aging: impl Fn(ClosedLoop) -> ClosedLoop) -> (Vec<Logged>, Vec<Update>) {
+        logged_changing(
+            |second| if second < CHANGE { COEFFICIENT } else { 0.0 },
+            aging,
+        )
+    }
+
+    /// The log's own c, following its change, reproduces the log, from
+    /// a c of 0 too, which needs s all the same; held at the c before
+    /// it, the replay departs from it.
+    #[test]
+    fn a_replay_with_the_logged_coefficient_takes_its_change() {
+        let (rows, updates) = changing(|closed| closed);
+        let after = (CHANGE / BLOCK_SECONDS) as usize;
+        let step = updates[after].efc - updates[after - 1].efc;
+        assert!(
+            step.abs() > 0.9 * COEFFICIENT.abs() * current(CHANGE),
+            "the log's u stepped {step}"
+        );
+        let error = replay_departure(&replay(&rows, None), 0, &rows);
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
+        let held = replay_departure(&replay(&rows, Some(COEFFICIENT)), 0, &rows);
+        assert!(held > 1e-9, "holding c moved {held:e}");
+        let (rows, _) = logged_changing(
+            |second| if second < CHANGE { 0.0 } else { COEFFICIENT },
+            |closed| closed,
+        );
+        let error = replay_departure(&replay(&rows, None), 0, &rows);
+        assert!(error < EXACT_DEPARTURE, "from c 0: {error:e}");
+    }
+
+    /// With a c of its own, held through the log's change, the replay is
+    /// the run that never changed c: it does not take the logged step.
+    #[test]
+    fn a_replay_with_another_coefficient_does_not_take_the_logged_change() {
+        let (rows, _) = changing(|closed| closed);
+        for coefficient in [COEFFICIENT, 0.0] {
+            let error =
+                replay_departure(&replay(&rows, Some(coefficient)), 0, &logged(coefficient));
+            assert!(error < EXACT_DEPARTURE, "c {coefficient}: {error:e}");
+        }
+    }
+
+    /// The estimate takes the change out, so a replay on it keeps to
+    /// the log with the log's c, and is the run that never changed c
+    /// with another.
+    #[test]
+    fn a_replay_on_the_estimate_across_a_change_of_coefficient() {
+        let aging = |closed: ClosedLoop| closed.with_aging(FIT_B, FIT_C, UPTIME);
+        let (rows, _) = changing(aging);
+        let error = departure(&rows, &rows, None, ONE_UPDATE);
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
+        let error = departure(
+            &rows,
+            &logged_with(COEFFICIENT, aging),
+            Some(COEFFICIENT),
+            ONE_UPDATE,
+        );
+        assert!(error < EXACT_DEPARTURE, "{error:e}");
     }
 
     /// How far a replay from the middle of a run may depart from the

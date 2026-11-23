@@ -146,6 +146,12 @@ as blocks and signals, each marked by how it is known
 what only it can settle.  The HP 53131A-family counters are built on
 the same platform ([`docs/hp5313x.md`](docs/hp5313x.md)).
 
+A replacement for the VP Oncore is at
+[smartclock-oncore-emulator](https://github.com/charlieh0tel/smartclock-oncore-emulator):
+a board with a u-blox LEA-M8T and an STM32C091 that answers the Oncore
+messages these receivers' firmware sends, built on this project's GPS
+crates.  Its design, fab files and firmware are in that repository.
+
 ## Tooling
 
 The firmware, FPGAs and board are read with the project's own tools:

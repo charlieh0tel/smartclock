@@ -5,7 +5,10 @@ The Motorola VP Oncore, the GPS engine the Z3801A, the Z3805A and the
 no BDM header.  "To confirm" marks what came from a photo or one
 buzz-out and still needs a check.  Two boards were looked at, named
 here by their MC68331's marking: DENU9621, photographed, and DEVT9614,
-traced and scanned, taken to share DENU9621's layout.
+traced and scanned, taken to share DENU9621's layout.  A replacement for it,
+on a u-blox LEA-M8T, is the
+[smartclock-oncore-emulator](https://github.com/charlieh0tel/smartclock-oncore-emulator)
+project's.
 
 [`oncore-vp-test-points.html`](https://charlieh0tel.github.io/smartclock/oncore-vp-test-points.html)
 labels the test points and the CPU's lower-edge pins on the photo,

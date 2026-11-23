@@ -4,7 +4,7 @@
 //! gives, or found as an immediate operand in the routine it names, by
 //! receiver and by meaning; and the update law the evidence states
 //! replayed against what the images' own `startup_pll` and `pll_normal`
-//! did, second by second, in Unicorn (`tools/firmware/loop_trace.py`,
+//! did, second by second, in an emulator (`tools/firmware/loop_trace.py`,
 //! whose output is `fixtures/loop/IMAGE.tsv`; `make -C
 //! third_party/firmware check-loop-trace` fails when it is stale).
 //! The page's by-model rows, poles and step response are then

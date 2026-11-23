@@ -45,7 +45,7 @@ How each is found:
   command, or by its address.
 - Console: each function with an instruction that moves a constant to
   gps_command's code is a word, named as its function less DIAG_PREFIX;
-  gps_command_send is run in Unicorn on each code found, with gpsx_send
+  gps_command_send is run (backend.py) on each code found, with gpsx_send
   answering at once, and the request it posts noted.  gps_change and
   gps_query post the request the console gives: any.
 
@@ -61,10 +61,11 @@ import re
 import struct
 from dataclasses import dataclass
 
-from unicorn import UC_ARCH_M68K, UC_HOOK_CODE, UC_MODE_BIG_ENDIAN, Uc
-from unicorn.m68k_const import UC_CPU_M68K_M68020, UC_M68K_REG_A7, UC_M68K_REG_SR
+from unicorn import UC_HOOK_CODE, Uc
+from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_SR
 
 import record_access
+from backend import Mc683xx, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = record_access.ROOT
@@ -374,18 +375,17 @@ def console_words(image: str, instructions: list[tuple[int, str, str]]) -> dict[
 
 
 def console_requests(image: str, rom: bytes, codes: set[int]) -> dict[int, tuple[int, int]]:
-    """The request gps_command_send posts for each console code, run in
-    Unicorn with gpsx_send answering at once."""
+    """The request gps_command_send posts for each console code, run with
+    gpsx_send answering at once."""
     send = names(image)[GPSX_SEND]
-    uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
-    uc.ctl_set_cpu_model(UC_CPU_M68K_M68020)
+    uc = new_cpu()
     uc.mem_map(0, ROM_SIZE)
     uc.mem_write(0, rom[:ROM_SIZE])
     uc.mem_write(send, ANSWER)
     uc.mem_map(RAM, RAM_SIZE)
     posted: list[tuple[int, int]] = []
 
-    def hook(uc: Uc, address: int, size: int, data: object) -> None:
+    def hook(uc: Uc | Mc683xx, address: int, size: int, data: object) -> None:
         sp = uc.reg_read(UC_M68K_REG_A7)
         posted.append((struct.unpack('>H', uc.mem_read(sp + FRAME_CODE, 2))[0], uc.mem_read(sp + FRAME_MODE, 1)[0]))
 

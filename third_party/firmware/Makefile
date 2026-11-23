@@ -63,10 +63,11 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
 
-# The CPU the harness runs the image on (tools/firmware/backend.py,
-# docs/firmware/README.md, "The CPU backend"): unicorn, Unicorn's 68020,
-# or mc683xx, the bare CPU32 of mc683xx's Python module, which uv takes
-# from PyPI as the harness's scripts pin it in their inline metadata.
+# The CPU the harness, the loop trace and the GPS fields run the image
+# on (tools/firmware/backend.py, docs/firmware/README.md, "The CPU
+# backend"): unicorn, Unicorn's 68020, or mc683xx, the bare CPU32 of
+# mc683xx's Python module, which uv takes from PyPI as the scripts pin it
+# in their inline metadata.
 CPU ?= unicorn
 HARNESS_RUN = SMARTCLOCK_CPU=$(CPU) uv run -q
 
@@ -270,14 +271,14 @@ chip-selects:
 
 # Fail if crates/smartclock/tests/fixtures/loop/IMAGE.tsv, what the
 # Z3805A's and 58503A 3704's own startup_pll and pll_normal do on
-# synthetic readings in Unicorn, which cargo test's loop_firmware.rs
+# synthetic readings on CPU, which cargo test's loop_firmware.rs
 # replays against docs/firmware/loop.md's update law, is not what the
 # images give; loop-trace rewrites them.
 check-loop-trace:
-	uv run -q $(ROOT)/tools/firmware/loop_trace.py --check
+	$(HARNESS_RUN) $(ROOT)/tools/firmware/loop_trace.py --check
 
 loop-trace:
-	uv run -q $(ROOT)/tools/firmware/loop_trace.py
+	$(HARNESS_RUN) $(ROOT)/tools/firmware/loop_trace.py
 
 # Fail if docs/firmware/loop-constants.json, the loop's τ, startup
 # constant, G and holdover-recovery threshold by model, disagrees with
@@ -312,14 +313,14 @@ loop-gain:
 # images give, or if
 # docs/firmware/gps-field-uses.tsv, by hand, lacks a function found
 # reading a field: the bytes their own decoders read of each message,
-# run in Unicorn, where they store them and which functions read them
+# run on CPU, where they store them and which functions read them
 # there, and the commands their request scripts send; gps-fields
 # rewrites the columns, the gaps and the fields used.
 check-gps-fields:
-	uv run -q $(ROOT)/tools/firmware/gps_fields.py --check
+	$(HARNESS_RUN) $(ROOT)/tools/firmware/gps_fields.py --check
 
 gps-fields:
-	uv run -q $(ROOT)/tools/firmware/gps_fields.py
+	$(HARNESS_RUN) $(ROOT)/tools/firmware/gps_fields.py
 
 # The decompiled C's flags.  -fno-defer-pop has gcc pop a call's
 # arguments after the call, so that from a task in user mode an argument

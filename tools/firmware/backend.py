@@ -15,7 +15,8 @@ Mc683xx keeps Unicorn's meaning:
   run covers is a device of the harness's own, its bytes kept here, a
   hook covering a cycle there called before the cycle, as Unicorn's
   are, a read reading what it left: the devices, the EEPROM and the
-  installer's flash.  Any other region is the Machine's memory.
+  installer's flash.  Any other region is the Machine's memory, as is
+  every region where the memory hooks only watch (watch_only).
 - Hooks.  A code or block hook is Unicorn's: before its instruction,
   free to read and write the CPU, a write of PC redirecting.  A memory
   hook's callback runs once its instruction has ended, given an InRun
@@ -289,7 +290,9 @@ class Mc683xx:
     """Unicorn's API, as the harness uses it, on mc683xx's bare CPU32:
     the regions mapped, and placed in the Machine or kept as devices at the
     first run (place); native_vectors the exceptions the CPU takes
-    itself, which no interrupt hook is called for."""
+    itself, which no interrupt hook is called for; watch_only, set where
+    the memory hooks only note what is read or written, that they make
+    no device."""
 
     def __init__(self):
         import mc683xx
@@ -301,6 +304,7 @@ class Mc683xx:
         self.starts: list[int] = []
         self.hooks: list[HookEntry] = []
         self.native_vectors: set[int] = set()
+        self.watch_only = False
         # whether the regions are placed; whether a device's cycle is
         # running hooks, which cannot call into the Machine (the run holds
         # it), and whether one asked to stop; and the exception
@@ -373,7 +377,11 @@ class Mc683xx:
         if self.placed:
             return
         self.placed = True
-        hooked = [hook for hook in self.hooks if hook.kind in (UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE)]
+        hooked = [
+            hook
+            for hook in self.hooks
+            if hook.kind in (UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE) and not self.watch_only
+        ]
         for region in self.regions:
             if any(hook.begin < region.end() and region.start <= hook.end for hook in hooked):
                 last = region.end() - 1

@@ -1,11 +1,11 @@
 # /// script
-# requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# requires-python = ">=3.12"
+# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
 # ///
 """Checks docs/firmware/gps-fields.tsv, the fields of every message the
 GPS engine of crates/smartclock-gps speaks, against what the images do:
 which bytes of each message an image's own decoders read, measured by
-running them in Unicorn, what becomes of each field read, and which
+running them (backend.py), what becomes of each field read, and which
 commands it sends, by every path (gps_paths.py).
 
     uv run -q tools/firmware/gps_fields.py [--check]
@@ -186,18 +186,16 @@ import sys
 from dataclasses import dataclass
 
 from unicorn import (
-    UC_ARCH_M68K,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
     UC_HOOK_MEM_READ,
-    UC_MODE_BIG_ENDIAN,
     Uc,
     UcError,
 )
 from unicorn.m68k_const import (
-    UC_CPU_M68K_M68020,
     UC_M68K_REG_A7,
+    UC_M68K_REG_CR_VBR,
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
@@ -205,6 +203,7 @@ from unicorn.m68k_const import (
 
 import gps_paths
 import record_access
+from backend import ON_MC683XX, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -468,7 +467,7 @@ def requests(image: str, found: list[gps_paths.Path]) -> Requests:
 
 
 class Machine:
-    """One image's ROM in Unicorn, noting the reads of a message."""
+    """One image's ROM on the CPU, noting the reads of a message."""
 
     def __init__(self, image: str, rom: bytes) -> None:
         self.image = image
@@ -477,8 +476,7 @@ class Machine:
         self.raised: int | None = None
         self.reads: set[int] | None = None
         self.watched: set[tuple[int, int]] | None = None
-        self.uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
-        self.uc.ctl_set_cpu_model(UC_CPU_M68K_M68020)
+        self.uc = new_cpu()
         self.uc.mem_map(0, ROM_SIZE)
         self.uc.mem_write(0, rom[:ROM_SIZE])
         self.uc.mem_map(RAM, RAM_SIZE)
@@ -486,6 +484,12 @@ class Machine:
         self.uc.hook_add(UC_HOOK_INTR, self.exception)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.read, begin=MESSAGE, end=MESSAGE + MESSAGE_SPACE - 1)
         self.uc.hook_add(UC_HOOK_MEM_READ, self.watch, begin=RAM, end=MESSAGE - 1)
+        if ON_MC683XX:
+            # the CPU takes trap #7 through the image's vectors and
+            # returns by rte itself
+            self.uc.native_vectors = {TRAP_7}
+            self.uc.watch_only = True
+            self.uc.reg_write(UC_M68K_REG_CR_VBR, self.vectors)
 
     def invalid(self, uc: Uc, access: int, address: int, size: int, value: int, data: object) -> bool:
         self.fault = f'access of {size} bytes at {address:#x} from {uc.reg_read(UC_M68K_REG_PC):#x}'
@@ -512,7 +516,8 @@ class Machine:
         return bytes(self.uc.mem_read(RAM, MESSAGE - RAM))
 
     def take_trap(self) -> None:
-        """Enters the image's trap #7 handler as the processor does."""
+        """Enters the image's trap #7 handler as the processor does, for
+        Unicorn, which raises it to the interrupt hook in place."""
         sr = self.uc.reg_read(UC_M68K_REG_SR)
         frame = struct.pack(FRAME, sr, self.uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE, TRAP_7 * VECTOR_SIZE)
         sp = self.uc.reg_read(UC_M68K_REG_A7) - len(frame)
@@ -1231,7 +1236,7 @@ def nmea_frame(sentence: str, frame: int) -> tuple[bytes, list[int]]:
 
 
 class NmeaMachine(Machine):
-    """An NMEA image's ROM in Unicorn, decoding its sentences as
+    """An NMEA image's ROM on the CPU, decoding its sentences as
     nmea_sentence_decode does, with NMEA_STUBS returning at once."""
 
     def __init__(self, rom: bytes, table: dict[str, Sentence], nmea: Nmea) -> None:

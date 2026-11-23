@@ -1,10 +1,10 @@
 # /// script
-# requires-python = ">=3.11"
-# dependencies = ["unicorn==2.1.4"]
+# requires-python = ">=3.12"
+# dependencies = ["mc683xx==0.8.0", "unicorn==2.1.4"]
 # ///
 """Runs the disciplining loop's own code, each image's startup_pll and
-pll_normal, in Unicorn on synthetic readings, and writes what it does
-second by second to crates/smartclock/tests/fixtures/loop/IMAGE.tsv,
+pll_normal, on backend.py's CPU on synthetic readings, and writes what
+it does second by second to crates/smartclock/tests/fixtures/loop/IMAGE.tsv,
 which crates/smartclock/tests/loop_firmware_trace.rs replays against
 the update law docs/firmware/loop.md states; or, with --check, fails
 if a fixture is not what the images give.
@@ -40,14 +40,15 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 
-from unicorn import UC_ARCH_M68K, UC_HOOK_INTR, UC_HOOK_MEM_INVALID, UC_MODE_BIG_ENDIAN, Uc, UcError
+from unicorn import UC_HOOK_INTR, UC_HOOK_MEM_INVALID, Uc, UcError
 from unicorn.m68k_const import (
-    UC_CPU_M68K_M68020,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
 )
+
+from backend import Mc683xx, new_cpu
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
@@ -245,14 +246,14 @@ def pushed_gain(image: bytes, task: int, setter: int) -> int:
 
 @dataclass
 class Machine:
-    """One image in Unicorn, its stubs in place."""
+    """One image on the CPU, its stubs in place."""
 
     image: str
     rom: bytes
     routines: dict[str, int]
     addresses: dict[str, int]
     layout: dict[str, tuple[int, int]]
-    uc: Uc = field(init=False)
+    uc: Uc | Mc683xx = field(init=False)
     fault: str | None = field(init=False, default=None)
 
     def __post_init__(self) -> None:
@@ -261,8 +262,7 @@ class Machine:
             if name in self.routines:
                 at = self.routines[name]
                 patched[at : at + len(code)] = code
-        self.uc = Uc(UC_ARCH_M68K, UC_MODE_BIG_ENDIAN)
-        self.uc.ctl_set_cpu_model(UC_CPU_M68K_M68020)
+        self.uc = new_cpu()
         self.uc.mem_map(0, ROM_SIZE)
         self.uc.mem_write(0, bytes(patched))
         self.uc.mem_map(RAM, RAM_SIZE)

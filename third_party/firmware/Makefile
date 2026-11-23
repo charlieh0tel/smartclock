@@ -58,7 +58,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
-	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields
+	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields check-softfloat
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -261,6 +261,12 @@ chip-selects:
 # images give; loop-trace rewrites them.
 check-loop-trace:
 	uv run -q $(ROOT)/tools/firmware/loop_trace.py --check
+
+# Fail if the 58503A 3704's single-precision add, subtract and multiply
+# do not round to nearest, ties to even, or its divide departs from that
+# other than 1 ulp toward zero (docs/firmware/softfloat.md).
+check-softfloat:
+	uv run -q $(ROOT)/tools/firmware/softfloat_check.py
 
 loop-trace:
 	uv run -q $(ROOT)/tools/firmware/loop_trace.py

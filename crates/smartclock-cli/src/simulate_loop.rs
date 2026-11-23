@@ -383,21 +383,53 @@ fn logged_state(rows: &[Logged], from: f64, second: u32) -> Result<(f64, f64)> {
     Ok((interval, efc))
 }
 
+/// The updates [`BLOCK_SECONDS`] apart from `start`, `count` of them,
+/// as the log saw them: at each, the latest row within [`LOG_GAP`] if
+/// it is `usable` and has a time interval, with f, the prefilter run
+/// over the time intervals from the first of a stretch without a gap,
+/// where it starts at that update's.
+fn walk(
+    rows: &[Logged],
+    start: f64,
+    count: u32,
+    weight: f64,
+    usable: impl Fn(&Logged) -> bool,
+) -> Vec<Option<(Logged, f64)>> {
+    let seconds = f64::from(BLOCK_SECONDS);
+    let mut filtered: Option<f64> = None;
+    (0..count)
+        .map(|index| {
+            let row = latest(rows, start + f64::from(index) * seconds).filter(&usable);
+            filtered = row.and_then(|row| row.interval).map(|interval| {
+                filtered.map_or(interval, |f| (1.0 - weight) * f + weight * interval)
+            });
+            row.zip(filtered)
+        })
+        .collect()
+}
+
 /// f, the prefilter's state at `from`: the filter run over the log's
 /// time intervals at the updates of the [`WARM_UP`] time constants
 /// before it, from the first of a stretch without a gap.
 fn warm_up(rows: &[Logged], from: f64, weight: f64) -> Option<f64> {
-    let blocks = (WARM_UP / weight).ceil();
-    let seconds = f64::from(BLOCK_SECONDS);
-    let mut filtered: Option<f64> = None;
-    let mut back = blocks;
-    while back >= 0.0 {
-        filtered = latest(rows, from - back * seconds)
-            .and_then(|row| row.interval)
-            .map(|interval| filtered.map_or(interval, |f| (1.0 - weight) * f + weight * interval));
-        back -= 1.0;
-    }
-    filtered
+    let blocks = warm_up_blocks(weight);
+    let start = from - f64::from(blocks) * f64::from(BLOCK_SECONDS);
+    walk(rows, start, blocks + 1, weight, |_| true)
+        .last()
+        .copied()
+        .flatten()
+        .map(|(_, filtered)| filtered)
+}
+
+/// The updates in [`WARM_UP`] time constants of the prefilter.
+fn warm_up_blocks(weight: f64) -> u32 {
+    #[expect(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "a = 29.75 / τ gives a few hundred updates"
+    )]
+    let blocks = (WARM_UP / weight).ceil() as u32;
+    blocks
 }
 
 /// A cell: the value to `places` decimals, or empty.

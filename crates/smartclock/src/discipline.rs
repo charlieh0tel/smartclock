@@ -100,6 +100,15 @@ impl<T: Real> Gains<T> {
             filter_weight: T::from_f64(FILTER_SCALE) / tau,
         }
     }
+
+    /// d, the aging slope an update fed the integrator, from what it
+    /// did, the update run backward: `held` is B + I, u − c·s − K·f,
+    /// before and after it, and `filtered` its f.  I grows by
+    /// 10·k·f + 10·d/2700, so d = 2700·(ΔI/10 − k·f).
+    pub fn applied_slope(self, before: T, after: T, filtered: T) -> T {
+        let block = T::from_f64(f64::from(BLOCK_SECONDS));
+        ((after - before) / block - self.integral * filtered) * T::from_f64(ENTRY_SECONDS)
+    }
 }
 
 /// M, the bound on the aging slope, for a gain.
@@ -332,6 +341,13 @@ impl ClosedLoop {
         self
     }
 
+    /// d held at `slope` from the next update, counts a window, within
+    /// ±M: r is `slope` and p 0.
+    pub fn hold_slope(&mut self, slope: f64) {
+        self.fit_b = slope;
+        self.fit_c = 0.0;
+    }
+
     /// Running the 58503A 3704's aging fit (`crate::aging`) from an
     /// empty history: from now on its sampler sums u − c·s a second,
     /// each 2700 s it fits the history, and the loop takes the fit's b
@@ -480,8 +496,10 @@ mod tests {
     use super::ClosedLoop;
     use super::Disturbance;
     use super::ENTRY_SECONDS;
+    use super::Gains;
     use super::INTEGRAL_SCALE;
     use super::Reference;
+    use super::Steering;
     use super::Update;
 
     /// The 58503A's G, fractional frequency a count.
@@ -654,6 +672,19 @@ mod tests {
             "{}",
             update.efc
         );
+    }
+
+    /// The update run backward gives the d it was run with.
+    #[test]
+    fn the_applied_slope_is_the_slope_fed() {
+        let gains = Gains::new(GAIN, TAU);
+        let mut steering = Steering::new(700_000.0);
+        let slope = 37.5;
+        let held = |steering: &Steering<f64>| steering.base + steering.integral;
+        let before = held(&steering);
+        steering.steer(gains, 20e-9, slope);
+        let applied = gains.applied_slope(before, held(&steering), steering.filtered);
+        assert!((applied - slope).abs() < 1e-6, "{applied}");
     }
 
     #[test]

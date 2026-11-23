@@ -514,6 +514,12 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   the logged time interval plus −S·(u − u_log) summed, which needs no
   phase within a block and leaves the counter's noise where the
   receiver saw it; a reproduction of the log then cannot test S.
+  The receiver's aging slope it can estimate from the log by running
+  the update backward, rather than needing the fit's values from the
+  console; the estimate is a mean over the fit's own 2700 s window,
+  not each update's, because one update's differences a rounded EFC
+  at 270 counts a window a count, and because each update's alone
+  would take up every residual and reproduce the log by construction.
   The aging fit it can run is the 58503A 3704's, transcribed from that
   image's hand-written C into `smartclock::aging` in single precision,
   not from `loop.md`'s summary, which leaves the three-term search's

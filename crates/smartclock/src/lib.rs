@@ -5,6 +5,7 @@
 
 /// Allan deviation from the receiver's phase readings.
 pub mod adev;
+pub mod aging;
 pub mod attach;
 pub mod client;
 /// The pForth debug console: reading memory, and the way back to SCPI.

@@ -5,8 +5,9 @@
 //! image's τ and G from `docs/firmware/loop-constants.json`, closed
 //! around an oscillator of a given sensitivity.  It starts at rest, or
 //! at a given time interval, or where a logged run stood, and runs no
-//! `startup_pll` or holdover; an aging slope may be fed to its
-//! integrator as a constant.  A replay drives it with what a logged
+//! `startup_pll` or holdover; its integrator is fed an aging slope, a
+//! constant, a given fit's, or the 58503A 3704's aging fit's as it
+//! learns.  A replay drives it with what a logged
 //! run's oscillator did, recovered from the log's time interval and
 //! EFC (`docs/firmware/loop.md`, "Simulating it").
 
@@ -21,6 +22,7 @@ use anyhow::bail;
 use clap::Args;
 use jiff::Timestamp;
 use serde_json::Value;
+use smartclock::aging::Mode;
 use smartclock::discipline::BLOCK_SECONDS;
 use smartclock::discipline::ClosedLoop;
 use smartclock::discipline::Disturbance;
@@ -42,6 +44,9 @@ const NANOSECONDS: f64 = 1e9;
 /// How far before an update the latest logged row may be and still
 /// stand beside it, seconds: a minute without one is a gap.
 const LOG_GAP: f64 = 60.0;
+
+/// The one image whose aging fit `smartclock::aging` transcribes.
+const FIT_IMAGE: &str = "58503a-3704";
 
 /// The FFOM of `normal pll` ("The FFOM"), the one stage a replay runs.
 const NORMAL_FFOM: f64 = 0.0;
@@ -118,8 +123,30 @@ pub(crate) struct SimulateLoopArgs {
     /// An aging slope fed to the integrator, EFC percent a day,
     /// standing in for the aging fit's; clamped to ±M as the firmware
     /// clamps it.
-    #[arg(long, default_value_t = 0.0, allow_negative_numbers = true)]
+    #[arg(
+        long,
+        default_value_t = 0.0,
+        allow_negative_numbers = true,
+        conflicts_with_all = ["fit_b", "fit_c"]
+    )]
     aging_slope: f64,
+    /// The aging fit's b the loop holds at the start, r, EFC counts a
+    /// 2700 s window, as the `curv` debug line's `b=` prints it.
+    #[arg(long, allow_negative_numbers = true)]
+    fit_b: Option<f64>,
+    /// The aging fit's c the loop holds at the start, p, as the `curv`
+    /// debug line's `c=` prints it: d is p·2700/q + r.  Needs
+    /// `--uptime`.
+    #[arg(long, allow_negative_numbers = true, requires = "uptime")]
+    fit_c: Option<f64>,
+    /// q, the receiver's uptime at the start, seconds.
+    #[arg(long)]
+    uptime: Option<u32>,
+    /// Runs the 58503A 3704's aging fit from an empty history, as after
+    /// the fit is cleared, its fits replacing r and p as they come.
+    /// Needs `--image 58503a-3704` and `--uptime`.
+    #[arg(long, requires = "uptime")]
+    aging_fit: bool,
     /// Seconds to simulate.
     #[arg(long)]
     seconds: u32,
@@ -421,41 +448,77 @@ fn start(
     Ok((closed, logged_current))
 }
 
-/// The updates the arguments give, replaying `log`, sorted, from its
-/// time at second 0 when they ask for a replay.
-fn simulate(args: &SimulateLoopArgs, log: Option<(&[Logged], f64)>) -> Result<Vec<Update>> {
+/// The updates the arguments give, with the aging fit's mode at each
+/// when it runs, replaying `log`, sorted, from its time at second 0 when
+/// they ask for a replay.
+fn simulate(
+    args: &SimulateLoopArgs,
+    log: Option<(&[Logged], f64)>,
+) -> Result<Vec<(Update, Option<Mode>)>> {
+    if args.aging_fit && args.image.as_deref() != Some(FIT_IMAGE) {
+        bail!("--aging-fit runs the {FIT_IMAGE}'s fit; give --image {FIT_IMAGE}");
+    }
     let (tau, gain) = tau_and_gain(args)?;
     let per_percent = counts_per_percent();
     let sensitivity = args.sensitivity.map_or(gain, |s| s / per_percent);
     let slope = args.aging_slope * per_percent * ENTRY_SECONDS / DAY;
     let replay = log.filter(|_| args.replay);
-    let (mut closed, logged_current) = start(
+    let (closed, logged_current) = start(
         args,
-        |efc| ClosedLoop::new(gain, tau, sensitivity, efc, slope),
+        |efc| {
+            ClosedLoop::new(gain, tau, sensitivity, efc, slope).with_aging(
+                args.fit_b.unwrap_or(slope),
+                args.fit_c.unwrap_or_default(),
+                args.uptime.unwrap_or_default(),
+            )
+        },
         replay,
     )?;
+    let mut closed = if args.aging_fit {
+        closed.with_aging_fit()
+    } else {
+        closed
+    };
     let disturbances = disturbances(args);
     (0..args.seconds / BLOCK_SECONDS)
-        .map(|block| match replay {
-            None => Ok(closed.block(&disturbances)),
-            Some((rows, from)) => {
-                let begun = block * BLOCK_SECONDS;
-                let ended = begun + BLOCK_SECONDS;
-                if logged_current
-                    && let Some(fresh) = last(rows, from + f64::from(ended), |row| row.current)
-                {
-                    closed.read_current(fresh);
-                }
-                let (_, in_force) = logged_state(rows, from, begun)?;
-                let (mean, _) = logged_state(rows, from, ended)?;
-                let reference = Reference {
-                    efc: counts(in_force),
-                    interval: mean,
-                };
-                Ok(closed.block_against(&disturbances, reference))
+        .map(|block| {
+            let update = step(&mut closed, &disturbances, replay, logged_current, block)?;
+            if let Some(error) = closed.fit_error() {
+                bail!("at second {}: {error}", update.second);
             }
+            Ok((update, closed.curve().map(|curve| curve.mode)))
         })
         .collect()
+}
+
+/// One block of the run, `block` from the start, against the model's
+/// reference or a replayed log's.
+fn step(
+    closed: &mut ClosedLoop,
+    disturbances: &[Disturbance],
+    replay: Option<(&[Logged], f64)>,
+    logged_current: bool,
+    block: u32,
+) -> Result<Update> {
+    match replay {
+        None => Ok(closed.block(disturbances)),
+        Some((rows, from)) => {
+            let begun = block * BLOCK_SECONDS;
+            let ended = begun + BLOCK_SECONDS;
+            if logged_current
+                && let Some(fresh) = last(rows, from + f64::from(ended), |row| row.current)
+            {
+                closed.read_current(fresh);
+            }
+            let (_, in_force) = logged_state(rows, from, begun)?;
+            let (mean, _) = logged_state(rows, from, ended)?;
+            let reference = Reference {
+                efc: counts(in_force),
+                interval: mean,
+            };
+            Ok(closed.block_against(disturbances, reference))
+        }
+    }
 }
 
 pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
@@ -471,17 +534,28 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
         args,
         log.as_ref().map(|(rows, from)| (rows.as_slice(), *from)),
     )?;
+    let fitting = args.aging_fit || args.fit_b.is_some() || args.fit_c.is_some();
     let mut out = std::io::stdout().lock();
     write!(out, "second\tti_ns\tefc_percent")?;
     if log.is_some() {
         write!(out, "\tlogged_ti_ns\tlogged_efc_percent")?;
     }
+    if fitting {
+        write!(out, "\taging_slope_percent_per_day")?;
+    }
+    if args.aging_fit {
+        write!(out, "\tfit_mode")?;
+    }
     writeln!(out)?;
-    for Update {
-        second,
-        interval,
-        efc,
-    } in updates
+    for (
+        Update {
+            second,
+            interval,
+            efc,
+            slope,
+        },
+        mode,
+    ) in updates
     {
         write!(
             out,
@@ -500,6 +574,20 @@ pub(crate) fn run(args: &SimulateLoopArgs) -> Result<()> {
                     3
                 ),
                 cell(row.and_then(|row| row.efc), 5)
+            )?;
+        }
+        if fitting {
+            write!(
+                out,
+                "\t{:.6}",
+                slope / counts_per_percent() * DAY / ENTRY_SECONDS
+            )?;
+        }
+        if args.aging_fit {
+            write!(
+                out,
+                "\t{}",
+                mode.map_or_else(String::new, |mode| (mode as u8).to_string())
             )?;
         }
         writeln!(out)?;
@@ -550,6 +638,10 @@ mod tests {
             tc_coefficient: None,
             oven_current: None,
             aging_slope: 0.0,
+            fit_b: None,
+            fit_c: None,
+            uptime: None,
+            aging_fit: false,
             seconds: SECONDS,
             phase_steps: Vec::new(),
             frequency_steps: Vec::new(),
@@ -583,9 +675,16 @@ mod tests {
     /// a row a second as the daemon logs one: each update's time
     /// interval and EFC until the next, and that second's current.
     fn logged(coefficient: f64) -> Vec<Logged> {
+        logged_with(coefficient, |closed| closed)
+    }
+
+    /// [`logged`], with the loop `aging` makes of it.
+    fn logged_with(coefficient: f64, aging: impl Fn(ClosedLoop) -> ClosedLoop) -> Vec<Logged> {
         let rest = counts(30.0);
-        let mut closed = ClosedLoop::new(GAIN, 700.0, GAIN, rest, 0.0)
-            .with_current_term(coefficient, current(0));
+        let mut closed = aging(
+            ClosedLoop::new(GAIN, 700.0, GAIN, rest, 0.0)
+                .with_current_term(coefficient, current(0)),
+        );
         let mut state = (0.0, rest);
         let mut rows = Vec::new();
         for second in 0..=SECONDS {
@@ -612,7 +711,11 @@ mod tests {
             replay: true,
             ..arguments()
         };
-        simulate(&args, Some((rows, 0.0))).expect("a replay")
+        simulate(&args, Some((rows, 0.0)))
+            .expect("a replay")
+            .into_iter()
+            .map(|(update, _)| update)
+            .collect()
     }
 
     /// With the log's own c the replay is the logged run.
@@ -662,10 +765,71 @@ mod tests {
             replay: true,
             ..arguments()
         };
-        for update in simulate(&args, Some((&rows, 0.0))).expect("a replay") {
+        for (update, _) in simulate(&args, Some((&rows, 0.0))).expect("a replay") {
             let interval = rows[update.second as usize].interval.expect("an interval");
             assert!((update.interval - interval).abs() < 1e-15);
         }
+    }
+
+    /// The fit the receiver held at the start.
+    const FIT_B: f64 = 20.0;
+
+    /// Its log coefficient.
+    const FIT_C: f64 = -300.0;
+
+    /// The receiver's uptime at the start, seconds.
+    const UPTIME: u32 = 20_000;
+
+    /// With the receiver's fit given, the replay is the log; running the
+    /// fit from empty instead, it is the run that cleared its fit.
+    #[test]
+    fn a_replay_with_the_aging_fit() {
+        let rows = logged_with(COEFFICIENT, |closed| {
+            closed.with_aging(FIT_B, FIT_C, UPTIME)
+        });
+        let args = SimulateLoopArgs {
+            fit_b: Some(FIT_B),
+            fit_c: Some(FIT_C),
+            uptime: Some(UPTIME),
+            replay: true,
+            ..arguments()
+        };
+        for (update, _) in simulate(&args, Some((&rows, 0.0))).expect("a replay") {
+            let interval = rows[update.second as usize].interval.expect("an interval");
+            assert!((update.interval - interval).abs() < 1e-15);
+        }
+        let cleared = logged_with(COEFFICIENT, |closed| {
+            closed.with_aging(FIT_B, FIT_C, UPTIME).with_aging_fit()
+        });
+        let args = SimulateLoopArgs {
+            aging_fit: true,
+            ..args
+        };
+        let replayed = simulate(&args, Some((&rows, 0.0))).expect("a replay");
+        assert!(replayed.iter().any(|(_, mode)| mode.is_some()));
+        for (update, _) in replayed {
+            let interval = cleared[update.second as usize]
+                .interval
+                .expect("an interval");
+            assert!(
+                (update.interval - interval).abs() < 1e-12,
+                "second {}: {:e} against {interval:e}",
+                update.second,
+                update.interval
+            );
+        }
+    }
+
+    #[test]
+    fn only_the_3704_runs_the_aging_fit() {
+        let args = SimulateLoopArgs {
+            image: Some("z3805a-3543b".to_owned()),
+            uptime: Some(UPTIME),
+            aging_fit: true,
+            ..arguments()
+        };
+        let error = simulate(&args, None).expect_err("another image");
+        assert!(error.to_string().contains("58503a-3704"), "{error}");
     }
 
     #[test]

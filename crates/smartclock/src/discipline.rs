@@ -14,13 +14,18 @@
 //! and the counter's reading and the DAC's write are taken as
 //! immediate.  The update adds `c·s`, a coefficient times the
 //! oscillator current as the health monitor averages it ("s, the
-//! oscillator current").
+//! oscillator current"), and may run the aging fit, [`crate::aging`],
+//! for the slope it feeds its integrator.
 
 use std::ops::Add;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Neg;
 use std::ops::Sub;
+
+use crate::aging::Curve;
+use crate::aging::FitError;
+use crate::aging::Sampler;
 
 /// A float the law runs in.
 pub trait Real:
@@ -245,6 +250,8 @@ pub struct Update {
     pub interval: f64,
     /// u, the EFC it set, counts.
     pub efc: f64,
+    /// d, the aging slope it fed the integrator, counts a window.
+    pub slope: f64,
 }
 
 /// The normal loop, `pll_normal`, closed around an oscillator.
@@ -265,11 +272,24 @@ pub struct ClosedLoop {
     coefficient: f64,
     /// s, the oscillator current as the health monitor averages it.
     current: f64,
+    /// G, fractional frequency a count.
+    gain: f64,
     /// K, k and a.
     gains: Gains<f64>,
-    /// d, the aging slope fed to the integrator, counts a window,
-    /// already within ±M.
-    slope: f64,
+    /// r, the aging fit's b the loop holds, counts a window.
+    fit_b: f64,
+    /// p, the aging fit's c the loop holds, counts a unit of w.
+    fit_c: f64,
+    /// q, the uptime, seconds.
+    uptime: u32,
+    /// The aging fit's sampler, when the fit is run.
+    sampler: Option<Sampler>,
+    /// A fit made, for the loop to take at the next second.
+    pending: Option<Curve>,
+    /// The fit the loop last took.
+    curve: Option<Curve>,
+    /// A fit the image's code does not determine; the fit stops there.
+    fit_error: Option<FitError>,
     /// The seconds run.
     second: u32,
 }
@@ -278,7 +298,7 @@ impl ClosedLoop {
     /// At rest, with time interval 0 and EFC `efc`, for the firmware's
     /// gain G and time constant τ, an oscillator of sensitivity S and an
     /// aging slope fed to the integrator (counts a window, clamped to
-    /// ±M as the firmware does).
+    /// ±M as the firmware does), at uptime 0.
     pub fn new(gain: f64, tau: f64, sensitivity: f64, efc: f64, slope: f64) -> Self {
         Self {
             phase: 0.0,
@@ -288,9 +308,68 @@ impl ClosedLoop {
             rest: efc,
             coefficient: 0.0,
             current: 0.0,
+            gain,
             gains: Gains::new(gain, tau),
-            slope: aging_slope(slope, 0.0, 1.0, gain),
+            fit_b: slope,
+            fit_c: 0.0,
+            uptime: 0,
+            sampler: None,
+            pending: None,
+            curve: None,
+            fit_error: None,
             second: 0,
+        }
+    }
+
+    /// With the aging fit's b and c the loop holds, r and p, counts a
+    /// window and a unit of w, at uptime `uptime`, seconds: d is then
+    /// p·2700/q + r, within ±M, q the uptime at each update.
+    #[must_use]
+    pub fn with_aging(mut self, fit_b: f64, fit_c: f64, uptime: u32) -> Self {
+        self.fit_b = fit_b;
+        self.fit_c = fit_c;
+        self.uptime = uptime;
+        self
+    }
+
+    /// Running the 58503A 3704's aging fit (`crate::aging`) from an
+    /// empty history: from now on its sampler sums u − c·s a second,
+    /// each 2700 s it fits the history, and the loop takes the fit's b
+    /// and c as r and p a second later.
+    #[must_use]
+    pub fn with_aging_fit(mut self) -> Self {
+        self.sampler = Some(Sampler::new(self.uptime));
+        self
+    }
+
+    /// The fit the loop last took from the aging fit.
+    pub fn curve(&self) -> Option<Curve> {
+        self.curve
+    }
+
+    /// A fit the image's code does not determine, which stopped the
+    /// aging fit.
+    pub fn fit_error(&self) -> Option<FitError> {
+        self.fit_error
+    }
+
+    /// One second of the aging fit: the loop takes a fit made, and the
+    /// sampler sums this second's u − c·s, fitting at an entry.
+    fn age(&mut self) {
+        if let Some(curve) = self.pending.take() {
+            self.fit_b = f64::from(curve.b);
+            self.fit_c = f64::from(curve.c);
+            self.curve = Some(curve);
+        }
+        let sample = f32::from_f64(self.efc - self.coefficient * self.current);
+        let Some(sampler) = self.sampler.as_mut().filter(|_| self.fit_error.is_none()) else {
+            return;
+        };
+        if sampler.second(sample, self.uptime) {
+            match sampler.history().fit() {
+                Ok(curve) => self.pending = Some(curve),
+                Err(error) => self.fit_error = Some(error),
+            }
         }
     }
 
@@ -343,6 +422,8 @@ impl ClosedLoop {
         let mut sum = 0.0;
         for _ in 0..BLOCK_SECONDS {
             self.second += 1;
+            self.uptime = self.uptime.saturating_add(1);
+            self.age();
             let free: f64 = disturbances
                 .iter()
                 .map(|disturbance| disturbance.phase(self.second))
@@ -351,13 +432,15 @@ impl ClosedLoop {
             sum += self.phase;
         }
         let interval = reference.interval + sum / f64::from(BLOCK_SECONDS);
+        let slope = aging_slope(self.fit_b, self.fit_c, f64::from(self.uptime), self.gain);
         // No clamp to the DAC's range: the oscillator model is linear.
         self.efc =
-            self.steering.steer(self.gains, interval, self.slope) + self.coefficient * self.current;
+            self.steering.steer(self.gains, interval, slope) + self.coefficient * self.current;
         Update {
             second: self.second,
             interval,
             efc: self.efc,
+            slope,
         }
     }
 
@@ -571,5 +654,31 @@ mod tests {
             "{}",
             update.efc
         );
+    }
+
+    #[test]
+    fn the_fit_s_window_is_the_law_s() {
+        assert!((f64::from(crate::aging::ENTRY_SECONDS) - ENTRY_SECONDS).abs() < f64::EPSILON);
+    }
+
+    /// The aging fit learns a drift and feeds it to the integrator,
+    /// taking the standing error down from 4·G·τ²·D/S.
+    #[test]
+    fn the_aging_fit_takes_up_a_drift() {
+        let rate = 1e-9 / 86_400.0;
+        let drift = [Disturbance::Drift { at: 0, rate }];
+        let standing = INTEGRAL_SCALE * GAIN * TAU * TAU * rate / GAIN;
+        let days = 3 * 86_400;
+        let mut closed = ClosedLoop::new(GAIN, TAU, GAIN, 524_288.0, 0.0)
+            .with_aging(0.0, 0.0, 86_400)
+            .with_aging_fit();
+        let error = last(&closed.run(&drift, days)).interval;
+        let curve = closed.curve().expect("a fit");
+        let slope = rate / GAIN * ENTRY_SECONDS;
+        assert!(
+            (f64::from(curve.b) / slope - 1.0).abs() < 0.1,
+            "{curve:?} for {slope}"
+        );
+        assert!(error.abs() < 0.1 * standing, "{error:e} for {standing:e}");
     }
 }

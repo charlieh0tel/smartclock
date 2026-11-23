@@ -908,6 +908,35 @@ pass `../efc.md`, "The regression", infers.  B is set to u − c·s at
 the start, as on the loop's entry, so a constant s moves nothing and c
 acts only through changes of s.
 
+The aging feed-forward: `--fit-b` and `--fit-c` set the fit's b and c
+the loop holds, r and p, in EFC counts a window and a unit of w, as
+the `curv` debug line prints them ("The aging fit"), and `--uptime` q
+at the start, so that d is p·2700/q + r, within ±M, at each update.
+`--aging-fit` runs the fit itself from an empty history, as a
+power-up leaves it, though at the uptime `--uptime` gives: the sampler sums u − c·s each second, each
+2700 s of uptime writes an entry with its weight, y and w, the fit
+runs at once, and the loop takes its b and c as r and p the second
+after.  Until the first fit, r and p are `--fit-b` and `--fit-c`, 0 by
+default.  It is the 58503A 3704's fit and sampler only, transcribed in
+`smartclock::aging` (`crates/smartclock/src/aging.rs`) from that
+image's hand-written C (`rewritten/58503a-3704/pll_aging.c` and
+`rewritten/common/pll_aging.c`), which the function check holds to the
+image (`rewrite.md`); the Z3805A's sampler times an entry by its
+samples, and the Z3815A fits halves of 32.  The output gains the d fed
+at each update, in EFC percent a day, and the fit's mode.  HQ is not
+computed.  Two things the code does not settle are left as they fall:
+
+- How the image's soft-float rounds is not established (`softfloat.md`
+  does not say); the transcription rounds to nearest.  It matters in
+  the sampler, which sums 2700 values at the EFC's level, hundreds of
+  thousands of counts, in a single-precision float (`efc_sum`): the
+  sum's rounding moves an entry's mean by an amount that varies with
+  the level, so the fit's slope depends on the rounding mode.
+- Where `fit_log_search` turns down without taking a step down, the
+  image takes a vertex through a point it never set
+  (`rewritten/common/pll_aging.c`); the simulator stops there with an
+  error rather than guess.
+
 **Replaying a logged run.**  `--replay`, with `--log` and `--from`,
 starts the loop where the log stood at `--from` and drives it with
 what the logged oscillator did, for asking what the time interval
@@ -944,8 +973,10 @@ What a replay assumes:
   measured"), not G's, where it is known.
 - The aging slope.  The receiver's d comes from its aging fit, whose
   p, r and q the log does not hold; reproducing the log needs the d
-  the receiver had, and a difference in d shows as a drift between the
-  two.
+  the receiver had, from `--fit-b`, `--fit-c` and `--uptime`, and a
+  difference in d shows as a drift between the two.  The fit's history
+  is not in the log either, so `--aging-fit` can replay a cleared fit
+  but not the receiver's own as it went on.
 - The counter's noise stays in the logged x̄ the replay adds to, so the
   simulated loop sees the readings the receiver saw; that is exact for
   noise added to the reading, whatever u does.
@@ -963,12 +994,14 @@ a frequency step Δy moves u by Δy / S and the time interval back to 0;
 a drift D, held by the integrator, stands the time interval at
 f = 4·G·τ²·(D/S − d/2700), since k·f + d/2700 must climb by D/S a
 second; a phase step leaves u where it was; c·s takes up a change of
-frequency that follows the current, but for the average's lag.  What
-it leaves out: `startup_pll`, holdover and the aging fit itself; the
-EFC's clamp and the DAC's dither; outside a replay, the counter's
-noise.  The Z3815A, 58503B and Z3805A 1.01.03 ease the aging slope in,
-which a constant d does not model, and the Z3817A's G moves with u and
-its integral's step with the block ("In every image").
+frequency that follows the current, but for the average's lag; the
+aging fit learns a drift and takes the standing error down.  What it
+leaves out: `startup_pll` and holdover; the aging fit of any image but
+the 58503A 3704, and its HQ; the EFC's clamp and the DAC's dither;
+outside a replay, the counter's noise.  The Z3815A, 58503B and Z3805A
+1.01.03 ease the aging slope in, which a constant d does not model,
+and the Z3817A's G moves with u and its integral's step with the block
+("In every image").
 
 ## How this is checked
 

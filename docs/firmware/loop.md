@@ -883,7 +883,9 @@ interval moves by y − S·(u − u₀): y the free-running fractional
 frequency offset, u₀ the EFC the loop starts at, `--efc`, and S the
 oscillator's sensitivity, `--sensitivity`, in fractional frequency an
 EFC percent and G's sign, by default G's.  A change of u acts from the
-second after the update.  The loop starts at rest, its time interval 0.
+second after the update.  The loop starts at rest, its time interval
+0, or at `--ti` nanoseconds with its filtered error f there; either
+way u starts at u₀, I at 0 and B takes the rest.
 
     smartclock-cli simulate-loop --image 58503a-3704 --seconds 10000 \
         --efc 35 --frequency-step 600:-1e-9
@@ -898,16 +900,75 @@ TSV with columns `at` (nanoseconds since the Unix epoch),
 `time_interval_s` and `efc_percent` at each update, within a minute,
 is printed beside it, for comparing a logged receiver with the law.
 
+The update's c·s term ("s, the oscillator current") is in: c is
+`--tc-coefficient`, s the oscillator current, `--oven-current` held
+constant or, in a replay, the log's.  s is the health monitor's
+average, s ← 0.1·fresh + 0.9·s, taken once an update, the ten-second
+pass `../efc.md`, "The regression", infers.  B is set to u − c·s at
+the start, as on the loop's entry, so a constant s moves nothing and c
+acts only through changes of s.
+
+**Replaying a logged run.**  `--replay`, with `--log` and `--from`,
+starts the loop where the log stood at `--from` and drives it with
+what the logged oscillator did, for asking what the time interval
+would have been with another c, aging slope or disturbance.  The free
+oscillator is recovered from the log, each second's y being the
+logged time interval's change plus S·(u_log − u₀), u_log the logged
+EFC in force; run back through the model, that makes the simulated
+time interval the logged one plus the sum of −S·(u − u_log) since the
+start, u the simulated EFC.  The replay computes it that way, as a
+difference from the log, so it needs neither u₀ nor the phase within a
+block, only each update's logged x̄ and u.  It starts with u the
+logged EFC at `--from`, f the prefilter run over the logged x̄ of the
+five filter time constants, 5/a updates, before it, I at 0 and B
+taking the rest, so u holds.  Synthetic disturbances add to the
+recovered one.
+
+The log's columns, by what needs them:
+
+| Column | Needed |
+| ------ | ------ |
+| `at`, `time_interval_s`, `efc_percent` | always |
+| `oven_tempco` | by a replay without `--tc-coefficient`: the latest at or before `--from` is c |
+| `oven_current` | by a replay with c not 0 and without `--oven-current`: the latest at or before each update is the fresh reading fed to s |
+| `ffom` | read where present; a replayed update whose row is not 0, `normal pll`, stops the replay |
+
+What a replay assumes:
+
+- S.  With the c and the aging slope the receiver ran, the replay
+  reproduces the logged time interval whatever S is given, because the
+  oscillator is recovered through S and run back through it: a
+  reproduction does not test S.  A counterfactual's departure from the
+  log is −S·(u − u_log) summed, closed through the loop, so it scales
+  with S; give the oscillator's own (`../efc.md`, "The pull,
+  measured"), not G's, where it is known.
+- The aging slope.  The receiver's d comes from its aging fit, whose
+  p, r and q the log does not hold; reproducing the log needs the d
+  the receiver had, and a difference in d shows as a drift between the
+  two.
+- The counter's noise stays in the logged x̄ the replay adds to, so the
+  simulated loop sees the readings the receiver saw; that is exact for
+  noise added to the reading, whatever u does.
+- The log's rows.  x̄ and u are taken at each update, every 10 s from
+  `--from`, from the latest row within a minute before it; an offset
+  between that grid and the receiver's updates delays every row
+  alike, by less than an update.  A minute without a row stops the
+  replay; it does not bridge a gap.  The log's `oven_current` is a
+  fresh conversion (`:DIAGnostic:ROSCillator:CURRent?`), read less
+  often than every update and held between readings; the receiver
+  averages its own readings, so s is an estimate of the receiver's.
+
 From the law, as `crates/smartclock/src/discipline.rs`'s tests check:
 a frequency step Δy moves u by Δy / S and the time interval back to 0;
 a drift D, held by the integrator, stands the time interval at
 f = 4·G·τ²·(D/S − d/2700), since k·f + d/2700 must climb by D/S a
-second; a phase step leaves u where it was.  What it leaves out:
-`startup_pll`, holdover and the aging fit itself; c·s; the EFC's clamp
-and the DAC's dither; the counter's noise.  The Z3815A, 58503B and
-Z3805A 1.01.03 ease the aging slope in, which a constant d does not
-model, and the Z3817A's G moves with u and its integral's step with
-the block ("In every image").
+second; a phase step leaves u where it was; c·s takes up a change of
+frequency that follows the current, but for the average's lag.  What
+it leaves out: `startup_pll`, holdover and the aging fit itself; the
+EFC's clamp and the DAC's dither; outside a replay, the counter's
+noise.  The Z3815A, 58503B and Z3805A 1.01.03 ease the aging slope in,
+which a constant d does not model, and the Z3817A's G moves with u and
+its integral's step with the block ("In every image").
 
 ## How this is checked
 

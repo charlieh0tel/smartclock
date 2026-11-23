@@ -12,7 +12,9 @@
 //! oscillator's sensitivity, which the loop assumes is its gain G.  A
 //! change of EFC acts from the second after the update that makes it,
 //! and the counter's reading and the DAC's write are taken as
-//! immediate.
+//! immediate.  The update adds `c·s`, a coefficient times the
+//! oscillator current as the health monitor averages it ("s, the
+//! oscillator current").
 
 use std::ops::Add;
 use std::ops::Div;
@@ -64,6 +66,10 @@ pub const ENTRY_SECONDS: f64 = 2700.0;
 
 /// The aging slope's clamp's numerator: M = `STEP_LIMIT` / |G|.
 pub const STEP_LIMIT: f64 = 6.25e-10;
+
+/// The weight of a fresh reading in the health monitor's average of
+/// the oscillator current, s ← w·fresh + (1 − w)·s.
+pub const CURRENT_WEIGHT: f64 = 0.1;
 
 /// The EFC's top, counts; its bottom is 0.
 pub const EFC_TOP: f64 = 1_048_560.0;
@@ -255,6 +261,10 @@ pub struct ClosedLoop {
     /// The EFC at which the undisturbed oscillator is on frequency,
     /// counts.
     rest: f64,
+    /// c, EFC counts a unit of oscillator current.
+    coefficient: f64,
+    /// s, the oscillator current as the health monitor averages it.
+    current: f64,
     /// K, k and a.
     gains: Gains<f64>,
     /// d, the aging slope fed to the integrator, counts a window,
@@ -276,10 +286,45 @@ impl ClosedLoop {
             efc,
             sensitivity,
             rest: efc,
+            coefficient: 0.0,
+            current: 0.0,
             gains: Gains::new(gain, tau),
             slope: aging_slope(slope, 0.0, 1.0, gain),
             second: 0,
         }
+    }
+
+    /// With the term c·s, c in counts a unit of oscillator current and s
+    /// that current, B set to the EFC less c·s so the EFC holds, as the
+    /// firmware sets it on entering the loop.
+    #[must_use]
+    pub fn with_current_term(mut self, coefficient: f64, current: f64) -> Self {
+        self.coefficient = coefficient;
+        self.current = current;
+        self.steering.base = self.efc - coefficient * current;
+        self
+    }
+
+    /// Picks up a running loop: time interval `interval`, filtered error
+    /// f = `filtered`, and the integrator taken into B so that the EFC
+    /// in force, K·f + B + I + c·s, is where it is.
+    pub fn resume(&mut self, interval: f64, filtered: f64) {
+        self.phase = interval;
+        self.steering.filtered = filtered;
+        self.steering.integral = 0.0;
+        self.steering.base =
+            self.efc - self.coefficient * self.current - self.gains.proportional * filtered;
+    }
+
+    /// A fresh reading of the oscillator current into s, the health
+    /// monitor's average: s ← w·fresh + (1 − w)·s.
+    pub fn read_current(&mut self, fresh: f64) {
+        self.current = CURRENT_WEIGHT * fresh + (1.0 - CURRENT_WEIGHT) * self.current;
+    }
+
+    /// K, k and a.
+    pub fn gains(&self) -> Gains<f64> {
+        self.gains
     }
 
     /// Ten seconds of readings and the update at their end, against the
@@ -306,9 +351,9 @@ impl ClosedLoop {
             sum += self.phase;
         }
         let interval = reference.interval + sum / f64::from(BLOCK_SECONDS);
-        // Neither c·s nor the clamp to the DAC's range: the oscillator
-        // model is linear, and the current is not modeled.
-        self.efc = self.steering.steer(self.gains, interval, self.slope);
+        // No clamp to the DAC's range: the oscillator model is linear.
+        self.efc =
+            self.steering.steer(self.gains, interval, self.slope) + self.coefficient * self.current;
         Update {
             second: self.second,
             interval,
@@ -348,10 +393,12 @@ pub fn update_matrix(tau: f64) -> [[f64; 3]; 3] {
 
 #[cfg(test)]
 mod tests {
+    use super::BLOCK_SECONDS;
     use super::ClosedLoop;
     use super::Disturbance;
     use super::ENTRY_SECONDS;
     use super::INTEGRAL_SCALE;
+    use super::Reference;
     use super::Update;
 
     /// The 58503A's G, fractional frequency a count.
@@ -463,5 +510,66 @@ mod tests {
             let error = last(&closed(ratio, slope).run(&drift, SETTLE)).interval;
             assert!(error.abs() < 1e-3 * standing, "S/G {ratio}: {error:e}");
         }
+    }
+
+    /// The 58503A's c, counts a unit of oscillator current.
+    const COEFFICIENT: f64 = -33.65;
+
+    /// The largest time interval over a run in which the current steps
+    /// by `step` units at second 0, the oscillator's frequency stepping
+    /// with it by what c says, S·c·step, for a loop applying `coefficient`.
+    fn worst_interval(coefficient: f64, step: f64) -> f64 {
+        let current = 110.0;
+        let mut closed = closed(1.0, 0.0).with_current_term(coefficient, current);
+        let size = GAIN * COEFFICIENT * step;
+        let disturbances = [Disturbance::FrequencyStep { at: 0, size }];
+        (0..SETTLE / BLOCK_SECONDS)
+            .map(|_| {
+                closed.read_current(current + step);
+                closed.block(&disturbances).interval.abs()
+            })
+            .fold(0.0, f64::max)
+    }
+
+    /// With c right, c·s takes up a change of frequency that follows the
+    /// current, lagging only by the monitor's average.
+    #[test]
+    fn the_current_term_takes_up_what_follows_the_current() {
+        let without = worst_interval(0.0, 1.0);
+        let with = worst_interval(COEFFICIENT, 1.0);
+        assert!(with < 0.2 * without, "{with:e} against {without:e}");
+    }
+
+    /// A constant current moves nothing: B takes c·s up on entry.
+    #[test]
+    fn a_constant_current_is_taken_into_the_base() {
+        let mut closed = closed(1.0, 0.0).with_current_term(COEFFICIENT, 110.0);
+        for _ in 0..100 {
+            closed.read_current(110.0);
+            let update = closed.block(&[]);
+            assert!(update.interval.abs() < f64::EPSILON);
+            assert!(update.efc.abs() < 1e-9);
+        }
+    }
+
+    /// A loop picked up running holds its EFC: the first update moves
+    /// it only by the integrator's step, 10·k·f.
+    #[test]
+    fn a_resumed_loop_holds_its_efc() {
+        let interval = 20e-9;
+        let mut closed =
+            ClosedLoop::new(GAIN, TAU, GAIN, 700_000.0, 0.0).with_current_term(COEFFICIENT, 110.0);
+        closed.resume(interval, interval);
+        let reference = Reference {
+            efc: 700_000.0,
+            interval: 0.0,
+        };
+        let update = closed.block_against(&[], reference);
+        let step = f64::from(BLOCK_SECONDS) * closed.gains().integral * interval;
+        assert!(
+            (update.efc - 700_000.0 - step).abs() < 1e-6,
+            "{}",
+            update.efc
+        );
     }
 }

@@ -25,7 +25,6 @@ use jiff::Timestamp;
 use serde_json::Value;
 use smartclock::aging::Mode;
 use smartclock::discipline::BLOCK_SECONDS;
-use smartclock::discipline::CURRENT_WEIGHT;
 use smartclock::discipline::ClosedLoop;
 use smartclock::discipline::Disturbance;
 use smartclock::discipline::EFC_TOP;
@@ -33,6 +32,7 @@ use smartclock::discipline::ENTRY_SECONDS;
 use smartclock::discipline::Gains;
 use smartclock::discipline::Reference;
 use smartclock::discipline::Update;
+use smartclock::discipline::average_current;
 use smartclock::types::EfcPercent;
 
 /// The loop's constants by image, which `make check-loop-constants`
@@ -375,6 +375,12 @@ fn last(rows: &[Logged], at: f64, value: impl Fn(&Logged) -> Option<f64>) -> Opt
         .find_map(value)
 }
 
+/// c as the log held it at `at`: the latest `oven_tempco` at or before
+/// it, however old.
+fn logged_coefficient(rows: &[Logged], at: f64) -> Option<f64> {
+    last(rows, at, |row| row.coefficient)
+}
+
 /// What a replay reads from the log at second `second` of the run: the
 /// latest row's time interval and EFC, within [`LOG_GAP`], in a stage
 /// the replay models.
@@ -400,20 +406,35 @@ fn logged_state(rows: &[Logged], from: f64, second: u32) -> Result<(f64, f64)> {
     Ok((interval, efc))
 }
 
+/// One update of a [`walk`] over the log.
+#[derive(Debug, Clone, Copy)]
+struct Walked {
+    /// The latest row within [`LOG_GAP`].
+    row: Logged,
+    /// f, the prefilter run over the time intervals from the first
+    /// update of the stretch without a gap, where it starts at that
+    /// update's, seconds.
+    filtered: f64,
+    /// s, the health monitor's average of the log's oscillator current,
+    /// its latest reading at or before each update of the stretch,
+    /// where the log has it.
+    current: Option<f64>,
+}
+
 /// The updates [`BLOCK_SECONDS`] apart from `start`, `count` of them,
 /// as the log saw them: at each, the latest row within [`LOG_GAP`] if
 /// it is `usable` at the update's time and has a time interval, with
-/// f, the prefilter run over the time intervals from the first of a
-/// stretch without a gap, where it starts at that update's.
+/// f and s formed over the stretch without a gap it is in.
 fn walk(
     rows: &[Logged],
     start: f64,
     count: u32,
     weight: f64,
     usable: impl Fn(&Logged, f64) -> bool,
-) -> Vec<Option<(Logged, f64)>> {
+) -> Vec<Option<Walked>> {
     let seconds = f64::from(BLOCK_SECONDS);
     let mut filtered: Option<f64> = None;
+    let mut current: Option<f64> = None;
     (0..count)
         .map(|index| {
             let at = start + f64::from(index) * seconds;
@@ -421,22 +442,28 @@ fn walk(
             filtered = row.and_then(|row| row.interval).map(|interval| {
                 filtered.map_or(interval, |f| (1.0 - weight) * f + weight * interval)
             });
-            row.zip(filtered)
+            let seen = row.zip(filtered);
+            current = seen
+                .and_then(|_| last(rows, at, |row| row.current))
+                .map(|fresh| current.map_or(fresh, |s| average_current(s, fresh)));
+            seen.map(|(row, filtered)| Walked {
+                row,
+                filtered,
+                current,
+            })
         })
         .collect()
 }
 
-/// f, the prefilter's state at `from`: the filter run over the log's
-/// time intervals at the updates of the [`WARM_UP`] time constants
-/// before it, from the first of a stretch without a gap.
-fn warm_up(rows: &[Logged], from: f64, weight: f64) -> Option<f64> {
+/// The update at `from` of a [`walk`] over the updates of the
+/// [`WARM_UP`] time constants of the prefilter before it.
+fn warm_up(rows: &[Logged], from: f64, weight: f64) -> Option<Walked> {
     let blocks = warm_up_blocks(weight);
     let start = from - f64::from(blocks) * f64::from(BLOCK_SECONDS);
     walk(rows, start, blocks + 1, weight, |_, _| true)
         .last()
         .copied()
         .flatten()
-        .map(|(_, filtered)| filtered)
 }
 
 /// The updates in [`WARM_UP`] time constants of the prefilter.
@@ -516,7 +543,6 @@ fn estimate_slopes(
     let lead = warm_up + half + 1;
     let block = f64::from(BLOCK_SECONDS);
     let start = from - f64::from(lead) * block;
-    let mut average: Option<f64> = None;
     let mut stretch: u32 = 0;
     let rebuilt: Vec<Option<Rebuilt>> = walk(
         rows,
@@ -529,24 +555,22 @@ fn estimate_slopes(
     .zip(0_u32..)
     .map(|(seen, index)| {
         let at = start + f64::from(index) * block;
-        let fresh = seen.and_then(|_| last(rows, at, |row| row.current));
-        average = fresh.map(|fresh| {
-            average.map_or(fresh, |s| {
-                CURRENT_WEIGHT * fresh + (1.0 - CURRENT_WEIGHT) * s
-            })
-        });
         stretch = if seen.is_some() { stretch + 1 } else { 0 };
-        let (row, filtered) = seen?;
-        let coefficient = last(rows, at, |row| row.coefficient)?;
+        let Walked {
+            row,
+            filtered,
+            current,
+        } = seen?;
+        let coefficient = logged_coefficient(rows, at)?;
         let term = if coefficient == 0.0 {
             0.0
         } else {
-            coefficient * average?
+            coefficient * current?
         };
         Some(Rebuilt {
             held: counts(row.efc?) - term - gains.proportional * filtered,
             filtered,
-            current: average,
+            current,
             warm: stretch > warm_up,
         })
     })
@@ -618,7 +642,7 @@ fn start(
     let (interval, efc) = logged_state(rows, from, 0)?;
     let coefficient = args
         .tc_coefficient
-        .or_else(|| last(rows, from, |row| row.coefficient))
+        .or_else(|| logged_coefficient(rows, from))
         .context("the log has no oven_tempco at or before --from; give --tc-coefficient")?;
     let (current, logged_current) = match args.oven_current {
         Some(current) => (current, false),
@@ -634,7 +658,7 @@ fn start(
     let mut closed = loop_at(counts(efc)).with_current_term(coefficient, current);
     let filtered = estimate
         .and_then(|estimate| estimate.filtered)
-        .or_else(|| warm_up(rows, from, closed.gains().filter_weight))
+        .or_else(|| warm_up(rows, from, closed.gains().filter_weight).map(|walked| walked.filtered))
         .unwrap_or(interval);
     closed.resume(0.0, filtered);
     Ok((closed, logged_current))

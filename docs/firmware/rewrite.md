@@ -17,7 +17,7 @@ this says what each is and where.
   "Other checks").  The Z3805A 3543B's link requires all 2041 of its
   functions and finds each defined: 1555 by hand-written C, 474 by
   assembly and 12 as another routine's name.
-- Each hand-written function is run in Unicorn beside the image's own
+- Each hand-written function is run on mc683xx's CPU32 beside the image's own
   copy, from the same state, and must leave the same results, RAM,
   registers and device and kernel calls, in the same order.  1312 of
   the primary's functions agree, 6 differ for known reasons, none
@@ -473,7 +473,7 @@ with a copy differing from the most images' by a constant or a name alone.
 ## The verification
 
 Three tools in [`tools/firmware/`](../../tools/firmware/), Python under
-uv on Unicorn.
+uv on mc683xx's CPU32.
 
 **The rebuilt link** (`rebuild_link.py`).  Each assembly piece at its
 own address, where it must be the image's bytes; gcc's code at
@@ -484,7 +484,7 @@ assembly keeps calling the original.
 
 **The function check** (`function_check.py` on `harness.py`; `make
 report-decompiled`).  Each C function's image copy and gcc copy are
-called in Unicorn from the same constructed state: the image's
+called on the CPU from the same constructed state: the image's
 arguments where the sidecar says the original reads them, gcc's in
 4-byte slots.  Compared after each call:
 
@@ -709,7 +709,7 @@ What a path does not see:
   callee, before that call returns, is not read rightly: a return is
   known by its address alone, since Unicorn shows the registers at a
   hook on an instruction that sets the register as that instruction
-  leaves them, and so never reads SP there.
+  leaves them, and so the harness never reads SP there.
 - A write is compared by the system byte, not the condition codes,
   each copy's own; of the calls' arguments, only `set_interrupt_mask`'s
   mask.
@@ -848,7 +848,7 @@ check-link`, `make check-scpi-tree`):
 | status register's paths, primary | 59 functions traced: 59 reach every event and arm; 59 agree, 0 known, 0 failed, 0 not run |
 | status register's paths, installer | 9 functions traced: 8 reach every event and arm; 9 agree, 0 known, 0 failed, 0 not run |
 | pForth console sessions | 8 of 8 agree |
-| cases, in the agreeing functions | 26,131 of 26,795 compared, the rest skipped; strict, 26,127 of 26,795 |
+| cases, in the agreeing functions | 26,127 of 26,795 compared, the rest skipped |
 | stack headroom | no case deeper than the image's by more than 256 bytes, or 16 above a floor; the console's data stack 56 bytes clear, the image's 58 |
 
 A case is skipped where both copies stop at something the harness does
@@ -882,12 +882,12 @@ the check is against the model, not the board.
   masked stretch, are not compared, and the reading's order is address
   against source where the paths do not reach every event and arm.
 - **Timing.**  No time is modeled: a poll's count and order are
-  compared, its duration is not.  Unicorn has no CPU32; the 68020
-  stands in, the image using none of the instructions where they differ
-  (PLAN.md).  Unicorn's read of the status register spoils the
-  condition codes, and so does a write of PC from a code hook; the
-  harness reads them with a probe of its own and takes an interrupt
-  between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
+  compared, its duration is not.  On Unicorn, by hand
+  (`CPU=unicorn`), which has no CPU32, the 68020 stands in, the image
+  using none of the instructions where they differ (PLAN.md), and
+  Unicorn's read of the status register spoils the condition codes, as
+  does a write of PC from a code hook; there the harness reads them
+  with a probe of its own and takes an interrupt between runs ([`README.md`, "Hand-written C"](README.md#hand-written-c)).
 - **Untraced hardware.**  Which wires reach what (the DUART's interrupt
   level, the EEPROM's select line, the SCI's connector, the switch word
   at `0x302000`, measured to be S1 on the 58503A but not traced) is
@@ -908,7 +908,7 @@ the check is against the model, not the board.
 
 Tools: Ghidra 12.1.4 (only to export again), `git-lfs` for the archive;
 `m68k-linux-gnu-gcc` and binutils; `clang-format`; Python 3.12+ with uv
-(Unicorn, Capstone); Rust (`cargo`, for `smartclock-cli dump-scpi`).
+(mc683xx, Unicorn, Capstone); Rust (`cargo`, for `smartclock-cli dump-scpi`).
 The checks need no Ghidra: the export is checked in.
 
     make -C third_party/firmware check-types IMAGE=z3805a-3543b
@@ -1011,8 +1011,8 @@ carried as bytes, the tables copied -- remains the image's copyright
 holder's.  The decompiled C is Ghidra's machine output, rewritten where
 it would not compile or would not do what the image does.  The pSOS
 manual consulted (Integrated Systems, *pSOSystem System Calls*,
-000-5070-002) is cited, not included.  The harness runs on Unicorn,
-GPL-2.0-only, as a local tool.
+000-5070-002) is cited, not included.  The harness runs on mc683xx,
+or by hand on Unicorn, GPL-2.0-only, as a local tool.
 
 The 58503A 3704 port has its own document,
 [`58503a-3704.md`](58503a-3704.md), held to this one's method and

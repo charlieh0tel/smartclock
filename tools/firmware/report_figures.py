@@ -15,10 +15,8 @@ reading; and how many are assembly routines and thunks.  And the
 figures of the image's link check, link_check.py's summary line: how
 many functions it requires, and how many the hand-written C, the
 assembly and another routine's name define.  CHECKS lists, for each
-image, the sentences that quote them, as Unicorn's report gives them.
-A report of mc683xx, which runs as the CPU32 and says so (STRICT), skips
-a few cases more, and is checked against rewrite.md's strict figure of
-them, the Z3805A's alone (STRICT_CHECKS).
+image, the sentences that quote them, as mc683xx's report gives them;
+one of Unicorn, which says so (UNICORN_REPORT), is refused.
 
     python3 -I tools/firmware/report_figures.py --image IMAGE --link SUMMARY REPORT [--write]
     python3 -I tools/firmware/report_figures.py --image IMAGE --unfinished REPORT [--write]
@@ -84,10 +82,10 @@ PATHS = re.compile(
 SESSIONS = re.compile(r'^console sessions agreeing: (\d+) of (\d+)$', re.M)
 # its line of an agreeing function's cases, those run and all
 CASES = re.compile(r'^ok \S+: (\d+) of (\d+) cases run$', re.M)
-# function_check.py's line of a report of mc683xx, which runs as the
-# CPU32, whose address errors stop some cases that Unicorn's 68020 runs
-# (docs/firmware/README.md, "The CPU backend")
-STRICT = 'cases run strictly as the CPU32: SMARTCLOCK_CPU=mc683xx'
+# function_check.py's line of a report of Unicorn, whose 68020 runs some
+# cases that the CPU32's address errors stop (docs/firmware/README.md,
+# "The CPU backend"): the documents quote mc683xx's figures alone
+UNICORN_REPORT = 'cases run on Unicorn, not the CPU32: SMARTCLOCK_CPU=unicorn'
 # link_check.py's summary line: the image, the functions required, and
 # those the hand-written C, the assembly and another's name define
 LINK = re.compile(
@@ -164,11 +162,8 @@ def paths_figures(profile):
     return lambda f: tuple(f[f'{profile}_paths_{key}'] for key in PATHS_KEYS)
 
 
-# rewrite.md's row of the agreeing functions' cases, and the same row's
-# figure for a strict report, after the parity one
+# rewrite.md's row of the agreeing functions' cases
 CASES_ROW = sentence('| cases, in the agreeing functions | {} of {} compared')
-STRICT_CASES_ROW = re.compile(
-    r'\|\s+cases, in the agreeing functions\s+\|[^|\n]*; strict,\s+([\d,]+) of ([\d,]+)\b')
 
 
 def link_sentence(image):
@@ -411,11 +406,6 @@ CHECKS = {
 }
 
 
-# For a strict report, the images that have a strict figure, and the
-# sentence each has in place of its parity one
-STRICT_CHECKS = {'z3805a-3543b': {CASES_ROW: STRICT_CASES_ROW}}
-
-
 def report_figures(path, unfinished):
     """The report's figures, keyed as CHECKS has them; exits if it lacks
     any, or if a function failed and the image is not unfinished."""
@@ -520,14 +510,12 @@ def main():
     figures = report_figures(args.report, args.unfinished) | export
     if not args.unfinished:
         figures |= link_figures(args.link, args.image, export)
-    strict = re.search(f'^{re.escape(STRICT)}$', args.report.read_text(), re.M) is not None
-    if strict and args.image not in STRICT_CHECKS:
-        sys.exit(f'{args.report}: a strict report, and {args.image} has no strict figures')
+    if re.search(f'^{re.escape(UNICORN_REPORT)}$', args.report.read_text(), re.M):
+        sys.exit(f"{args.report}: a report of Unicorn, whose figures the documents do not quote; "
+                 'run make report-decompiled on mc683xx')
     texts = {}
     drifted = False
     for document, pattern, want in CHECKS[args.image]:
-        if strict:
-            pattern = STRICT_CHECKS[args.image].get(pattern, pattern)
         text = texts.setdefault(document, document.read_text())
         matches = list(pattern.finditer(text))
         if len(matches) != 1:

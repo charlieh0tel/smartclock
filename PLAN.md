@@ -699,16 +699,23 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   path the first case never took, and agreed.  Every case is now
   poisoned, but one in which the copies touched the same cells, at
   the cost of a second run of each case that differs.
-- Unicorn has no CPU32; its 68020 stands in, since the image uses none
-  of the instructions either has alone.  Because the 68020 runs what a
-  CPU32 traps on, the link takes a libgcc built for the CPU32 with soft
+- The function check, the loop trace and the GPS fields run on
+  mc683xx's bare CPU32 (`tools/firmware/backend.py`), and the documents
+  quote its figures (decided 2026-11-22): a word or long at an odd
+  address is an address error and the trace bits trace, as on the
+  image's CPU.  Was Unicorn's 68020, which has no CPU32 and stood in,
+  since the image uses none of the instructions either has alone; it
+  stays by hand (`CPU=unicorn`) until it is removed, its figures
+  quoted nowhere.  Because a 68020 runs what a CPU32 traps on, the link
+  takes a libgcc built for the CPU32 with soft
   float from GCC's source (`tools/firmware/cpu32_libgcc.py`, vendored in
   `third_party/gcc/`), not the toolchain's 68020/68881 one, and the
   build fails on any instruction the CPU32 lacks.
 - Unicorn's m68k status register bugs are checked by behavior, not by
   version (`make check-unicorn`), since `dev` still calls itself 2.1.4;
   a Unicorn that differs fails, so the workarounds are revisited rather
-  than kept by habit (`docs/firmware/README.md`).
+  than kept by habit (`docs/firmware/README.md`), until Unicorn is
+  removed.
 - A routine that returns in the condition codes or in registers beside
   its result is called through one register-bound asm statement, not a
   generated bridge: the bridges kept those results in globals, which
@@ -1389,7 +1396,7 @@ stands in for one.
   `docs/firmware/gps-fields.tsv` has a row for every field of every
   message the model speaks, with the manual page, the images that read
   it or set it, what they use it for and where the model gets it.  The
-  readers are measured, each image's own decoders run in Unicorn on a
+  readers are measured, each image's own decoders run on the CPU on a
   message with the reads of its bytes noted, not read off the C, and
   the setters are every path by which an image sends its engine a
   command (`tools/firmware/gps_paths.py`; `docs/firmware/gps.md`,
@@ -1407,7 +1414,7 @@ stands in for one.
   holds complete but cannot hold right.
   The Z3815A's sentences have rows too (decided 2026-11-16), by field
   rather than byte, measured the same way: the image's own decoders,
-  from its sentence table, run in Unicorn on a second of the Furuno
+  from its sentence table, run on the CPU on a second of the Furuno
   model's sentences, and the second run again with each field changed
   to find its stores, which the commits copy into the 58503A's records
   the scan then follows (`docs/firmware/gps.md`, "The fields").
@@ -2018,9 +2025,8 @@ stands in for one.
   `SKY`, leaving out satellites that are not GPS, and what stands in
   for the receiver's own time integrity.  The raw provider stays, as
   the test of the u-blox path against a live receiver.
-- **Firmware C:** when a Unicorn release has #2420 (bug 1), bump the
-  pin, drop the probe and set `BUG_1.expected` to fixed; likewise bug 2.
-  Give the firmware routines their file's prefix, as the hand-written
+- **Firmware C:** remove Unicorn, its backend, `check-unicorn` and
+  the probe, then rename what is named for it.  Give the firmware routines their file's prefix, as the hand-written
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.

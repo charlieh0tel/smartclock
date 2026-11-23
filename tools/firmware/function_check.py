@@ -164,7 +164,7 @@ from event_log import EEPROM_BASE, LOG_ENTRIES, LOG_PAGE_CHECKSUM, entry_argumen
 from libc_check import BUFFER_SPACING, RAM, RAM_SIZE, RETURN
 from image_diff import region_memories
 from rebuild_link import IMAGE_PREFIX, REBUILT, Section, code_symbols, link, objects, preprocessed, symbols
-from report_figures import STRICT
+from report_figures import UNICORN_REPORT
 from status_register import (
     MASK_ARGUMENT,
     PRIMARY,
@@ -5583,9 +5583,9 @@ def main() -> int:
             print(f"{label}console sessions agreeing: {sessions['agreeing']} of {sessions['run']}")
         print_stacks(label, context.depths)
         failed += counts["failed"] + registers["failed"] + paths["failed"]
-    # the CPU32's cases are not Unicorn's (report_figures.py)
-    if ON_MC683XX:
-        print(STRICT)
+    # Unicorn's figures are not the documents' (report_figures.py)
+    if not ON_MC683XX:
+        print(UNICORN_REPORT)
     return 1 if failed else 0
 
 

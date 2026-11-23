@@ -1,5 +1,5 @@
-"""The CPU the harness runs the image on: Unicorn's 68020, the default,
-or mc683xx's bare CPU32, chosen by SMARTCLOCK_CPU (BACKEND_VARIABLE),
+"""The CPU the harness runs the image on: mc683xx's bare CPU32, the
+default, or Unicorn's 68020, chosen by SMARTCLOCK_CPU (BACKEND_VARIABLE),
 and the one seam between them (docs/firmware/README.md, "The CPU
 backend").
 
@@ -104,11 +104,11 @@ from unicorn.m68k_const import (
 )
 
 # The environment variable that chooses the backend, and its values;
-# Unicorn when it is unset.
+# mc683xx when it is unset.
 BACKEND_VARIABLE = "SMARTCLOCK_CPU"
 UNICORN = "unicorn"
 MC683XX = "mc683xx"
-BACKEND = os.environ.get(BACKEND_VARIABLE, UNICORN)
+BACKEND = os.environ.get(BACKEND_VARIABLE, MC683XX)
 if BACKEND not in (UNICORN, MC683XX):
     raise SystemExit(f"{BACKEND_VARIABLE}={BACKEND}: not {UNICORN} or {MC683XX}")
 ON_MC683XX = BACKEND == MC683XX

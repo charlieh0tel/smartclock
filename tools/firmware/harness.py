@@ -1,5 +1,5 @@
 """The emulator harness the rebuild's checks share: the image with the
-rebuilt image's code loaded beside it in Unicorn (libc_check.Machine),
+rebuilt image's code loaded beside it on the CPU (libc_check.Machine),
 and calls into either from the same RAM and registers.  A machine runs
 one image's profile (Profile): the primary's, or the installer's, whose
 RAM starts as the boot code unpacks it and whose own vectors, kernel
@@ -20,9 +20,9 @@ the harness's own for each parameter that points at one, whose calls
 are effects; and the
 image's own object for a parameter whose callers pass one.  The harness
 stands in for what lies outside memory, the same for both calls: traps
-#1 and #7 run the image's own handlers, and rtr, which Unicorn lacks,
-is done in its place, as is its read of the status register, which
-spoils the condition codes (PROBE); the kernel's traps, #3 and #4, are answered by a
+#1 and #7 run the image's own handlers, and on Unicorn rtr, which it
+lacks, is done in its place, as is its read of the status register,
+which spoils the condition codes (PROBE); the kernel's traps, #3 and #4, are answered by a
 model of each service, and in a pForth console session the console's
 reads by its lines (READ); a trap that never returns, a zero divide, a
 write to code, a branch to itself, the KERNEL_CALL_LIMIT'th kernel
@@ -31,8 +31,9 @@ instruction other than the one that read it (SPLIT), end a call; a case may
 take an interrupt part way, after an event of its own instructions
 (Interrupt); and the kernel calls and device reads and writes a call
 makes, in order, are its effects, compared as RAM is.
-Unicorn has no CPU32; the 68020 stands in, and the image uses none of
-the instructions either has alone (PLAN.md, "A rebuild that runs").
+The CPU is mc683xx's CPU32 (backend.py); on Unicorn, which has none,
+the 68020 stands in, and the image uses none of the instructions
+either has alone (PLAN.md, "A rebuild that runs").
 """
 
 import bisect

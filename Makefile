@@ -336,7 +336,8 @@ check-pages: pages
 # seeded from them, the addresses their C cites from the Z3805A's,
 # the function check's reading of the status
 # register against its tests, every image's chip-select tables, the
-# hand-written C's magic numbers and ROM pointers, the loop's traces and
+# hand-written C's magic numbers and ROM pointers, the 58503A 3704's
+# soft-float rounding, the loop's traces and
 # its constants by model (docs/firmware/loop-constants.json) and where
 # each image's G comes from (docs/firmware/loop-gain.json), the GPS
 # engine's message fields against what the images read, use and send
@@ -354,7 +355,7 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 	check-pforth-words pforth-words check-report-figures report-figures \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
 	check-loop-constants loop-constants check-loop-gain loop-gain record-access report-link check-status-register \
-	check-gps-fields gps-fields
+	check-gps-fields gps-fields check-softfloat
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@

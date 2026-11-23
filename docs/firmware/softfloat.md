@@ -69,3 +69,17 @@ which enables the invalid-operation trap: an invalid operation sets
 bit 13 of the status word at `0x10372c` and reaches `FUN_00013e36`,
 which prints `fp operand error: ` and the routine's name and stops in
 the fatal routine (`restart.md`, "The watchdog", `3 crash`).
+
+In the 58503A 3704 the float add, subtract and multiply round to
+nearest, ties to even: the add compares the bits it shifts off with
+half, `0x80000000`, and on an exact half rounds up only when the
+result's bit 0 is set (`0x613b0` to `0x613c0`).  The divide takes what
+lies below its last bit from only the low 16 bits of the remainder
+(`0x61ad8` to `0x61b08`), so it is now and then 1 ulp toward zero: 1/3
+gives `0x3eaaaaaa`, not `0x3eaaaaab`.  `make check-softfloat`
+(`tools/firmware/softfloat_check.py`) runs the four on random operands,
+the add, subtract and multiply on exact ties too, and fails on any
+other departure from nearest.  The 3704's
+start-up writes the same `0x7480` to its control word, at `0x103a8e`
+(`0x1498e`).  The other images' routines are the same code by the
+match above, but were not run.

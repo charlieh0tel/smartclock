@@ -126,6 +126,8 @@ jobs:
         if: ${{ !cancelled() }}
       - run: make check-loop-trace
         if: ${{ !cancelled() }}
+      - run: make check-softfloat
+        if: ${{ !cancelled() }}
       - run: make check-loop-constants
         if: ${{ !cancelled() }}
       - run: make check-loop-gain

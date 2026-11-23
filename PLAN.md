@@ -465,6 +465,14 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   a pull request or is run by hand.  The eight
   images' function checks run at once (`make -j`), each one's output
   kept whole in a log of its own.
+- The browser job, `pages` in `web.yml`, is a required check on
+  `main`, so its workflow runs on every pull request: one filtered out
+  by `paths` never reports, and a required check that never reports
+  blocks the merge.  A first job, `changed`, compares the pull
+  request's merge commit with `main` and `pages` is skipped, which
+  passes, where nothing it tests changed.  A push to `main` is still
+  narrowed by `paths`, which judges a push of several commits whole;
+  the list is in both places, kept alike by hand.
 - HTML pages are published on GitHub Pages by
   `.github/workflows/pages.yml`, which `make pages` builds.  Generated
   ones (the board atlas, the block diagram, the SCPI trees, the

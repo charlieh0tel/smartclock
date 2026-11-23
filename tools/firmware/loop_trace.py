@@ -40,15 +40,18 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 
-from unicorn import UC_HOOK_INTR, UC_HOOK_MEM_INVALID, Uc, UcError
-from unicorn.m68k_const import (
+from unicorn import Uc, UcError
+
+from backend import (
+    UC_HOOK_INTR,
+    UC_HOOK_MEM_INVALID,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
+    Mc683xx,
+    new_cpu,
 )
-
-from backend import Mc683xx, new_cpu
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'

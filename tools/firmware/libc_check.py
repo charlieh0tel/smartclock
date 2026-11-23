@@ -17,15 +17,14 @@ import math
 import struct
 import sys
 
-from unicorn.m68k_const import (
+from backend import (
     UC_M68K_REG_A0,
     UC_M68K_REG_A1,
     UC_M68K_REG_A7,
     UC_M68K_REG_D0,
     UC_M68K_REG_D1,
+    new_cpu,
 )
-
-from backend import new_cpu
 
 ROM = 0x000000
 ROM_SIZE = 0x80000

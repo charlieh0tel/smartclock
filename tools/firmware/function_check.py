@@ -75,10 +75,17 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UcError
-from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_D0, UC_M68K_REG_PC
+from unicorn import UcError
 
-from backend import ON_MC683XX
+from backend import (
+    ON_MC683XX,
+    UC_HOOK_CODE,
+    UC_HOOK_MEM_READ,
+    UC_HOOK_MEM_WRITE,
+    UC_M68K_REG_A7,
+    UC_M68K_REG_D0,
+    UC_M68K_REG_PC,
+)
 from harness import (
     ALLOCATIONS,
     BYTE_MASK,

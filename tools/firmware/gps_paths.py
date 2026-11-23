@@ -61,11 +61,10 @@ import re
 import struct
 from dataclasses import dataclass
 
-from unicorn import UC_HOOK_CODE, Uc
-from unicorn.m68k_const import UC_M68K_REG_A7, UC_M68K_REG_SR
+from unicorn import Uc
 
 import record_access
-from backend import Mc683xx, new_cpu
+from backend import UC_HOOK_CODE, UC_M68K_REG_A7, UC_M68K_REG_SR, Mc683xx, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = record_access.ROOT

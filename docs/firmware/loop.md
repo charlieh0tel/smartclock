@@ -235,6 +235,33 @@ then the sum and count are cleared and event 0x100 is sent to `curv`
 is printed as `e_avg= %.1f time= %f weight= %d log= %.2f tfom= %.1e`
 (`0x463a6`), time being y / 32 -- days.
 
+The sum is a single-precision float, and each u − c·s goes into it
+whole, in the Z3816A above and in the Z3805A 3543B, Z3801A and 58503A
+3704 (3704 `efc_history_update`, `0x414b2` to `0x414d0`, sum at
+`0x102810`); the Z3815A, Z3817A, 58503B and Z3805A 1.01.03 sum each
+less the window's first and add that back to the mean
+(`rewritten/*/pll_aging.c`); the 58503A 3633's was not checked.  A
+float carries 24 bits, so from 2³⁰ to 2³¹ the sum is a multiple of
+128: an EFC of u counts takes it there after 2³⁰ / u additions, 1534
+at u = 7 × 10⁵, and each addition after rounds to the nearest 128
+(`softfloat.md`).  With the EFC steady each rounds the same way, so
+the errors add: the mean is off by an amount that varies with the
+EFC's level, with a period of 128 counts, and the fit's slope is
+distorted unless the EFC moves well over 128 counts across the
+history.  `uv run tools/firmware/softfloat_check.py --sum` gives the
+3704's error at each level, through its own add and divide.
+
+What that does in service follows from the law.  Locked, the
+integrator takes up a slope error of ε counts a second and moves the
+standing time interval by 4·G·τ²·ε ("Simulating it").  In holdover
+the EFC is set from the fit ("Starting up"),
+and every fit but mode 0 passes through the newest sample, so an error
+of e counts in that sample's mean is a frequency offset of G·e from
+the start of holdover and a time error of G·e·t after t seconds; ε
+adds G·ε·t²/2.  G and τ are in "In every image".  On a settled
+oscillator the EFC barely moves and e stands; the further it moves
+within a window, the more of that window's errors cancel.
+
 w is ∫ ln t dt over the window from y − 1 to y, since ∫ ln t dt =
 t·ln t − t: the mean of ln t over the 2700 s the sample averages.  The
 fit below regresses e on y and w, so a + b·y + c·w is the window mean

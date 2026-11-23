@@ -185,25 +185,23 @@ import struct
 import sys
 from dataclasses import dataclass
 
-from unicorn import (
+from unicorn import Uc, UcError
+
+import gps_paths
+import record_access
+from backend import (
+    ON_MC683XX,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
     UC_HOOK_MEM_READ,
-    Uc,
-    UcError,
-)
-from unicorn.m68k_const import (
     UC_M68K_REG_A7,
     UC_M68K_REG_CR_VBR,
     UC_M68K_REG_D0,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
+    new_cpu,
 )
-
-import gps_paths
-import record_access
-from backend import ON_MC683XX, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]

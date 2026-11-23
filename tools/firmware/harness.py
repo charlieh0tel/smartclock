@@ -44,21 +44,16 @@ import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from unicorn import (
+from unicorn import Uc, UcError
+
+from backend import (
+    ON_MC683XX,
     UC_HOOK_BLOCK,
     UC_HOOK_CODE,
     UC_HOOK_INTR,
     UC_HOOK_MEM_INVALID,
     UC_HOOK_MEM_READ,
     UC_HOOK_MEM_WRITE,
-    UC_MEM_WRITE_PROT,
-    UC_PROT_EXEC,
-    UC_PROT_READ,
-    UC_PROT_WRITE,
-    Uc,
-    UcError,
-)
-from unicorn.m68k_const import (
     UC_M68K_REG_A0,
     UC_M68K_REG_A1,
     UC_M68K_REG_A2,
@@ -78,9 +73,11 @@ from unicorn.m68k_const import (
     UC_M68K_REG_D7,
     UC_M68K_REG_PC,
     UC_M68K_REG_SR,
+    UC_MEM_WRITE_PROT,
+    UC_PROT_EXEC,
+    UC_PROT_READ,
+    UC_PROT_WRITE,
 )
-
-from backend import ON_MC683XX
 from decompiled_check import installer_records
 from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
 from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section

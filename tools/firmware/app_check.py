@@ -18,7 +18,7 @@ the Z3805A 3543B's.  Exits nonzero if any check fails.
 import struct
 import sys
 
-from unicorn.m68k_const import (
+from backend import (
     UC_M68K_REG_A0,
     UC_M68K_REG_A1,
     UC_M68K_REG_A7,
@@ -28,7 +28,6 @@ from unicorn.m68k_const import (
     UC_M68K_REG_D3,
     UC_M68K_REG_D7,
 )
-
 from libc_check import (
     RETURN,
     STACK_TOP,

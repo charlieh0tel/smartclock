@@ -45,63 +45,63 @@ import os
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from unicorn import (
-    UC_ARCH_M68K,
-    UC_ERR_EXCEPTION,
-    UC_ERR_FETCH_PROT,
-    UC_ERR_FETCH_UNALIGNED,
-    UC_ERR_FETCH_UNMAPPED,
-    UC_ERR_READ_PROT,
-    UC_ERR_READ_UNALIGNED,
-    UC_ERR_READ_UNMAPPED,
-    UC_ERR_WRITE_PROT,
-    UC_ERR_WRITE_UNALIGNED,
-    UC_ERR_WRITE_UNMAPPED,
-    UC_HOOK_BLOCK,
-    UC_HOOK_CODE,
-    UC_HOOK_INTR,
-    UC_HOOK_MEM_INVALID,
-    UC_HOOK_MEM_READ,
-    UC_HOOK_MEM_WRITE,
-    UC_MEM_FETCH,
-    UC_MEM_FETCH_PROT,
-    UC_MEM_FETCH_UNMAPPED,
-    UC_MEM_READ,
-    UC_MEM_READ_PROT,
-    UC_MEM_READ_UNMAPPED,
-    UC_MEM_WRITE,
-    UC_MEM_WRITE_PROT,
-    UC_MEM_WRITE_UNMAPPED,
-    UC_MODE_BIG_ENDIAN,
-    UC_PROT_ALL,
-    UC_PROT_EXEC,
-    UC_PROT_READ,
-    UC_PROT_WRITE,
-    Uc,
-    UcError,
-)
-from unicorn.m68k_const import (
-    UC_CPU_M68K_M68020,
-    UC_M68K_REG_A0,
-    UC_M68K_REG_A1,
-    UC_M68K_REG_A2,
-    UC_M68K_REG_A3,
-    UC_M68K_REG_A4,
-    UC_M68K_REG_A5,
-    UC_M68K_REG_A6,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_CR_VBR,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_D1,
-    UC_M68K_REG_D2,
-    UC_M68K_REG_D3,
-    UC_M68K_REG_D4,
-    UC_M68K_REG_D5,
-    UC_M68K_REG_D6,
-    UC_M68K_REG_D7,
-    UC_M68K_REG_PC,
-    UC_M68K_REG_SR,
-)
+from unicorn import UC_ARCH_M68K, UC_MODE_BIG_ENDIAN, Uc, UcError
+from unicorn.m68k_const import UC_CPU_M68K_M68020
+
+# Unicorn 2.1.4's names and values, which the harness and its checks
+# use: a hook's kind (hook_add) ...
+UC_HOOK_INTR = 1
+UC_HOOK_CODE = 4
+UC_HOOK_BLOCK = 8
+UC_HOOK_MEM_INVALID = 1008
+UC_HOOK_MEM_READ = 1024
+UC_HOOK_MEM_WRITE = 2048
+# ... the access a memory hook is given ...
+UC_MEM_READ = 16
+UC_MEM_WRITE = 17
+UC_MEM_FETCH = 18
+UC_MEM_READ_UNMAPPED = 19
+UC_MEM_WRITE_UNMAPPED = 20
+UC_MEM_FETCH_UNMAPPED = 21
+UC_MEM_WRITE_PROT = 22
+UC_MEM_READ_PROT = 23
+UC_MEM_FETCH_PROT = 24
+# ... a region's permissions (mem_map, mem_protect) ...
+UC_PROT_READ = 1
+UC_PROT_WRITE = 2
+UC_PROT_EXEC = 4
+UC_PROT_ALL = 7
+# ... an error's code (UcError.errno) ...
+UC_ERR_READ_UNMAPPED = 6
+UC_ERR_WRITE_UNMAPPED = 7
+UC_ERR_FETCH_UNMAPPED = 8
+UC_ERR_WRITE_PROT = 12
+UC_ERR_READ_PROT = 13
+UC_ERR_FETCH_PROT = 14
+UC_ERR_READ_UNALIGNED = 16
+UC_ERR_WRITE_UNALIGNED = 17
+UC_ERR_FETCH_UNALIGNED = 18
+UC_ERR_EXCEPTION = 21
+# ... and a register (reg_read, reg_write).
+UC_M68K_REG_A0 = 1
+UC_M68K_REG_A1 = 2
+UC_M68K_REG_A2 = 3
+UC_M68K_REG_A3 = 4
+UC_M68K_REG_A4 = 5
+UC_M68K_REG_A5 = 6
+UC_M68K_REG_A6 = 7
+UC_M68K_REG_A7 = 8
+UC_M68K_REG_D0 = 9
+UC_M68K_REG_D1 = 10
+UC_M68K_REG_D2 = 11
+UC_M68K_REG_D3 = 12
+UC_M68K_REG_D4 = 13
+UC_M68K_REG_D5 = 14
+UC_M68K_REG_D6 = 15
+UC_M68K_REG_D7 = 16
+UC_M68K_REG_SR = 17
+UC_M68K_REG_PC = 18
+UC_M68K_REG_CR_VBR = 21
 
 # The environment variable that chooses the backend, and its values;
 # mc683xx when it is unset.

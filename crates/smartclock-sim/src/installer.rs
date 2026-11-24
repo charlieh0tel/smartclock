@@ -97,8 +97,8 @@ impl Installer {
     }
 
     pub(crate) fn primary_revision(&self) -> String {
-        // All five dumps place the revision between UNLK A6; RTS and
-        // the primary copyright string. Inspect current writable flash:
+        // Every catalog dump places the revision between UNLK A6; RTS
+        // and the primary copyright string; the 1.01 line's has dots. Inspect current writable flash:
         // upgrades move this string and leave the boot region untouched.
         const EPILOGUE: &[u8] = b"\x4e\x5e\x4e\x75";
         const COPYRIGHT: &[u8] = b"\0Copyright Hewlett-Packard Co.";
@@ -109,7 +109,9 @@ impl Installer {
             .filter(|(_, bytes)| *bytes == EPILOGUE)
             .find_map(|(offset, _)| {
                 let tail = &primary[offset + EPILOGUE.len()..];
-                let length = tail.iter().position(|byte| !byte.is_ascii_alphanumeric())?;
+                let length = tail
+                    .iter()
+                    .position(|&byte| !byte.is_ascii_alphanumeric() && byte != b'.')?;
                 if length == 0 || !tail[length..].starts_with(COPYRIGHT) {
                     return None;
                 }

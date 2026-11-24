@@ -2056,6 +2056,10 @@ stands in for one.
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.
+- **The installer in the emulator:** goal, details to be worked out:
+  run a dump's own boot code and installer on mc683xx, with the flash
+  chips modeled, so that `smartclock-cli flash` programs it over TCP
+  and the installer's own code writes the chips.
 - **The rest of the firmware work** is in progress and will follow:
   the emulator that boots these images and booting the rebuilt C in
   it.  The FPGA designs decoded as netlists are here

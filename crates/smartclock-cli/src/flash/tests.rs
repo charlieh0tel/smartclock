@@ -62,6 +62,7 @@ fn simulator_reflashes_each_model_through_real_echoes_and_prompts() {
     for (name, layout) in [
         ("z3801a-3543.bin", FlashLayout::AmdLanes),
         ("z3805a-3543b.bin", FlashLayout::AmdLanes),
+        ("z3805a-1.01.03.bin", FlashLayout::AmdLanes),
         ("58503a-3633.bin", FlashLayout::AmdLanes),
         ("58503a-3704.bin", FlashLayout::AmdLanes),
         ("z3816a-4001.bin", FlashLayout::IntelWords),
@@ -210,6 +211,7 @@ fn validates_audited_images_and_rejects_corruption_and_chip_files() {
     ));
     for name in [
         "z3805a-3543b.bin",
+        "z3805a-1.01.03.bin",
         "58503a-3633.bin",
         "58503a-3704.bin",
         "z3816a-4001.bin",
@@ -438,9 +440,18 @@ fn failed_boot_is_not_reported_as_success() {
 
 #[test]
 fn simulator_upgrades_and_downgrades_preserving_the_original_installer() {
-    let older = include_bytes!("../../../../third_party/firmware/images/58503a-3633.bin");
-    let newer = include_bytes!("../../../../third_party/firmware/images/58503a-3704.bin");
-    for (original, candidate) in [(older, newer), (newer, older)] {
+    let a3633 = include_bytes!("../../../../third_party/firmware/images/58503a-3633.bin");
+    let a3704 = include_bytes!("../../../../third_party/firmware/images/58503a-3704.bin");
+    // The Z3805A's Oncore and Furuno images, both ways: the way back
+    // must be open whichever is running.
+    let z3543b = include_bytes!("../../../../third_party/firmware/images/z3805a-3543b.bin");
+    let z1_01_03 = include_bytes!("../../../../third_party/firmware/images/z3805a-1.01.03.bin");
+    for (original, candidate) in [
+        (a3633, a3704),
+        (a3704, a3633),
+        (z1_01_03, z3543b),
+        (z3543b, z1_01_03),
+    ] {
         let original_firmware = Firmware::validate(original.to_vec()).unwrap();
         let firmware = Firmware::validate(candidate.to_vec()).unwrap();
         let transport = simulated(&original_firmware, original.to_vec(), FlashLayout::AmdLanes);
@@ -453,8 +464,8 @@ fn simulator_upgrades_and_downgrades_preserving_the_original_installer() {
                 .one_line("identity")
                 .unwrap(),
             format!(
-                "HEWLETT-PACKARD,58503A,3542A01548,{}-A",
-                firmware.profile.revision
+                "HEWLETT-PACKARD,{},3542A01548,{}-A",
+                firmware.profile.model, firmware.profile.revision
             )
         );
         let receiver = transport.receiver().lock().unwrap();
@@ -637,4 +648,18 @@ fn an_image_checked_by_its_word_sum_is_split_and_joined_and_found_sound() {
     assert!(told.sound, "{:?}", told.lines);
     assert!(told.lines[1].contains("word sum"), "{:?}", told.lines);
     assert_eq!(join(&split(&image).unwrap()).unwrap(), image);
+}
+
+#[test]
+fn a_symmetricom_z3805a_on_1_01_03_checks_compatible_with_3543b() {
+    let firmware = Firmware::validate(
+        include_bytes!("../../../../third_party/firmware/images/z3805a-3543b.bin").to_vec(),
+    )
+    .unwrap();
+    let mut script = Script::default();
+    script.add("*IDN?", "SYMMETRICOM,Z3805A,3625A01418,1.01.03-A");
+    script.add(":SYSTem:LANGuage?", "\"PRIMARY\"");
+    script.add(":SYSTem:ERRor?", "+0,\"No error\"");
+    flash(&mut script, &firmware, false, Some("3625A01418")).unwrap();
+    assert!(script.replies.is_empty());
 }

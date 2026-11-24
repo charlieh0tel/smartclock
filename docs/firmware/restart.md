@@ -826,6 +826,7 @@ The image catalog accepts these full 512 KiB dumps by exact SHA-256:
 | --- | --- | --- | --- |
 | Z3801A | 3543 | Peru | `0x10000` |
 | Z3805A | 3543B | Peru | `0x10000` |
+| Z3805A | 1.01.03 | Peru | `0x10000` |
 | 58503A | 3633 | Oman | `0x10000` |
 | 58503A | 3704 | USA | `0x10000` |
 | Z3816A | 4001 | USA | `0x20000` |
@@ -841,6 +842,13 @@ across upgrades is not established.  This relies on the receiver's
 EEPROM identity, not independent board identification.  A model
 without a dump (such as 59551A) is refused until its image and layout
 can be audited.
+
+The flasher does not know the GPS engine.  The Z3805A's 3543B speaks
+to a Motorola Oncore and its 1.01.03 to a Furuno
+([`z3805a-1.01.03.md`](z3805a-1.01.03.md), "The GPS engine"), and
+either flashes onto either board.  An image for the other engine runs
+without GPS until it is reflashed, which the boot flash and installer,
+never written, always allow.
 
 `--experimental` also accepts an image built by its owner, not HP's,
 whose SHA-256 is in a second table, `EXPERIMENTAL`
@@ -887,7 +895,7 @@ the debug console, as `smartclock-cli read-flash` does, requires it to
 equal the image, protected boot region included, and returns the port
 to SCPI as `read-flash` does (see `console.md`, "Reading memory through it").  That
 adds about eleven minutes.  For an image with no known installer exit,
-such as the Z3816A's, it says so and relies on `halt` alone.
+such as the Z3816A's or the Z3805A 1.01.03's, it says so and relies on `halt` alone.
 Simulator tests compare all bytes after programming for each catalog
 image, protected boot region included; the simulator has no console,
 so the readback is not tested there.
@@ -904,7 +912,8 @@ The tool does not restore settings.
 
 Cross-revision flashing is allowed between catalog images of the same
 model and layout, but has not been tried on hardware.  Simulator tests
-cover 58503A 3633 to 3704 and 3704 to 3633, comparing the downloaded
+cover 58503A 3633 to 3704 and 3704 to 3633, and Z3805A 1.01.03 to
+3543B and 3543B to 1.01.03, comparing the downloaded
 primary bytes and the original protected boot bytes.  097-59551-02
 appendix C, page C-3, says new firmware resets settings to
 system-preset defaults; the same-revision Z3801A reinstall below kept

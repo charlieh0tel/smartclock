@@ -110,6 +110,13 @@ pub(super) const PROFILES: &[Profile] = &[
         sha256: "216daf929b293be02bfd92ed61cca8c7e70d577696f2567a12f01905f6998792",
     },
     Profile {
+        model: "Z3805A",
+        revision: "1.01.03",
+        installer: "Peru",
+        layout: Layout::AmdLanes,
+        sha256: "148d9b55a0ed9d043dbab813b90c2b007c6afdd97a7b7e12eb424c4d3da354d7",
+    },
+    Profile {
         model: "58503A",
         revision: "3633",
         installer: "Oman",

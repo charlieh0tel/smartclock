@@ -3605,7 +3605,7 @@ class Run:
             address = access.address
             # the stack pointer before the writing instruction's own
             # decrement, which the write lies below
-            sp = access.registers["A7"]
+            sp = access.register("A7")
             if address >= sp - PUSH_REACH:
                 top = STACK_END if sp >= SUPERVISOR_STACK else SUPERVISOR_STACK
                 deepest[top] = min(deepest.get(top, address), address)

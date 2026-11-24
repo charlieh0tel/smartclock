@@ -4,8 +4,10 @@ page under "Featured", each in a box of its own if given, then each
 PAGE given (a file in DIR) but those named UNLISTED, NEW and FEATURED
 included, by its <title> and its description meta tag under its
 smartclock-group meta tag's group, in GROUPS' order and within one in
-the order given, and the repository's README and the hub document of
-each of the project's tracks.  Fails if a page lacks any
+the order given, followed by the group's projects in other
+repositories, each linking to its repository, and the repository's
+README and the hub document of each of the project's tracks.  Fails if a
+page lacks any
 of the three tags or names a group GROUPS lacks, or if NEW, FEATURED or
 an UNLISTED page is not one of the PAGEs, or NEW and FEATURED are the
 same page or either is unlisted, or a WIP page is not one of the PAGEs.
@@ -56,6 +58,19 @@ TREE = f"{REPOSITORY}/tree/main"
 
 
 @dataclass(frozen=True)
+class Elsewhere:
+    """A project in another repository, listed in a group as a page is,
+    though it is not one of this site's pages."""
+
+    # Its name, the entry's title.
+    name: str
+    # Its link, its repository.
+    link: str
+    # One line saying what it is, the entry's line.
+    blurb: str
+
+
+@dataclass(frozen=True)
 class Group:
     """One of the groups the landing page lists pages under."""
 
@@ -65,6 +80,8 @@ class Group:
     blurb: str
     # Its motif, an SVG drawing's inner elements on MOTIF_BOX, in strokes.
     motif: str
+    # The projects elsewhere it lists after its pages, in order.
+    elsewhere: tuple[Elsewhere, ...] = ()
 
 
 # The boxes set apart above the groups, in order: each one's key, which
@@ -75,7 +92,8 @@ SET_APART = (("new", "New"), ("featured", "Featured"))
 MOTIF_BOX = (72, 48)
 
 # The groups a page names in its smartclock-group meta tag, by key, in
-# the landing page's order.  A group with no page is left out.
+# the landing page's order.  A group with neither a page nor a project
+# elsewhere is left out.
 GROUPS = {
     "hardware": Group(
         "Hardware",
@@ -87,6 +105,13 @@ GROUPS = {
         '<path d="M18 14v-3M23 14v-3M28 14v-3M18 34v3M23 34v3M28 34v3"/>'
         '<rect x="44" y="12" width="16" height="16" rx="3"/>'
         '<path d="M42 36h8M54 36h8"/>',
+        (
+            Elsewhere(
+                "smartclock-oncore-emulator",
+                "https://github.com/charlieh0tel/smartclock-oncore-emulator",
+                "A replacement for the VP Oncore: a board with a u-blox LEA-M8T and an STM32C091 that answers the Oncore messages these receivers' firmware sends, built on this project's GPS crates.",
+            ),
+        ),
     ),
     "firmware": Group(
         "Firmware",
@@ -613,6 +638,7 @@ def grouped(heads, unlisted, wip):
     sections = []
     for key, group in GROUPS.items():
         entries = [entry(name, page, wip) for name, page in heads.items() if page.group == key and name not in unlisted]
+        entries += [listing(project.link, project.name, project.blurb) for project in group.elsewhere]
         if entries:
             about = f"{motif(group)}<p>{html.escape(group.blurb)}</p>"
             sections.append(section(key, group.heading, about, entries))
@@ -671,7 +697,8 @@ def main():
     sections = [set_apart(key, heading, name, heads[name], wip) for key, heading, name in chosen if name]
     unlisted = set(args.unlisted)
     sections += grouped(heads, unlisted, wip)
-    listed = {page.group for name, page in heads.items() if name not in unlisted}
+    listed = ({page.group for name, page in heads.items() if name not in unlisted}
+              | {key for key, group in GROUPS.items() if group.elsewhere})
     for name, page in heads.items():
         crumb = breadcrumb(page, page.group in listed)
         if name in wip:

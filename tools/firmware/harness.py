@@ -3666,7 +3666,7 @@ class Run:
         try:
             at = start
             while True:
-                end = machine.run_limited(begin=at, reach=RETURN, instructions=STEP_LIMIT - steps).end
+                end = self_looped(machine, at, STEP_LIMIT - steps)
                 if isinstance(end, mc683xx.End.Fault) or not due or trapped or ended or steps >= STEP_LIMIT:
                     break
                 at = machine.read_register("PC")
@@ -3738,6 +3738,21 @@ class Run:
         for part in register.split(":"):
             value = value << 32 | self.registers[part]
         return value
+
+
+def self_looped(machine: mc683xx.Machine, begin: int, instructions: int) -> mc683xx.End:
+    """A run from begin of at most instructions, which, where it reaches
+    one of SELF_BRANCHES, runs it twice, as the run would go on at it,
+    and ends there; any other branch to itself it runs on at."""
+    started = machine.instructions
+    end = machine.run_limited(begin=begin, reach=RETURN, instructions=instructions, self_loop=True).end
+    if not isinstance(end, mc683xx.End.SelfLoop):
+        return end
+    if any(machine.peek_bytes(end.pc, len(branch)) == branch for branch in SELF_BRANCHES):
+        machine.run_limited(instructions=1)
+        return end
+    left = instructions - (machine.instructions - started)
+    return machine.run_limited(reach=RETURN, instructions=left).end if left > 0 else end
 
 
 def literal_region(m: RebuiltMachine, at: int) -> int | None:

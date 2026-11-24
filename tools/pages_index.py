@@ -111,6 +111,11 @@ GROUPS = {
                 "https://github.com/charlieh0tel/smartclock-oncore-emulator",
                 "A replacement for the VP Oncore: a board with a u-blox LEA-M8T and an STM32C091 that answers the Oncore messages these receivers' firmware sends, built on this project's GPS crates.",
             ),
+            Elsewhere(
+                "mc683xx-bdm",
+                "https://github.com/charlieh0tel/mc683xx-bdm",
+                "A USB background debug mode (BDM) pod for Motorola CPU32 microcontrollers, such as the MC68331: a Raspberry Pi Pico on a small carrier board that drives the standard 10-pin BDM header.",
+            ),
         ),
     ),
     "firmware": Group(

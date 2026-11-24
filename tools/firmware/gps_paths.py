@@ -45,7 +45,7 @@ How each is found:
   command, or by its address.
 - Console: each function with an instruction that moves a constant to
   gps_command's code is a word, named as its function less DIAG_PREFIX;
-  gps_command_send is run (backend.py) on each code found, with gpsx_send
+  gps_command_send is run (mc683xx's CPU32) on each code found, with gpsx_send
   answering at once, and the request it posts noted.  gps_change and
   gps_query post the request the console gives: any.
 
@@ -61,8 +61,9 @@ import re
 import struct
 from dataclasses import dataclass
 
+import mc683xx
+
 import record_access
-from backend import UC_HOOK_CODE, UC_M68K_REG_A7, UC_M68K_REG_SR, Mc683xx, new_cpu
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = record_access.ROOT
@@ -375,28 +376,31 @@ def console_requests(image: str, rom: bytes, codes: set[int]) -> dict[int, tuple
     """The request gps_command_send posts for each console code, run with
     gpsx_send answering at once."""
     send = names(image)[GPSX_SEND]
-    uc = new_cpu()
-    uc.mem_map(0, ROM_SIZE)
-    uc.mem_write(0, rom[:ROM_SIZE])
-    uc.mem_write(send, ANSWER)
-    uc.mem_map(RAM, RAM_SIZE)
+    machine = mc683xx.Machine()
+    machine.map(0, ROM_SIZE, contents=rom[:ROM_SIZE])
+    machine.poke_bytes(send, ANSWER)
+    machine.map(RAM, RAM_SIZE)
+    machine.set_stop_on_fault(True)
+    machine.set_stop_on_exception(None)
     posted: list[tuple[int, int]] = []
 
-    def hook(uc: Mc683xx, address: int, size: int, data: object) -> None:
-        sp = uc.reg_read(UC_M68K_REG_A7)
-        posted.append((struct.unpack('>H', uc.mem_read(sp + FRAME_CODE, 2))[0], uc.mem_read(sp + FRAME_MODE, 1)[0]))
+    def hook(instruction: mc683xx.Instruction) -> None:
+        sp = machine.read_register('A7')
+        posted.append((struct.unpack('>H', machine.peek_bytes(sp + FRAME_CODE, 2))[0], machine.peek_bytes(sp + FRAME_MODE, 1)[0]))
 
-    uc.hook_add(UC_HOOK_CODE, hook, begin=send, end=send)
+    machine.add_code_hook(hook, send, send)
     mailbox = globals_of(image)['gps_command']
     found = {}
     for code in sorted(codes):
         posted.clear()
-        uc.mem_write(mailbox, bytes([code]))
-        uc.mem_write(mailbox + COMMAND_REQUEST, struct.pack('>I', ANY))
-        uc.mem_write(STACK, struct.pack('>I', RETURN))
-        uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-        uc.reg_write(UC_M68K_REG_A7, STACK)
-        uc.emu_start(names(image)[CONSOLE_SENDER], RETURN, count=CALL_LIMIT)
+        machine.poke_bytes(mailbox, bytes([code]))
+        machine.poke_bytes(mailbox + COMMAND_REQUEST, struct.pack('>I', ANY))
+        machine.poke_bytes(STACK, struct.pack('>I', RETURN))
+        machine.write_register('SR', SUPERVISOR)
+        machine.write_register('A7', STACK)
+        match machine.run_limited(begin=names(image)[CONSOLE_SENDER], reach=RETURN, instructions=CALL_LIMIT).end:
+            case mc683xx.End.Fault() | mc683xx.End.Exception() as end:
+                raise RuntimeError(f'{image}: {end}')
         if posted:
             found[code] = posted[0]
     return found

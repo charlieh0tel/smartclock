@@ -1,9 +1,9 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Runs the disciplining loop's own code, each image's startup_pll and
-pll_normal, on backend.py's CPU on synthetic readings, and writes what
+pll_normal, on mc683xx's CPU32 on synthetic readings, and writes what
 it does second by second to crates/smartclock/tests/fixtures/loop/IMAGE.tsv,
 which crates/smartclock/tests/loop_firmware_trace.rs replays against
 the update law docs/firmware/loop.md states; or, with --check, fails
@@ -40,17 +40,7 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 
-from backend import (
-    UC_HOOK_INTR,
-    UC_HOOK_MEM_INVALID,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_PC,
-    UC_M68K_REG_SR,
-    Mc683xx,
-    UcError,
-    new_cpu,
-)
+import mc683xx
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIRMWARE = ROOT / 'third_party/firmware'
@@ -255,8 +245,7 @@ class Machine:
     routines: dict[str, int]
     addresses: dict[str, int]
     layout: dict[str, tuple[int, int]]
-    uc: Mc683xx = field(init=False)
-    fault: str | None = field(init=False, default=None)
+    machine: mc683xx.Machine = field(init=False)
 
     def __post_init__(self) -> None:
         patched = bytearray(self.rom)
@@ -264,25 +253,14 @@ class Machine:
             if name in self.routines:
                 at = self.routines[name]
                 patched[at : at + len(code)] = code
-        self.uc = new_cpu()
-        self.uc.mem_map(0, ROM_SIZE)
-        self.uc.mem_write(0, bytes(patched))
-        self.uc.mem_map(RAM, RAM_SIZE)
-        self.uc.hook_add(UC_HOOK_MEM_INVALID, self.invalid)
-        self.uc.hook_add(UC_HOOK_INTR, self.trap)
+        self.machine = mc683xx.Machine()
+        self.machine.map(0, ROM_SIZE, contents=patched)
+        self.machine.map(RAM, RAM_SIZE)
+        self.machine.set_stop_on_fault(True)
+        self.machine.set_stop_on_exception(None)
         self.known = sorted(
             (address, name) for name, address in self.routines.items() if RUN.match(name) or name in STUBS
         )
-
-    def invalid(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> bool:
-        pc = uc.reg_read(UC_M68K_REG_PC)
-        self.fault = f'{self.image}: access {access} of {size} bytes at {address:#x} from {pc:#x}'
-        return False
-
-    def trap(self, uc: Mc683xx, number: int, data: object) -> None:
-        pc = uc.reg_read(UC_M68K_REG_PC)
-        self.fault = f'{self.image}: exception {number} at {pc:#x}'
-        uc.emu_stop()
 
     def field(self, structure: str, member: str) -> int:
         """A field's address."""
@@ -295,29 +273,27 @@ class Machine:
         return self.addresses[variable] + self.layout[f'{structure}.{member}'][0]
 
     def write(self, at: int, fmt: str, value: float | int) -> None:
-        self.uc.mem_write(at, struct.pack('>' + fmt, value))
+        self.machine.poke_bytes(at, struct.pack('>' + fmt, value))
 
     def read(self, at: int, fmt: str) -> float | int:
-        return struct.unpack('>' + fmt, self.uc.mem_read(at, struct.calcsize(fmt)))[0]
+        return struct.unpack('>' + fmt, self.machine.peek_bytes(at, struct.calcsize(fmt)))[0]
 
     def call(self, routine: str, argument: bytes) -> int:
         """Calls a routine with its stack arguments' bytes; its D0."""
         sp = STACK - 4 - len(argument)
-        self.uc.mem_write(sp, struct.pack('>I', RETURN) + argument)
+        self.machine.poke_bytes(sp, struct.pack('>I', RETURN) + argument)
         # SR first: setting S swaps in the supervisor's stack pointer.
-        self.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-        self.uc.reg_write(UC_M68K_REG_A7, sp)
-        self.uc.reg_write(UC_M68K_REG_D0, 0)
-        self.fault = None
-        try:
-            self.uc.emu_start(self.routines[routine], RETURN, count=CALL_LIMIT)
-        except UcError as error:
-            sys.exit(f'{self.fault or self.image}: {error}')
-        if self.fault is not None:
-            sys.exit(self.fault)
-        if self.uc.reg_read(UC_M68K_REG_PC) != RETURN:
-            sys.exit(f'{self.image}: {routine} did not return')
-        return self.uc.reg_read(UC_M68K_REG_D0)
+        self.machine.write_register('SR', SUPERVISOR)
+        self.machine.write_register('A7', sp)
+        self.machine.write_register('D0', 0)
+        match self.machine.run_limited(begin=self.routines[routine], reach=RETURN, instructions=CALL_LIMIT).end:
+            case mc683xx.End.Reached():
+                pass
+            case mc683xx.End.Fault() | mc683xx.End.Exception() as end:
+                sys.exit(f'{self.image}: {routine}: {end}')
+            case _:
+                sys.exit(f'{self.image}: {routine} did not return')
+        return self.machine.read_register('D0')
 
 
 def check_callees(machine: Machine) -> None:
@@ -482,8 +458,7 @@ def cell(value: float | int | str, fmt: str) -> str:
 
 def fresh(machine: Machine) -> dict[str, str]:
     """RAM cleared and set for a scenario; the constants it set."""
-    uc = machine.uc
-    uc.mem_write(RAM, bytes(RAM_SIZE))
+    machine.machine.poke_bytes(RAM, bytes(RAM_SIZE))
     gain = pushed_gain(machine.rom, machine.routines['pllp_task'], machine.routines['efc_gain_set'])
     machine.call('efc_gain_set', struct.pack('>I', gain))
     tau = struct.unpack('>f', machine.rom[TAU_BLOCKS[machine.image] + TAU_OFFSET :][:4])[0]
@@ -540,8 +515,8 @@ def run(machine: Machine, name: str, seconds: list[Second], stop_when_done: bool
         # result and causes are its own call's.
         causes_at = machine.field('pll_state', 'hold_causes')
         size = machine.layout['pll_state.hold_causes'][1]
-        causes = int.from_bytes(machine.uc.mem_read(causes_at, size), 'big')
-        machine.uc.mem_write(causes_at, bytes(size))
+        causes = int.from_bytes(machine.machine.peek_bytes(causes_at, size), 'big')
+        machine.machine.poke_bytes(causes_at, bytes(size))
         row = [name] + [
             cell(getattr(second, key), 'f' if key in ('reading', 'current', 'fit_b', 'fit_c') else 'd')
             for key in INPUTS

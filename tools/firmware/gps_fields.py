@@ -1,11 +1,11 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Checks docs/firmware/gps-fields.tsv, the fields of every message the
 GPS engine of crates/smartclock-gps speaks, against what the images do:
 which bytes of each message an image's own decoders read, measured by
-running them (backend.py), what becomes of each field read, and which
+running them (mc683xx's CPU32), what becomes of each field read, and which
 commands it sends, by every path (gps_paths.py).
 
     uv run -q tools/firmware/gps_fields.py [--check]
@@ -185,22 +185,10 @@ import struct
 import sys
 from dataclasses import dataclass
 
+import mc683xx
+
 import gps_paths
 import record_access
-from backend import (
-    UC_HOOK_CODE,
-    UC_HOOK_INTR,
-    UC_HOOK_MEM_INVALID,
-    UC_HOOK_MEM_READ,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_CR_VBR,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_PC,
-    UC_M68K_REG_SR,
-    Mc683xx,
-    UcError,
-    new_cpu,
-)
 from loop_trace import CALL_LIMIT, RAM, RAM_SIZE, RETURN, ROM_SIZE, STACK, SUPERVISOR, globals_of, names
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -258,8 +246,7 @@ RECORD_ARGUMENT = 8
 WALK_BEFORE = 16
 # How many calls deep a pushed address is followed.
 FOLLOW_DEPTH = 6
-# Trap #7's vector, and a vector's bytes.
-TRAP_7 = 39
+# A vector's bytes.
 VECTOR_SIZE = 4
 
 COLUMNS = (
@@ -463,43 +450,30 @@ class Machine:
     def __init__(self, image: str, rom: bytes) -> None:
         self.image = image
         self.vectors = IMAGES.get(image) or NMEA_IMAGES[image]
-        self.fault: str | None = None
         self.reads: set[int] | None = None
         self.watched: set[tuple[int, int]] | None = None
-        self.uc = new_cpu()
-        self.uc.mem_map(0, ROM_SIZE)
-        self.uc.mem_write(0, rom[:ROM_SIZE])
-        self.uc.mem_map(RAM, RAM_SIZE)
-        self.uc.hook_add(UC_HOOK_MEM_INVALID, self.invalid)
-        self.uc.hook_add(UC_HOOK_INTR, self.exception)
-        self.uc.hook_add(UC_HOOK_MEM_READ, self.read, begin=MESSAGE, end=MESSAGE + MESSAGE_SPACE - 1)
-        self.uc.hook_add(UC_HOOK_MEM_READ, self.watch, begin=RAM, end=MESSAGE - 1)
+        self.machine = mc683xx.Machine()
+        self.machine.map(0, ROM_SIZE, contents=rom[:ROM_SIZE])
+        self.machine.map(RAM, RAM_SIZE)
+        self.machine.set_stop_on_fault(True)
         # the CPU takes trap #7 through the image's vectors and returns
         # by rte itself
-        self.uc.native_vectors = {TRAP_7}
-        self.uc.watch_only = True
-        self.uc.reg_write(UC_M68K_REG_CR_VBR, self.vectors)
+        self.machine.set_stop_on_exception(mc683xx.VectorSet.ALL.without(mc683xx.Vector.trap(7)))
+        self.machine.add_read_hook(self.read, MESSAGE, MESSAGE + MESSAGE_SPACE - 1)
+        self.machine.add_read_hook(self.watch, RAM, MESSAGE - 1)
+        self.machine.write_register('VBR', self.vectors)
 
-    def invalid(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> bool:
-        self.fault = f'access of {size} bytes at {address:#x} from {uc.reg_read(UC_M68K_REG_PC):#x}'
-        return False
+    def read(self, access: mc683xx.MemoryAccess) -> None:
+        if self.reads is not None and not access.stacking:
+            self.reads.update(range(access.address - MESSAGE, access.address - MESSAGE + access.size))
 
-    def exception(self, uc: Mc683xx, number: int, data: object) -> None:
-        self.fault = f'exception {number} at {uc.reg_read(UC_M68K_REG_PC):#x}'
-        uc.emu_stop()
-
-    def read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
-        if self.reads is not None:
-            self.reads.update(range(address - MESSAGE, address - MESSAGE + size))
-
-    def watch(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
-        if self.watched is not None:
-            pc = uc.reg_read(UC_M68K_REG_PC)
-            self.watched.update((pc, byte) for byte in range(address, address + size))
+    def watch(self, access: mc683xx.MemoryAccess) -> None:
+        if self.watched is not None and not access.stacking:
+            self.watched.update((access.pc, byte) for byte in range(access.address, access.address + access.size))
 
     def ram(self) -> bytes:
         """RAM below the message."""
-        return bytes(self.uc.mem_read(RAM, MESSAGE - RAM))
+        return self.machine.peek_bytes(RAM, MESSAGE - RAM)
 
     def call(self, routine: int, *arguments: int) -> int:
         """Calls a routine with long arguments on the stack; its D0."""
@@ -509,26 +483,24 @@ class Machine:
         """Calls a routine with its arguments as pushed; its D0."""
         frame = struct.pack('>I', RETURN) + arguments
         sp = STACK - len(frame)
-        self.uc.mem_write(sp, frame)
+        self.machine.poke_bytes(sp, frame)
         # SR first: setting S swaps in the supervisor's stack pointer.
-        self.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-        self.uc.reg_write(UC_M68K_REG_A7, sp)
-        self.uc.reg_write(UC_M68K_REG_D0, 0)
-        self.fault = None
-        try:
-            self.uc.emu_start(routine, RETURN, count=CALL_LIMIT)
-        except UcError as error:
-            sys.exit(f'{self.image}: {routine:#x}: {self.fault or error}')
-        if self.fault is not None:
-            sys.exit(f'{self.image}: {routine:#x}: {self.fault}')
-        if self.uc.reg_read(UC_M68K_REG_PC) != RETURN:
-            sys.exit(f'{self.image}: {routine:#x} did not return, at {self.uc.reg_read(UC_M68K_REG_PC):#x}')
-        return self.uc.reg_read(UC_M68K_REG_D0)
+        self.machine.write_register('SR', SUPERVISOR)
+        self.machine.write_register('A7', sp)
+        self.machine.write_register('D0', 0)
+        match self.machine.run_limited(begin=routine, reach=RETURN, instructions=CALL_LIMIT).end:
+            case mc683xx.End.Reached():
+                pass
+            case mc683xx.End.Fault() | mc683xx.End.Exception() as end:
+                sys.exit(f'{self.image}: {routine:#x}: {end}')
+            case _:
+                sys.exit(f'{self.image}: {routine:#x} did not return, at {self.machine.read_register("PC"):#x}')
+        return self.machine.read_register('D0')
 
     def decode(self, entry: Entry, data: bytes) -> set[int]:
         """The offsets of a message of entry's with this data that its
         decoders read."""
-        self.uc.mem_write(MESSAGE, b'@@' + entry.id.encode() + data + b'\x00\r\n')
+        self.machine.poke_bytes(MESSAGE, b'@@' + entry.id.encode() + data + b'\x00\r\n')
         self.reads = set()
         cursor = MESSAGE + HEADER
         for decoder, record in entry.decoders:
@@ -554,7 +526,7 @@ def machines(image: str, table: Requests) -> dict[int, Machine]:
     found = {}
     for count, eight in counts.items():
         machine = Machine(image, rom)
-        machine.uc.mem_write(fix_mode, bytes([POSITION_FIX]))
+        machine.machine.poke_bytes(fix_mode, bytes([POSITION_FIX]))
         if update is not None:
             machine.call(update)
         if eight:
@@ -594,7 +566,7 @@ def read_sets(table: Requests, by_count: dict[int, Machine]) -> dict[str, set[in
             kept = machine.ram()
             for fill in FILLS:
                 reads |= machine.decode(entry, filled(entry, fill))
-            machine.uc.mem_write(RAM, kept)
+            machine.machine.poke_bytes(RAM, kept)
     return found
 
 
@@ -638,10 +610,10 @@ def stores(
                             for byte in span:
                                 if byte - HEADER < len(flipped):
                                     flipped[byte - HEADER] = fill ^ flip
-                        machine.uc.mem_write(RAM, kept)
+                        machine.machine.poke_bytes(RAM, kept)
                         machine.decode(entry, bytes(flipped))
                         found.setdefault(row.line, set()).update(changed(base, machine.ram()))
-                machine.uc.mem_write(RAM, kept)
+                machine.machine.poke_bytes(RAM, kept)
     return found, seen
 
 
@@ -659,8 +631,8 @@ def compared(rows: list[Row], table: Requests, machine: Machine) -> dict[str, se
         length = HEADER + sum(len(span) for row in sent for span in row.instances()) + TRAILER
         reads: set[int] = set()
         for fill in FILLS:
-            machine.uc.mem_write(SENT, b'@@' + entry.id.encode() + bytes([fill]) * (length - HEADER - TRAILER) + b'\x00\r\n')
-            machine.uc.mem_write(MESSAGE, b'@@' + entry.id.encode() + filled(entry, fill) + b'\x00\r\n')
+            machine.machine.poke_bytes(SENT, b'@@' + entry.id.encode() + bytes([fill]) * (length - HEADER - TRAILER) + b'\x00\r\n')
+            machine.machine.poke_bytes(MESSAGE, b'@@' + entry.id.encode() + filled(entry, fill) + b'\x00\r\n')
             machine.reads = set()
             machine.call_with(
                 match, struct.pack(MATCH_ARGUMENTS, entry.index, SENT, length, 0, entry.index, MESSAGE, entry.length)
@@ -1205,18 +1177,19 @@ class NmeaMachine(Machine):
         self.frame_reads: set[int] | None = None
         known = names(nmea.image)
         for stub in NMEA_STUBS:
-            self.uc.hook_add(UC_HOOK_CODE, self.stub, begin=known[stub], end=known[stub])
-        self.uc.hook_add(UC_HOOK_MEM_READ, self.frame_read, begin=nmea.frame, end=nmea.frame + FRAME_TEXT - 1)
+            self.machine.add_code_hook(self.stub, known[stub], known[stub])
+        self.machine.add_read_hook(self.frame_read, nmea.frame, nmea.frame + FRAME_TEXT - 1)
 
-    def stub(self, uc: Mc683xx, address: int, size: int, data: object) -> None:
-        sp = uc.reg_read(UC_M68K_REG_A7)
-        uc.reg_write(UC_M68K_REG_PC, struct.unpack('>I', uc.mem_read(sp, VECTOR_SIZE))[0])
-        uc.reg_write(UC_M68K_REG_A7, sp + VECTOR_SIZE)
-        uc.reg_write(UC_M68K_REG_D0, 0)
+    def stub(self, instruction: mc683xx.Instruction) -> None:
+        sp = self.machine.read_register('A7')
+        self.machine.write_register('PC', struct.unpack('>I', self.machine.peek_bytes(sp, VECTOR_SIZE))[0])
+        self.machine.write_register('A7', sp + VECTOR_SIZE)
+        self.machine.write_register('D0', 0)
 
-    def frame_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, data: object) -> None:
-        if self.frame_reads is not None:
-            self.frame_reads.update(range(address - self.nmea.frame, address - self.nmea.frame + size))
+    def frame_read(self, access: mc683xx.MemoryAccess) -> None:
+        if self.frame_reads is not None and not access.stacking:
+            frame = access.address - self.nmea.frame
+            self.frame_reads.update(range(frame, frame + access.size))
 
     def sentence(self, sentence: str) -> set[int]:
         """Decodes one sentence, each field's decoder called with the
@@ -1224,7 +1197,7 @@ class NmeaMachine(Machine):
         calls them; the indices of the fields they read, a field's NUL,
         which ends it, its own, and the address's left out."""
         record, starts = nmea_frame(sentence, self.nmea.frame)
-        self.uc.mem_write(self.nmea.frame, record)
+        self.machine.poke_bytes(self.nmea.frame, record)
         self.frame_reads = set()
         for index, _, decode, place in self.table[nmea_name(sentence)].entries:
             if decode and index < len(starts):
@@ -1293,7 +1266,7 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
     against ssd, GLL against GGA and rrs against rsd."""
     nmea = machine.nmea
     match = names(nmea.image)[MATCH]
-    machine.uc.mem_write(nmea.position_hold, b'\x01')
+    machine.machine.poke_bytes(nmea.position_hold, b'\x01')
     second = {nmea_name(sentence): sentence for sentence in NMEA_SECOND}
     ssd = second['ssd'].split(',')[2:]
     gga = second['GGA'].split(',')
@@ -1313,8 +1286,8 @@ def nmea_compared(machine: NmeaMachine, rom: bytes) -> dict[str, set[int]]:
             continue
         text = sent.encode('ascii') + b'\r\n'
         record, starts = nmea_frame(response, nmea.frame)
-        machine.uc.mem_write(SENT, text)
-        machine.uc.mem_write(nmea.frame, record)
+        machine.machine.poke_bytes(SENT, text)
+        machine.machine.poke_bytes(nmea.frame, record)
         machine.frame_reads = set()
         code = codes[address]
         machine.call_with(match, struct.pack(MATCH_ARGUMENTS, code, SENT, len(text), 0, code, nmea.frame, len(response) + 2))
@@ -1363,13 +1336,13 @@ def nmea_trace(image: str, rows: list[Row]) -> tuple[Traced, dict[str, Sentence]
                 for value in variants(sentences[at].split(',')[index]):
                     altered = list(sentences)
                     altered[at] = with_field(sentences[at], index, value)
-                    machine.uc.mem_write(RAM, primed)
+                    machine.machine.poke_bytes(RAM, primed)
                     machine.second(tuple(altered))
                     # The framer's record holds the sentence itself.
                     changes |= {
                         address for address in changed(base, machine.ram()) if not nmea.frame <= address < nmea.frame + FRAME_SIZE
                     }
-    machine.uc.mem_write(RAM, primed_by[NMEA_SECOND])
+    machine.machine.poke_bytes(RAM, primed_by[NMEA_SECOND])
     compared_fields = nmea_compared(machine, rom)
     every = set().union(*stored.values()) or {nmea.gps}
     first = min(min(every), nmea.gps)

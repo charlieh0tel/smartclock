@@ -584,12 +584,18 @@ def motif(group):
     return f'<svg viewBox="0 0 {width} {height}" aria-hidden="true">{group.motif}</svg>'
 
 
+def listing(link, title, line, tag=""):
+    """An entry in a group on the landing page: TITLE linking to LINK,
+    followed by TAG, markup, and LINE under it."""
+    return (f'<li><a href="{html.escape(link)}"><span class="title">{html.escape(title)}{tag}</span>'
+            f'<span class="line">{html.escape(line)}</span></a></li>')
+
+
 def entry(name, page, wip):
     """PAGE's entry on the landing page, with a WIP tag if NAME is in
     WIP."""
     tag = '<span class="wip">WIP</span>' if name in wip else ""
-    return (f'<li><a href="{html.escape(name)}"><span class="title">{html.escape(page.title.strip())}{tag}</span>'
-            f'<span class="line">{html.escape(page.description)}</span></a></li>')
+    return listing(name, page.title.strip(), page.description, tag)
 
 
 def section(key, heading, about, entries, classes="group"):

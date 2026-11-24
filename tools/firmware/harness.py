@@ -29,7 +29,7 @@ instruction other than the one that read it (SPLIT), end a call; a case may
 take an interrupt part way, after an event of its own instructions
 (Interrupt); and the kernel calls and device reads and writes a call
 makes, in order, are its effects, compared as RAM is.
-The CPU is mc683xx's CPU32 (backend.py).
+The CPU is mc683xx's CPU32, its bare Machine.
 """
 
 import bisect
@@ -40,62 +40,15 @@ import zlib
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
-from backend import (
-    UC_HOOK_BLOCK,
-    UC_HOOK_CODE,
-    UC_HOOK_INTR,
-    UC_HOOK_MEM_INVALID,
-    UC_HOOK_MEM_READ,
-    UC_HOOK_MEM_WRITE,
-    UC_M68K_REG_A0,
-    UC_M68K_REG_A1,
-    UC_M68K_REG_A2,
-    UC_M68K_REG_A3,
-    UC_M68K_REG_A4,
-    UC_M68K_REG_A5,
-    UC_M68K_REG_A6,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_CR_VBR,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_D1,
-    UC_M68K_REG_D2,
-    UC_M68K_REG_D3,
-    UC_M68K_REG_D4,
-    UC_M68K_REG_D5,
-    UC_M68K_REG_D6,
-    UC_M68K_REG_D7,
-    UC_M68K_REG_PC,
-    UC_M68K_REG_SR,
-    UC_MEM_WRITE_PROT,
-    UC_PROT_EXEC,
-    UC_PROT_READ,
-    UC_PROT_WRITE,
-    Mc683xx,
-    UcError,
-)
+import mc683xx
+
 from decompiled_check import installer_records
-from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine
+from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine, run_call
 from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section
 from status_register import Cpu, Trace
 
 # Every register a routine might take, by the sidecar's name.
-REGISTERS = {
-    "D0": UC_M68K_REG_D0,
-    "D1": UC_M68K_REG_D1,
-    "D2": UC_M68K_REG_D2,
-    "D3": UC_M68K_REG_D3,
-    "D4": UC_M68K_REG_D4,
-    "D5": UC_M68K_REG_D5,
-    "D6": UC_M68K_REG_D6,
-    "D7": UC_M68K_REG_D7,
-    "A0": UC_M68K_REG_A0,
-    "A1": UC_M68K_REG_A1,
-    "A2": UC_M68K_REG_A2,
-    "A3": UC_M68K_REG_A3,
-    "A4": UC_M68K_REG_A4,
-    "A5": UC_M68K_REG_A5,
-    "A6": UC_M68K_REG_A6,
-}
+REGISTERS = ("D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "A0", "A1", "A2", "A3", "A4", "A5", "A6")
 # The registers the m68k C convention has a callee keep, which the
 # original's compiler and gcc both save where a function uses them; a
 # sidecar convention's preserves names others a routine keeps too
@@ -168,9 +121,8 @@ EEPROM = 0x400000
 EEPROM_SIZE = 0x2000
 ERASED = b"\xff" * EEPROM_SIZE
 # The primary's vector table (docs/firmware/README.md), which the
-# harness takes an exception through, and a vector's bytes in it.
+# harness takes an exception through.
 VECTORS = 0x10000
-VECTOR_SIZE = 4
 # trap #n is vector TRAP_VECTORS + n.
 TRAP_VECTORS = 32
 # The vectors whose handlers the harness runs, the image's own: trap #1,
@@ -178,6 +130,8 @@ TRAP_VECTORS = 32
 # longjmp (primary_trap_1, 0x510e8), and trap #7, which hands back the
 # caller's status register (docs/firmware/psos.md).
 HANDLED = {TRAP_VECTORS + 1, TRAP_VECTORS + 7}
+# The exceptions an instruction raises that reach the harness.
+INTERCEPTED = mc683xx.VectorSet.INSTRUCTION.difference(HANDLED)
 # The vectors whose handlers never return to the routine, which ends at
 # them, the two calls then compared as if it had returned, but for its
 # result: trap #5, which ends an interrupt by switching to the first
@@ -291,7 +245,7 @@ def service_argument(m: "RebuiltMachine", name: str) -> tuple[str, int]:
     """An argument's name and the bits of its register a service reads,
     as the image's copy would pass it (RebuiltMachine.as_image)."""
     register, width = name[:2], name[2:]
-    value = m.uc.reg_read(REGISTERS[register]) & WIDTHS.get(width, 0xFFFFFFFF)
+    value = m.machine.read_register(register) & WIDTHS.get(width, 0xFFFFFFFF)
     return name, m.as_image(value)
 
 
@@ -439,13 +393,13 @@ def qspi_widths(widths: dict[int, tuple[int, ...] | str], minor: int, count: int
     return widths_of_minor
 
 
-def qspi_write_data(uc: Mc683xx, widths: dict[int, tuple[int, ...] | str], minor: int, count: int, buffer: int) -> bytes:
+def qspi_write_data(m: Machine, widths: dict[int, tuple[int, ...] | str], minor: int, count: int, buffer: int) -> bytes:
     """A QSPI write's transfers from its buffer, each the low bits of its
     word its width sends, in the fewest bytes that hold them, by an
     image's widths (QSPI_WIDTHS)."""
     data = b""
     for index, width in enumerate(qspi_widths(widths, minor, count)):
-        (word,) = QSPI_ENTRY.unpack(uc.mem_read(buffer + QSPI_ENTRY.size * index, QSPI_ENTRY.size))
+        (word,) = QSPI_ENTRY.unpack(m.machine.peek_bytes(buffer + QSPI_ENTRY.size * index, QSPI_ENTRY.size))
         data += (word & (1 << width) - 1).to_bytes(-(-width // BITS_PER_BYTE), "big")
     return data
 
@@ -1201,9 +1155,9 @@ class Devices:
             if at in PORT_AT:
                 self.latches[PORT_AT[at].pins] = value >> 8 * (address + size - 1 - at) & BYTE_MASK
 
-    def port_value(self, uc: Mc683xx, port: Port) -> int:
+    def port_value(self, pending: mc683xx.PendingRead, port: Port) -> int:
         """What a port's data register reads as now (Port)."""
-        latched = uc.mem_read(port.direction, 1)[0] | uc.mem_read(port.assignment, 1)[0]
+        latched = pending.peek_bytes(port.direction, 1)[0] | pending.peek_bytes(port.assignment, 1)[0]
         return self.latches[port.pins] & latched | getattr(self.case, port.pins) & ~latched & BYTE_MASK
 
     def next_input(self) -> int:
@@ -2458,50 +2412,58 @@ class RebuiltMachine(Machine):
         # that reads each instruction for it (traced), while tracing;
         # and the CPU as a path reads it
         self.tracing: Callable[[int], Trace] | None = None
-        self.path: tuple[Trace, Callable[[Mc683xx, int], bool]] | None = None
-        self.tracing_hook = None
-        self.reader = CpuReader(self.uc)
+        self.path: tuple[Trace, Callable[[int], bool]] | None = None
+        self.tracing_hook: mc683xx.HookId | None = None
+        self.reader = CpuReader(self)
+        self.stop_request = self.machine.stop_request()
         # the routines at ROUTINES, by the address each records at
         self.stubs: dict[int, Stub] = {}
         # the child lists of the profile's main SCPI tree, as the image
         # holds them (tree_lists)
         self.tree: list[TreeList] = []
-        self.uc.mem_map(ROUTINES, ROUTINES_SIZE)
-        self.uc.hook_add(UC_HOOK_CODE, self.routine_call, begin=ROUTINES, end=ROUTINES + ROUTINES_SIZE - 1)
+        self.machine.map(ROUTINES, ROUTINES_SIZE)
+        self.machine.add_code_hook(self.routine_call, ROUTINES, ROUTINES + ROUTINES_SIZE - 1)
         # the CPU takes trap #1 and #7 itself, through the profile's
         # vectors (reset)
-        self.uc.native_vectors = HANDLED
+        self.machine.set_stop_on_exception(INTERCEPTED)
         # the devices' state in the running call, and the flash, the
         # profile's model of it, None for a profile that writes none
         self.devices = Devices()
         self.devices.reset(DEVICE_CASES[0])
         self.device_case = DEVICE_CASES[0]
         self.flash = profile.flash(image) if profile.flash else None
-        # where the call's writes and status reads have left other than
-        # the arrays in memory, and whether it has written the flash
-        self.flash_written: list[tuple[int, int]] = []
+        # whether the call has written the flash
         self.flash_touched = False
         # whether the call has written the flash where no part takes it
         self.stray_write = False
         for start, size in DEVICES:
-            self.uc.mem_map(start, size)
-            self.uc.hook_add(UC_HOOK_MEM_WRITE, self.device_write, begin=start, end=start + size - 1)
-            self.uc.hook_add(UC_HOOK_MEM_READ, self.device_read, begin=start, end=start + size - 1)
+            self.machine.map(start, size)
+            self.add_model(start, size, self.device_read, self.device_write)
+        self.machine.map(EEPROM, EEPROM_SIZE, permissions="rw", contents=ERASED)
+        self.add_model(EEPROM, EEPROM_SIZE, self.eeprom_read, self.eeprom_write)
         if self.flash is not None:
-            self.uc.hook_add(UC_HOOK_MEM_WRITE, self.flash_write, begin=ROM, end=ROM + FLASH_SIZE - 1)
-            self.uc.hook_add(UC_HOOK_MEM_READ, self.flash_read, begin=ROM, end=ROM + FLASH_SIZE - 1)
-            # an overlay's code runs from RAM, and a block run from the
-            # flash, the boot code's, is put back first; the primary's
-            # runs from the flash, where only a stray write lands, which
-            # ends the call, its flash routines from RAM (Profile.records)
-            if profile.overlay is not None:
-                self.uc.hook_add(UC_HOOK_BLOCK, self.flash_restore, begin=ROM, end=ROM + FLASH_SIZE - 1)
-        self.uc.hook_add(UC_HOOK_MEM_WRITE, self.eeprom_write, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
-        self.uc.hook_add(UC_HOOK_MEM_READ, self.eeprom_read, begin=EEPROM, end=EEPROM + EEPROM_SIZE - 1)
+            self.add_model(ROM, FLASH_SIZE, self.flash_read, self.flash_write)
+
+    def add_model(self, start: int, size: int, read: Callable, write: Callable) -> None:
+        """A device model's read before each operand read of its memory,
+        given the read and the bytes it is to answer with, and its write
+        before each operand write, given the write and the bytes it is to
+        store, but an exception's stacking; a write that returns True
+        stops the run."""
+
+        def before_read(pending: mc683xx.PendingRead, data: bytearray) -> None:
+            if not pending.stacking:
+                read(pending, data)
+
+        def before_write(pending: mc683xx.PendingWrite, data: bytearray) -> bool | None:
+            return None if pending.stacking else write(pending, data)
+
+        self.machine.add_pre_read_hook(before_read, start, start + size - 1)
+        self.machine.add_pre_write_hook(before_write, start, start + size - 1)
 
     def status(self) -> int:
         """The status register, outside a run."""
-        return self.uc.reg_read(UC_M68K_REG_SR)
+        return self.machine.read_register("SR")
 
     def as_image(self, value: int) -> int:
         """A value as the image's copy would have it: a C function's gcc
@@ -2512,104 +2474,94 @@ class RebuiltMachine(Machine):
         twin = self.twins.image_address(value)
         return value if twin is None else twin
 
-    def device_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
-        """Records a device read and, before it, sets each modeled
-        register it covers to what it reads as."""
-        self.effects.append(DeviceRead(address, size))
-        for at in range(address, address + size):
+    def device_read(self, pending: mc683xx.PendingRead, data: bytearray) -> None:
+        """Records a device read and answers each modeled register it
+        covers with what it reads as."""
+        address = pending.address
+        self.effects.append(DeviceRead(address, len(data)))
+        for at in range(address, address + len(data)):
             status = STATUS_AT.get(at)
             if status is not None:
-                uc.mem_write(at, self.devices.status_value(status).to_bytes(status.size, "big"))
+                patch(data, address, at, self.devices.status_value(status).to_bytes(status.size, "big"))
             elif at == INPUT_PORT:
-                uc.mem_write(at, bytes([self.devices.next_input()]))
+                patch(data, address, at, bytes([self.devices.next_input()]))
             elif at == SWITCH_WORD:
-                uc.mem_write(at, self.devices.case.switches.to_bytes(SWITCH_WORD_SIZE, "big"))
+                patch(data, address, at, self.devices.case.switches.to_bytes(SWITCH_WORD_SIZE, "big"))
             elif at in PORT_AT:
-                uc.mem_write(at, bytes([self.devices.port_value(uc, PORT_AT[at])]))
+                patch(data, address, at, bytes([self.devices.port_value(pending, PORT_AT[at])]))
 
-    def device_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
-        value &= (1 << 8 * size) - 1
-        self.effects.append(DeviceWrite(address, size, value))
-        self.devices.written_to(address, size, value)
+    def device_write(self, pending: mc683xx.PendingWrite, data: bytearray) -> None:
+        value = int.from_bytes(data, "big")
+        self.effects.append(DeviceWrite(pending.address, len(data), value))
+        self.devices.written_to(pending.address, len(data), value)
 
-    def eeprom_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
+    def eeprom_write(self, pending: mc683xx.PendingWrite, data: bytearray) -> None:
         """Records an EEPROM write and starts the write cycle of its last
-        byte, finishing the cell written before it."""
-        value &= (1 << 8 * size) - 1
-        self.effects.append(DeviceWrite(address, size, value))
+        byte, the cell written before it done."""
+        self.effects.append(DeviceWrite(pending.address, len(data), int.from_bytes(data, "big")))
         devices = self.devices
-        if devices.eeprom_cell is not None:
-            uc.mem_write(devices.eeprom_cell[0], bytes([devices.eeprom_cell[1]]))
-        devices.eeprom_cell = (address + size - 1, value & BYTE_MASK)
+        devices.eeprom_cell = (pending.address + len(data) - 1, data[-1])
         devices.eeprom_polls = 0
         devices.eeprom_written = True
 
-    def eeprom_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
+    def eeprom_read(self, pending: mc683xx.PendingRead, data: bytearray) -> None:
         """Records an EEPROM read from the call's first write on, and gives
         the cell being written its complement until its cycle is done."""
+        address = pending.address
         devices = self.devices
         if not devices.eeprom_written:
             return
-        self.effects.append(DeviceRead(address, size))
+        self.effects.append(DeviceRead(address, len(data)))
         cell = devices.eeprom_cell
-        if cell is None or not address <= cell[0] < address + size:
+        if cell is None or not address <= cell[0] < address + len(data):
             return
         devices.eeprom_polls += 1
         done = devices.eeprom_polls > devices.case.busy and not devices.case.fails
-        uc.mem_write(cell[0], bytes([cell[1] if done else ~cell[1] & BYTE_MASK]))
+        data[cell[0] - address] = cell[1] if done else ~cell[1] & BYTE_MASK
         if done:
             devices.eeprom_cell = None
 
-    def flash_write(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
-        """Records a write to the flash and gives it to its parts.  The
-        write lands in memory after the hook; the arrays are put back
-        there before the next read of the flash or block of code run from
-        it (flash_restore)."""
-        value &= (1 << 8 * size) - 1
-        self.effects.append(DeviceWrite(address, size, value))
-        self.flash_written.append((address, size))
+    def flash_write(self, pending: mc683xx.PendingWrite, data: bytearray) -> bool | None:
+        """Records a write to the flash and gives it to its parts, leaving
+        their arrays in memory as they are."""
+        value = int.from_bytes(data, "big")
+        self.effects.append(DeviceWrite(pending.address, len(data), value))
         self.flash_touched = True
-        if not self.flash.write(address, size, value):
+        pending.set_dropped(True)
+        if not self.flash.write(pending.address, len(data), value):
             # a write the parts ignore, through a stray pointer: the call
             # ends there, as one to the primary's ROM does (BUS_ERROR)
             self.stray_write = True
-            uc.emu_stop()
+            return True
+        return None
 
-    def flash_restore(self, uc: Mc683xx, *_) -> None:
-        """Puts the arrays back where writes landed in memory."""
-        for address, size in self.flash_written:
-            uc.mem_write(address, self.flash.arrays(address, size))
-        self.flash_written = []
-
-    def flash_read(self, uc: Mc683xx, access: int, address: int, size: int, value: int, _) -> None:
-        """Sets what a read of the flash reads as, before it, and records
-        it where its code polls it, as its model has it (polled).  Until
-        the call's first write, the flash reads its arrays, which memory
+    def flash_read(self, pending: mc683xx.PendingRead, data: bytearray) -> None:
+        """Answers a read of the flash as its parts would, and records it
+        where its code polls it, as its model has it (polled).  Until the
+        call's first write, the flash reads its arrays, which memory
         holds."""
         if not self.flash_touched:
             return
-        self.flash_restore(uc)
         if self.flash.polled():
-            self.effects.append(DeviceRead(address, size))
-        uc.mem_write(address, self.flash.read(address, size))
-        self.flash_written.append((address, size))
+            self.effects.append(DeviceRead(pending.address, len(data)))
+        data[:] = self.flash.read(pending.address, len(data))
 
-    def routine_call(self, uc: Mc683xx, address: int, size: int, _) -> None:
+    def routine_call(self, instruction: mc683xx.Instruction) -> None:
         """Records a call of a routine at ROUTINES, at the instruction it
         records at, and returns its result."""
-        stub = self.stubs.get(address)
+        stub = self.stubs.get(instruction.pc)
         if stub is None:
             return
         if stub.layout is None:
-            self.effects.append(RoutineCall(stub.position, (string(uc, ROUTINE_TEXT),)))
+            self.effects.append(RoutineCall(stub.position, (string(self, ROUTINE_TEXT),)))
             return
-        sp = uc.reg_read(UC_M68K_REG_A7)
+        sp = self.machine.read_register("A7")
         arguments = []
         for offset, length, text in stub.layout:
-            value = int.from_bytes(uc.mem_read(sp + offset, length), "big")
+            value = int.from_bytes(self.machine.peek_bytes(sp + offset, length), "big")
             try:
-                contents = string(uc, value) if text else None
-            except UcError:
+                contents = string(self, value) if text else None
+            except mc683xx.BusError:
                 contents = None
             # a pointer into the stack, a local of the caller's, which
             # each copy's frame puts where it does
@@ -2618,7 +2570,15 @@ class RebuiltMachine(Machine):
                 contents = STACK_ARGUMENT
             arguments.append(self.as_image(value) if contents is None else contents)
         self.effects.append(RoutineCall(stub.position, tuple(arguments)))
-        uc.reg_write(UC_M68K_REG_D0, ROUTINE_RESULT)
+        self.machine.write_register("D0", ROUTINE_RESULT)
+
+
+def patch(data: bytearray, address: int, at: int, value: bytes) -> None:
+    """A register's value at an address, where it overlaps the bytes a
+    read cycle at another reads."""
+    for offset, byte in enumerate(value, at - address):
+        if 0 <= offset < len(data):
+            data[offset] = byte
 
 
 def rebuilt_machine(
@@ -2640,27 +2600,27 @@ def rebuilt_machine(
         if IMAGE_PREFIX + name in linked_symbols
     }
     m.image_copies = dict(m.copies)
-    m.uc.mem_map(REBUILT, REBUILT_SIZE)
+    m.machine.map(REBUILT, REBUILT_SIZE)
     for section in linked:
         if section.name in LOADED:
-            m.uc.mem_write(section.address, section.data)
-    m.uc.mem_map(STACK, STACK_SIZE)
-    for start, size in COMPARED.values():
-        m.uc.mem_map(start, size, UC_PROT_READ | UC_PROT_WRITE)
+            m.machine.poke_bytes(section.address, section.data)
+    m.machine.map(STACK, STACK_SIZE)
+    for start in POINTEES:
+        m.machine.map(start, POINTEES_SIZE, permissions="rw")
     if profile.buffers_apart():
-        m.uc.mem_map(*profile.buffers, UC_PROT_READ | UC_PROT_WRITE)
-    m.uc.mem_write(RAM, profile.ram)
+        m.machine.map(*profile.buffers, permissions="rw")
+    m.machine.poke_bytes(RAM, profile.ram)
     for source, destination, size in profile.kernel_tables:
-        m.uc.mem_write(destination, m.read(source, size))
-    m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
+        m.machine.poke_bytes(destination, m.machine.peek_bytes(source, size))
+    m.machine.write_register("SR", SUPERVISOR)
     for start, end in profile.kernel_init:
-        m.uc.emu_start(start, end, count=STEP_LIMIT)
+        run_call(m.machine, start, end)
     for name, flags, limit in profile.root_exchanges:
-        m.uc.reg_write(UC_M68K_REG_A6, data_area(m))
+        m.machine.write_register("A6", data_area(m))
         for register, value in zip(("D0", "D1", "D2"), (int.from_bytes(name, "big"), flags, limit)):
-            m.uc.reg_write(REGISTERS[register], value)
-        m.uc.emu_start(*profile.kernel_create, count=STEP_LIMIT)
-    m.initialized_ram = m.read(RAM, RAM_SIZE)
+            m.machine.write_register(register, value)
+        run_call(m.machine, *profile.kernel_create)
+    m.initialized_ram = m.machine.peek_bytes(RAM, RAM_SIZE)
     for routine in profile.initializers:
         fresh_ram(m)
         reset(m, snapshot(m))
@@ -2680,16 +2640,16 @@ def trace(m: RebuiltMachine, tracing: Callable[[int], Trace] | None) -> None:
     set, added once, not for each call."""
     m.tracing = tracing
     if tracing is not None and m.tracing_hook is None:
-        m.tracing_hook = m.uc.hook_add(UC_HOOK_CODE, traced, m)
+        m.tracing_hook = m.machine.add_code_hook(lambda instruction: traced(m, instruction.pc))
     elif tracing is None and m.tracing_hook is not None:
-        m.uc.hook_del(m.tracing_hook)
+        m.machine.remove_hook(m.tracing_hook)
         m.tracing_hook = None
 
 
-def traced(uc: Mc683xx, address: int, size: int, m: RebuiltMachine) -> None:
+def traced(m: RebuiltMachine, address: int) -> None:
     """The tracing hook: the instruction about to run, to the running
     call's path, if it has one and the instruction is its own."""
-    if m.path is not None and m.path[1](uc, address):
+    if m.path is not None and m.path[1](address):
         m.path[0].instruction(address, m.reader)
 
 
@@ -2699,8 +2659,8 @@ def protect_code(m: RebuiltMachine) -> None:
     cases; but for the installer's, whose writes to ROM's range are to
     the flash (Flash), reset for each call."""
     if m.flash is None:
-        m.uc.mem_protect(ROM, ROM_SIZE, UC_PROT_READ | UC_PROT_EXEC)
-    m.uc.mem_protect(REBUILT, REBUILT_DATA - REBUILT, UC_PROT_READ | UC_PROT_EXEC)
+        m.machine.protect(ROM, ROM_SIZE, "rx")
+    m.machine.protect(REBUILT, REBUILT_DATA - REBUILT, "rx")
     m.protected = True
 
 
@@ -2715,7 +2675,7 @@ def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> in
         if routine.parameters[0] != FORMAT:
             return None
         formatting = FORMATTING_START + struct.pack(">I", m.profile.vsprintf) + FORMATTING_END
-        m.uc.mem_write(start, formatting)
+        m.machine.poke_bytes(start, formatting)
         m.stubs[start + len(formatting) - len(RETURN_INSTRUCTION)] = Stub(position, None)
         return start
     layout, offset = [], FIRST_ARGUMENT
@@ -2728,7 +2688,7 @@ def stub(m: RebuiltMachine, types: Types, routine: Routine, position: int) -> in
         layout.append((offset, size, kind == FORMAT))
         slot = max(size, STACK_SLOT_MINIMUM)
         offset += slot + slot % 2
-    m.uc.mem_write(start, RETURN_INSTRUCTION)
+    m.machine.poke_bytes(start, RETURN_INSTRUCTION)
     m.stubs[start] = Stub(position, tuple(layout))
     return start
 
@@ -2831,8 +2791,8 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
     nodes = header_nodes(m, scpi.common_list if common else scpi.main_tree, path.removeprefix(COMMON_PREFIX))
     if not nodes:
         return None
-    ids = [i for i in (struct.unpack(">H", m.read(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
-    m.uc.mem_write(parameters, struct.pack(f">{len(ids)}H", *ids))
+    ids = [i for i in (struct.unpack(">H", m.machine.peek_bytes(node + NODE_ID, 2))[0] for node in nodes) if i != NO_ID]
+    m.machine.poke_bytes(parameters, struct.pack(f">{len(ids)}H", *ids))
     for offset, value in (
         (CALL_NODE, nodes[-1]),
         (CALL_ARENA, arena(m)),
@@ -2845,7 +2805,7 @@ def call_record(m: RebuiltMachine, query: bool, path: str, parameters: int, resp
         (CALL_COMMON_LIST, scpi.common_list),
     ):
         give(m, record + offset, value)
-    m.uc.mem_write(record + CALL_INDEX, struct.pack(">H", int(query)))
+    m.machine.poke_bytes(record + CALL_INDEX, struct.pack(">H", int(query)))
     return len(ids)
 
 
@@ -2857,13 +2817,13 @@ def parsed_parameters(m: RebuiltMachine, query: bool, record: int, at: int, valu
     parameter = pointer_at(m, entry + ENTRY_PARAMETERS)
     while parameter:
         kinds = pointer_at(m, parameter + PARAMETER_KINDS)
-        size = struct.unpack(">h", m.read(kinds + KINDS_SIZE, WORD.size))[0]
+        size = struct.unpack(">h", m.machine.peek_bytes(kinds + KINDS_SIZE, WORD.size))[0]
         choices = pointer_at(m, kinds + KINDS_CHOICES)
-        converters = struct.unpack(f">{CONVERTERS}I", m.read(kinds + KINDS_CONVERTERS, CONVERTERS * POINTER_SIZE))
+        converters = struct.unpack(f">{CONVERTERS}I", m.machine.peek_bytes(kinds + KINDS_CONVERTERS, CONVERTERS * POINTER_SIZE))
         kind = next((i for i, converter in enumerate(converters) if converter), 0)
         count = choice_count(m, choices) if choices else values
         if count:
-            m.uc.mem_write(at, WORD.pack(kind) + WORD.pack(case % count))
+            m.machine.poke_bytes(at, WORD.pack(kind) + WORD.pack(case % count))
         at += WORD.size + size
         parameter = pointer_at(m, parameter + PARAMETER_NEXT)
 
@@ -2888,7 +2848,7 @@ def sample_call(m: RebuiltMachine) -> int:
 def arena(m: RebuiltMachine) -> int:
     """An arena of a fresh buffer, as arena_init makes it."""
     at = m.buffer()
-    m.uc.mem_write(at, struct.pack(">II", at + ARENA_START, at + BUFFER_SPACING - 1))
+    m.machine.poke_bytes(at, struct.pack(">II", at + ARENA_START, at + BUFFER_SPACING - 1))
     return at
 
 
@@ -2905,7 +2865,7 @@ def parser_context(m: RebuiltMachine, record: int) -> int:
         (CONTEXT_COMMON_LIST, scpi.common_list),
     ):
         give(m, context + offset, value)
-    m.uc.mem_write(context + CONTEXT_WORD, bytes(CONTEXT_WORD_SIZE))
+    m.machine.poke_bytes(context + CONTEXT_WORD, bytes(CONTEXT_WORD_SIZE))
     return context
 
 
@@ -2922,7 +2882,7 @@ def give(m: RebuiltMachine, at: int, pointer: int) -> None:
     """Gives a call a pointer at a cell of the memory it starts with,
     noting the cell if what it points at has a twin among the C's
     objects, for give_twins."""
-    m.uc.mem_write(at, struct.pack(">I", pointer))
+    m.machine.poke_bytes(at, struct.pack(">I", pointer))
     if m.twins.c_address(pointer) is not None:
         m.given[at] = pointer
 
@@ -2931,7 +2891,7 @@ def give_twins(m: RebuiltMachine) -> None:
     """Gives gcc's copy, in place of each image object the harness gave
     a call, its twin among the C's objects."""
     for at, pointer in m.given.items():
-        m.uc.mem_write(at, struct.pack(">I", m.twins.c_address(pointer)))
+        m.machine.poke_bytes(at, struct.pack(">I", m.twins.c_address(pointer)))
 
 
 def twin_arguments(m: RebuiltMachine, types: Types, kinds: list[str], values: list[bytes]) -> list[bytes]:
@@ -2952,8 +2912,8 @@ def header_nodes(m: Machine, root: int, path: str) -> list[int]:
     for keyword in path.split(KEYWORD_SEPARATOR):
         if children == 0:
             return []
-        count = struct.unpack(">H", m.read(children + LIST_COUNT, 2))[0]
-        pointers = struct.unpack(f">{count}I", m.read(children + LIST_NODES, count * POINTER_SIZE))
+        count = struct.unpack(">H", m.machine.peek_bytes(children + LIST_COUNT, 2))[0]
+        pointers = struct.unpack(f">{count}I", m.machine.peek_bytes(children + LIST_NODES, count * POINTER_SIZE))
         found = [node for node in pointers if keyword_text(m, node).upper() == keyword.upper()]
         if not found:
             return []
@@ -2995,8 +2955,8 @@ def tree_lists(m: Machine, root: int) -> list[TreeList]:
         at, path = pending.pop(0)
         if at in found:
             continue
-        count, default = struct.unpack(">hh", m.read(at + LIST_COUNT, 4))
-        nodes = struct.unpack(f">{count}I", m.read(at + LIST_NODES, count * POINTER_SIZE))
+        count, default = struct.unpack(">hh", m.machine.peek_bytes(at + LIST_COUNT, 4))
+        nodes = struct.unpack(f">{count}I", m.machine.peek_bytes(at + LIST_NODES, count * POINTER_SIZE))
         found[at] = TreeList(at, path, nodes, default)
         pending += [(children, path + (node,)) for node in nodes if (children := pointer_at(m, node + NODE_CHILDREN))]
     return list(found.values())
@@ -3098,12 +3058,12 @@ def image_object(m: RebuiltMachine, kind: str, name: str | None, case: int, targ
         return status
     if kind == ERROR_QUEUE:
         return pointer_at(m, status + STATUS_MODEL_QUEUE)
-    count = struct.unpack(">h", m.read(status + STATUS_REGISTER_COUNT, 2))[0]
+    count = struct.unpack(">h", m.machine.peek_bytes(status + STATUS_REGISTER_COUNT, 2))[0]
     return pointer_at(m, status + STATUS_MODEL_REGISTERS + case % count * POINTER_SIZE)
 
 
 def pointer_at(m: Machine, address: int) -> int:
-    return struct.unpack(">I", m.read(address, POINTER_SIZE))[0]
+    return struct.unpack(">I", m.machine.peek_bytes(address, POINTER_SIZE))[0]
 
 
 def data_area(m: RebuiltMachine) -> int:
@@ -3146,11 +3106,11 @@ def fresh_ram(m: RebuiltMachine, case: int = 0) -> None:
     m.given = {}
     m.device_case = DEVICE_CASES[case % len(DEVICE_CASES)]
     if m.profile.buffers_apart():
-        m.uc.mem_write(start, bytes(size))
+        m.machine.poke_bytes(start, bytes(size))
     m.pointees = pointer_fill(case) * (POINTEES_SIZE // len(pointer_fill(case)))
-    m.uc.mem_write(RAM, m.initialized_ram)
+    m.machine.poke_bytes(RAM, m.initialized_ram)
     for cell, exchange in m.profile.exchange_ids().items():
-        m.uc.mem_write(cell, struct.pack(">I", exchange))
+        m.machine.poke_bytes(cell, struct.pack(">I", exchange))
 
 
 def memory_compared(m: RebuiltMachine) -> list[tuple[int, int]]:
@@ -3162,40 +3122,39 @@ def memory_compared(m: RebuiltMachine) -> list[tuple[int, int]]:
 
 def snapshot(m: RebuiltMachine) -> dict[int, bytes]:
     """What the memory_compared holds, by its start, for reset."""
-    return {start: m.read(start, size) for start, size in memory_compared(m)}
+    return {start: m.machine.peek_bytes(start, size) for start, size in memory_compared(m)}
 
 
 def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
     for start, contents in memory.items():
-        m.uc.mem_write(start, contents)
+        m.machine.poke_bytes(start, contents)
     m.next_allocation = m.first_allocation
     m.tasks = {RUNNING_TASK: allocate(m, TASK_RECORD_SIZE)}
-    m.uc.mem_write(data_area(m), struct.pack(">I", m.tasks[RUNNING_TASK]))
-    m.uc.mem_write(EEPROM, m.eeprom)
+    m.machine.poke_bytes(data_area(m), struct.pack(">I", m.tasks[RUNNING_TASK]))
+    m.machine.poke_bytes(EEPROM, m.eeprom)
     for start in POINTEES:
-        m.uc.mem_write(start, m.pointees)
-    m.uc.mem_write(STACK, CLEAN_STACK)
+        m.machine.poke_bytes(start, m.pointees)
+    m.machine.poke_bytes(STACK, CLEAN_STACK)
     for start, size in DEVICES:
-        m.uc.mem_write(start, bytes(size))
+        m.machine.poke_bytes(start, bytes(size))
     for start, contents in m.device_presets.items():
-        m.uc.mem_write(start, contents)
+        m.machine.poke_bytes(start, contents)
     m.devices.reset(m.device_case)
     m.string_cursor = 0
     if m.flash is not None:
         m.flash.reset(m.flash.start, m.device_case)
-        m.uc.mem_write(ROM, m.flash.start)
-        m.flash_written = []
+        m.machine.poke_bytes(ROM, m.flash.start)
         m.flash_touched = False
         m.stray_write = False
-    m.uc.reg_write(UC_M68K_REG_SR, SUPERVISOR)
-    m.uc.reg_write(UC_M68K_REG_CR_VBR, m.profile.vectors)
-    for name, register in REGISTERS.items():
-        m.uc.reg_write(register, m.starting_registers.get(name, STARTING[name]))
+    m.machine.write_register("SR", SUPERVISOR)
+    m.machine.write_register("VBR", m.profile.vectors)
+    for name in REGISTERS:
+        m.machine.write_register(name, m.starting_registers.get(name, STARTING[name]))
 
 
-def system_status(uc: Mc683xx) -> int:
+def system_status(m: RebuiltMachine) -> int:
     """The status register's system byte, its condition codes clear."""
-    return uc.reg_read(UC_M68K_REG_SR) & SYSTEM_BYTE
+    return m.status() & SYSTEM_BYTE
 
 
 @dataclass(frozen=True)
@@ -3250,44 +3209,25 @@ QSPI_LEVEL = 4
 UNMAPPED_FRAME = KERNEL_RESULT
 
 
-def take_interrupt(uc: Mc683xx, vectors: int, interrupt: Interrupt, pc: int, sr: int) -> int:
-    """Enters an interrupt's handler from status register sr as the
-    CPU32 does (MC68331UM, 5.8.2 and "Exception Stack Frames"): the
-    status register copied, then supervisor mode, trace off and the mask
-    at the interrupt's level; a four-word frame of format 0, the status
-    register, the address of the next instruction and the vector's
-    offset, on the supervisor stack; and the handler's address from the
-    vector table at the vector base.  Returns the frame's address."""
-    frame = struct.pack(FRAME_FORMAT, sr, pc, interrupt.vector * VECTOR_SIZE)
-    mask = LEVEL_MASK << MASK_SHIFT
-    uc.reg_write(UC_M68K_REG_SR, (sr | SUPERVISOR_BIT) & ~TRACE_BITS & ~mask | interrupt.level << MASK_SHIFT)
-    sp = uc.reg_read(UC_M68K_REG_A7) - len(frame)
-    uc.mem_write(sp, frame)
-    uc.reg_write(UC_M68K_REG_A7, sp)
-    handler = struct.unpack(">I", uc.mem_read(vectors + interrupt.vector * VECTOR_SIZE, VECTOR_SIZE))[0]
-    uc.reg_write(UC_M68K_REG_PC, handler)
-    return sp
-
-
-def return_from_exception(uc: Mc683xx) -> bool:
+def return_from_exception(m: RebuiltMachine) -> bool:
     """Returns from a format 0 frame as rte does; False, the frame left,
     if it is of another format."""
-    sp = uc.reg_read(UC_M68K_REG_A7)
-    sr, pc, vector_word = struct.unpack(FRAME_FORMAT, uc.mem_read(sp, struct.calcsize(FRAME_FORMAT)))
+    sp = m.machine.read_register("A7")
+    sr, pc, vector_word = struct.unpack(FRAME_FORMAT, m.machine.peek_bytes(sp, struct.calcsize(FRAME_FORMAT)))
     if vector_word >> FRAME_FORMAT_SHIFT:
         return False
-    uc.reg_write(UC_M68K_REG_A7, sp + struct.calcsize(FRAME_FORMAT))
-    uc.reg_write(UC_M68K_REG_SR, sr)
-    uc.reg_write(UC_M68K_REG_PC, pc)
+    m.machine.write_register("A7", sp + struct.calcsize(FRAME_FORMAT))
+    m.machine.write_register("SR", sr)
+    m.machine.write_register("PC", pc)
     return True
 
 
-def string(uc: Mc683xx, at: int) -> bytes | None:
+def string(m: Machine, at: int) -> bytes | None:
     """The NUL-terminated string at an address, without its NUL; None if
     it runs past LONGEST_BUFFER."""
     data = b""
     while len(data) < LONGEST_BUFFER:
-        byte = bytes(uc.mem_read(at + len(data), 1))
+        byte = m.machine.peek_bytes(at + len(data), 1)
         if byte == b"\0":
             return data
         data += byte
@@ -3309,9 +3249,8 @@ def console_read(m: RebuiltMachine, vector: int) -> int | None:
     models (READ), else None."""
     if m.console_input is None or vector != IO_TRAP:
         return None
-    uc = m.uc
-    device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
-    if uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK != READ:
+    device = m.machine.read_register("D0") >> DEVICE_SHIFT & DEVICE_MASK
+    if m.machine.read_register(SERVICE_REGISTER) & SERVICE_MASK != READ:
         return None
     return device if device in (CONSOLE_PORT_DEVICE, CONSOLE_STRING_DEVICE) else None
 
@@ -3319,12 +3258,11 @@ def console_read(m: RebuiltMachine, vector: int) -> int | None:
 def console_state(m: RebuiltMachine, text: bytes | None, echoed: bytes = b"") -> ConsoleLine:
     """The console's state as it reads its port, the line given and what
     the port echoed reading it."""
-    uc = m.uc
-    a5, a6 = uc.reg_read(UC_M68K_REG_A5), uc.reg_read(UC_M68K_REG_A6)
-    user = m.read(a5 - USER_AREA_SIZE, USER_AREA_SIZE)
+    a5, a6 = m.machine.read_register("A5"), m.machine.read_register("A6")
+    user = m.machine.peek_bytes(a5 - USER_AREA_SIZE, USER_AREA_SIZE)
     base = pointer_at(m, a5 - USER_STACK_BASE)
-    stack = m.read(a6, base - a6) if a6 < base and base - a6 <= LONGEST_BUFFER else b""
-    return ConsoleLine(text, uc.reg_read(UC_M68K_REG_A4), a6, user, stack, echoed)
+    stack = m.machine.peek_bytes(a6, base - a6) if a6 < base and base - a6 <= LONGEST_BUFFER else b""
+    return ConsoleLine(text, m.machine.read_register("A4"), a6, user, stack, echoed)
 
 
 def console_echo(m: RebuiltMachine, given: bytes, ended: bool) -> bytes:
@@ -3343,35 +3281,34 @@ def console_session_ended(m: RebuiltMachine, vector: int) -> bool:
     device = console_read(m, vector)
     if device == CONSOLE_PORT_DEVICE:
         return not m.console_input
-    return device == CONSOLE_STRING_DEVICE and not (m.string_cursor and m.read(m.string_cursor, 1) != b"\0")
+    return device == CONSOLE_STRING_DEVICE and not (m.string_cursor and m.machine.peek_bytes(m.string_cursor, 1) != b"\0")
 
 
 def answer_console_read(m: RebuiltMachine, device: int) -> ConsoleLine | KernelCall:
     """Answers a console session's read of a device as READ models it,
     returning past the trap."""
-    uc = m.uc
-    buffer, length = uc.reg_read(UC_M68K_REG_A1), uc.reg_read(REGISTERS["D2"])
+    buffer, length = m.machine.read_register("A1"), m.machine.read_register("D2")
     if device == CONSOLE_PORT_DEVICE:
         line = m.console_input.pop(0)
         given, rest = line[: length - 1], line[length - 1 :]
         if rest:
             m.console_input.insert(0, rest)
-        uc.mem_write(buffer, given + b"\0")
+        m.machine.poke_bytes(buffer, given + b"\0")
         end, count = buffer + len(given), len(given)
         call = console_state(m, given, console_echo(m, given, not rest))
         for name in PORT_READ_CHANGES:
-            uc.reg_write(REGISTERS[name], KERNEL_SCRATCH)
+            m.machine.write_register(name, KERNEL_SCRATCH)
     else:
-        text = m.read(m.string_cursor, length)
+        text = m.machine.peek_bytes(m.string_cursor, length)
         given = text[: text.index(0) + 1] if 0 in text else text
         m.string_cursor += len(given)
-        uc.mem_write(buffer, given)
+        m.machine.poke_bytes(buffer, given)
         end = count = buffer + len(given)
-        call = KernelCall(IO_TRAP, READ, (("D0", uc.reg_read(UC_M68K_REG_D0)), ("D2", length)), given)
-    uc.reg_write(UC_M68K_REG_A1, end)
-    uc.reg_write(REGISTERS["D2"], count)
-    uc.reg_write(REGISTERS[SERVICE_REGISTER], NO_ERROR)
-    uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
+        call = KernelCall(IO_TRAP, READ, (("D0", m.machine.read_register("D0")), ("D2", length)), given)
+    m.machine.write_register("A1", end)
+    m.machine.write_register("D2", count)
+    m.machine.write_register(SERVICE_REGISTER, NO_ERROR)
+    m.machine.write_register("PC", m.machine.read_register("PC") + TRAP_SIZE)
     return call
 
 
@@ -3381,15 +3318,14 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
     returning past the trap; or, nothing done, why it cannot: a service
     it does not model, a buffer it cannot read or fill, or a segment too
     large."""
-    uc = m.uc
     read = console_read(m, vector)
     if read is not None:
         return answer_console_read(m, read)
-    number = uc.reg_read(REGISTERS[SERVICE_REGISTER]) & SERVICE_MASK
+    number = m.machine.read_register(SERVICE_REGISTER) & SERVICE_MASK
     service = KERNEL_TRAPS[vector].get(number)
-    device = uc.reg_read(UC_M68K_REG_D0) >> DEVICE_SHIFT & DEVICE_MASK
+    device = m.machine.read_register("D0") >> DEVICE_SHIFT & DEVICE_MASK
     if m.console_input is not None and vector == IO_TRAP and number == CONTROL and device == CONSOLE_STRING_DEVICE:
-        m.string_cursor = uc.reg_read(REGISTERS["D2"])
+        m.string_cursor = m.machine.read_register("D2")
     if vector == IO_TRAP and number == WRITE and device in m.profile.string_devices:
         service = STRING_WRITE
     if service is None:
@@ -3399,47 +3335,47 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
     try:
         if service.reads:
             pointer, length = service.reads
-            size = MESSAGE_SIZE if length is None else uc.reg_read(REGISTERS[length])
-            start = uc.reg_read(REGISTERS[pointer]) + (MESSAGE_OFFSET if length is None else 0)
+            size = MESSAGE_SIZE if length is None else m.machine.read_register(length)
+            start = m.machine.read_register(pointer) + (MESSAGE_OFFSET if length is None else 0)
             if service.qspi_transfers:
-                minor = uc.reg_read(UC_M68K_REG_D0) & QSPI_MINOR_MASK
-                data = qspi_write_data(uc, m.profile.qspi_widths, minor, size, start)
+                minor = m.machine.read_register("D0") & QSPI_MINOR_MASK
+                data = qspi_write_data(m, m.profile.qspi_widths, minor, size, start)
             elif size > LONGEST_BUFFER:
                 return out_of_reach
             else:
-                data = bytes(uc.mem_read(start, size))
+                data = bytes(m.machine.peek_bytes(start, size))
             if length is None:
                 # a message's longs, a routine spoo_run sends among them
                 longs = struct.unpack(f">{MESSAGE_LONGS}I", data)
                 data = struct.pack(f">{MESSAGE_LONGS}I", *(m.as_image(v) for v in longs))
         if service.fills:
-            buffer, exchange = (uc.reg_read(REGISTERS[name]) for name in service.fills)
+            buffer, exchange = (m.machine.read_register(name) for name in service.fills)
             ids = m.profile.exchange_ids()
             received = {ids[cell]: message for cell, message in m.profile.received.items()}
-            uc.mem_write(buffer + MESSAGE_OFFSET, received.get(exchange, MESSAGE))
+            m.machine.poke_bytes(buffer + MESSAGE_OFFSET, received.get(exchange, MESSAGE))
         if service.text:
-            data = string(uc, uc.reg_read(REGISTERS[service.text[0]]))
+            data = string(m, m.machine.read_register(service.text[0]))
             if data is None:
                 return out_of_reach
         if service.counted:
-            block = uc.reg_read(REGISTERS[service.counted])
+            block = m.machine.read_register(service.counted)
             if block:
-                (count,) = COUNT.unpack(uc.mem_read(block, COUNT.size))
-                data = bytes(uc.mem_read(block, COUNT.size * (count + 1)))
-    except UcError:
+                (count,) = COUNT.unpack(m.machine.peek_bytes(block, COUNT.size))
+                data = bytes(m.machine.peek_bytes(block, COUNT.size * (count + 1)))
+    except mc683xx.BusError:
         return out_of_reach
     too_large = f"service {number}, its segment out of reach"
     if service.allocates:
         size, pointer = service.allocates
-        segment = allocate(m, uc.reg_read(REGISTERS[size]))
+        segment = allocate(m, m.machine.read_register(size))
         if segment is None:
             return too_large
-        uc.reg_write(REGISTERS[pointer], segment)
+        m.machine.write_register(pointer, segment)
     failing = vector == SERVICE_TRAP and number in m.failing_services
     error = SERVICE_FAILED if failing else NO_ERROR
     if service.identifies:
         name, pointer = service.identifies
-        task = uc.reg_read(REGISTERS[name])
+        task = m.machine.read_register(name)
         if m.ident_fails and task != RUNNING_TASK or failing:
             error = IDENT_NOT_FOUND
             record = NO_TASK
@@ -3449,24 +3385,24 @@ def answer_kernel(m: RebuiltMachine, vector: int, sr: int) -> KernelCall | Conso
             record = m.tasks[task]
             if record is None:
                 return too_large
-        uc.reg_write(REGISTERS[pointer], record)
+        m.machine.write_register(pointer, record)
     call = KernelCall(vector, number, tuple(service_argument(m, name) for name in service.arguments), data)
     for name in service.changes:
-        uc.reg_write(REGISTERS[name], KERNEL_SCRATCH)
+        m.machine.write_register(name, KERNEL_SCRATCH)
     for name in service.results:
-        uc.reg_write(REGISTERS[name], KERNEL_RESULT | service.result_low)
+        m.machine.write_register(name, KERNEL_RESULT | service.result_low)
     if service.none_done:
-        uc.reg_write(REGISTERS[service.none_done], 0)
+        m.machine.write_register(service.none_done, 0)
     if service.text:
         pointer, count = service.text
-        uc.reg_write(REGISTERS[pointer], uc.reg_read(REGISTERS[pointer]) + len(data))
-        uc.reg_write(REGISTERS[count], len(data))
-    uc.reg_write(REGISTERS[SERVICE_REGISTER], error)
+        m.machine.write_register(pointer, m.machine.read_register(pointer) + len(data))
+        m.machine.write_register(count, len(data))
+    m.machine.write_register(SERVICE_REGISTER, error)
     if service.supervisor:
-        uc.reg_write(UC_M68K_REG_D0, uc.reg_read(UC_M68K_REG_D0) & ~WIDTHS[".w"] | sr)
+        m.machine.write_register("D0", m.machine.read_register("D0") & ~WIDTHS[".w"] | sr)
         # A7 becomes the supervisor stack, as the trap's rte leaves it
-        uc.reg_write(UC_M68K_REG_SR, sr | SUPERVISOR_BIT)
-    uc.reg_write(UC_M68K_REG_PC, uc.reg_read(UC_M68K_REG_PC) + TRAP_SIZE)
+        m.machine.write_register("SR", sr | SUPERVISOR_BIT)
+    m.machine.write_register("PC", m.machine.read_register("PC") + TRAP_SIZE)
     return call
 
 
@@ -3474,19 +3410,17 @@ class CpuReader(Cpu):
     """The CPU as a path reads it (status_register.Cpu), its system
     byte as system_status reads it, safe in a hook."""
 
-    REGISTERS = {**REGISTERS, "A7": UC_M68K_REG_A7}
-
-    def __init__(self, uc: Mc683xx):
-        self.uc = uc
+    def __init__(self, m: RebuiltMachine):
+        self.m = m
 
     def word(self, at: int) -> int:
-        return int.from_bytes(self.uc.mem_read(at, STATUS_SIZE), "big")
+        return int.from_bytes(self.m.machine.peek_bytes(at, STATUS_SIZE), "big")
 
     def register(self, name: str) -> int:
-        return self.uc.reg_read(self.REGISTERS[name])
+        return self.m.machine.read_register(name)
 
     def system_byte(self) -> int:
-        return system_status(self.uc)
+        return system_status(self.m)
 
 
 class Run:
@@ -3530,8 +3464,8 @@ class Run:
         due: list[Interrupt] = []
         steps = 0
 
-        def watched(uc, access, address, size, value, index):
-            if frames:
+        def watched(access, index):
+            if frames or access.stacking:
                 return
             interrupt = interrupts[index][0]
             events[index] += 1
@@ -3541,7 +3475,7 @@ class Run:
             ):
                 pending.append(index)
 
-        def step(uc, address, size, _):
+        def step(_):
             # before each instruction, the first interrupt due, if the
             # mask lets it in
             nonlocal steps
@@ -3550,47 +3484,45 @@ class Run:
                 return
             index = pending[0]
             interrupt = interrupts[index][0]
-            if interrupt.level != NONMASKABLE and interrupt.level <= system_status(uc) >> MASK_SHIFT & LEVEL_MASK:
+            if interrupt.level != NONMASKABLE and interrupt.level <= system_status(m) >> MASK_SHIFT & LEVEL_MASK:
                 return
             pending.pop(0)
             presented = interrupt.presents[min(fired[index], len(interrupt.presents) - 1)] if interrupt.presents else ()
             fired[index] += 1
             for at, length, shown in presented:
-                uc.mem_write(at, shown.to_bytes(length, "big"))
+                m.machine.poke_bytes(at, shown.to_bytes(length, "big"))
             for at in interrupt.ready:
                 m.devices.make_ready(at)
             steps -= 1
             due.append(interrupt)
-            uc.emu_stop()
+            m.stop_request.request()
 
-        def trap(uc, number, _):
+        def trap(intercepted):
+            number = intercepted.vector
             if frames and number == RETURN_FROM_INTERRUPT:
                 # the kernel's return from interrupt, as it returns when
                 # the interrupt readied no task to switch to: the rte
-                return_from_exception(uc)
+                return_from_exception(m)
                 frames.pop()
-                return
-            if number in ENDING:
+            elif number in ENDING:
                 ended.append(number)
-                uc.emu_stop()
-                return
-            if number in KERNEL_TRAPS and kernel_calls == KERNEL_CALL_LIMIT:
+                m.stop_request.request()
+            elif number in KERNEL_TRAPS and kernel_calls == KERNEL_CALL_LIMIT:
                 ended.append(STILL_RUNNING)
-                uc.emu_stop()
-                return
-            if number in KERNEL_TRAPS and console_session_ended(m, number):
+                m.stop_request.request()
+            elif number in KERNEL_TRAPS and console_session_ended(m, number):
                 if console_read(m, number) == CONSOLE_PORT_DEVICE:
                     m.effects.append(console_state(m, None))
                 ended.append(INPUT_ENDED)
-                uc.emu_stop()
-                return
-            if number in KERNEL_TRAPS:
-                answered(uc, number, m.status())
-                return
-            trapped.append(number)
-            uc.emu_stop()
+                m.stop_request.request()
+            elif number in KERNEL_TRAPS:
+                answered(number, m.status())
+            else:
+                trapped.append(number)
+                m.stop_request.request()
+            return True
 
-        def answered(uc, number, sr):
+        def answered(number, sr):
             nonlocal kernel_calls
             call = answer_kernel(m, number, sr)
             if isinstance(call, (KernelCall, ConsoleLine)):
@@ -3598,182 +3530,192 @@ class Run:
                 m.effects.append(call)
                 if m.console_input is not None and call == KernelCall(number, DELETE, (("A0", SELF),)):
                     ended.append(TASK_DELETED)
-                    uc.emu_stop()
+                    m.stop_request.request()
                 return
             trapped.append(f"{number}, {call}")
-            uc.emu_stop()
+            m.stop_request.request()
 
-        def fault(uc, access, address, size, value, _):
-            if access == UC_MEM_WRITE_PROT and literal_region(m, uc.reg_read(UC_M68K_REG_PC)) is not None:
-                ended.append(BUS_ERROR)
-            invalid.append(address)
-            return False
-
-        def code_write(uc, access, address, size, value, _):
+        def code_write(access):
             # the hook is after the write, undone after the call, the
             # bytes it overwrote the call's start's
-            written.append((address, code_start[address - m.profile.code[0] :][:size]))
-            if literal_region(m, uc.reg_read(UC_M68K_REG_PC)) is not None:
+            if access.stacking:
+                return
+            written.append((access.address, code_start[access.address - m.profile.code[0] :][: access.size]))
+            if literal_region(m, access.pc) is not None:
                 ended.append(BUS_ERROR)
             else:
-                invalid.append(address)
-            uc.emu_stop()
+                invalid.append(access.address)
+            m.stop_request.request()
 
         # the return address and frame of each interrupt taken, whose
         # rte, the CPU's own, pops it once PC is at the address with the
         # frame popped (returned)
         returns: dict[int, int] = {}
 
-        def returning(uc, address):
+        def returning(address):
             # whether the instruction at an address is where the
             # innermost interrupt taken returns to, its frame popped
             return (
                 bool(frames)
                 and returns.get(address) == frames[-1]
-                and uc.reg_read(UC_M68K_REG_A7) == frames[-1] + struct.calcsize(FRAME_FORMAT)
+                and m.machine.read_register("A7") == frames[-1] + struct.calcsize(FRAME_FORMAT)
             )
 
-        def returned(uc, address, size, _):
-            if returning(uc, address):
+        def returned(instruction):
+            if returning(instruction.pc):
                 frames.pop()
 
         # the call's path, read at the function's level, outside the
         # interrupts taken (RebuiltMachine.traced)
         self.trace = None if m.tracing is None else m.tracing(start)
-        m.path = None if self.trace is None else (self.trace, lambda uc, address: not frames or returning(uc, address))
+        m.path = None if self.trace is None else (self.trace, lambda address: not frames or returning(address))
 
         # the instructions begun, and the one that last read the counter
         # (SPLIT)
         counter_reads = [0, None]
 
-        def counter_instruction(uc, address, size, _):
+        def counter_instruction(_):
             counter_reads[0] += 1
 
-        def counter_read(uc, access, address, size, value, _):
-            counter_reads[1] = counter_reads[0]
+        def counter_read(access):
+            if not access.stacking:
+                counter_reads[1] = counter_reads[0]
 
-        def counted(uc, access, address, size, value, _):
+        def counted(access):
             # before the write; made here too, in case it is not after
+            if access.stacking:
+                return
             counter, counter_size, count = m.counter
             if counter_reads[1] not in (None, counter_reads[0]):
                 ended.append(SPLIT)
-                uc.emu_stop()
+                m.stop_request.request()
                 return
-            if address == counter and size == counter_size and value & (1 << 8 * size) - 1 == count:
-                uc.mem_write(counter, count.to_bytes(size, "big"))
+            if access.address == counter and access.size == counter_size and access.value == count:
+                m.machine.poke_bytes(counter, count.to_bytes(counter_size, "big"))
                 ended.append(COUNTED)
-                uc.emu_stop()
+                m.stop_request.request()
 
         # the lowest address the call has written on each stack, by the
         # top of its memory, STACK_END or SUPERVISOR_STACK
         deepest: dict[int, int] = {}
 
-        def stack_write(uc, access, address, size, value, _):
+        def stack_write(access):
+            if access.stacking:
+                return
+            address = access.address
             # the stack pointer before the writing instruction's own
             # decrement, which the write lies below
-            sp = uc.reg_read(UC_M68K_REG_A7)
+            sp = access.registers["A7"]
             if address >= sp - PUSH_REACH:
                 top = STACK_END if sp >= SUPERVISOR_STACK else SUPERVISOR_STACK
                 deepest[top] = min(deepest.get(top, address), address)
-            clean_frame(uc, address)
+            clean_frame(access.pc, address)
 
-        def clean_frame(uc, address):
+        def clean_frame(pc, address):
             # at link's push of the frame pointer, the frame below it
-            opcode, displacement = LINK_INSTRUCTION.unpack(
-                uc.mem_read(uc.reg_read(UC_M68K_REG_PC), LINK_INSTRUCTION.size)
-            )
+            opcode, displacement = LINK_INSTRUCTION.unpack(m.machine.peek_bytes(pc, LINK_INSTRUCTION.size))
             if opcode & LINK_MASK == LINK and displacement < 0 and address + displacement >= STACK:
                 fill = m.frame_fill
                 if fill is None:
-                    uc.mem_write(address + displacement, CLEAN_STACK[:-displacement])
+                    m.machine.poke_bytes(address + displacement, CLEAN_STACK[:-displacement])
                 else:
-                    uc.mem_write(address + displacement, (fill * (-displacement // len(fill) + 1))[displacement:])
+                    m.machine.poke_bytes(address + displacement, (fill * (-displacement // len(fill) + 1))[displacement:])
 
         if entry:
             # a task's entry, as the kernel starts it: its stack's words
             # at SP, no return address below them
             sp = STACK_TOP - len(stack_arguments)
-            m.uc.mem_write(sp, stack_arguments)
+            m.machine.poke_bytes(sp, stack_arguments)
         elif m.stack_edge:
             # the arguments end where the stack's memory does, and the
             # caller's frame is nowhere mapped (UNMAPPED_FRAME)
             sp = STACK + STACK_SIZE - 4 - len(stack_arguments)
-            m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments)
-            m.uc.reg_write(UC_M68K_REG_A6, UNMAPPED_FRAME)
+            m.machine.poke_bytes(sp, struct.pack(">I", RETURN) + stack_arguments)
+            m.machine.write_register("A6", UNMAPPED_FRAME)
         else:
             sp = STACK_TOP - 4 - len(stack_arguments)
             frame = FRAME_CONTENTS.pack(0, RETURN, m.profile.caller_name)
-            m.uc.mem_write(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
+            m.machine.poke_bytes(sp, struct.pack(">I", RETURN) + stack_arguments + frame)
         if not m.starting_status & SUPERVISOR_BIT:
             # A7 is then the user stack, the supervisor's kept apart
-            m.uc.reg_write(UC_M68K_REG_A7, SUPERVISOR_STACK)
-        m.uc.reg_write(UC_M68K_REG_SR, m.starting_status)
-        m.uc.reg_write(UC_M68K_REG_A7, sp)
+            m.machine.write_register("A7", SUPERVISOR_STACK)
+        m.machine.write_register("SR", m.starting_status)
+        m.machine.write_register("A7", sp)
         # where each stack starts, which a case's arguments, gcc's slots
         # or the original's layout, move
         self.stack_starts = {STACK_END: sp, SUPERVISOR_STACK: SUPERVISOR_STACK}
+        machine = m.machine
         hooks = [
-            m.uc.hook_add(UC_HOOK_INTR, trap),
-            m.uc.hook_add(UC_HOOK_MEM_INVALID, fault),
-            m.uc.hook_add(UC_HOOK_MEM_WRITE, stack_write, begin=STACK, end=STACK_END - 1),
+            machine.add_intercept_hook(trap, INTERCEPTED),
+            machine.add_write_hook(stack_write, STACK, STACK_END - 1),
         ]
         for index, (interrupt, at) in enumerate(interrupts):
-            kind = UC_HOOK_MEM_WRITE if interrupt.write else UC_HOOK_MEM_READ
-            hooks.append(m.uc.hook_add(kind, watched, index, begin=at, end=at))
+            add = machine.add_write_hook if interrupt.write else machine.add_read_hook
+            hooks.append(add(lambda access, index=index: watched(access, index), at, at))
         if interrupts:
-            hooks.append(m.uc.hook_add(UC_HOOK_CODE, step))
-            hooks.append(m.uc.hook_add(UC_HOOK_CODE, returned))
+            hooks.append(machine.add_code_hook(step))
+            hooks.append(machine.add_code_hook(returned))
         if m.counter is not None:
-            hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, counted, begin=m.counter[0], end=m.counter[0]))
-            hooks.append(m.uc.hook_add(UC_HOOK_MEM_READ, counter_read, begin=m.counter[0], end=m.counter[0]))
-            hooks.append(m.uc.hook_add(UC_HOOK_CODE, counter_instruction))
+            hooks.append(machine.add_write_hook(counted, m.counter[0], m.counter[0]))
+            hooks.append(machine.add_read_hook(counter_read, m.counter[0], m.counter[0]))
+            hooks.append(machine.add_code_hook(counter_instruction))
         if m.protected and m.profile.code:
             code, size = m.profile.code
-            code_start = m.read(code, size)
-            hooks.append(m.uc.hook_add(UC_HOOK_MEM_WRITE, code_write, begin=code, end=code + size - 1))
+            code_start = m.machine.peek_bytes(code, size)
+            hooks.append(machine.add_write_hook(code_write, code, code + size - 1))
         try:
             at = start
             while True:
-                m.uc.emu_start(at, RETURN, count=STEP_LIMIT - steps)
-                if not due or trapped or ended or steps >= STEP_LIMIT:
+                end = machine.run_limited(begin=at, reach=RETURN, instructions=STEP_LIMIT - steps).end
+                if isinstance(end, mc683xx.End.Fault) or not due or trapped or ended or steps >= STEP_LIMIT:
                     break
-                at = m.uc.reg_read(UC_M68K_REG_PC)
-                frames.append(take_interrupt(m.uc, m.profile.vectors, due.pop(), at, m.status()))
+                at = machine.read_register("PC")
+                interrupt = due.pop()
+                machine.take_exception(interrupt.vector, interrupt.level)
+                frames.append(machine.read_register("A7"))
                 returns[at] = frames[-1]
-                at = m.uc.reg_read(UC_M68K_REG_PC)
-            self.stop_reason = f"trap {trapped[0]}" if trapped else None
-            self.stopped = self.stop_reason
-        except UcError as error:
-            of = f" of {invalid[0]:x}" if invalid else ""
-            self.stop_reason = None if ended else str(error)
-            self.stopped = None if ended else f"{error}{of} at {m.uc.reg_read(UC_M68K_REG_PC):x}"
+                at = machine.read_register("PC")
+            match end:
+                case mc683xx.End.Fault(fault):
+                    protected = fault.cause == mc683xx.FaultCause.PROTECTED
+                    if protected and fault.kind == mc683xx.BusCycleKind.WRITE and literal_region(m, fault.pc) is not None:
+                        ended.append(BUS_ERROR)
+                    invalid.append(fault.address)
+                    self.stop_reason = None if ended else f"{fault.cause}: {fault.kind}"
+                    self.stopped = None if ended else f"{self.stop_reason} of {fault.address:x} at {fault.pc:x}"
+                case mc683xx.End.Stop(mc683xx.Stop.Halted() as halted):
+                    self.stop_reason = None if ended else str(halted)
+                    self.stopped = None if ended else f"{self.stop_reason} at {machine.read_register('PC'):x}"
+                case _:
+                    self.stop_reason = f"trap {trapped[0]}" if trapped else None
+                    self.stopped = self.stop_reason
         finally:
             for hook in hooks:
-                m.uc.hook_del(hook)
+                machine.remove_hook(hook)
             m.path = None
         if self.trace is not None:
             self.trace.settled(m.reader)
         if m.stray_write:
             ended.append(BUS_ERROR)
             self.stopped = self.stop_reason = None
-        pc = m.uc.reg_read(UC_M68K_REG_PC)
+        pc = m.machine.read_register("PC")
         # the flash's arrays, which memory then holds again in place of
         # what the call's commands and status reads left there
         self.flash = None if m.flash is None else m.flash.contents()
         if self.flash is not None:
-            m.uc.mem_write(ROM, self.flash)
+            m.machine.poke_bytes(ROM, self.flash)
         for address, contents in reversed(written):
-            m.uc.mem_write(address, contents)
+            m.machine.poke_bytes(address, contents)
         if written and not ended:
             self.stop_reason = "write to code"
             self.stopped = f"{self.stop_reason} of {invalid[0]:x} at {pc:x}"
         if self.stopped is None and not ended and pc != RETURN:
-            if any(m.read(pc, len(branch)) == branch for branch in SELF_BRANCHES):
+            if any(m.machine.peek_bytes(pc, len(branch)) == branch for branch in SELF_BRANCHES):
                 ended.append(HALTED)
             else:
                 self.stopped = self.stop_reason = f"no return in {STEP_LIMIT} steps"
         self.ended = ended[0] if ended else None
-        self.registers = {name: m.uc.reg_read(register) for name, register in REGISTERS.items()}
+        self.registers = {name: m.machine.read_register(name) for name in REGISTERS}
         self.deepest = deepest
         # the lowest address the call's own stack may reach, above
         # memory another use has, where one is known: a pForth console
@@ -3781,7 +3723,7 @@ class Run:
         self.floor: int | None = None
         self.status = m.status()
         self.memory = snapshot(m)
-        self.compared = {name: m.read(start, size) for name, (start, size) in COMPARED.items()}
+        self.compared = {name: m.machine.peek_bytes(start, size) for name, (start, size) in COMPARED.items()}
 
     def end(self) -> str:
         if self.ended is None:
@@ -3812,7 +3754,7 @@ def preceding(m: RebuiltMachine, at: int) -> bytes | None:
     if region is None:
         return None
     start = max(region, at - BUFFER_SPACING)
-    return m.read(start, at - start)
+    return m.machine.peek_bytes(start, at - start)
 
 
 def same_literal(m: RebuiltMachine, a: int, b: int) -> bool:
@@ -3839,7 +3781,7 @@ def same_literal(m: RebuiltMachine, a: int, b: int) -> bool:
     try:
         text = m.string(a - back)
         return text == m.string(b - back)
-    except (UcError, ValueError):
+    except (mc683xx.BusError, ValueError):
         return False
 
 

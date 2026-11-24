@@ -1,11 +1,10 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Confirms application routines named from the decompiled firmware by
 running them, as libc_check.py does the C library's: each is called in
-the harness's CPU, mc683xx's CPU32 (backend.py), on
-known inputs and its result compared with what its name says.
+the harness's CPU, mc683xx's CPU32, on known inputs and its result compared with what its name says.
 
     uv run tools/firmware/app_check.py third_party/firmware/images/z3805a-3543b.bin
 
@@ -18,24 +17,14 @@ the Z3805A 3543B's.  Exits nonzero if any check fails.
 import struct
 import sys
 
-from backend import (
-    UC_M68K_REG_A0,
-    UC_M68K_REG_A1,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_D1,
-    UC_M68K_REG_D2,
-    UC_M68K_REG_D3,
-    UC_M68K_REG_D7,
-)
 from libc_check import (
     RETURN,
     STACK_TOP,
-    STEP_LIMIT,
     Machine,
     double_words,
     from_double_words,
     read_double,
+    run_call,
     signed,
 )
 
@@ -50,17 +39,6 @@ ADDRESSES = {
     "scpi_double_to_decimal": 0x24E18,
     "scpi_scale_by_power_of_ten": 0x251E4,
     "scpi_double_multiply": 0x252BC,
-}
-
-# The registers the number engine's routines take their arguments in.
-REGISTERS = {
-    "d0": UC_M68K_REG_D0,
-    "d1": UC_M68K_REG_D1,
-    "d2": UC_M68K_REG_D2,
-    "d3": UC_M68K_REG_D3,
-    "d7": UC_M68K_REG_D7,
-    "a0": UC_M68K_REG_A0,
-    "a1": UC_M68K_REG_A1,
 }
 
 # The table of powers of ten scpi_bcd_to_double hands
@@ -102,22 +80,22 @@ def call_packed(m: Machine, name: str, arguments: bytes) -> int:
     not.  The converters' scale is a long, its low word read: their
     callers push it sign-extended."""
     sp = STACK_TOP - len(arguments) - 4
-    m.uc.mem_write(sp, struct.pack(">I", RETURN) + arguments)
-    m.uc.reg_write(UC_M68K_REG_A7, sp)
-    m.uc.emu_start(ADDRESSES[name], RETURN, count=STEP_LIMIT)
-    return signed(m.uc.reg_read(UC_M68K_REG_D0))
+    m.machine.poke_bytes(sp, struct.pack(">I", RETURN) + arguments)
+    m.machine.write_register("A7", sp)
+    run_call(m.machine, ADDRESSES[name])
+    return signed(m.machine.read_register("D0"))
 
 
 def call_registers(m: Machine, name: str, **registers: int) -> tuple[int, int]:
     """Calls name with its arguments in the registers given; returns D0
     and D1."""
     sp = STACK_TOP - 4
-    m.uc.mem_write(sp, struct.pack(">I", RETURN))
-    m.uc.reg_write(UC_M68K_REG_A7, sp)
+    m.machine.poke_bytes(sp, struct.pack(">I", RETURN))
+    m.machine.write_register("A7", sp)
     for register, value in registers.items():
-        m.uc.reg_write(REGISTERS[register], value & 0xFFFFFFFF)
-    m.uc.emu_start(ADDRESSES[name], RETURN, count=STEP_LIMIT)
-    return m.uc.reg_read(UC_M68K_REG_D0), m.uc.reg_read(UC_M68K_REG_D1)
+        m.machine.write_register(register.upper(), value & 0xFFFFFFFF)
+    run_call(m.machine, ADDRESSES[name])
+    return m.machine.read_register("D0"), m.machine.read_register("D1")
 
 
 def checks(m: Machine):
@@ -137,7 +115,7 @@ def checks(m: Machine):
             if not low <= wanted <= high:
                 yield name, f"{value}", status == OUT_OF_RANGE
                 continue
-            got = int.from_bytes(m.read(out, width), "big", signed=signed_result)
+            got = int.from_bytes(m.machine.peek_bytes(out, width), "big", signed=signed_result)
             yield name, f"{value}", status == 0 and got == wanted
 
     for value in (1234, -5):
@@ -157,7 +135,7 @@ def checks(m: Machine):
         out = m.buffer()
         arguments = struct.pack(">dIhhhBx", value, out, digits, REAL_TEXT_MODE, resolution, 1)
         status = call_packed(m, "scpi_real_to_text", arguments)
-        got = m.read(out, len(wanted) + 1)
+        got = m.machine.peek_bytes(out, len(wanted) + 1)
         yield "scpi_real_to_text", f"{value} {digits} {resolution}", status == 0 and got == wanted + b"\0"
 
     # The number engine under them, which takes its arguments in registers.
@@ -185,7 +163,7 @@ def checks(m: Machine):
         out = m.buffer()
         high, low = double_words(value)
         call_registers(m, "scpi_double_to_decimal", d0=high, d1=low, a0=out, d7=digits)
-        raw = m.read(out, DECIMAL_EXPONENT + 2)
+        raw = m.machine.peek_bytes(out, DECIMAL_EXPONENT + 2)
         sign = struct.unpack(">H", raw[:DECIMAL_DIGITS])[0]
         got_exponent = struct.unpack(">h", raw[DECIMAL_EXPONENT:])[0]
         passed = sign == (value < 0) and raw[DECIMAL_DIGITS:].startswith(wanted) and got_exponent == exponent

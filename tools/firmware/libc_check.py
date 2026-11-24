@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Confirms the C library routines named in docs/firmware/libc.md by running
-them: each is called on the harness's CPU, mc683xx's CPU32
-(backend.py), on known inputs and its result compared with
+them: each is called on the harness's CPU, mc683xx's CPU32, on known
+inputs and its result compared with
 what the C routine of that name gives.
 
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
@@ -17,14 +17,7 @@ import math
 import struct
 import sys
 
-from backend import (
-    UC_M68K_REG_A0,
-    UC_M68K_REG_A1,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_D1,
-    new_cpu,
-)
+import mc683xx
 
 ROM = 0x000000
 ROM_SIZE = 0x80000
@@ -104,29 +97,38 @@ ADDRESSES = {
 RAND_SEED = 0x103936
 
 
+def run_call(machine: mc683xx.Machine, begin: int, reach: int = RETURN, instructions: int = STEP_LIMIT) -> mc683xx.End:
+    """How a call's run from begin ended; it fails on a fault, an
+    exception or a halt."""
+    end = machine.run_limited(begin=begin, reach=reach, instructions=instructions).end
+    match end:
+        case mc683xx.End.Fault() | mc683xx.End.Exception() | mc683xx.End.Stop(mc683xx.Stop.Halted()):
+            raise RuntimeError(f"{begin:x}: {end}")
+    return end
+
+
 class Machine:
-    """The image in an emulator, with calls into it."""
+    """The image in an emulator, with calls into it: a fault or an
+    exception stops a call."""
 
     def __init__(self, image: bytes):
-        self.uc = new_cpu()
-        self.uc.mem_map(ROM, ROM_SIZE)
-        self.uc.mem_write(ROM, image)
-        self.uc.mem_map(RAM, RAM_SIZE)
-        self.uc.mem_map(RETURN, RETURN_SIZE)
-        self.uc.mem_write(COMPARE_AT, COMPARE_BYTES)
+        self.machine = mc683xx.Machine()
+        self.machine.map(ROM, ROM_SIZE, contents=image)
+        self.machine.map(RAM, RAM_SIZE)
+        self.machine.map(RETURN, RETURN_SIZE)
+        self.machine.poke_bytes(COMPARE_AT, COMPARE_BYTES)
+        self.machine.set_stop_on_fault(True)
+        self.machine.set_stop_on_exception(None)
         self.next_buffer = BUFFER
 
     def buffer(self, contents: bytes = b"") -> int:
         at = self.next_buffer
         self.next_buffer += BUFFER_SPACING
-        self.uc.mem_write(at, contents.ljust(BUFFER_SPACING, b"\xa5"))
+        self.machine.poke_bytes(at, contents.ljust(BUFFER_SPACING, b"\xa5"))
         return at
 
-    def read(self, at: int, length: int) -> bytes:
-        return bytes(self.uc.mem_read(at, length))
-
     def string(self, at: int) -> bytes:
-        data = self.read(at, BUFFER_SPACING)
+        data = self.machine.peek_bytes(at, BUFFER_SPACING)
         return data[: data.index(0)]
 
     def call(
@@ -137,16 +139,16 @@ class Machine:
         sp = STACK_TOP
         for value in reversed(longs):
             sp -= 4
-            self.uc.mem_write(sp, struct.pack(">I", value & 0xFFFFFFFF))
+            self.machine.poke_bytes(sp, struct.pack(">I", value & 0xFFFFFFFF))
         sp -= 4
-        self.uc.mem_write(sp, struct.pack(">I", RETURN))
-        self.uc.reg_write(UC_M68K_REG_A7, sp)
-        self.uc.reg_write(UC_M68K_REG_D0, d0 & 0xFFFFFFFF)
-        self.uc.reg_write(UC_M68K_REG_D1, d1 & 0xFFFFFFFF)
-        self.uc.reg_write(UC_M68K_REG_A0, a0 & 0xFFFFFFFF)
-        self.uc.reg_write(UC_M68K_REG_A1, a1 & 0xFFFFFFFF)
-        self.uc.emu_start(ADDRESSES[name], RETURN, count=STEP_LIMIT)
-        return self.uc.reg_read(UC_M68K_REG_D0), self.uc.reg_read(UC_M68K_REG_D1)
+        self.machine.poke_bytes(sp, struct.pack(">I", RETURN))
+        self.machine.write_register("A7", sp)
+        self.machine.write_register("D0", d0 & 0xFFFFFFFF)
+        self.machine.write_register("D1", d1 & 0xFFFFFFFF)
+        self.machine.write_register("A0", a0 & 0xFFFFFFFF)
+        self.machine.write_register("A1", a1 & 0xFFFFFFFF)
+        run_call(self.machine, ADDRESSES[name])
+        return self.machine.read_register("D0"), self.machine.read_register("D1")
 
 
 def signed(value: int) -> int:
@@ -174,7 +176,7 @@ def double_buffer(m: Machine, value: float) -> int:
 
 
 def read_double(m: Machine, at: int) -> float:
-    return struct.unpack(">d", m.read(at, 8))[0]
+    return struct.unpack(">d", m.machine.peek_bytes(at, 8))[0]
 
 
 def entry_checks(m: Machine):
@@ -188,7 +190,7 @@ def entry_checks(m: Machine):
     ):
         at = m.buffer(struct.pack(">f", x))
         m.call(name, d1=float_bits(y), a0=at)
-        got = struct.unpack(">f", m.read(at, 4))[0]
+        got = struct.unpack(">f", m.machine.peek_bytes(at, 4))[0]
         yield name, f"*x={x}, y={y}", got == operation(x, y)
 
     y_high, y_low = double_words(y)
@@ -249,18 +251,18 @@ def checks(m: Machine):
 
     destination = m.buffer()
     got = m.call("memcpy", destination, m.buffer(b"hello world"), 5)[0]
-    yield "memcpy", "5 bytes", got == destination and m.read(destination, 6) == b"hello\xa5"
+    yield "memcpy", "5 bytes", got == destination and m.machine.peek_bytes(destination, 6) == b"hello\xa5"
 
     destination = m.buffer()
     got = m.call("memset", destination, 0x41, 4)[0]
-    yield "memset", "4 bytes", got == destination and m.read(destination, 5) == b"AAAA\xa5"
+    yield "memset", "4 bytes", got == destination and m.machine.peek_bytes(destination, 5) == b"AAAA\xa5"
 
     values = b"qsortbyte"
     base = m.buffer(values)
     m.call("qsort", base, len(values), 1, COMPARE_AT)
-    yield "qsort", "bytes", m.read(base, len(values)) == bytes(sorted(values))
+    yield "qsort", "bytes", m.machine.peek_bytes(base, len(values)) == bytes(sorted(values))
 
-    m.uc.mem_write(RAND_SEED, struct.pack(">I", 1))
+    m.machine.poke_bytes(RAND_SEED, struct.pack(">I", 1))
     seed = 1
     for _ in range(3):
         seed = (seed * 1103515245 + 12345) & 0xFFFFFFFF
@@ -281,10 +283,10 @@ def checks(m: Machine):
 
     destination = m.buffer()
     got = m.call("strncpy", destination, m.buffer(b"ab\0"), 4)[0]
-    yield "strncpy", "pads", got == destination and m.read(destination, 5) == b"ab\0\0\xa5"
+    yield "strncpy", "pads", got == destination and m.machine.peek_bytes(destination, 5) == b"ab\0\0\xa5"
     destination = m.buffer()
     m.call("strncpy", destination, m.buffer(b"abcdef\0"), 3)
-    yield "strncpy", "truncates", m.read(destination, 4) == b"abc\xa5"
+    yield "strncpy", "truncates", m.machine.peek_bytes(destination, 4) == b"abc\xa5"
 
     for character in b"aZz0{`":
         got = m.call("toupper", character)[0]
@@ -302,14 +304,14 @@ def checks(m: Machine):
         exponent = m.buffer()
         high, low = m.call("frexp", *double_words(value), exponent)
         mantissa, wanted_exponent = math.frexp(value)
-        got_exponent = signed(struct.unpack(">I", m.read(exponent, 4))[0])
+        got_exponent = signed(struct.unpack(">I", m.machine.peek_bytes(exponent, 4))[0])
         yield "frexp", f"{value}", (from_double_words(high, low), got_exponent) == (mantissa, wanted_exponent)
 
     for value in (3.25, -2.5):
         whole = m.buffer()
         high, low = m.call("modf", *double_words(value), whole)
         fraction, wanted_whole = math.modf(value)
-        got_whole = from_double_words(*struct.unpack(">II", m.read(whole, 8)))
+        got_whole = from_double_words(*struct.unpack(">II", m.machine.peek_bytes(whole, 8)))
         yield "modf", f"{value}", (from_double_words(high, low), got_whole) == (fraction, wanted_whole)
 
     for name, function, values in (("sqrt", math.sqrt, (4.0, 2.0)), ("log", math.log, (1.0, math.e, 10.0))):
@@ -349,7 +351,7 @@ def checks(m: Machine):
     for value, integer, odd in ((3.0, 1, 1), (4.0, 1, 0), (2.5, 0, 0), (-5.0, 1, 1), (1e30, 1, 0)):
         flag = m.buffer(b"\0" * 4)
         got = m.call("double_is_integer", *double_words(value), flag)[0]
-        got_odd = struct.unpack(">I", m.read(flag, 4))[0]
+        got_odd = struct.unpack(">I", m.machine.peek_bytes(flag, 4))[0]
         yield "double_is_integer", f"{value}", (got, got_odd) == (integer, odd)
     for value in (3.14159, -2.71828, 0.1, 100.03, 0.03):
         got = from_double_words(*m.call("double_truncate_sixteenths", *double_words(value)))
@@ -362,12 +364,12 @@ def checks(m: Machine):
     for value in (1234, 9, 0, 1000000007):
         at = m.buffer(struct.pack(">I", value))
         digit = m.call("next_decimal_digit", at)[0]
-        rest = struct.unpack(">I", m.read(at, 4))[0]
+        rest = struct.unpack(">I", m.machine.peek_bytes(at, 4))[0]
         yield "next_decimal_digit", f"{value}", (digit, rest) == (ord("0") + value % 10, value // 10)
     for value, digits, wanted, wanted_exponent in ((123.456, 3, b"123", 3), (0.00125, 4, b"13", -2)):
         exponent, sign, out = m.buffer(b"\0" * 4), m.buffer(b"\0" * 4), m.buffer()
         m.call("double_to_digits", *double_words(value), digits, exponent, sign, out, value > 1)
-        got_exponent = signed(struct.unpack(">I", m.read(exponent, 4))[0])
+        got_exponent = signed(struct.unpack(">I", m.machine.peek_bytes(exponent, 4))[0])
         yield "double_to_digits", f"{value}", (m.string(out), got_exponent) == (wanted, wanted_exponent)
 
     for a, d in ((3.0, 1.0), (1.0, 3.0), (-2.5, 0.5)):

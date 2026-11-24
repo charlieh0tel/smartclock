@@ -357,7 +357,7 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 	check-pforth-words pforth-words check-report-figures report-figures \
 	check-chip-selects chip-selects check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
 	check-loop-constants loop-constants check-loop-gain loop-gain record-access report-link check-status-register \
-	check-gps-fields gps-fields check-softfloat
+	check-gps-fields gps-fields check-softfloat reported-images
 .PHONY: $(FIRMWARE_TARGETS)
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@

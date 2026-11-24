@@ -24,8 +24,9 @@ name: firmware
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
 # on its own.  No Rust: none of these targets builds the workspace.  Most
-# of a run is report-decompiled's, the eight images' function checks,
-# as many at once as the runner has CPUs (make -j"$(nproc)").
+# of a run is report-decompiled's, the eight images' function checks, a
+# job each beside the rest; checks, the required check, passes if they
+# all do.
 #
 # On pull requests and pushes to main, not on a branch's own pushes,
 # which its pull request's run checks: both ran each change twice at
@@ -42,21 +43,43 @@ on:
   workflow_dispatch:
 
 jobs:
-  checks:
+  # The images report-decompiled runs for, the firmware Makefile's
+  # REPORTED_IMAGES, and on a pull request whether it runs.
+  plan:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      images: ${{ steps.images.outputs.images }}
+      run: ${{ steps.report-decompiled.outputs.run }}
+    steps:
+      # The pin audit.yml carries; moved by hand to match it.
+      - &checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        # The history, for the pull request's base report-decompiled's
+        # guard compares against (tools/ci/report-decompiled-needed).
+        with:
+          fetch-depth: 0
+      - id: images
+        run: echo "images=$(make -s reported-images)" >> "$GITHUB_OUTPUT"
+      # Whether report-decompiled needs to run: whether anything it reads
+      # changed (tools/ci/report-decompiled-needed) against a pull
+      # request's base.  A push to main or a run by hand runs it in full.
+      - id: report-decompiled
+        env:
+          PULL_BASE: ${{ github.event.pull_request.base.sha }}
+        run: >-
+          if [ "$GITHUB_EVENT_NAME" = pull_request ];
+          then tools/ci/report-decompiled-needed "$PULL_BASE";
+          else echo run=true >> "$GITHUB_OUTPUT"; fi
+
+  other-checks:
     # 26.04, not latest (24.04), for gcc 15, the one the C is developed
     # with; 24.04's gcc 13 gives the same figures (docs/firmware/README.md,
     # "The checks in CI").  A preview image as of 2026-10.
     runs-on: ubuntu-26.04
-    # Four images' function checks, each case run again poisoned, took
-    # past 50 minutes on 2026-11-05; the Z3817A 3752's is a fifth, the
-    # Z3816A 4001's and the 58503B 1.01.04's a sixth and seventh, the
-    # Z3805A 1.01.03's an eighth, which took a pull request's full run
-    # past 90 minutes on 2026-11-16.  On mc683xx's CPU32 since
-    # 2026-11-22, the Z3815A 4010's, Z3817A 3752's, Z3816A 4001's and
-    # 58503B 1.01.04's take about three times as long as on the 68020
-    # the check ran on before, 47 to 80 minutes on four CPUs; near
-    # GitHub's cap of 360.
-    timeout-minutes: 340
+    timeout-minutes: 90
     permissions:
       contents: read
     env:
@@ -69,12 +92,7 @@ jobs:
       # check-magic-numbers parses the hand-written C with it.
       CLANG: clang-21
     steps:
-      # The pin audit.yml carries; moved by hand to match it.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        # The history, for the pull request's base report-decompiled's
-        # guard compares against (tools/ci/report-decompiled-needed).
-        with:
-          fetch-depth: 0
+      - *checkout
       - run: >-
           sudo apt-get update && sudo apt-get install -y --no-install-recommends
           gcc-m68k-linux-gnu binutils-m68k-linux-gnu "$CLANG_FORMAT" "$CLANG"
@@ -83,7 +101,8 @@ jobs:
       # script's own inline metadata, pinned there, which `uv run`
       # resolves; uv itself is pinned here, and the cache is keyed on
       # the scripts.
-      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+      - &setup-uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.2"
           enable-cache: true
@@ -222,24 +241,54 @@ jobs:
         if: ${{ !cancelled() }}
       # Without IMAGE, for every reported image: fails if one does not link
       # from its hand-written C and assembly alone, every function
-      # required, and saves the summary the figures check reads.  -j, so
-      # that the images run at once, each one's output printed whole.
+      # required.  -j, so that the images run at once, each one's output
+      # printed whole.
       - run: make -j"$(nproc)" check-link IMAGE=
         if: ${{ !cancelled() }}
-      # Whether report-decompiled needs to run: whether anything it reads
-      # changed (tools/ci/report-decompiled-needed) against a pull
-      # request's base.  Not run on a push to main or by hand, which run
-      # report-decompiled in full.
-      - id: report-decompiled
-        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
-        env:
-          PULL_BASE: ${{ github.event.pull_request.base.sha }}
-        run: tools/ci/report-decompiled-needed "$PULL_BASE"
-      # Without IMAGE, for every image, on mc683xx's CPU32 (the Makefile's
-      # CPU): fails on a failed function, and
-      # checks the documents' figures from each image's function check
-      # against its report.  The images at once, as check-link's.  Run
-      # unless the step before found nothing it reads changed, so also
-      # when that step did not run; skipped, the job still passes.
-      - run: make -j"$(nproc)" report-decompiled IMAGE=
-        if: ${{ !cancelled() && steps.report-decompiled.outputs.run != 'false' }}
+
+  # Each image's function check, on mc683xx's CPU32 (the Makefile's
+  # CPU), after its link check: fails on a failed function, and checks
+  # the documents' figures from the function check against its report.
+  # Skipped where plan found nothing it reads changed.
+  report-decompiled:
+    needs: plan
+    if: ${{ needs.plan.outputs.run == 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.plan.outputs.images) }}
+    steps:
+      - *checkout
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          gcc-m68k-linux-gnu binutils-m68k-linux-gnu
+      - *setup-uv
+      - run: m68k-linux-gnu-gcc --version && python3 --version && uv --version && nproc
+      - env:
+          IMAGE: ${{ matrix.image }}
+        run: make report-decompiled IMAGE="$IMAGE"
+
+  # The required check: fails unless plan and other-checks passed and
+  # each image's report-decompiled passed or, plan finding nothing it
+  # reads changed, was skipped.  always(), so that a failed or cancelled
+  # job before it is a failure here, never a skip.
+  checks:
+    needs: [plan, other-checks, report-decompiled]
+    if: ${{ always() }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - env:
+          PLAN: ${{ needs.plan.result }}
+          OTHER_CHECKS: ${{ needs.other-checks.result }}
+          REPORT_DECOMPILED: ${{ needs.report-decompiled.result }}
+          RUN: ${{ needs.plan.outputs.run }}
+        run: >-
+          echo "plan: $PLAN, other-checks: $OTHER_CHECKS, report-decompiled: $REPORT_DECOMPILED, run: $RUN"
+          && [ "$PLAN" = success ] && [ "$OTHER_CHECKS" = success ]
+          && { [ "$REPORT_DECOMPILED" = success ] || { [ "$REPORT_DECOMPILED" = skipped ] && [ "$RUN" = false ]; }; }

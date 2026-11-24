@@ -2124,7 +2124,7 @@ CPU32, which has no FPU, and mc683xx has no switch for it.
 
 `.github/workflows/firmware.yml` runs the firmware's checks for the
 eight images on every pull request and push to `main`, and when run by
-hand (`workflow_dispatch`), a job of its own beside
+hand (`workflow_dispatch`), jobs of their own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-status-register`, `check-chip-selects`,
@@ -2144,14 +2144,17 @@ known, skipped and failed functions, the agreeing ones' cases and the
 functions touching the status register --
 and from its link check against the report it writes and the link
 check's summary, so that every function agreeing is
-checked in public.  `IMAGE=z3805a-3543b` is set for the job;
+checked in public.  `IMAGE=z3805a-3543b` is set for `other-checks`,
+the job of all but `report-decompiled`;
 `check-types`, `check-scpi-tree`, `check-magic-numbers` and
 `check-decompiled` run again with `IMAGE=58503a-3704` and
 `IMAGE=z3801a-3543`, `IMAGE=z3815a-4010`, `IMAGE=z3817a-3752`,
 `IMAGE=z3816a-4001`, `IMAGE=58503b-1.01.04` and `IMAGE=z3805a-1.01.03`, and
-`check-link` and `report-decompiled` run without `IMAGE`, for the eight,
+`check-link` runs without `IMAGE`, for the eight,
 as many images at once as the runner has CPUs (`make -j"$(nproc)"`;
-`rewrite.md`, "Reproducing"), each failing if any of its functions fails
+`rewrite.md`, "Reproducing"), and `report-decompiled` in a job for each
+of them, the firmware Makefile's `REPORTED_IMAGES` (`make
+reported-images`), each failing if any of its functions fails
 (`58503a-3704.md`, `z3801a-3543.md`, `z3815a-4010.md`,
 `z3817a-3752.md`, `z3816a-4001.md`, `58503b-1.01.04.md` and
 `z3805a-1.01.03.md`, "The function check").  An unfinished image (the
@@ -2238,7 +2241,9 @@ function check measures the C as a given gcc compiles it, so a gcc
 that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  Most of
-the job's time is `report-decompiled`'s.
+the run's time is `report-decompiled`'s.  `checks`, the required check,
+passes only if `other-checks` and every image's `report-decompiled`
+pass, an image's skipped only where the guard below said so.
 
 Not on a branch's own pushes: a branch with a pull request ran the job
 twice for each push, once for the push and once for the pull request,
@@ -2255,8 +2260,8 @@ scripts pin their Python dependencies, this folder and the top
 `README.md`, whose figures it checks, both Makefiles, `firmware.yml`,
 which pins the toolchain and uv, and the script itself.  It prints
 `run=true` or `run=false`, to `$GITHUB_OUTPUT` too, and why; with
-nothing changed against `BASE`, the step is skipped, the job passes,
-and a notice says so.  The workflow passes a pull request's base,
+nothing changed against `BASE`, the images' jobs are skipped, `checks`
+passes, and a notice says so.  The workflow passes a pull request's base,
 whose history the checkout fetches; a base not found runs it.  A push
 to `main` and a run by hand skip the script and run `report-decompiled`
 in full: `main`'s full run is the backstop for an input missing from

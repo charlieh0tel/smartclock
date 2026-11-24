@@ -58,7 +58,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures \
 	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
-	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields check-softfloat
+	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields check-softfloat reported-images
 
 # Where an image's checks keep what they make.
 work = $(ROOT)/target/firmware/$(1)
@@ -386,6 +386,11 @@ check-report-figures:
 
 report-figures:
 	$(foreach image,$(FIGURED_IMAGES),$(call report_figures,$(image)) --write &&) true
+
+# REPORTED_IMAGES as a JSON list, .github/workflows/firmware.yml's
+# matrix.
+reported-images:
+	@python3 -I -c 'import json, sys; print(json.dumps(sys.argv[1:]))' $(REPORTED_IMAGES)
 
 ifeq ($(IMAGE),)
 

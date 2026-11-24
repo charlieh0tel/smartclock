@@ -458,13 +458,15 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   list that the step does read, or drift outside the repository (the
   runner image, the toolchain, the Python dependencies), is caught at
   the next merge.  Guarding `main` too, against the commit before the
-  push, was weighed and declined.  The job still runs and passes, so a
-  required check is never left pending.  Cost: `main`'s run mostly
+  push, was weighed and declined.  The required check, `checks`, still
+  runs and passes, so it is never left pending.  Cost: `main`'s run mostly
   re-proves what the rebase-merged pull request tested; the checkout
   fetches the whole history; and a branch is not checked until it has
   a pull request or is run by hand.  The eight
-  images' function checks run at once (`make -j`), each one's output
-  kept whole in a log of its own.
+  images' function checks run a job each, beside one for the rest, so
+  that the run takes about as long as the slowest image's; `checks`
+  needs them all and fails on any failed or cancelled, never reading a
+  skip as a pass but the guard's.
 - The browser job, `pages` in `web.yml`, is a required check on
   `main`, so its workflow runs on every pull request: one filtered out
   by `paths` never reports, and a required check that never reports

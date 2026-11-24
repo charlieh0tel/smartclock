@@ -538,6 +538,15 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   it; a new track is one more hub and one more entry, with nothing
   reordered.  `PLAN.md` is not in the box: it is a record of
   decisions, not a way in, and the README links it.
+- A group can list a project in another repository beside its pages
+  (a `Group`'s `elsewhere` in `tools/pages_index.py`: name, link,
+  one line), linking to that repository, after the group's own pages,
+  so the `Makefile`'s order of the site's pages is kept and the one
+  entry that leaves the site comes last.  It sits in the group whose
+  subject it shares rather than in a box of its own, since a box for
+  one entry says less than its group does.  Its line is the README's
+  wording for it, not new text.  The hardware group lists the VP
+  Oncore replacement board, `smartclock-oncore-emulator`.
 - Every other page gets a breadcrumb back to the landing page
   (SmartClock, its group, its title), put in by `tools/pages_index.py`
   as it writes the landing page, from the same head tags, rather than

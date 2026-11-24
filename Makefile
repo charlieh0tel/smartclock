@@ -155,7 +155,9 @@ docs:
 # a smartclock-group meta tag naming its group in tools/pages_index.py;
 # a page joins by such a target, named in PAGES.  One rendered from data
 # a tool prints keeps that data in PAGES_DATA, which is not published.  The landing page,
-# index.html, lists them by group, in that order within one, after
+# index.html, lists them by group, in that order within one, each
+# group's projects in other repositories, a Group's elsewhere in
+# tools/pages_index.py, after its pages, all after
 # NEW_PAGE, a page just launched, under "New", and FEATURED_PAGE under
 # "Featured", each one of PAGES or empty for none, each set apart above
 # them in a box of its own and listed in its group too, and last the

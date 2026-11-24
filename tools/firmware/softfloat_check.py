@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Checks the rounding of the 58503A 3704's single-precision add,
 subtract, multiply and divide (docs/firmware/softfloat.md) by calling
@@ -155,10 +155,10 @@ def sum_errors(m: Machine, start: float) -> int:
     print("level\terror")
     for step in range(steps):
         level = single(start + step * SUM_STEP)
-        m.uc.mem_write(at, struct.pack(">I", 0))
+        m.machine.poke_bytes(at, struct.pack(">I", 0))
         for _ in range(SAMPLES):
             m.call("float_add_in_place", d1=float_bits(level), a0=at)
-        total = struct.unpack(">I", m.read(at, 4))[0]
+        total = struct.unpack(">I", m.machine.peek_bytes(at, 4))[0]
         mean = from_float_bits(m.call("float_divide", d0=total, d1=count)[0])
         errors.append(mean - level)
         print(f"{level:.1f}\t{errors[-1]:+.3f}")

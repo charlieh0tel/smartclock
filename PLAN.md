@@ -744,7 +744,7 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   poisoned, but one in which the copies touched the same cells, at
   the cost of a second run of each case that differs.
 - The function check, the loop trace and the GPS fields run on
-  mc683xx's bare CPU32 (`tools/firmware/backend.py`), and the documents
+  mc683xx's bare CPU32, and the documents
   quote its figures (decided 2026-11-22): a word or long at an odd
   address is an address error and the trace bits trace, as on the
   image's CPU.  Was Unicorn's 68020, which has no CPU32 and stood in,
@@ -756,9 +756,9 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   hand and a check of the bugs by behavior, all gone with it.  The
   cost: no second CPU checks mc683xx now, so a bug of mc683xx's that
   both copies of a function meet alike passes unseen.  The harness
-  keeps the API it was written against, Unicorn's names, constants
-  and error messages, which the reports and the known differences'
-  patterns quote, in `backend.py`.  The link takes a libgcc built for
+  calls `mc683xx.Machine` in its own vocabulary, with no wrapper
+  (decided 2026-11-23): the reports and the known differences' patterns
+  quote a fault by mc683xx's names for its cause and cycle.  The link takes a libgcc built for
   the CPU32 with soft float from GCC's source
   (`tools/firmware/cpu32_libgcc.py`, vendored in `third_party/gcc/`),
   not the toolchain's 68020/68881 one, which uses what a CPU32 traps
@@ -2072,8 +2072,7 @@ stands in for one.
   `SKY`, leaving out satellites that are not GPS, and what stands in
   for the receiver's own time integrity.  The raw provider stays, as
   the test of the u-blox path against a live receiver.
-- **Firmware C:** rename what is named for Unicorn: `uc`, `UcError`,
-  the `UC_` constants and the error text the reports quote.  Give the firmware routines their file's prefix, as the hand-written
+- **Firmware C:** give the firmware routines their file's prefix, as the hand-written
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.

@@ -59,7 +59,7 @@ flash_host.py (--pod POD | --model FLASH) --image IMAGE MODE [flags]
 | Option | Meaning |
 | ------ | ------- |
 | `--pod POD` | the pod, as `mc683xx_bdm.Pod` names it: `usb`, `usb:SERIAL` |
-| `--model FLASH` | the modeled board, its flash holding the file FLASH; needs `mc683xx` (`uv run --with mc683xx==0.8.0`, as `test_flash.py` pins it) |
+| `--model FLASH` | the modeled board, its flash holding the file FLASH; needs `mc683xx` (`uv run --with mc683xx==0.9.0`, as `test_flash.py` pins it) |
 | `--image IMAGE` | the image to program, which the plan is against |
 | `--dry-run` | set-up, the dump and its SHA-256, the plan: no flash command, no code run on the CPU |
 | `--identify` | the dry run and the routine's identify: the first code the CPU runs, sending only autoselect and read/reset |

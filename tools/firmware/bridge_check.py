@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Confirms the decompiled C's bindings by running them: each function
 the hand-written bindings/ headers define under the name and prototype
@@ -247,7 +247,7 @@ def load_registers(m: Machine, registers: list[str], values: list[bytes]) -> Non
             # original's callers load it with moveq
             value = int.from_bytes(value, "big", signed=True).to_bytes(4, "big", signed=True)
         for part, word in zip(register.split(":"), struct.unpack(f">{len(value) // 4}I", value)):
-            m.uc.reg_write(REGISTERS[part], word)
+            m.machine.write_register(part, word)
 
 
 def live_values() -> list[int]:
@@ -282,13 +282,13 @@ def check(
             load_registers(m, binding.registers, values)
             direct = Run(m, address)
             reset(m, memory)
-            m.uc.mem_write(live, b"".join(LONG.pack(v) for v in live_values()))
-            m.uc.mem_write(kept_at, bytes(LONG.size * LIVE))
+            m.machine.poke_bytes(live, b"".join(LONG.pack(v) for v in live_values()))
+            m.machine.poke_bytes(kept_at, bytes(LONG.size * LIVE))
             bound = Run(m, function, gcc_slots(values))
         finally:
             m.interrupts = []
             m.starting_status = SUPERVISOR
-        kept = [LONG.unpack(m.read(kept_at + LONG.size * i, LONG.size))[0] for i in range(LIVE)]
+        kept = [LONG.unpack(m.machine.peek_bytes(kept_at + LONG.size * i, LONG.size))[0] for i in range(LIVE)]
 
         stopped = stopped_outcome(direct, bound, ("direct", "bound"))
         if stopped and extra is not None and stopped.startswith(SKIPPED):

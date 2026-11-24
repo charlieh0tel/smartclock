@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["mc683xx==0.8.0"]
+# dependencies = ["mc683xx==0.9.0"]
 # ///
 """Runs each decompiled C function, as gcc compiled it, against the
 image's own: in the rebuilt image (rebuild_link.py), the image's copy is
@@ -75,15 +75,8 @@ import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from backend import (
-    UC_HOOK_CODE,
-    UC_HOOK_MEM_READ,
-    UC_HOOK_MEM_WRITE,
-    UC_M68K_REG_A7,
-    UC_M68K_REG_D0,
-    UC_M68K_REG_PC,
-    UcError,
-)
+import mc683xx
+
 from harness import (
     ALLOCATIONS,
     BYTE_MASK,
@@ -1515,8 +1508,8 @@ def console_task_run(m: Machine, first: Run, task: int) -> Run:
     )
     if create is None:
         return first
-    for name, register in REGISTERS.items():
-        m.uc.reg_write(register, STARTING[name])
+    for name in REGISTERS:
+        m.machine.write_register(name, STARTING[name])
     starting_status, m.starting_status = m.starting_status, TASK_STATUS
     run = Run(m, task, create.data[COUNT.size :], entry=True)
     run.floor = pointer_at(m, run.registers["A5"] - USER_STACK_BASE)
@@ -1547,9 +1540,9 @@ def scpi_session(m: Machine, function: "Function", linked_symbols: dict[str, int
     session = SCPI_SESSIONS[function.name]
     text = session_lines(m, function)[line]
     buffer = linked_symbols[session.line]
-    m.uc.mem_write(buffer, b"\0" + text + b"\0")
-    m.uc.mem_write(linked_symbols[session.next], struct.pack(">I", buffer + 1))
-    m.uc.mem_write(linked_symbols[session.end], struct.pack(">I", buffer + 1 + len(text)))
+    m.machine.poke_bytes(buffer, b"\0" + text + b"\0")
+    m.machine.poke_bytes(linked_symbols[session.next], struct.pack(">I", buffer + 1))
+    m.machine.poke_bytes(linked_symbols[session.end], struct.pack(">I", buffer + 1 + len(text)))
     scpi = m.profile.scpi
     trees = (scpi.main_tree, scpi.common_list)
     if session.trees is not None:
@@ -2971,7 +2964,7 @@ def area(m: Machine, contents: bytes) -> int:
     """contents among the arguments' buffers, however many they take."""
     at = m.next_buffer
     m.next_buffer += -(-len(contents) // BUFFER_SPACING) * BUFFER_SPACING
-    m.uc.mem_write(at, contents)
+    m.machine.poke_bytes(at, contents)
     return at
 
 
@@ -2985,7 +2978,7 @@ def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> N
 
     def field(name: str, value: int) -> None:
         offset, size = located[TASK_FIELDS[name]]
-        m.uc.mem_write(record + offset, preset_bytes(value, size))
+        m.machine.poke_bytes(record + offset, preset_bytes(value, size))
 
     def into(top: int, size: int) -> int:
         return top - int(size * stacks.pointer_at) & -len(UNUSED_STACK)
@@ -3010,9 +3003,9 @@ def task_stacks(m: Machine, located: dict[str, tuple[int, int]], case: int) -> N
     offset, size = located[SYSTEM_STACK_SIZE]
     size_at = m.profile.psos_config + offset
     system = pointer_at(m, m.profile.psos_config) + SYSTEM_STACK
-    length = int.from_bytes(m.read(size_at, size), "big")
+    length = int.from_bytes(m.machine.peek_bytes(size_at, size), "big")
     unused = length - stacks.system_used
-    m.uc.mem_write(system, bytes(unused) + USED_STACK * (stacks.system_used // len(USED_STACK)))
+    m.machine.poke_bytes(system, bytes(unused) + USED_STACK * (stacks.system_used // len(USED_STACK)))
 
 
 # A target's leading cast of a null pointer, which only a type's
@@ -3155,12 +3148,12 @@ def hook_arguments(
     offsets, gcc's in its slots, a narrower value in a slot's last bytes
     (gcc_slots); each as the image's copy would pass it
     (RebuiltMachine.as_image)."""
-    sp = m.uc.reg_read(UC_M68K_REG_A7) if sp is None else sp
+    sp = m.machine.read_register("A7") if sp is None else sp
     found, slot = [], FIRST_ARGUMENT
     for offset, kind in zip(routine.offsets, routine.parameters):
         size = types.size(kind)
         at = sp + (slot + max(size, GCC_SLOT) - size if gcc else offset)
-        found.append(m.as_image(int.from_bytes(m.uc.mem_read(at, size), "big")))
+        found.append(m.as_image(int.from_bytes(m.machine.peek_bytes(at, size), "big")))
         slot += max(size, GCC_SLOT)
     return tuple(found)
 
@@ -3168,11 +3161,11 @@ def hook_arguments(
 def return_from_hook(m: Machine, result: int | None) -> None:
     """Returns from a hooked routine at its entry, D0 its result unless
     None."""
-    sp = m.uc.reg_read(UC_M68K_REG_A7)
+    sp = m.machine.read_register("A7")
     if result is not None:
-        m.uc.reg_write(UC_M68K_REG_D0, result & 0xFFFFFFFF)
-    m.uc.reg_write(UC_M68K_REG_PC, int.from_bytes(m.uc.mem_read(sp, POINTER_SIZE), "big"))
-    m.uc.reg_write(UC_M68K_REG_A7, sp + POINTER_SIZE)
+        m.machine.write_register("D0", result & 0xFFFFFFFF)
+    m.machine.write_register("PC", int.from_bytes(m.machine.peek_bytes(sp, POINTER_SIZE), "big"))
+    m.machine.write_register("A7", sp + POINTER_SIZE)
 
 
 # The differences whose cause is found and is not the C's (PLAN.md,
@@ -3210,7 +3203,7 @@ EMPTY_PART = Known(
 # over whatever gcc put above it.
 OTHERS_OVERFLOW = Known(
     "satellite_status_list overflows its 12 satellites on more, each copy's frame its own (0x4985e)",
-    r"stopped differently: image Invalid memory write \(UC_ERR_WRITE_UNMAPPED\) of 110000 at 499de, gcc .*",
+    r"stopped differently: image bus error: write of 110000 at 499de, gcc .*",
 )
 # And what C cannot say: log_event pushes only its message's format
 # (0x31a0a), so log_write keeps as the entry's two longs whatever lies
@@ -3376,7 +3369,7 @@ IMAGE_KNOWN = {
         ),
         "satellite_status_list": Known(
             "satellite_status_list overflows its 12 satellites on more, each copy's frame its own (0x4981c)",
-            r"stopped differently: image Invalid memory write \(UC_ERR_WRITE_UNMAPPED\) of 110000 at 4999c, gcc .*",
+            r"stopped differently: image bus error: write of 110000 at 4999c, gcc .*",
         ),
         "log_event": log_event_fill([0x101D4C, 0x101D92], 0x30842),
     },
@@ -4516,7 +4509,7 @@ def same_text(m: Machine, function: Function, a: int, b: int) -> bool:
         return False
     try:
         return m.string(a) == m.string(b)
-    except (UcError, ValueError):
+    except (mc683xx.BusError, ValueError):
         return False
 
 
@@ -4567,7 +4560,7 @@ def establish(m: Machine, function: Function, context: "Context", case: int) -> 
             continue
         if isinstance(value, str):
             value = linked_symbols[IMAGE_PREFIX + value]
-        m.uc.mem_write(linked_symbols[variable], struct.pack(">I", value))
+        m.machine.poke_bytes(linked_symbols[variable], struct.pack(">I", value))
     if function.name in context.set_up_requests:
         requests = context.set_up_requests[function.name]
         if isinstance(requests, bytes):
@@ -4579,7 +4572,7 @@ def establish(m: Machine, function: Function, context: "Context", case: int) -> 
         call_first(m, linked_symbols, routine, struct.pack(f">{len(longs)}I", *longs))
     if function.name in REGIONS and REGIONS[function.name][0] in located:
         variable, contents = REGIONS[function.name]
-        m.uc.mem_write(linked_symbols[variable], contents(case, located[variable][1]))
+        m.machine.poke_bytes(linked_symbols[variable], contents(case, located[variable][1]))
 
 
 def pointed(m: Machine, value: Pointed) -> int:
@@ -4775,7 +4768,7 @@ class Context:
 
 def install_hooks(
     m: Machine, types: Types, name: str, states: States, context: Context, drawn: list[Drawn]
-) -> list[int]:
+) -> list[mc683xx.HookId]:
     """Hooks each of the States' routines, the image's copy and gcc's, to
     answer as the current case drew (drawn's one entry), and each other
     C function the image's copy of a function calls (Context.calls), to
@@ -4788,17 +4781,20 @@ def install_hooks(
         routine = context.by_name[hook.routine]
         image = context.linked_symbols[IMAGE_PREFIX + hook.routine]
 
-        def answer(uc, address, size, hook_data):
-            hook, routine, gcc = hook_data
+        def answer(hook, routine, gcc):
             case = drawn[0]
             if hook.recorded:
                 m.effects.append(HookedCall(hook.routine, hook_arguments(m, types, routine, gcc)))
             for at, contents in case.leaves[hook.routine].items():
-                uc.mem_write(at, contents)
+                m.machine.poke_bytes(at, contents)
             return_from_hook(m, case.results[hook.routine])
 
         for address, gcc in ((image, False), (context.linked_symbols[hook.routine], True)):
-            handles.append(m.uc.hook_add(UC_HOOK_CODE, answer, (hook, routine, gcc), begin=address, end=address))
+            handles.append(
+                m.machine.add_code_hook(
+                    lambda _, hook=hook, routine=routine, gcc=gcc: answer(hook, routine, gcc), address, address
+                )
+            )
     return handles
 
 
@@ -4902,7 +4898,7 @@ class RebuiltCode:
         to an address: the function holding it or, from a helper of the
         C's own, the first sidecar function back through the helpers'
         frames, each linked, -fno-omit-frame-pointer, at A6."""
-        frame = m.uc.reg_read(REGISTERS["A6"])
+        frame = m.machine.read_register("A6")
         for _ in range(HELPER_DEPTH):
             name = self.function_at(returning)
             if name is None or name in self.sidecar:
@@ -4910,7 +4906,7 @@ class RebuiltCode:
             try:
                 returning = pointer_at(m, frame + SAVED_RETURN)
                 frame = pointer_at(m, frame + SAVED_FRAME)
-            except UcError:
+            except mc683xx.BusError:
                 return None
         return None
 
@@ -4938,7 +4934,7 @@ POINTER_KIND = "*"
 NOT_POINTER = -1
 
 
-def record_calls(m: Machine, types: Types, name: str, states: States, context: Context) -> list[int]:
+def record_calls(m: Machine, types: Types, name: str, states: States, context: Context) -> list[mc683xx.HookId]:
     """Hooks each C function the image's copy of a function calls, by
     its sidecar, that the States do not answer, the image's copy and
     gcc's, to record the arguments of each call the function's own code
@@ -4959,11 +4955,10 @@ def record_calls(m: Machine, types: Types, name: str, states: States, context: C
         )
     ]
 
-    def record(uc, address, size, hook_data):
-        routine, gcc = hook_data
+    def record(routine, gcc):
         start, end = copies[gcc]
-        sp = uc.reg_read(UC_M68K_REG_A7)
-        returning = int.from_bytes(uc.mem_read(sp, POINTER_SIZE), "big")
+        sp = m.machine.read_register("A7")
+        returning = int.from_bytes(m.machine.peek_bytes(sp, POINTER_SIZE), "big")
         own = context.rebuilt_code.owner(m, returning) == name if gcc else start <= returning < end
         if not own and returning != RETURN:
             return
@@ -4981,7 +4976,10 @@ def record_calls(m: Machine, types: Types, name: str, states: States, context: C
         if callee in answered or callee not in context.by_name or image is None or rebuilt is None:
             continue
         for address, gcc in ((image, False), (rebuilt, True)):
-            handles.append(m.uc.hook_add(UC_HOOK_CODE, record, (context.by_name[callee], gcc), begin=address, end=address))
+            routine = context.by_name[callee]
+            handles.append(
+                m.machine.add_code_hook(lambda _, routine=routine, gcc=gcc: record(routine, gcc), address, address)
+            )
     return handles
 
 
@@ -5036,7 +5034,7 @@ def check(m: Machine, types: Types, function: Function, image: int, rebuilt: int
         yield from check_cases(m, types, function, image, rebuilt, context, states, drawn)
     finally:
         for handle in handles:
-            m.uc.hook_del(handle)
+            m.machine.remove_hook(handle)
         if m.tracing is not None:
             trace(m, None)
         m.counter = None
@@ -5164,7 +5162,7 @@ def check_cases(
         if function.name in TASK_STACKS:
             task_stacks(m, context.located, case)
         for address, contents in drawn[0].presets.items():
-            m.uc.mem_write(address, contents)
+            m.machine.poke_bytes(address, contents)
         for target, value in presets.items():
             if target not in context.located:
                 continue
@@ -5173,7 +5171,7 @@ def check_cases(
                 value = value(m, types)
             elif isinstance(value, str):
                 value = context.linked_symbols[IMAGE_PREFIX + value]
-            m.uc.mem_write(address, preset_bytes(value, size))
+            m.machine.poke_bytes(address, preset_bytes(value, size))
             if is_device(address):
                 m.device_presets[address] = preset_bytes(value, size)
         target = None if step is None else tree_steps(m)[step]
@@ -5207,7 +5205,7 @@ def check_cases(
             )
             m.starting_status = starting_status
         for handle in handles:
-            m.uc.hook_del(handle)
+            m.machine.remove_hook(handle)
         description += POISONED if poisoned else ""
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
@@ -5292,20 +5290,18 @@ def poison_byte(at: int) -> int:
     return at * POISON_STEP & BYTE_MASK or POISON_STEP
 
 
-def record_accesses(m: Machine, accesses: Accesses) -> list[int]:
+def record_accesses(m: Machine, accesses: Accesses) -> list[mc683xx.HookId]:
     """Hooks RAM's reads and writes to add each byte they touch to the
     running copy's accesses; the hooks."""
 
-    def touched(uc, access, address, size, value, kind):
-        (accesses.reads if kind == UC_HOOK_MEM_READ else accesses.writes)[accesses.copy].update(
-            range(address, address + size)
-        )
+    def touched(access, bytes_touched):
+        if not access.stacking:
+            bytes_touched[accesses.copy].update(range(access.address, access.address + access.size))
 
-    handles = [
-        m.uc.hook_add(kind, touched, kind, begin=RAM, end=RAM + RAM_SIZE - 1)
-        for kind in (UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE)
+    return [
+        m.machine.add_read_hook(lambda access: touched(access, accesses.reads), RAM, RAM + RAM_SIZE - 1),
+        m.machine.add_write_hook(lambda access: touched(access, accesses.writes), RAM, RAM + RAM_SIZE - 1),
     ]
-    return handles
 
 
 def poison(m: Machine, accesses: Accesses) -> bool:
@@ -5315,14 +5311,14 @@ def poison(m: Machine, accesses: Accesses) -> bool:
     (POISONED): a zero byte of a long that is not, a pointer's or a
     count's high byte, is part of a value set up, which poisoned would
     no longer be.  Whether any byte was."""
-    start = m.read(RAM, RAM_SIZE)
+    start = m.machine.peek_bytes(RAM, RAM_SIZE)
     ram = bytearray(start)
     for at in accesses.poisoned():
         offset = at - RAM
         cell = offset - offset % POINTER_SIZE
         if not any(start[cell : cell + POINTER_SIZE]) and literal_region(m, at) is None and at < ALLOCATIONS:
             ram[offset] = poison_byte(at)
-    m.uc.mem_write(RAM, bytes(ram))
+    m.machine.poke_bytes(RAM, bytes(ram))
     return ram != start
 
 
@@ -5354,8 +5350,8 @@ def untraced_jump(m: Machine, buffer: int) -> None:
     """Clears the trace bits of the status register a jump buffer holds
     (JUMP_FUNCTIONS)."""
     at = buffer + JUMP_STATUS
-    status = int.from_bytes(m.uc.mem_read(at, 2), "big")
-    m.uc.mem_write(at, (status & ~TRACE_BITS).to_bytes(2, "big"))
+    status = int.from_bytes(m.machine.peek_bytes(at, 2), "big")
+    m.machine.poke_bytes(at, (status & ~TRACE_BITS).to_bytes(2, "big"))
 
 
 # The names files, which label the image's objects, in the image's

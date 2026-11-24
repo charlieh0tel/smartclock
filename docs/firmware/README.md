@@ -2114,12 +2114,9 @@ The harness and its checks (`function_check.py`, `libc_check.py`,
 `app_check.py`), the loop trace (`loop_trace.py`) and the GPS fields
 (`gps_fields.py`, and `gps_paths.py` beneath it) run on mc683xx's bare
 CPU32, `mc683xx.Machine` (its `docs/python.md`, "Bare CPU"), the one
-CPU they have (PLAN.md, "A rebuild that runs").
-`tools/firmware/backend.py` gives it to them through the API they are
-written against, `mem_map`, `reg_read`, `hook_add`, `emu_start` and
-the rest, with that API's constants and error messages, which the
-reports and the known differences' patterns quote.  mc683xx's Python
-module is its PyPI release, `mc683xx==0.8.0`, pinned exactly in each
+CPU they have (PLAN.md, "A rebuild that runs"), called directly in
+its own vocabulary.  mc683xx's Python
+module is its PyPI release, `mc683xx==0.9.0`, pinned exactly in each
 script's inline metadata and bumped only on purpose, which `uv run`
 installs.  To try an unreleased mc683xx, build its wheel (its
 `docs/python.md`) and, for the run, change the pin by hand to
@@ -2135,20 +2132,22 @@ What the harness leaves to the CPU and what it does itself:
   `move (SP)+,SR`, `rtr` and `rte` are the CPU's own; traps #1 and #7
   are taken by the CPU through the profile's vector table (VBR); the
   harness notes an interrupt's `rte` at its return.  The other
-  exceptions reach the harness's interrupt hook before anything is
+  exceptions an instruction raises are intercepted before anything is
   stacked, PC at the instruction.
-- The devices, the EEPROM and the installer's flash are Python
-  peripherals of the `Machine`, whose read hooks answer before the
-  read.  The memory hooks run once the instruction has ended, with the
-  registers as it began, an overlay code write's bytes taken from the
-  call's start; a long is one access, at a device and to a hook alike.
-  The writes of an exception's frame, flagged as stacking, reach no
-  hook.
-- A fault stops the run, with the error of the API's kind for it.
+- The devices, the EEPROM and the installer's flash are the
+  `Machine`'s RAM.  Their models answer each operand read as pre-read
+  hooks, leaving memory as it is, and take each write before it is
+  stored as pre-write hooks, the flash's dropping it; a fetch reaches
+  no model.  The memory hooks run once the instruction
+  has ended, with the registers as it began, an overlay code write's
+  bytes taken from the call's start; a long is one access, to a model
+  and to a hook alike.  The hooks pass over the writes of an
+  exception's frame, flagged as stacking.
+- A fault stops the run (`set_stop_on_fault`); a report gives its
+  cause and cycle, `bus error: write`, as mc683xx names them.
 - The GPS fields' trap #7 is taken by the CPU through the image's
   vectors, and its `rte` is the CPU's; its memory hooks only note what
-  is read (`watch_only`), so they make no device: RAM stays the
-  `Machine`'s.
+  is read.
 - mc683xx runs as the CPU32 does: a word or long at an odd address is
   an address error (CPU32RM 6.2.3), and the trace bits trace (6.2.10).
   So a case that reaches one stops at the same exception in both
@@ -2274,7 +2273,7 @@ On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu`, `clang-21`, which `check-magic-numbers`
 parses the C with, and the FPGA checks' Icarus Verilog, Yosys and
 poppler-utils, from the archive and uv 0.13.2 through
-`astral-sh/setup-uv`, whose cache holds mc683xx 0.8.0 and Capstone
+`astral-sh/setup-uv`, whose cache holds mc683xx 0.9.0 and Capstone
 5.0.9, each tool's inline dependencies, pinned in the scripts, keyed
 on `tools/firmware/*.py`.  26.04,
 not 24.04, for gcc 15, the one the C is developed with; 24.04's gcc 13

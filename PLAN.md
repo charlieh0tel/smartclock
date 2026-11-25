@@ -488,6 +488,9 @@ package needs no `Breaks` or `Replaces`, and an upgrade removes
   lands.  Each page that was once committed leaves a forwarding page
   at its old path.  The hand-written ones moved too, so that every
   page has one kind of URL and none needs htmlpreview's workarounds.
+  A page that leaves the site leaves a forwarding page at its URL
+  (`FORWARDING_PAGES`): the VP Oncore test points went, with the
+  engine's board document, to the `oncore-vp` repository.
   Generated Markdown stays committed: GitHub renders it in place.
 - `loop.html` and `docs/firmware/loop.md` are split by job: the page
   explains the loop (the law, the symbols, its poles and damping, the

@@ -16,7 +16,8 @@ size of the flash, parts that are not the expected ones, a chip-select
 decode with a hazard, and any target error.  It never starts the
 firmware.
 
-`pod_target.py` adapts it to the mc683xx BDM pod.  The bench trial
+`pod_target.py` adapts it to the
+[mc683xx BDM pod](https://github.com/charlieh0tel/mc683xx-bdm).  The bench trial
 below ran on a 58503A through the pod on 2026-11-22, every step
 passing ("Seen on the bench").  The tests touch neither pod nor
 receiver.

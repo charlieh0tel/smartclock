@@ -116,6 +116,11 @@ GROUPS = {
                 "https://github.com/charlieh0tel/mc683xx-bdm",
                 "A USB background debug mode (BDM) pod for Motorola CPU32 microcontrollers, such as the MC68331: a Raspberry Pi Pico on a small carrier board that drives the standard 10-pin BDM header.",
             ),
+            Elsewhere(
+                "oncore-vp",
+                "https://github.com/charlieh0tel/oncore-vp",
+                "The Motorola VP Oncore GPS engine of the 58503A, Z3801A and Z3805A: its memory map, clocking, board notes and photos.",
+            ),
         ),
     ),
     "firmware": Group(

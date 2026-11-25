@@ -1,3 +1,24 @@
+smartclockmon (1.9.2-1) unstable; urgency=low
+
+  * `smartclock-cli flash` takes the Z3805A's 1.01.03 image, the
+    Furuno build, and a receiver running it: it can reinstall it, flash
+    3543B over it and go back.  The flasher does not know the GPS
+    engine; an image for the other engine runs without GPS until it is
+    reflashed (docs/firmware/restart.md, "The flasher").
+  * `smartclock-cli daemons` lists the receiver daemons on the host,
+    one line each: the instance, the socket to give `--daemon`, and the
+    receiver it is attached to.  It needs no receiver and sends nothing
+    to one.
+  * `smartclock-cli simulate-loop` replays a snapshot log (`--replay`),
+    driving the loop with what the logged oscillator did, with the
+    update's c·s term from the log's oven_tempco and oven_current.  It
+    runs the 58503A 3704's aging fit (`--aging-fit`), or holds one given
+    by `--fit-b` and `--fit-c`, and estimates from a log the aging slope
+    the receiver fed its integrator (`--estimate-aging`).
+  * The logs stay at schema 13.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Tue, 24 Nov 2026 16:17:08 -0800
+
 smartclockmon (1.9.1-1) unstable; urgency=low
 
   * The terminal monitor is gone: an upgrade removes

@@ -5081,6 +5081,7 @@ def both_runs(
     reset(m, memory)
     give_twins(m)
     if accesses is not None:
+        accesses.take(m.machine)
         accesses.copy = 1
     m.console_input = None if session is None else list(session[0])
     gcc_arguments = gcc_slots(twin_arguments(m, types, function.parameters, values))
@@ -5088,6 +5089,8 @@ def both_runs(
     if session is not None:
         gcc = console_task_run(m, gcc, session[2])
     m.console_input = None
+    if accesses is not None:
+        accesses.take(m.machine)
     return original, gcc
 
 
@@ -5193,7 +5196,8 @@ def check_cases(
         memory = snapshot(m)
 
         recording = not poisoned
-        handles = record_accesses(m, accesses) if recording else []
+        if recording:
+            record_accesses(m, accesses)
         original, gcc = both_runs(
             m, types, function, image, rebuilt, values, memory, listed, session, accesses if recording else None
         )
@@ -5204,8 +5208,9 @@ def check_cases(
                 m, types, function, image, rebuilt, values, memory, listed, session, accesses if recording else None
             )
             m.starting_status = starting_status
-        for handle in handles:
-            m.machine.remove_hook(handle)
+        if recording:
+            for coverage in accesses.coverages:
+                m.machine.remove_coverage(coverage)
         description += POISONED if poisoned else ""
 
         stopped = stopped_outcome(original, gcc, ("image", "gcc"))
@@ -5271,11 +5276,20 @@ POISON_STEP = 0x9D
 @dataclass
 class Accesses:
     """The bytes of RAM each copy's run of a case read and wrote, the
-    image's first, and which copy is running (both_runs)."""
+    image's first, which copy is running (both_runs), and the read and
+    write coverages that record the running copy's (record_accesses)."""
 
     reads: tuple[set[int], set[int]] = field(default_factory=lambda: (set(), set()))
     writes: tuple[set[int], set[int]] = field(default_factory=lambda: (set(), set()))
     copy: int = 0
+    coverages: tuple[mc683xx.CoverageId, mc683xx.CoverageId] | None = None
+
+    def take(self, machine: mc683xx.Machine) -> None:
+        """Adds what the coverages recorded to the running copy's bytes,
+        and clears them."""
+        for recorded, coverage in zip((self.reads, self.writes), self.coverages):
+            recorded[self.copy].update(machine.coverage(coverage))
+            machine.clear_coverage(coverage)
 
     def poisoned(self) -> set[int]:
         """The bytes a poisoned case poisons, if zero (POISONED)."""
@@ -5290,18 +5304,10 @@ def poison_byte(at: int) -> int:
     return at * POISON_STEP & BYTE_MASK or POISON_STEP
 
 
-def record_accesses(m: Machine, accesses: Accesses) -> list[mc683xx.HookId]:
-    """Hooks RAM's reads and writes to add each byte they touch to the
-    running copy's accesses; the hooks."""
-
-    def touched(access, bytes_touched):
-        if not access.stacking:
-            bytes_touched[accesses.copy].update(range(access.address, access.address + access.size))
-
-    return [
-        m.machine.add_read_hook(lambda access: touched(access, accesses.reads), RAM, RAM + RAM_SIZE - 1),
-        m.machine.add_write_hook(lambda access: touched(access, accesses.writes), RAM, RAM + RAM_SIZE - 1),
-    ]
+def record_accesses(m: Machine, accesses: Accesses) -> None:
+    """Records RAM's reads and writes, each byte they touch, for the
+    running copy's accesses (Accesses.take)."""
+    accesses.coverages = tuple(m.machine.add_coverage(RAM, RAM + RAM_SIZE - 1, kind) for kind in ("read", "write"))
 
 
 def poison(m: Machine, accesses: Accesses) -> bool:

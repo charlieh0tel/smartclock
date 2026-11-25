@@ -1027,6 +1027,13 @@ and p 0, within ±M, in place of `--fit-b` and `--fit-c`, and starts
 from the f and s the estimate rebuilt at `--from`, so that the two
 agree.
 
+The estimate reproduces a log; it does not show what another c would
+have done.  The logged EFC already holds the loop's answer to the c the
+receiver ran, the estimate takes that into d, and a replay with
+`--estimate-aging` and another `--tc-coefficient` departs little from
+the log.  A change of c at one moment is a frequency step of S·Δc·s:
+`--frequency-step` with that shows its transient.
+
 One update's estimate alone differences a rounded number: an error of
 one count in u is 270 counts a window in d.  u is a whole DAC count,
 and `:EFControl:RELative?` reports four decimals of a percent, about

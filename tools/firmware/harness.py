@@ -3570,23 +3570,19 @@ class Run:
         self.trace = None if m.tracing is None else m.tracing(start)
         m.path = None if self.trace is None else (self.trace, lambda address: not frames or returning(address))
 
-        # the instructions begun, and the one that last read the counter
-        # (SPLIT)
-        counter_reads = [0, None]
-
-        def counter_instruction(_):
-            counter_reads[0] += 1
+        # the instruction that last read the counter (SPLIT)
+        counter_read_by: list[int | None] = [None]
 
         def counter_read(access):
             if not access.stacking:
-                counter_reads[1] = counter_reads[0]
+                counter_read_by[0] = access.instruction
 
         def counted(access):
             # before the write; made here too, in case it is not after
             if access.stacking:
                 return
             counter, counter_size, count = m.counter
-            if counter_reads[1] not in (None, counter_reads[0]):
+            if counter_read_by[0] not in (None, access.instruction):
                 ended.append(SPLIT)
                 m.stop_request.request()
                 return
@@ -3658,7 +3654,6 @@ class Run:
         if m.counter is not None:
             hooks.append(machine.add_write_hook(counted, m.counter[0], m.counter[0]))
             hooks.append(machine.add_read_hook(counter_read, m.counter[0], m.counter[0]))
-            hooks.append(machine.add_code_hook(counter_instruction))
         if m.protected and m.profile.code:
             code, size = m.profile.code
             code_start = m.machine.peek_bytes(code, size)

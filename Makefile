@@ -150,7 +150,8 @@ docs:
 # ones are not committed; the hand-written ones' sources are in
 # docs/pages/, HAND_PAGES, copied with the files they name.  A page
 # that once was at a path in docs/ left there a page forwarding to its
-# new one.  Each page is built by the target of its own name, writing
+# new one; one that left the site, FORWARDING_PAGES, is replaced by one
+# forwarding to its new home, from docs/pages/forwarding/.  Each page is built by the target of its own name, writing
 # $(PAGES_DIR)/<page>.html with a <title>, a description meta tag and
 # a smartclock-group meta tag naming its group in tools/pages_index.py;
 # a page joins by such a target, named in PAGES.  One rendered from data
@@ -180,17 +181,19 @@ docs:
 # path under docs/, described by HERO_ALT.
 PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
-HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03 oncore-vp-test-points
+HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03
 PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage \
 	58501a-prototype
 NEW_PAGE := gps-architecture
 FEATURED_PAGE := loop
 UNLISTED_PAGES := bench-sky-2026-10-03 58501a-prototype
+FORWARDING_PAGES := oncore-vp-test-points
 WIP_PAGES := block-diagram
 HERO_IMAGE :=
 HERO_ALT :=
 .PHONY: $(PAGES)
 pages: $(PAGES)
+	cp $(FORWARDING_PAGES:%=docs/pages/forwarding/%.html) $(PAGES_DIR)
 	python3 -I tools/pages_index.py \
 		$(if $(NEW_PAGE),--new $(NEW_PAGE).html) $(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
 		$(UNLISTED_PAGES:%=--unlisted %.html) \

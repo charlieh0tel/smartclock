@@ -207,7 +207,9 @@ here, where they go stale unnoticed.
   Name a page in `UNLISTED_PAGES` to publish it at its URL, with its
   breadcrumb, but leave it off the landing page, and in `WIP_PAGES` to
   mark it as a work in progress: a ribbon on the page and a WIP tag on
-  its landing page entry.
+  its landing page entry.  A page that leaves the site keeps its URL:
+  put a page forwarding to its new home in `docs/pages/forwarding/`
+  and name it in `FORWARDING_PAGES`.
 
 ## Working style
 

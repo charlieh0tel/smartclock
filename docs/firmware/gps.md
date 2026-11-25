@@ -1025,7 +1025,8 @@ The Z3801A's engine answered while tracking no satellites on an
 antenna the 58503A tracks on.
 
 The engine's own board, its MC68331's test points and how a BDM
-header wires to them, is `../oncore-vp-board.md`.
+header wires to them, is
+[oncore-vp's `docs/board.md`](https://github.com/charlieh0tel/oncore-vp/blob/main/docs/board.md).
 
 ## Where the sawtooth is read
 

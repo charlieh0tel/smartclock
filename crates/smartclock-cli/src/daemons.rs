@@ -48,11 +48,18 @@ enum State {
     Unreadable(std::io::ErrorKind),
 }
 
-/// List the daemons under `run_dir`, or where there are no Unix
-/// sockets the one a client asks by default.
-pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
+/// The daemons a listing or a lookup found: where they were looked
+/// for, and each instance with what became of asking it.
+struct Survey {
+    daemons: Daemons,
+    found: Vec<(Found, State)>,
+}
+
+/// Ask every daemon under `run_dir`, or where there are no Unix sockets
+/// the one a client asks by default, what it is attached to.
+fn survey(run_dir: Option<&Path>) -> Result<Survey> {
     let daemons = Daemons::from_names(&[], run_dir);
-    let found = match &daemons {
+    let found: Vec<Found> = match &daemons {
         Daemons::Listed(listed) => listed
             .iter()
             .map(|instance| Found {
@@ -66,13 +73,6 @@ pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
             Err(e) => Err(e).with_context(|| format!("reading {}", dir.display()))?,
         },
     };
-    if found.is_empty() {
-        match &daemons {
-            Daemons::Dir(dir) => println!("no daemons under {}", dir.display()),
-            Daemons::Listed(_) => println!("no daemons"),
-        }
-        return Ok(());
-    }
     let states: Vec<State> = thread::scope(|scope| {
         let asked: Vec<_> = found.iter().map(|f| scope.spawn(|| state(f))).collect();
         asked
@@ -84,7 +84,24 @@ pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
             })
             .collect()
     });
-    for (found, state) in found.iter().zip(&states) {
+    Ok(Survey {
+        daemons,
+        found: found.into_iter().zip(states).collect(),
+    })
+}
+
+/// List the daemons under `run_dir`, or where there are no Unix
+/// sockets the one a client asks by default.
+pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
+    let Survey { daemons, found } = survey(run_dir)?;
+    if found.is_empty() {
+        match &daemons {
+            Daemons::Dir(dir) => println!("no daemons under {}", dir.display()),
+            Daemons::Listed(_) => println!("no daemons"),
+        }
+        return Ok(());
+    }
+    for (found, state) in &found {
         println!("{}", line(&found.instance, state));
     }
     Ok(())

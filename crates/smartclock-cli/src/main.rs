@@ -106,6 +106,11 @@ struct Cli {
     #[arg(long, global = true)]
     capture: Option<PathBuf>,
 
+    /// Where the local daemons' sockets are: one instance per
+    /// subdirectory, `<run-dir>/<instance>/socket`.
+    #[arg(long, default_value = RUN_DIR, global = true)]
+    run_dir: Option<PathBuf>,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -261,12 +266,7 @@ enum Command {
     /// attached to, asked of the daemon, which answers from what it
     /// holds.  Needs neither a receiver nor `--daemon`; nothing is sent
     /// to a receiver.
-    Daemons {
-        /// Where the daemons' sockets are: one instance per
-        /// subdirectory, `<run-dir>/<instance>/socket`.
-        #[arg(long, default_value = RUN_DIR)]
-        run_dir: Option<PathBuf>,
-    },
+    Daemons,
 }
 
 /// Where a console read goes and what happens after it, shared by the
@@ -360,10 +360,8 @@ mod simulate_loop;
 fn parse() -> Cli {
     let command = match DAEMON {
         None => Cli::command(),
-        Some(_) => Cli::command().mut_subcommand("daemons", |daemons| {
-            daemons.mut_arg("run_dir", |arg| {
-                arg.hide(true).default_value(None).value_parser(no_run_dir)
-            })
+        Some(_) => Cli::command().mut_arg("run_dir", |arg| {
+            arg.hide(true).default_value(None).value_parser(no_run_dir)
         }),
     };
     Cli::from_arg_matches(&command.get_matches()).unwrap_or_else(|e| e.exit())
@@ -381,8 +379,8 @@ fn main() -> Result<()> {
     if let Command::Sensors { sensord } = &cli.command {
         return sensors(sensord);
     }
-    if let Command::Daemons { run_dir } = &cli.command {
-        return daemons::run(run_dir.as_deref());
+    if matches!(cli.command, Command::Daemons) {
+        return daemons::run(cli.run_dir.as_deref());
     }
     if let Command::JoinChips(args) = &cli.command {
         return flash::chips::run_join(args);
@@ -464,7 +462,7 @@ fn main() -> Result<()> {
     let at_console =
         console_read(&cli.command).is_some() || matches!(cli.command, Command::ReadRegisters(_));
     let settings = if at_console {
-        let found = console::line_settings(&settings, transport::open)
+        let (found, _) = console::line_settings(&settings, transport::open)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;
         if (found.baud, found.framing) != (settings.baud, settings.framing) {
             eprintln!(
@@ -654,7 +652,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         }
         // Handled before the port is opened.
         Command::Commands => Ok(()),
-        Command::Sensors { .. } | Command::Daemons { .. } => Ok(()),
+        Command::Sensors { .. } | Command::Daemons => Ok(()),
     };
     // Errors read off the queue so that no command was judged by them
     // (docs/protocol.md, "The error prompt"): the receiver raised them,
@@ -691,7 +689,7 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::Note { .. }
         | Command::Fact { .. }
         | Command::Sensors { .. }
-        | Command::Daemons { .. } => Vec::new(),
+        | Command::Daemons => Vec::new(),
     })
 }
 
@@ -1089,7 +1087,7 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
             Ok(())
         }
         Command::Sensors { sensord } => sensors(sensord),
-        Command::Daemons { run_dir } => daemons::run(run_dir.as_deref()),
+        Command::Daemons => unreachable!("handled before a daemon is asked"),
         Command::JoinChips(args) => flash::chips::run_join(args),
         Command::SplitChips(args) => flash::chips::run_split(args),
         Command::DumpScpi(args) => dump_scpi::run(args),

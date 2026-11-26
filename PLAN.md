@@ -687,7 +687,9 @@ through which a bench trial on a 58503A passed on 2026-11-22.
 
 The goal is idiomatic C a person can read, proven function by function
 against the original image in an emulator, not a byte-identical rebuild,
-which would need the unknown original compiler.  Method, scope and
+which would need the original compiler, most likely HP's B3640
+(`docs/firmware/README.md`, "The calling convention"), which the
+project does not have.  Method, scope and
 figures: `docs/firmware/rewrite.md`; the toolchain:
 `docs/firmware/README.md`.
 

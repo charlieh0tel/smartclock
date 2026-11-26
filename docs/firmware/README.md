@@ -320,8 +320,9 @@ undisassembled until disassembly is forced at the resolved targets.
 
 ## The calling convention
 
-Read from the Z3805A 3543B image's 5125 calls, not from a document: no
-compiler banner is in the image, and the compiler is not known.
+Read from the Z3805A 3543B image's 5125 calls.  No compiler banner is
+in the image, but the convention is the one HP documents for its B3640
+compiler ("The compiler", below).
 
 **Observed.**
 
@@ -357,7 +358,15 @@ The classic Mac 68K convention also uses 2-byte slots, but puts a
 single byte in the slot's low half, the pad byte most significant
 ([Apple, Classic 68K Stack Structure and Calling
 Conventions](https://dev.os9.ca/techpubs/mac/runtimehtml/RTArch-132.html)).
-None matches.
+None of these matches.  HP's own 68000-family C compiler does: its
+manual (`third_party/hp/B3640-97001.pdf`, release A.04.00, 1994;
+pages are its printed numbers) passes a prototyped `char` or `short`
+unwidened (pages 37 and 38), pushes a `char` with `MOVE.B` and pops
+two calls' arguments with one `ADDQ.L #6,A7` (figure 4-5, page 75),
+widens unprototyped arguments (page 67), returns in D0 or D0:D1 with
+D0, D1, A0 and A1 its working registers and A6 its frame pointer
+(table 4-1, page 77), and keeps register variables in D2--D7 and
+A2--A4 (page 78).
 
 **What it must be.**  The rest is inference from the above.  `int` is
 32 bits: the variadic calls promote a `char` to a long, which is the
@@ -371,8 +380,45 @@ declared types decide each slot -- 2 bytes for `char` and `short`, the
 value at the slot's start; 4 for `int`, `long`, pointers and `float`;
 8 for `double` -- and an unprototyped or variadic call falls back to
 the default promotions.  A `char` result is not extended, so the
-caller extends it if it needs to.  How a structure is passed or
-returned is not established.
+caller extends it if it needs to.  The manual copies a structure
+argument onto the stack, its last long first (figure 4-3, page 71), as
+the image passes `oncore_date_pack` its 4-byte one, in one `move.l`
+(`0x43f40`).  A structure result of up to 8 bytes comes back in D0:D1,
+as `div`'s does (`libc.md`); a larger one goes through a pointer the
+caller pushes after the arguments, the first then at 12(A6) (pages 66
+and 68), and none has been found in the images.
+
+**The compiler.**  The images are consistent with the B3640, or a
+later release of it, and its libraries.  Their floating-point
+routines have its run-time library's register interfaces and entries
+(`libc.md`; chapter 11, pages 272 to 289), and every image's
+exception messages name them, `ftoi()` to `uitof()`, in its form
+`fp <error>: <function>` (page 267).  The exit message, "Prog end,
+returned ", is its `_exit`'s (page 235); `strlen`, `strcpy` and
+`strcmp` are expanded in line, the three it names (page 104); `atexit`
+holds 32 functions (page 144); `frem`, an HP extension (page 153), is
+in the math library's name table; a structure is copied by `MOVE.L
+(A1)+,(A0)+`, in a `DBF D1` loop or unrolled, as figure 5-1 (page 99)
+shows; and a sparse `switch` is a binary search ending in short runs
+of compares, as page 96 says (the Z3817A 3752's `0x21690`).  Against
+it: the name table has float versions of the math functions, `acosf`
+on, which the manual's list of its routines (pages 136 to 140) lacks,
+so the library is likely later; `qsort` keeps its comparator in a
+static (`libc.md`), though table 6-1 (page 126) does not list it as
+not reentrant; the 58503A 3704's float divide is not always nearest
+(`softfloat.md`); and where the manual drops LINK only from a function
+without parameters or automatics (page 67), the images, like its
+figures 4-4 and 4-5, also drop it from some with parameters, which
+they address from A7 (the Z3817A's `0x21690` again), yet keep
+`link A6,#0` in others (`round_shift_right`, `0x12206`).  No image
+holds a version string: the compiler's `MKT:@(#)` line is an
+assembler comment (figure 4-3).  The compiler itself would settle it:
+its libraries against the images' library block, or its code for a
+function against the image's.  Motorola's VP Oncore firmware shows
+the same convention, `switch` code and floating-point entries, without
+the library's messages
+([oncore-vp](https://github.com/charlieh0tel/oncore-vp/blob/main/docs/memory-map.md),
+"Compiler"), so the compiler was not only HP's own divisions'.
 
 Ghidra cannot model this convention: its 68000 language justifies a
 small value to the end of its slot, a property of the language, not of a

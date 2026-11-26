@@ -274,17 +274,31 @@ fn at_prompt(buffer: &[u8]) -> bool {
     }
 }
 
-/// Whether `buffer` ends at a prompt, the console's or SCPI's.
-fn at_any_prompt(buffer: &[u8]) -> bool {
-    at_prompt(buffer) || split_prompt(&String::from_utf8_lossy(buffer)).is_some()
+/// Which prompt a port answered with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Reached {
+    /// The pForth console's.
+    Console,
+    /// SCPI's, or its error prompt.
+    Scpi,
+}
+
+/// Which prompt `buffer` ends at, if either.
+fn prompt_at_end(buffer: &[u8]) -> Option<Reached> {
+    if at_prompt(buffer) {
+        Some(Reached::Console)
+    } else {
+        split_prompt(&String::from_utf8_lossy(buffer)).map(|_| Reached::Scpi)
+    }
 }
 
 /// The line settings at which `settings`' port answers an empty line
-/// with a prompt, the console's or SCPI's: the configured ones, then the
-/// fallbacks an SCPI attach tries.  A console read cannot identify the
-/// receiver with `*IDN?`, which a port already at the console does not
-/// know, so it listens for either prompt instead.  `open` opens a port.
-pub fn line_settings<T, F>(settings: &Settings, open: F) -> Result<Settings>
+/// with a prompt, the console's or SCPI's, and which it was: the
+/// configured ones, then the fallbacks an SCPI attach tries.  A console
+/// read cannot identify the receiver with `*IDN?`, which a port already
+/// at the console does not know, so it listens for either prompt
+/// instead.  `open` opens a port.
+pub fn line_settings<T, F>(settings: &Settings, open: F) -> Result<(Settings, Reached)>
 where
     T: Read + Write,
     F: FnMut(&Settings) -> std::result::Result<T, Error>,
@@ -293,7 +307,11 @@ where
 }
 
 /// [`line_settings`], waiting `wait` at each for a prompt.
-fn line_settings_within<T, F>(settings: &Settings, mut open: F, wait: Duration) -> Result<Settings>
+fn line_settings_within<T, F>(
+    settings: &Settings,
+    mut open: F,
+    wait: Duration,
+) -> Result<(Settings, Reached)>
 where
     T: Read + Write,
     F: FnMut(&Settings) -> std::result::Result<T, Error>,
@@ -313,8 +331,8 @@ where
         while Instant::now() < deadline {
             let n = port.read(&mut chunk)?;
             heard.extend_from_slice(&chunk[..n]);
-            if at_any_prompt(&heard) {
-                return Ok(tried);
+            if let Some(reached) = prompt_at_end(&heard) {
+                return Ok((tried, reached));
             }
         }
     }
@@ -853,6 +871,7 @@ mod tests {
     use super::ConsoleError;
     use super::EXITS;
     use super::Fetch;
+    use super::Reached;
     use super::Region;
     use super::WayBack;
     use super::Width;
@@ -995,7 +1014,7 @@ mod tests {
 
     /// The settings found when the port answers `reply` at 19200 7O1
     /// and garbles everything else, starting from 19200 8N1.
-    fn found(reply: &[u8]) -> super::Result<Settings> {
+    fn found(reply: &[u8]) -> super::Result<(Settings, Reached)> {
         let settings = Settings {
             path: "/dev/null".to_owned(),
             baud: BaudRate::B19200,
@@ -1021,9 +1040,14 @@ mod tests {
 
     #[test]
     fn a_console_read_finds_the_line_settings_by_either_prompt() {
-        for reply in [&b"scpi > "[..], b"p4th D > ", b" E-102> "] {
-            let settings = found(reply).expect("a prompt at 7O1");
+        for (reply, prompt) in [
+            (&b"scpi > "[..], Reached::Scpi),
+            (b"p4th D > ", Reached::Console),
+            (b" E-102> ", Reached::Scpi),
+        ] {
+            let (settings, reached) = found(reply).expect("a prompt at 7O1");
             assert_eq!(settings.framing, Framing::SevenOdd, "{reply:?}");
+            assert_eq!(reached, prompt, "{reply:?}");
         }
         assert!(matches!(
             found(b"garbage"),

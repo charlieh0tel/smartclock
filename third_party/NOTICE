@@ -249,6 +249,16 @@ In `hp/`.
                              design paper for SmartClock itself: what
                              the receiver learns, when, and where it
                              keeps it.
+  B3640-97001.pdf            "HP B3640 Motorola 68000 Family C Cross
+                             Compiler User's Guide", manual part number
+                             B3640-97001, edition 2, January 1994, as
+                             scanned by bitsavers.org (test_equipment/
+                             hp/64700a/software_toolchain/).  HP's C
+                             compiler for the 68000 family, the 68332
+                             among them: its calling convention and
+                             run-time library, against which the
+                             images' code is compared in
+                             `docs/firmware/`.
 
 Firmware images
 ---------------

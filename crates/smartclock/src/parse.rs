@@ -291,6 +291,13 @@ impl Identity {
     pub fn same_unit(&self, other: &Identity) -> bool {
         self.model == other.model && self.serial == other.serial
     }
+
+    /// Whether its serial is `serial`, compared exactly, case included,
+    /// after trimming.  An empty serial is no receiver's.
+    pub fn has_serial(&self, serial: &str) -> bool {
+        let serial = serial.trim();
+        !serial.is_empty() && self.serial == serial
+    }
 }
 
 /// Joined as the receiver answers it, the form the daemon keys receivers

@@ -23,6 +23,7 @@ use crate::link;
 use crate::link::Stream;
 use crate::parse;
 use crate::parse::Identity;
+use crate::protocol::CHECKS_RECEIVER_SERIAL;
 use crate::protocol::Message;
 use crate::protocol::Op;
 use crate::protocol::Protocol;
@@ -53,6 +54,9 @@ pub struct Daemon {
     /// budget: every request on it fails past this, however recently
     /// the daemon last said something.
     until: Option<Instant>,
+    /// The receiver serial sent with every query, note and fact, for
+    /// the daemon to refuse them if it is attached to another.
+    receiver_serial: Option<String>,
 }
 
 impl Daemon {
@@ -79,7 +83,15 @@ impl Daemon {
             reader,
             next_id: 0,
             until,
+            receiver_serial: None,
         })
+    }
+
+    /// Send `serial` with every query, note and fact from now on, for
+    /// the daemon to refuse them if its receiver's serial differs.  An
+    /// older daemon ignores it: see [`checks_receiver_serial`].
+    pub fn for_receiver(&mut self, serial: &str) {
+        self.receiver_serial = Some(serial.to_owned());
     }
 
     /// Send one request and wait for the reply that echoes its id.
@@ -209,6 +221,7 @@ impl Daemon {
     pub fn query(&mut self, scpi: &str) -> Result<Vec<String>> {
         let value = self.ask(Op::Query {
             scpi: scpi.to_owned(),
+            receiver_serial: self.receiver_serial.clone(),
         })?;
         Ok(value
             .get("lines")
@@ -222,6 +235,7 @@ impl Daemon {
         let value = self.ask(Op::Note {
             text: text.to_owned(),
             at,
+            receiver_serial: self.receiver_serial.clone(),
         })?;
         filed_under(&value)
     }
@@ -233,6 +247,7 @@ impl Daemon {
             key: key.to_owned(),
             value: value.to_owned(),
             since,
+            receiver_serial: self.receiver_serial.clone(),
         })?;
         filed_under(&value)
     }
@@ -441,6 +456,14 @@ pub fn identity(info: &serde_json::Value) -> Option<Identity> {
     info.get("identity")
         .and_then(serde_json::Value::as_str)
         .and_then(|text| parse::identity(text).ok())
+}
+
+/// Whether the daemon that gave this [`Daemon::info`] reply refuses a
+/// request carrying another receiver's serial.
+pub fn checks_receiver_serial(info: &serde_json::Value) -> bool {
+    info.get(CHECKS_RECEIVER_SERIAL)
+        .and_then(serde_json::Value::as_bool)
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

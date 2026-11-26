@@ -25,7 +25,17 @@ use crate::wire::Reading;
 /// client's request, so a mismatch in either direction is refused
 /// before anything is acted on, and the client is told which version
 /// the daemon speaks rather than failing to parse a reply.
+///
+/// Not bumped for an optional field a client may leave out, which every
+/// daemon would then refuse every older client over.  A client relying
+/// on one asks [`Op::Info`] first, whose reply names what the daemon
+/// checks; an older daemon ignores the field, so its silence is not
+/// taken for a pass.
 pub const VERSION: u32 = 1;
+
+/// The [`Op::Info`] key a daemon that enforces `receiver_serial`
+/// answers `true`.
+pub const CHECKS_RECEIVER_SERIAL: &str = "checks_receiver_serial";
 
 /// The requests one service answers, and the version of their shapes.
 pub trait Protocol: Serialize + DeserializeOwned {
@@ -59,6 +69,11 @@ pub enum Op {
         /// flags the daemon was started with, not on the name of this
         /// variant.
         scpi: String,
+        /// The serial number of the receiver this is for.  Given, it is
+        /// refused, with nothing sent or written, unless the attached
+        /// receiver's `*IDN?` serial is exactly this.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        receiver_serial: Option<String>,
     },
     /// Return the most recent snapshot without waiting.
     Latest,
@@ -81,6 +96,11 @@ pub enum Op {
         /// When it happened; now if absent.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         at: Option<jiff::Timestamp>,
+        /// The serial number of the receiver this is for.  Given, it is
+        /// refused, with nothing sent or written, unless the attached
+        /// receiver's `*IDN?` serial is exactly this.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        receiver_serial: Option<String>,
     },
     /// Record a fact about the attached receiver, such as
     /// `ocxo.serial`, and a note saying so.  Nothing is sent to the
@@ -93,6 +113,11 @@ pub enum Op {
         /// When it became true; now if absent.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         since: Option<jiff::Timestamp>,
+        /// The serial number of the receiver this is for.  Given, it is
+        /// refused, with nothing sent or written, unless the attached
+        /// receiver's `*IDN?` serial is exactly this.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        receiver_serial: Option<String>,
     },
 }
 

@@ -6,6 +6,7 @@
 //! receiver.
 
 use std::path::Path;
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
@@ -21,6 +22,9 @@ use smartclock::error::Error;
 use smartclock::parse::Identity;
 use smartclock::snapshot::Freshness;
 use smartclock::wire::Reading;
+
+use crate::select::Serial;
+use crate::select::describe;
 
 /// How long each daemon has to say what it is attached to.
 ///
@@ -107,6 +111,46 @@ pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
     Ok(())
 }
 
+/// The socket of the one daemon under `run_dir` attached to `serial`'s
+/// receiver, whether or not the receiver is answering it.  None or
+/// several is an error listing every daemon found.
+pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf> {
+    let Survey { daemons, found } = survey(run_dir)?;
+    let attached = |state: &State| match state {
+        State::Answering(id) | State::Silent(Some(id), _) => serial.matches(id),
+        _ => false,
+    };
+    let matching: Vec<&Found> = found
+        .iter()
+        .filter(|(_, state)| attached(state))
+        .map(|(found, _)| found)
+        .collect();
+    if let [one] = matching.as_slice() {
+        return Ok(one.instance.endpoint.clone());
+    }
+    let place = match &daemons {
+        Daemons::Dir(dir) => format!("under {}", dir.display()),
+        Daemons::Listed(_) => "here".to_owned(),
+    };
+    let listing: String = found
+        .iter()
+        .map(|(found, state)| format!("\n  {}", line(&found.instance, state)))
+        .collect();
+    match matching.len() {
+        0 if found.is_empty() => {
+            anyhow::bail!("no daemon {place} is attached to serial {serial}: none were found")
+        }
+        0 => anyhow::bail!(
+            "no daemon {place} is attached to serial {serial}; found:{listing}\n\
+             Give --daemon for one elsewhere, or --device with its daemon stopped"
+        ),
+        _ => anyhow::bail!(
+            "more than one daemon {place} is attached to serial {serial}; found:{listing}\n\
+             Give --daemon to say which"
+        ),
+    }
+}
+
 /// What is known of one instance: from its directory, and if a socket
 /// is there, from the daemon behind it.
 fn state(found: &Found) -> State {
@@ -174,20 +218,15 @@ fn why(reading: &Reading, what: &str) -> String {
     }
 }
 
-/// A receiver as the listing names it.
-fn receiver(id: &Identity) -> String {
-    format!("{} serial {} firmware {}", id.model, id.serial, id.firmware)
-}
-
 /// One instance's line: its name, the endpoint to give `--daemon`, and
 /// what it is attached to or why that is not known.
 fn line(instance: &Instance, state: &State) -> String {
     let status = match state {
-        State::Answering(id) => format!("running, {}", receiver(id)),
+        State::Answering(id) => format!("running, {}", describe(id)),
         State::Silent(Some(id), why) => {
             format!(
                 "running, receiver not answering (last {}; {why})",
-                receiver(id)
+                describe(id)
             )
         }
         State::Silent(None, why) => format!("running, receiver not answering ({why})"),

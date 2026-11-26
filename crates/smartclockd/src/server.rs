@@ -24,6 +24,8 @@ use smartclock::command::Class;
 use smartclock::command::Dialect;
 use smartclock::command::Spec;
 use smartclock::control::names;
+use smartclock::parse;
+use smartclock::protocol::CHECKS_RECEIVER_SERIAL;
 use smartclock::protocol::Message;
 use smartclock::protocol::Op;
 use smartclock::scpi::lookup;
@@ -31,6 +33,7 @@ use smartclock::server::Held;
 use smartclock::server::Service;
 use smartclock::server::Writer;
 use smartclock::server::write_line;
+use smartclock::task::AttachmentId;
 use smartclock::task::Cadence;
 use smartclock::task::Handle;
 use smartclock::wire::Reading;
@@ -147,10 +150,13 @@ impl Service for Daemon {
     /// the new receiver here before it starts the task that would
     /// answer the waiting request.  Taken per request rather than per
     /// connection, so a reconnect to a different receiver takes effect
-    /// for the next command.
+    /// for the next command.  The attachment is read first: a reconnect
+    /// records its receiver before it moves the attachment on, so a
+    /// command checked against one receiver is never sent to the next.
     fn answer(&self, id: String, op: Op) -> Message {
+        let attachment = self.handle.attachment();
         let current = lock_or_poisoned(&self.info).clone();
-        handle_request(id, op, &self.handle, &current)
+        handle_request(id, op, &self.handle, &current, attachment)
     }
 
     /// Snapshots are pushed from a thread of their own, so a client
@@ -204,7 +210,29 @@ impl Service for Daemon {
     }
 }
 
-fn handle_request(id: String, op: Op, handle: &Handle, info: &Info) -> Message {
+fn handle_request(
+    id: String,
+    op: Op,
+    handle: &Handle,
+    info: &Info,
+    attachment: AttachmentId,
+) -> Message {
+    if let Op::Query {
+        receiver_serial: Some(serial),
+        ..
+    }
+    | Op::Note {
+        receiver_serial: Some(serial),
+        ..
+    }
+    | Op::Fact {
+        receiver_serial: Some(serial),
+        ..
+    } = &op
+        && let Some(why) = wrong_receiver(&info.identity, serial)
+    {
+        return Message::err(id, why);
+    }
     match op {
         Op::Latest => match handle.latest() {
             Some(snapshot) => match serde_json::to_value(Reading::from(&snapshot)) {
@@ -226,6 +254,7 @@ fn handle_request(id: String, op: Op, handle: &Handle, info: &Info) -> Message {
                 "cadence_fast": info.cadence.fast.as_secs_f64(),
                 "cadence_medium": info.cadence.medium.as_secs_f64(),
                 "cadence_slow": info.cadence.slow.as_secs_f64(),
+                CHECKS_RECEIVER_SERIAL: true,
             }),
         ),
         // The screen itself, not the latest snapshot: the screen is
@@ -235,8 +264,8 @@ fn handle_request(id: String, op: Op, handle: &Handle, info: &Info) -> Message {
             Ok(screen) => Message::ok(id, serde_json::json!({ "screen": screen })),
             Err(e) => Message::err(id, e),
         },
-        Op::Query { scpi } => send(id, &scpi, handle, info),
-        Op::Note { text, at } => {
+        Op::Query { scpi, .. } => send(id, &scpi, handle, info, attachment),
+        Op::Note { text, at, .. } => {
             let text = text.trim();
             if text.is_empty() {
                 return Message::err(id, "a note needs some text");
@@ -249,7 +278,9 @@ fn handle_request(id: String, op: Op, handle: &Handle, info: &Info) -> Message {
                 })
             })
         }
-        Op::Fact { key, value, since } => {
+        Op::Fact {
+            key, value, since, ..
+        } => {
             let (key, value) = (key.trim(), value.trim());
             if key.is_empty() || key.contains(char::is_whitespace) {
                 return Message::err(id, "a fact's key is one word, such as ocxo.serial");
@@ -266,6 +297,21 @@ fn handle_request(id: String, op: Op, handle: &Handle, info: &Info) -> Message {
                 })
             })
         }
+    }
+}
+
+/// Why a request for the receiver with `serial` is refused by a daemon
+/// attached to `identity`, or `None` if it is that receiver.
+fn wrong_receiver(identity: &str, serial: &str) -> Option<String> {
+    match parse::identity(identity) {
+        Ok(found) if found.has_serial(serial) => None,
+        Ok(found) => Some(format!(
+            "this daemon's receiver is {} serial {:?}, not serial {:?}; nothing was sent or written",
+            found.model, found.serial, serial
+        )),
+        Err(_) => Some(format!(
+            "this daemon has no receiver identified as serial {serial:?}; nothing was sent or written"
+        )),
     }
 }
 
@@ -301,7 +347,7 @@ fn written(
 /// reclassified there is reclassified for clients too.  A spelling the
 /// table does not know is refused unless raw is allowed, since an
 /// unknown command could be anything.
-fn send(id: String, scpi: &str, handle: &Handle, info: &Info) -> Message {
+fn send(id: String, scpi: &str, handle: &Handle, info: &Info, attachment: AttachmentId) -> Message {
     let scpi = scpi.trim();
     // Before anything else, because the class is read from the header
     // and everything after it is passed through untouched.
@@ -335,7 +381,7 @@ fn send(id: String, scpi: &str, handle: &Handle, info: &Info) -> Message {
         );
     }
 
-    let outcome = handle.request(to_send);
+    let outcome = handle.request_under(to_send, attachment);
     let note = match &outcome {
         Ok(reply) if reply.lines.is_empty() => "ok".to_owned(),
         Ok(reply) => format!("ok: {}", reply.lines.join(" | ")),
@@ -1113,14 +1159,17 @@ mod note_tests {
     use std::thread;
 
     use smartclock::command::Dialect;
+    use smartclock::protocol::CHECKS_RECEIVER_SERIAL;
     use smartclock::protocol::Message;
     use smartclock::protocol::Op;
+    use smartclock::task::AttachmentId;
     use smartclock::task::Handle;
     use smartclock::task::Shared;
 
     /// Ask `op` of a daemon attached to `identity`, with a log thread
-    /// that writes everything it is sent.
-    fn ask(identity: &str, op: Op) -> Message {
+    /// that writes everything it is sent, and count the commands that
+    /// reached the device task.
+    fn asked(identity: &str, op: Op) -> (Message, usize) {
         let (inbox_tx, inbox) = channel();
         thread::spawn(move || {
             for request in inbox {
@@ -1132,7 +1181,7 @@ mod note_tests {
                 }
             }
         });
-        let (requests, _unused) = channel();
+        let (requests, queued) = channel();
         let info = Info {
             identity: identity.to_owned(),
             dialect: Dialect::Hp58503,
@@ -1141,12 +1190,18 @@ mod note_tests {
             inbox: LogInbox::new(inbox_tx),
             cadence: smartclock::task::Cadence::default(),
         };
-        handle_request(
+        let reply = handle_request(
             "1".to_owned(),
             op,
             &Handle::new(requests, Shared::new()),
             &info,
-        )
+            AttachmentId::default(),
+        );
+        (reply, queued.try_iter().count())
+    }
+
+    fn ask(identity: &str, op: Op) -> Message {
+        asked(identity, op).0
     }
 
     fn error(message: Message) -> Option<String> {
@@ -1165,6 +1220,7 @@ mod note_tests {
             Op::Note {
                 text: "added a 20 dB LNA".to_owned(),
                 at: None,
+                receiver_serial: None,
             },
         );
         match reply {
@@ -1181,6 +1237,7 @@ mod note_tests {
         let note = |text: &str| Op::Note {
             text: text.to_owned(),
             at: None,
+            receiver_serial: None,
         };
         assert!(error(ask("", note("before any receiver"))).is_some());
         assert!(error(ask(UNIT, note("   "))).is_some());
@@ -1188,7 +1245,50 @@ mod note_tests {
             key: "ocxo serial".to_owned(),
             value: "1234".to_owned(),
             since: None,
+            receiver_serial: None,
         };
         assert!(error(ask(UNIT, fact)).is_some());
+    }
+
+    #[test]
+    fn a_request_for_another_receiver_is_refused_and_reaches_nothing() {
+        let note = |serial: &str| Op::Note {
+            text: "added a 20 dB LNA".to_owned(),
+            at: None,
+            receiver_serial: Some(serial.to_owned()),
+        };
+        assert_eq!(error(ask(UNIT, note(" 3710A01056 "))), None);
+        let refused = error(ask(UNIT, note("3800A00002"))).expect("refused");
+        assert!(
+            refused.contains("\"3710A01056\"") && refused.contains("\"3800A00002\""),
+            "{refused}"
+        );
+        assert!(error(ask(UNIT, note("3710a01056"))).is_some());
+        assert!(error(ask(UNIT, note(""))).is_some());
+        assert!(error(ask("", note("3710A01056"))).is_some());
+        let fact = Op::Fact {
+            key: "ocxo.serial".to_owned(),
+            value: "1234".to_owned(),
+            since: None,
+            receiver_serial: Some("3800A00002".to_owned()),
+        };
+        assert!(error(ask(UNIT, fact)).is_some());
+        let (reply, queued) = asked(
+            UNIT,
+            Op::Query {
+                scpi: "*IDN?".to_owned(),
+                receiver_serial: Some("3800A00002".to_owned()),
+            },
+        );
+        assert!(error(reply).is_some());
+        assert_eq!(queued, 0, "a refused command reached the device task");
+    }
+
+    #[test]
+    fn info_says_the_daemon_checks_the_receiver_serial() {
+        match ask(UNIT, Op::Info) {
+            Message::Reply { ok: Some(ok), .. } => assert_eq!(ok[CHECKS_RECEIVER_SERIAL], true),
+            other => panic!("{other:?}"),
+        }
     }
 }

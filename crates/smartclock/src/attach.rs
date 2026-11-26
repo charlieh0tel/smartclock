@@ -16,6 +16,7 @@
 
 use crate::device::Device;
 use crate::error::Result;
+use crate::parse::Identity;
 use crate::session::Config;
 use crate::session::Session;
 use crate::transport;
@@ -75,11 +76,14 @@ pub fn attach(settings: &Settings, config: &Config) -> Result<Attached<Box<dyn T
 }
 
 /// The line settings the receiver answers at: `settings`, or the first
-/// of [`FALLBACKS`] it answers at, with [`Attached::probe_report`] when
-/// probing was needed.  The port is let go, so a caller that records
-/// its exchanges opens it again at these and the recording begins with
-/// its own sync.
-pub fn answering(settings: &Settings, config: &Config) -> Result<(Settings, Option<String>)> {
+/// of [`FALLBACKS`] it answers at, with what it said it is and
+/// [`Attached::probe_report`] when probing was needed.  The port is let
+/// go, so a caller that records its exchanges opens it again at these
+/// and the recording begins with its own sync.
+pub fn answering(
+    settings: &Settings,
+    config: &Config,
+) -> Result<(Settings, Identity, Option<String>)> {
     let attached = attach(settings, config)?;
     let report = attached.probe_report(settings);
     Ok((
@@ -88,6 +92,7 @@ pub fn answering(settings: &Settings, config: &Config) -> Result<(Settings, Opti
             framing: attached.framing,
             ..settings.clone()
         },
+        attached.device.identity().clone(),
         report,
     ))
 }

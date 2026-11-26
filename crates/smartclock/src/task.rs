@@ -421,11 +421,25 @@ impl Handle {
     /// came back, which could be hours, and its thread and its socket
     /// stayed up the whole time.
     pub fn request_within(&self, scpi: impl Into<String>, within: Duration) -> Result<Reply> {
+        self.submit(scpi.into(), within, self.shared.attachment())
+    }
+
+    /// [`Handle::request`], answered but not sent unless `attachment`,
+    /// read by the caller beforehand, is still the one being served.
+    pub fn request_under(
+        &self,
+        scpi: impl Into<String>,
+        attachment: AttachmentId,
+    ) -> Result<Reply> {
+        self.submit(scpi.into(), REQUEST_TIMEOUT, attachment)
+    }
+
+    fn submit(&self, scpi: String, within: Duration, attachment: AttachmentId) -> Result<Reply> {
         let (tx, rx) = sync_channel(1);
         let request = Request::Command {
-            scpi: scpi.into(),
+            scpi,
             deadline: Instant::now() + within,
-            attachment: self.shared.attachment(),
+            attachment,
             answer: tx,
         };
         self.requests

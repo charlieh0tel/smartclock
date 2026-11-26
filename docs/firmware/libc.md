@@ -12,7 +12,8 @@ the C routine of that name gives.
     uv run tools/firmware/libc_check.py third_party/firmware/images/z3805a-3543b.bin
 
 `strlen`, `strcpy` and `strcmp` are not in the block; the compiler
-expands them in line.
+expands them in line, as HP's B3640 does (`README.md`, "The calling
+convention").
 
 Arguments are passed on the stack, first argument lowest, in 4-byte
 slots for `int`, pointers and `long` and 8 for `double`; the result
@@ -85,6 +86,12 @@ are one that loads A0:A1 from the pointer in A1, and one before that
 which also loads D0:D1 from the pointer in A0; an in-place entry
 loads A0:A1 from the pointer in A0 and stores the result back there.
 The float operations have in-place entries alike, `*A0` with D1.
+These are the B3640 run-time library's routines
+(`third_party/hp/B3640-97001.pdf`, pages 275 to 289), whose main
+entries' names the exception codes below give: the add's is `add64`,
+then `add64pp`, `add64p` and `add64z` by column, and so on; the swaps
+below are `sub64rp` and `div64r`, the float in-place entries
+`add32z`, `sub32z`, `mul32z` and `div32z`.
 
 | Operation | Main | `*A0`, `*A1` | D0:D1, `*A1` | In place, `*A0` and D0:D1 |
 | --------- | ---- | ------------ | ------------ | ------------------------- |

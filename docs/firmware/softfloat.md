@@ -76,7 +76,12 @@ half, `0x80000000`, and on an exact half rounds up only when the
 result's bit 0 is set (`0x613b0` to `0x613c0`).  The divide takes what
 lies below its last bit from only the low 16 bits of the remainder
 (`0x61ad8` to `0x61b08`), so it is now and then 1 ulp toward zero: 1/3
-gives `0x3eaaaaaa`, not `0x3eaaaaab`.  `make check-softfloat`
+gives `0x3eaaaaaa`, not `0x3eaaaaab`.  HP's manual says its 68000 and
+68332 libraries "always perform operations in double precision and
+round to nearest" (`third_party/hp/B3640-97001.pdf`, page 157): a
+fixed mode, against its 68881 libraries' selectable ones; its float
+routines still return floats (page 275).  The add, subtract and
+multiply round as it says; the divide does not.  `make check-softfloat`
 (`tools/firmware/softfloat_check.py`) runs the four on random operands,
 the add, subtract and multiply on exact ties too, and fails on any
 other departure from nearest.  The 3704's

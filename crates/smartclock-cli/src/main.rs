@@ -30,6 +30,7 @@ use smartclock::command::Class;
 use smartclock::command::Dialect;
 use smartclock::console;
 use smartclock::console::Progress;
+use smartclock::console::Reached;
 use smartclock::console::Region;
 use smartclock::control::forbidden;
 use smartclock::defaults::DAEMON;
@@ -58,6 +59,7 @@ use crate::flash::FlashArgs;
 use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
 use crate::registers::ReadRegistersArgs;
+use crate::select::Serial;
 use crate::simulate_loop::SimulateLoopArgs;
 
 #[derive(Parser)]
@@ -68,6 +70,14 @@ use crate::simulate_loop::SimulateLoopArgs;
     version = smartclock::VERSION
 )]
 struct Cli {
+    /// The serial number of the receiver the command is for, as its
+    /// `*IDN?` gives it: the usual way to pick one.  Alone, it finds the
+    /// local daemon attached to that receiver; with `--daemon` or
+    /// `--device` it is checked there.  Either way a different receiver
+    /// is refused before anything is sent to it.
+    #[arg(long, env = "SMARTCLOCK_SERIAL", value_parser = Serial::parse, global = true)]
+    serial: Option<Serial>,
+
     /// Serial device, or `tcp://host:port` for a receiver on the
     /// network or the simulator.
     ///
@@ -91,7 +101,8 @@ struct Cli {
     #[arg(long, default_value = "5", value_parser = seconds, global = true)]
     timeout: Duration,
 
-    /// Ask a running smartclockd instead of opening the port.
+    /// Ask a running smartclockd instead of opening the port: for one
+    /// `--serial` cannot find, such as `tcp://HOST:PORT`.
     ///
     /// The daemon holds the serial port for as long as it runs, so a
     /// direct-mode tool has to be given `--device` with the daemon
@@ -231,7 +242,8 @@ enum Command {
         to: ReadTo,
     },
     /// Write a note to the log of the daemon's receiver, such as "added
-    /// a 20 dB LNA".  Needs `--daemon`; nothing is sent to the receiver.
+    /// a 20 dB LNA".  Needs `--serial` or `--daemon`; nothing is sent to
+    /// the receiver.
     Note {
         /// What it says; the words are joined with spaces.
         #[arg(required = true)]
@@ -241,8 +253,8 @@ enum Command {
         at: Option<Timestamp>,
     },
     /// Record a fact about the daemon's receiver, such as `ocxo.serial
-    /// 1234`, and a note saying so.  Needs `--daemon`; nothing is sent
-    /// to the receiver.
+    /// 1234`, and a note saying so.  Needs `--serial` or `--daemon`;
+    /// nothing is sent to the receiver.
     Fact {
         /// What it is about, one word, such as `ocxo.serial`.
         key: String,
@@ -353,6 +365,7 @@ mod dump_scpi;
 mod flash;
 mod image;
 mod registers;
+mod select;
 mod simulate_loop;
 
 /// The command line.  Where there are no Unix sockets there is no run
@@ -407,13 +420,26 @@ fn main() -> Result<()> {
         return registers::dry_run(args);
     }
 
-    if let Some(daemon) = cli.daemon.clone() {
-        return through_daemon(&daemon, &cli.command);
+    // A command that needs the port is found its receiver's daemon only
+    // to be told which to stop; flash without --device inspects only the
+    // image.
+    let daemon = match (&cli.daemon, &cli.device, &cli.serial) {
+        (Some(daemon), _, _) => Some(daemon.clone()),
+        (None, None, Some(serial)) if served(&cli.command) => {
+            Some(daemons::serving(cli.run_dir.as_deref(), serial)?)
+        }
+        (None, None, Some(serial)) if !matches!(cli.command, Command::Flash(_)) => {
+            daemons::serving(cli.run_dir.as_deref(), serial).ok()
+        }
+        _ => None,
+    };
+    if let Some(daemon) = daemon {
+        return through_daemon(&daemon, &cli.command, cli.serial.as_ref());
     }
     if matches!(cli.command, Command::Note { .. } | Command::Fact { .. }) {
         anyhow::bail!(
-            "notes and facts are written to the log by the daemon; give --daemon \
-             (`smartclock-cli daemons` lists the daemons here)"
+            "notes and facts are written to the log by the daemon; give --serial, or \
+             --daemon (`smartclock-cli daemons` lists the daemons here)"
         );
     }
     // Before the port is opened, so a refused list sends nothing at
@@ -437,16 +463,17 @@ fn main() -> Result<()> {
     if let Command::Flash(args) = &cli.command {
         return flash::run(
             args,
+            cli.serial.as_ref(),
             cli.device.as_deref(),
             baud,
             cli.framing,
             cli.capture.as_deref(),
         );
     }
-    let device = cli
-        .device
-        .clone()
-        .context("--device is required and has no default; SMARTCLOCK_DEVICE works too")?;
+    let device = cli.device.clone().context(
+        "--device is required and has no default; SMARTCLOCK_DEVICE works too, \
+             and --serial alone finds the receiver's daemon",
+    )?;
     let settings = Settings {
         path: device.clone(),
         baud,
@@ -462,7 +489,7 @@ fn main() -> Result<()> {
     let at_console =
         console_read(&cli.command).is_some() || matches!(cli.command, Command::ReadRegisters(_));
     let settings = if at_console {
-        let (found, _) = console::line_settings(&settings, transport::open)
+        let (found, reached) = console::line_settings(&settings, transport::open)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;
         if (found.baud, found.framing) != (settings.baud, settings.framing) {
             eprintln!(
@@ -470,12 +497,30 @@ fn main() -> Result<()> {
                 settings.path, settings.baud, settings.framing, found.baud, found.framing
             );
         }
+        match (&cli.serial, reached) {
+            (None, _) => {}
+            (Some(serial), Reached::Scpi) => {
+                let (_, identity, _) = answering(&found, &config)
+                    .with_context(|| format!("no receiver answered on {}", found.path))?;
+                select::check_direct(serial, &identity, &device)?;
+            }
+            // read-registers checks the serial in the unit's EEPROM.
+            (Some(_), Reached::Console) if matches!(cli.command, Command::ReadRegisters(_)) => {}
+            (Some(serial), Reached::Console) => anyhow::bail!(
+                "{device} is at the pForth console, where *IDN? cannot be asked, so it \
+                 cannot be checked for serial {serial}; nothing was sent.  Leave the \
+                 console with halt first, or leave out --serial"
+            ),
+        }
         found
     } else {
-        let (found, report) = answering(&settings, &config)
+        let (found, identity, report) = answering(&settings, &config)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;
         if let Some(report) = report {
             eprintln!("{report}");
+        }
+        if let Some(serial) = &cli.serial {
+            select::check_direct(serial, &identity, &device)?;
         }
         found
     };
@@ -497,7 +542,11 @@ fn main() -> Result<()> {
 
     // The console has its own prompt, so these skip the SCPI session.
     if let Command::ReadRegisters(args) = &cli.command {
-        return registers::run(port, args, config);
+        let serial = cli
+            .serial
+            .as_ref()
+            .context("--read needs --serial: the unit's serial number")?;
+        return registers::run(port, args, serial, config);
     }
     if let Some((from, length, to)) = console_read(&cli.command) {
         let region = Region::new(from, length)?;
@@ -1050,19 +1099,35 @@ fn probe<T: Transport>(session: &mut Session<T>, dialect: Option<&str>) -> Resul
     Ok(())
 }
 
+/// Whether a daemon serves `command` for its receiver.
+const fn served(command: &Command) -> bool {
+    matches!(
+        command,
+        Command::Query { .. } | Command::Diagnose | Command::Note { .. } | Command::Fact { .. }
+    )
+}
+
 /// Serve a subcommand from a running daemon rather than from the port.
 ///
 /// Only the subcommands that make sense through another process: a
 /// query is one exchange, and diagnose is a rendering of state the
 /// daemon already holds.  `probe` and `sweep` send hundreds of commands
 /// and belong on a port of their own, with the daemon stopped.
-fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
+fn through_daemon(socket: &Path, command: &Command, serial: Option<&Serial>) -> Result<()> {
     let mut daemon = Daemon::connect(socket).with_context(|| {
         format!(
             "connecting to {}; is smartclockd running, and are you in its group?",
             socket.display()
         )
     })?;
+    let info = match serial {
+        Some(serial) if served(command) => {
+            let info = daemon.info()?;
+            select::check_daemon(serial, &mut daemon, &info, socket)?;
+            Some(info)
+        }
+        _ => None,
+    };
     match command {
         Command::Query { commands } => {
             for one in commands {
@@ -1073,7 +1138,7 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
             }
             Ok(())
         }
-        Command::Diagnose => diagnose_daemon(&mut daemon),
+        Command::Diagnose => diagnose_daemon(&mut daemon, info),
         Command::Note { text, at } => {
             filed("noted", &daemon.note(&text.join(" "), *at)?);
             Ok(())
@@ -1096,11 +1161,13 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
         Command::SimulateLoop(args) => simulate_loop::run(args),
         Command::Probe { .. } | Command::Sweep { .. } => anyhow::bail!(
             "probe and sweep send hundreds of commands and need the port to themselves; \
-             stop smartclockd and use --device"
+             stop the smartclockd at {} and use --device",
+            socket.display()
         ),
         Command::Flash(_) => anyhow::bail!(
             "flash talks to the installer on the port, not to the daemon; \
-             stop smartclockd for that port and use --device"
+             stop the smartclockd at {} and use --device",
+            socket.display()
         ),
         Command::ReadMemory { .. }
         | Command::ReadFlash { .. }
@@ -1108,7 +1175,8 @@ fn through_daemon(socket: &Path, command: &Command) -> Result<()> {
         | Command::ReadRegisters(_) => {
             anyhow::bail!(
                 "reading memory talks to the pForth console, not to the daemon; \
-                 stop smartclockd for that port and use --device"
+                 stop the smartclockd at {} and use --device",
+                socket.display()
             )
         }
     }
@@ -1341,8 +1409,11 @@ fn show_opt(label: &str, value: Option<String>) {
 /// so asking it again would cost link time and tell no one anything
 /// new; the age of each tier is printed instead, so a value that has
 /// not been refreshed says so.
-fn diagnose_daemon(daemon: &mut Daemon) -> Result<()> {
-    let info = daemon.info()?;
+fn diagnose_daemon(daemon: &mut Daemon, info: Option<serde_json::Value>) -> Result<()> {
+    let info = match info {
+        Some(info) => info,
+        None => daemon.info()?,
+    };
     let reading = daemon.latest()?;
     render(&info, &reading, &facts(&info));
     Ok(())

@@ -13,7 +13,6 @@
 
 use std::fmt::Write as _;
 
-use anyhow::Context as _;
 use anyhow::Result;
 use clap::ValueEnum;
 use smartclock::console;
@@ -24,6 +23,8 @@ use smartclock::console::WayBack;
 use smartclock::console::Width;
 use smartclock::session::Config;
 use smartclock::transport::Transport;
+
+use crate::select::Serial;
 
 /// What `read-registers` is asked to do.
 #[derive(Debug, clap::Args)]
@@ -38,10 +39,6 @@ pub(crate) struct ReadRegistersArgs {
     /// daemon first.
     #[arg(long, requires = "serial")]
     read: bool,
-    /// The serial number the unit's EEPROM must hold; required with
-    /// `--read`.
-    #[arg(long)]
-    serial: Option<String>,
     /// Also read the SIM's supervisor-only registers: the chip
     /// selects, PICR, PITR, PEPAR, PFPAR, SIMCR and SYPCR.  The console
     /// runs in user mode, where they are not readable: a bench Z3801A
@@ -810,12 +807,14 @@ fn report(progress: Progress) {
 
 /// Read the registers on the port and return it to SCPI.  The table is
 /// printed as soon as the reads are in, before the way back.
-pub(crate) fn run<T: Transport>(port: T, args: &ReadRegistersArgs, config: Config) -> Result<()> {
+pub(crate) fn run<T: Transport>(
+    port: T,
+    args: &ReadRegistersArgs,
+    serial: &Serial,
+    config: Config,
+) -> Result<()> {
     let profile = args.model.profile();
-    let serial = args
-        .serial
-        .as_deref()
-        .context("--read needs --serial: the unit's serial number")?;
+    let serial = serial.as_str();
     let (registers, fetches) = plan(args)?;
     let identity = identity_fetches(profile)?;
     let split = fetches

@@ -69,7 +69,8 @@ drop-in.  `smartclock-sensord` takes the same flag,
 Check the install:
 
     systemctl status smartclockd@ttyUSB0
-    smartclock-cli --daemon /run/smartclockd/ttyUSB0/socket diagnose
+    smartclock-cli daemons
+    smartclock-cli --serial <serial> diagnose
     sudo -u smartclockd ls /var/lib/smartclockd/
     sudo -u smartclockd sqlite3 /var/lib/smartclockd/<model>-<serial>.sqlite \
         "select count(*), max(at) from snapshot;"
@@ -103,6 +104,38 @@ answered, so "no socket" is also a daemon still waiting for its first.
 run directory, or only `--listen`, is not found.  Where there are no
 Unix sockets it asks the default daemon, `tcp://127.0.0.1:9978`.
 With nothing found it says so and succeeds.
+
+### Picking a receiver by its serial
+
+Ports are not receivers: after the USB adapters enumerate in another
+order, `smartclockd@ttyUSB0` is attached to what `ttyUSB1` was.  So
+`smartclock-cli` names the receiver instead, by the serial number its
+`*IDN?` gives, which `daemons` lists:
+
+    smartclock-cli --serial 0000A00000 diagnose
+    SMARTCLOCK_SERIAL=0000A00000 smartclock-cli query :SYSTem:STATus?
+
+Alone, `--serial` finds the daemon under the run directory attached to
+that receiver, and with none or more than one says so, listing every
+daemon found.  `--daemon` names one outright, for one on TCP or a
+socket outside the run directory; `--device` opens the port directly.
+With either, `--serial` checks that it reaches that receiver, and
+refuses before anything is sent to a different one:
+
+- through a daemon, by the daemon's `info`, answered from memory, and
+  again by the daemon itself for each query, note and fact, so a
+  receiver swapped in between is refused too.  A daemon too old to do
+  that, or not yet attached to a receiver, is refused.
+- directly, by `*IDN?`, sent first.  A port already at the pForth
+  console cannot be asked, so a console read refuses it;
+  `read-registers` checks the serial in the unit's EEPROM instead.
+
+The serial is compared exactly, case included, after trimming spaces.
+A command that needs the port, such as `probe` or `read-eeprom`, is
+told which daemon to stop.  Commands that need no receiver ignore it,
+as `flash` does without `--device`.  `flash --write` and
+`read-registers --read` require it.  The simulator's serial is
+`0000A00000` whatever the model.
 
 ### Upgrading
 
@@ -343,11 +376,12 @@ last year's holdover events stay in the record.
 What the receiver cannot report -- a new amplifier, a moved antenna,
 the oscillator's serial -- goes into its log through the daemon:
 
-    smartclock-cli --daemon /run/smartclockd/ttyUSB0/socket note added a 20 dB LNA
-    smartclock-cli --daemon ... note --at 2026-09-25T14:00:00-07:00 ran master_reset
-    smartclock-cli --daemon ... fact ocxo.model 10811-60159
+    smartclock-cli --serial 0000A00000 note added a 20 dB LNA
+    smartclock-cli --serial ... note --at 2026-09-25T14:00:00-07:00 ran master_reset
+    smartclock-cli --serial ... fact ocxo.model 10811-60159
 
-`smartclock-cli daemons` lists the sockets to give `--daemon`.
+`smartclock-cli daemons` lists the receivers' serials; `--daemon` names
+a daemon outright.
 
 Both are filed under the receiver attached now; nothing is sent to it.
 Notes show in the web view's journal, and as dashed lines across its
@@ -366,7 +400,7 @@ A second port is a second instance:
 
     sudo systemctl enable --now smartclockd@ttyUSB1
 
-    smartclock-cli --daemon /run/smartclockd/ttyUSB1/socket diagnose
+    smartclock-cli --serial <its serial> diagnose
 
 A Z3801A's port is fixed at seven data bits and odd parity
 (`097-z3801-01` 1-8 and 2-10); the daemon opens 8N1 by default.  A

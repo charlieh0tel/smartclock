@@ -78,7 +78,10 @@ from this tree and the compiler checks the wire type;
 a compile error, not a protocol change.  `smartclock::protocol`
 documents what a type cannot (request ids, `VERSION`).  Protocol and
 schema each carry a version, since daemon and clients upgrade
-independently.
+independently.  An optional request field does not bump the protocol
+version, which would make every daemon refuse every older client; the
+daemon's `info` names what it honors (`checks_receiver_serial`), and a
+client relying on a field asks first, since an older daemon ignores it.
 
 ### Transports and readers
 
@@ -93,6 +96,17 @@ independently.
   no new request, and nothing reaches a receiver.  A daemon on a socket
   outside the run directory, or on TCP alone, cannot be discovered and
   is not listed.
+- `smartclock-cli --serial` picks the receiver, not the port: after a
+  USB re-enumeration swapped two daemons' receivers, a command meant
+  for one rewrote the other's EEPROM.  Alone it finds the one daemon
+  in the run directory attached to that serial, by the same scan;
+  with `--daemon` or `--device` it checks there, refusing before
+  anything is sent.  Through a daemon the CLI checks `info`, then
+  sends the serial with each query, note and fact for the daemon to
+  enforce, against the attachment read before its identity, so a
+  reattachment between check and send is refused, not obeyed.
+  Directly it is `*IDN?`, sent first.  It stays optional: requiring it
+  would break every existing command line.
 - History is read from the SQLite file, read-only, beside the daemon's
   single writer (WAL).  A read-only reader needs `-shm` and cannot
   create it in `/var/lib/smartclockd`, so the daemon sets persistent

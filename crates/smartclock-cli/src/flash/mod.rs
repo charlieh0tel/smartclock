@@ -28,6 +28,8 @@ use smartclock::types::ErrorEntry;
 use smartclock::types::Framing;
 use thiserror::Error;
 
+use crate::select::Serial;
+
 pub(crate) mod chips;
 mod firmware;
 
@@ -42,9 +44,9 @@ const PROGRESS_INTERVAL_BYTES: usize = 0x2000;
 const COMPATIBILITY_NOTICE: &str =
     "Compatibility uses a model/layout allowlist; installer/primary pairing is not verified.";
 
-/// `flash`'s own arguments.  The port, its line settings and the
-/// transcript are the CLI's global `--device`, `--baud`, `--framing`
-/// and `--capture`.  Without a device only the image is inspected.
+/// `flash`'s own arguments.  The port, its line settings, the expected
+/// serial and the transcript are the CLI's global `--device`, `--baud`,
+/// `--framing`, `--serial` and `--capture`.  Without a device only the image is inspected.
 #[derive(Debug, clap::Args)]
 pub(crate) struct FlashArgs {
     /// Full 512 KiB, address-zero binary dump (not an individual chip or S-record file).
@@ -54,9 +56,6 @@ pub(crate) struct FlashArgs {
     /// file, the exchange is recorded there.
     #[arg(long, requires = "serial")]
     write: bool,
-    /// Expected receiver serial number; required for writing.
-    #[arg(long)]
-    serial: Option<String>,
     /// Skip reading the whole flash back through the debug console
     /// after writing.
     #[arg(long)]
@@ -336,6 +335,7 @@ fn warn_experimental(firmware: &Firmware) {
 /// one is never overwritten.
 pub(crate) fn run(
     args: &FlashArgs,
+    serial: Option<&Serial>,
     device: Option<&str>,
     baud: BaudRate,
     framing: Framing,
@@ -384,7 +384,12 @@ pub(crate) fn run(
     let port = open(&settings, &config, capture)?;
     let mut session = Session::new(port, config.clone());
     session.sync()?;
-    flash(&mut session, &firmware, args.write, args.serial.as_deref())?;
+    flash(
+        &mut session,
+        &firmware,
+        args.write,
+        serial.map(Serial::as_str),
+    )?;
     if !args.write || args.no_readback {
         return Ok(());
     }
@@ -408,7 +413,7 @@ fn open(
     config: &Config,
     capture: Option<std::fs::File>,
 ) -> Result<Box<dyn Transport>> {
-    let (settings, report) = answering(settings, config)
+    let (settings, _, report) = answering(settings, config)
         .with_context(|| format!("no receiver answered on {}", settings.path))?;
     if let Some(report) = report {
         eprintln!("{report}");

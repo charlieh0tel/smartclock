@@ -57,7 +57,7 @@ TARGETS = format-c check-format-c check-module-figures module-figures check-imag
 	check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-seed-names seed-names \
 	check-pforth-words pforth-words check-report-figures report-figures \
-	check-chip-selects chip-selects check-loop-trace loop-trace check-loop-constants loop-constants \
+	check-chip-selects chip-selects check-boards synthetic-eeprom check-loop-trace loop-trace check-loop-constants loop-constants \
 	check-loop-gain loop-gain check-status-register check-gps-fields gps-fields check-softfloat reported-images
 
 # Where an image's checks keep what they make.
@@ -253,6 +253,20 @@ check-chip-selects:
 
 chip-selects:
 	python3 -I $(ROOT)/tools/firmware/chip_selects.py --write
+
+# Fail if a board file's chip-select attachments (boards/*.toml) are not
+# what its images' reset code programs (boards/README.md), if a
+# synthetic EEPROM is not what tools/firmware/synthetic_eeprom.py builds
+# from its image (synthetic-eeprom writes them), or if the 58503B's
+# EEPROM is not a good record of HP Santa Clara Division's position
+# (tools/firmware/scrubbed_eeprom.py).
+check-boards:
+	python3 -I $(ROOT)/tools/firmware/check_boards.py
+	python3 -I $(ROOT)/tools/firmware/synthetic_eeprom.py --check
+	python3 -I $(ROOT)/tools/firmware/scrubbed_eeprom.py --check
+
+synthetic-eeprom:
+	python3 -I $(ROOT)/tools/firmware/synthetic_eeprom.py
 
 # Fail if crates/smartclock/tests/fixtures/loop/IMAGE.tsv, what the
 # Z3805A's and 58503A 3704's own startup_pll and pll_normal do on

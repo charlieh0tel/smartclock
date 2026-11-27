@@ -1,0 +1,86 @@
+[package]
+name = "smartclock-emu"
+description = "A SmartClock receiver's own firmware, booted in an emulator, on a terminal or served over TCP"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+# The library is the board's side, which any host runs; the binary, the
+# command line's host (src/main.rs).  The library's doc comments quote
+# trace records and scripts in indented blocks, which are not Rust, so
+# no doctests.
+[lib]
+doctest = false
+
+# The CPU core is mc683xx's MC68331, behind `mc683xx`, on by default:
+# the device models on mc683xx-modules' bus traits and mc683xx-board's
+# registry, beside mc683xx-peripherals' stock chips (docs/emulator.md,
+# "The mc683xx device layer"), the board that core is to run.  The
+# 0.9.0 release from crates.io, pinned exactly,
+# bumped only on purpose, and its mc683xx-target, the bus's types.  It
+# runs the receiver's board file (boards/*.toml), which it edits with
+# `toml` for `--gps`; its models save their state with `serde` for the
+# board's snapshot; `--panel` serves its page with the
+# `smartclock` library's `http` feature, its answers written with
+# `serde_json`.  The LCA model picks the netlist it runs by the SHA-256
+# of the configuration the firmware sends, with `sha2`.  Its
+# synthetic GPS engine, on every core, is `smartclock-gps`'s, the one
+# the project's tools share (docs/emulator.md, "The synthetic GPS
+# engine").
+#
+# Unicorn, a development core, is behind `unicorn`, off by default: it
+# builds QEMU's m68k target from C, which needs cmake and libclang and
+# costs minutes, and it is GPL-2.0-only, so a binary built with it is
+# never distributed.  `make emulator-unicorn` builds and tests with it.
+[features]
+default = ["mc683xx"]
+unicorn = ["dep:unicorn-engine"]
+mc683xx = [
+  "dep:mc683xx-board",
+  "dep:mc683xx-cpu32",
+  "dep:mc683xx-mc68331",
+  "dep:mc683xx-modules",
+  "dep:mc683xx-peripherals",
+  "dep:mc683xx-target",
+  "dep:serde",
+  "dep:serde_json",
+  "smartclock/http",
+  "dep:toml",
+]
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+jiff = "0.2.38"
+mc683xx-board = { version = "=0.9.0", optional = true }
+mc683xx-cpu32 = { version = "=0.9.0", optional = true }
+mc683xx-mc68331 = { version = "=0.9.0", optional = true }
+mc683xx-modules = { version = "=0.9.0", optional = true }
+mc683xx-peripherals = { version = "=0.9.0", optional = true }
+mc683xx-target = { version = "=0.9.0", optional = true }
+serde = { version = "1.0.229", features = ["derive"], optional = true }
+serde_json = { version = "1.0.154", optional = true }
+sha2 = "0.11.1"
+smartclock = { path = "../smartclock" }
+smartclock-gps = { path = "../smartclock-gps" }
+smartclock-sim = { path = "../smartclock-sim" }
+thiserror = "2.0.21"
+toml = { version = "1.2.0", optional = true }
+unicorn-engine = { version = "2.1.5", default-features = false, features = ["arch_m68k"], optional = true }
+
+[target."cfg(unix)".dependencies]
+nix = { version = "0.31.3", features = ["term"] }
+signal-hook = "0.4.5"
+
+[target."cfg(unix)".dev-dependencies]
+nix = { version = "0.31.3", features = ["resource"] }
+
+[dev-dependencies]
+proptest = "1.12.0"
+toml = "1.2.0"

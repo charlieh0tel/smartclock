@@ -809,9 +809,10 @@ time offset (`+0x6`), and in the Z3816A and 3704 a word at `+0xa`, the
 oscillator type or kind, the byte at `+0x1c` (the EEPROM's
 `0x40009c`).  The table is made from `loop-gain.json` and the EEPROMs
 in `third_party/firmware/images/eeprom/`, each decoded by its unit's
-image's rules, and `make check-loop-gain`
+image's rules; the project's synthetic EEPROMs are listed there too,
+marked `synthetic`, and decoded for neither table.  `make check-loop-gain`
 (`tools/firmware/loop_gain.py`) reads every address after a value or
-a clause from its image, decodes every EEPROM afresh, and fails if
+a clause from its image, decodes every unit's EEPROM afresh, and fails if
 this table or `docs/pages/loop.html`'s "G and the EEPROM" is not what
 they give (`make loop-gain` rewrites both).  u is the EFC in DAC
 counts, 0 to 2²⁰.

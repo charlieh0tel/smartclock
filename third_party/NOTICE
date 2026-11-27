@@ -697,4 +697,5 @@ In `xilinx/`.
                              (docs/images/Z3805-68001/
                              z3805a-cpu-fpga-flash.jpg, U32): its
                              configuration states, length count, frame
-                             layout (Figure 21) and readback.
+                             layout (Figure 21) and readback, which the
+                             emulator's FPGA model follows.

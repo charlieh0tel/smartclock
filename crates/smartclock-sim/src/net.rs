@@ -2,7 +2,8 @@
 //!
 //! What the `smartclock-sim` binary serves, and what a test serves when
 //! the thing under test opens its receiver by address rather than being
-//! handed a transport.
+//! handed a transport.  `smartclock-emu` serves its emulated ports the
+//! same way.
 
 use std::io::Read;
 use std::io::Write;

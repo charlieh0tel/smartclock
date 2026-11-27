@@ -175,6 +175,10 @@
     {"file": "z3805a-3625A01487-eeprom.bin", "image": "z3805a-3543b"},
     {"file": "58503a-3710A01056-eeprom.bin", "image": "58503a-3704"},
     {"file": "58503b-L00000-eeprom.bin", "image": "58503b-1.01.04"},
-    {"file": "z3817a-3832A03064-eeprom.bin", "image": "z3817a-3752"}
+    {"file": "z3817a-3832A03064-eeprom.bin", "image": "z3817a-3752"},
+    {"file": "58503b-synthetic-eeprom.bin", "image": "58503b-1.01.04", "synthetic": true},
+    {"file": "z3805a-1.01.03-synthetic-eeprom.bin", "image": "z3805a-1.01.03", "synthetic": true},
+    {"file": "z3815a-synthetic-eeprom.bin", "image": "z3815a-4010", "synthetic": true},
+    {"file": "z3816a-synthetic-eeprom.bin", "image": "z3816a-4001", "synthetic": true}
   ]
 }

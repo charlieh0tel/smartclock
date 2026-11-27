@@ -1,0 +1,419 @@
+# HP Z3816A main board, as its 4001 image drives it.
+#
+# Format, confidence key and doc names as z3805a.toml and
+# boards/README.md.  No Z3816A board has been seen (README.md, "What is
+# not established"): every part is open, and every connection is the
+# image's (read) or inferred from the Z3805A only where the docs say
+# the code is the same.  Its map is the second family's (read:
+# chip-selects.md, "Z3816A 4001"; README.md's table): flash one 512 KiB
+# select, and 0x300000, 0x302000, 0x304000 three selects of their own.
+# Its boot map is not its primary's: CS7 is a write select at 0x306000
+# there, a read select at 0x302000 here (`make check-boards` warns).
+
+version = 1
+
+# schema: draft
+[board]
+name = "z3816a"
+title = "HP Z3816A"
+images = ["../third_party/firmware/images/z3816a-4001.bin"]      # read
+
+[chip]
+type = "mc68331"                                          # inferred: the image programs an MC68331's SIM, QSM and GPT
+reference_hz = 32768                                      # read: SYNCR 0xcf80 (0x4e0, 0x2474e), 16.777 MHz (README.md); open: the crystal
+# data: open
+autovector = []                                           # read: the primary's CS4 IACK is vectored, external DSACK (CSOR4 0x2bc4); the boot code's asks AVEC itself (CSOR4 0x7805)
+
+# ---------------------------------------------------------------- memory
+
+# schema: draft -- flash command cycles need a peripheral
+[[memory]]
+name = "flash"
+image = "../third_party/firmware/images/z3816a-4001.bin"  # read
+size = 0x80000                                            # read: CSBARBT 0x0006, 512 KiB
+attach = [
+  { select = "CSBOOT", role = "read" },                   # read: CSBARBT 0x0006, CSORBT 0x6870 (0x24686; chip-selects.md)
+  { select = "CS6", role = "write" },                     # read: CSBAR6 0x0006, CSOR6 0x7070
+]
+# read: an Intel-style part, one 16-bit wide; the erase handler erases
+# three 128 KiB blocks from 0x20000 (restart.md, "The installer", "Boot check"); open: the part
+
+[[memory]]
+name = "ram"
+size = 0x10000                                            # read: CS0/2/3 64 KiB (restart.md, "The chip selects", "The RAM")
+writable = true
+attach = [
+  { select = "CS0", role = "read" },                      # read: CSBAR0 0x1003, CSOR0 0x6830
+  { select = "CS2", role = "write", lane = "upper" },       # read: CSOR2 0x5030
+  { select = "CS3", role = "write", lane = "lower" },       # read: CSOR3 0x3030
+]
+
+# ---------------------------------------------------------------- bus peripherals
+
+[[peripheral]]
+name = "duart"
+type = "mc68681"
+irq = 2                                                   # inferred: CS4 the level 2 IACK; PFPAR 0x04 at 0x24776 makes PF2 IRQ2
+reset = ["power-on", "external"]                          # inferred: as z3805a.toml
+attach = [
+  { select = "CS8", lines = [1, 2, 3, 4], lane = "lower" },  # read: CSBAR8 0x2000, CSOR8 0x3bf0 (primary; the boot code's 0xb830 is synchronous, on ECLK); odd registers referenced as the Z3805A's (image scan)
+  { select = "CS4", role = "iack", lane = "lower" },      # read: CSBAR4 0xfff8, CSOR4 0x2bc4 (0x246d6)
+]
+dsack = "DSACK1"                                        # inferred: DSACK1 alone gives a 16-bit port (MC68331UM 4.4.2, Table 4-12), the DUART on its lower lane, odd addresses; PEPAR 0x32 at 0x2475e (the boot code's 0x10 assigns no DSACK, its selects synchronous or autovectored)
+marking = "68681-class"                                   # read: the 68681's registers (console.md, "Which port"); open: the part
+[peripheral.parameters]
+x1_hz = 3686400                                           # inferred: as the Z3805A's; open
+
+[[peripheral]]
+name = "latch"
+type = "74x374"                                           # inferred: as z3805a.toml
+attach = [
+  { select = "CS1", role = "write", lines = 0 },          # read: CSBAR1 0x3000, CSOR1 0x7030, 16-bit, write; move.b to 0x300000 at 0x28720 (image)
+]
+# open: the part; which byte lane a byte write at 0x300000 lands on (an
+# even address on a 16-bit port: DATA15 to DATA8)
+
+[[peripheral]]
+name = "switch_high"
+type = "74x244"                                           # inferred: a buffer on DATA15 to DATA8 of the word, bit 8 its A0; open: the parts
+attach = [
+  { select = "CS7", role = "read", lane = "upper", lines = 0 },  # read: CSBAR7 0x3020, CSOR7 0x6870, 16-bit read; the word at 0x302000, bit 8 picks G (0x4b14e; restart.md, "The switch byte at `0x302000`"; loop.md)
+]
+parameters = { levels = 0xff }                            # inferred; open: what drives bit 8
+
+[[peripheral]]
+name = "switch_low"
+type = "74x244"                                           # inferred: a buffer on DATA7 to DATA0 of the word; open: the parts
+attach = [
+  { select = "CS7", role = "read", lane = "lower", lines = 0 },  # read: as switch_high
+]
+parameters = { levels = 0xff }                            # inferred
+
+[[peripheral]]
+name = "fpga"
+type = "xc3042"
+attach = [
+  { select = "CS5", lines = 3 },                          # read: CSBAR5 0x3040, CSOR5 0x7930, 8-bit, 4 wait; the port 0x304000, FUN_000440a6 (interval.md, "The FPGA")
+  { qspi = 6, mask = 0xf },                               # inferred: the loader's QSPI device 6 (structures.md: devices 0 and 4 to 5 set up as the Z3805A's)
+]
+marking = "XC3042"                                        # inferred: a 3860-byte XC3000 bitstream for the same part (outputs.md); open: the board
+[peripheral.parameters]
+design = "lca"                                            # read: z3816a.bit, at 0x2ffb8, sha1 8061d2bb (outputs.md, "The FPGA bitstreams"); no hand model: its netlist runs (docs/firmware/fpga-codegen.md)
+bitstream = "z3816a"                                      # read: the bitstream the loader sends
+# inferred: P53, ACLK, the CDMA VCXO the board's PLL locks to the 10 MHz,
+# P53 / 12,288 to P7 / 6250, so 19.6608 MHz, which the part's model
+# drives itself, ideally, at the OCXO's rate times 12,288 / 6250, the
+# PLL not modeled, P7 held Low (z3816a-trace.md, "Clocks";
+# board/fpga/pins.rs, `ACLK_ALONE`); open: the VCXO and the PLL's
+# filter, P38 and P40 to it
+
+[[peripheral]]
+name = "eeprom"
+type = "at28c64b"
+attach = [
+  { select = "CS9", lines = 13 },                         # read: CSBAR9 0x4001, CSOR9 0x78f0; the checksummed block at 0x400080 (README.md)
+]
+marking = "open"                                          # open: no dump, no photo
+[peripheral.parameters]
+image = "../third_party/firmware/images/eeprom/z3816a-synthetic-eeprom.bin"  # inferred: synthetic, the image's own records (tools/firmware/synthetic_eeprom.py; boards/README.md); open: a dump
+write_cycle_us = 5000                                     # inferred: as z3805a.toml
+
+# schema: draft
+[[unconnected]]
+select = "CS10"                                           # read: CSBAR10 0x5000, CSOR10 0x7bf0, 8-bit, external DSACK; open: no instruction found addressing 0x500000 (image scan), nothing known on pin 125
+
+# ---------------------------------------------------------------- QSPI peripherals
+
+[[peripheral]]
+name = "adc"
+type = "adc0838"
+attach = [{ qspi = 1, mask = 0xf }]                       # inferred: the README's ADC reads (ovens.md); the device codes as the Z3805A's table (structures.md)
+[peripheral.parameters]
+vref_volts = 5.0                                          # inferred: as z3805a.toml
+noise_volts = 0.0068359375                                # inferred: as z3805a.toml
+
+[[peripheral]]
+name = "hex_dac"
+type = "mc144110"
+attach = [{ qspi = 2, mask = 0xf }]                       # read: hdac sent as QSPI device 2 (0x2e460, 0x2e4e2; ovens.md, "What `hdac` is not")
+parameters = { vdd_volts = 5.0 }                          # inferred: as z3805a.toml; open: its VDD rail (item 23)
+
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+[[peripheral]]
+name = "efc_shift"
+# read: device 7 written in SPI mode 2 and read in mode 3 (SPCR0 0x8204
+# and 0x8304, 0x2f886), as the hex DAC, where the Z3805A's writes in 3
+# and reads in 2; qspi_efc_test (0x28b38) shifts the word read back
+# right a bit before it compares, so it wants the chain to shift on
+# SCK's fall; inferred: the 74x164s on SCK inverted (`clock = "falling"`);
+# open: an inverter or another part
+type = "74x164"
+attach = [{ qspi = 7, mask = 0xf }]                       # inferred: as adc
+parameters = { cascade = 2, miso = "qh", initial = 0x8000, clock = "falling" }  # inferred: the part as z3805a.toml (efc.md; hardware-investigations.md, item 27)
+
+[[peripheral]]
+name = "efc_dac"
+type = "ad569"
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+# inferred: LBE tied low too, every latch transparent, the DAC following
+# the chain: the image writes the word on QSPI device 7 about a hundred
+# times a second (`--trace qspi`) and no strobe after it was found (the
+# efc net, below); open: the load
+parameters = { cs = "low", hbe = "low", lbe = "low", ldac = "low", vref_negative_volts = -5.0, vref_positive_volts = 5.0, initial = 0x8000 }  # inferred: as z3805a.toml (efc.md; item 27)
+
+# read: QSPI device 0 set up as the Z3805A's, never sent (structures.md)
+
+# ---------------------------------------------------------------- beside the bus
+
+[[peripheral]]
+name = "interpolator"
+type = "smartclock-interpolator"
+# inferred: as z3805a.toml: not in the FPGA, its byte on P3 to P6, P8 to
+# P11, read complemented at registers 0x10 and 0x11 (z3816a-trace.md,
+# "Register port"); trimmed by the hex DAC's channels 2 and 3 as the
+# Z3805A's; open: the part
+[peripheral.parameters]
+trim_vss = 0.0                                            # inferred: as hex_dac's vss_volts
+trim_vdd = 5.0                                            # inferred: as hex_dac's vdd_volts
+
+# The supplies' monitors, one ADC channel a rail, as the health
+# monitor's table at 0x32596 reads them (42 bytes an entry, by
+# channel): each converts the channel's count c to volts, and checks it
+# against its limits.  Each source gives the level whose count the
+# conversion makes the table's nominal, c x 5 V / 256 at the pin (the
+# ADC's 1 LSB, SNAS531B); open: the dividers.
+[[peripheral]]
+name = "rail_12b"
+type = "dc-source"
+parameters = { volts = 3.0718 }                           # read: channel 0, "12B", 0.0763 c (0x31e04), 11 to 13 V, 12 nominal; inferred: c = 157.3
+
+[[peripheral]]
+name = "rail_5v"
+type = "dc-source"
+parameters = { volts = 4.0354 }                           # read: channel 1, "5V", 0.0242 c (0x31dea), 4.5 to 5.5 V, 5 nominal; inferred: c = 206.6
+
+[[peripheral]]
+name = "rail_12c"
+type = "dc-source"
+parameters = { volts = 3.0718 }                           # read: channel 2, "12C", as 12B
+
+# read: channels 3 to 5, "-12B", "-12C", "-12D", -0.084 x channel 1's
+# count + 0.0438 c (0x31e1e), -12.5 to -10.5 V, -11.5 nominal; inferred:
+# c = 134 with channel 1's 207, -11.52 V
+[[peripheral]]
+name = "rail_minus_12b"
+type = "dc-source"
+parameters = { volts = 2.6172 }                           # inferred: c = 134
+
+[[peripheral]]
+name = "rail_minus_12c"
+type = "dc-source"
+parameters = { volts = 2.6172 }                           # inferred: as rail_minus_12b
+
+[[peripheral]]
+name = "rail_minus_12d"
+type = "dc-source"
+parameters = { volts = 2.6172 }                           # inferred: as rail_minus_12b
+
+[[peripheral]]
+name = "antenna_current"
+type = "dc-source"
+parameters = { volts = 0.9961 }                           # read: channel 7, "Antenna current", 0.98 c (0x31e92), 50 nominal, no check; inferred: c = 51; open: its unit and source
+
+[[peripheral]]
+name = "ocxo"
+type = "ocxo"
+[peripheral.parameters]
+hz = 10_000_000                                           # read: 100 ns ticks (interval.md)
+# the part: an MTI Series 260, 5 MHz (several sources), so the 10 MHz the
+# count ticks at is made from it on the board, how not traced (z3816a-trace.md)
+# open: its gain (loop.md, "τ and G": G from the switch word)
+efc_vref_negative = -5.0                                  # inferred: as efc_dac's vref_negative_volts
+efc_vref_positive = 5.0                                   # inferred: as efc_dac's vref_positive_volts
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+
+[[peripheral]]
+name = "gps"
+type = "oncore"
+[peripheral.parameters]
+protocol = "motorola-binary"                              # read: @@ messages, @@En and @@Bn (gps.md; console.md)
+engine = "b4121"                                          # inferred: the image takes @@Ea and @@En and asks @@Ea first (gps.md, "Six or eight channels"), the emulator's B4121; open: the engine
+
+[[peripheral]]
+name = "leds"
+type = "led-bank"                                         # read: OP6 the heartbeat (outputs.md, "The heartbeat"); open: the bank
+
+# ---------------------------------------------------------------- nets
+# The ADC's nets name its pins.  This adc_read (0x2e3b0) is the
+# 58503A's: it addresses channel n as n halved, plus 4 for an odd n
+# (58503a-3704.md, "adc_channel"), as the address's ODD, SELECT 1 and
+# SELECT 0 bits, the pin 2 x SELECT + ODD (SNAS531B, Table 2), so
+# channel n is CHn.
+
+[[net]]
+name = "gps-to-duart"
+type = "serial"
+from = "gps.tx"
+to = ["duart.RxDA"]                                        # read: channel A the GPS link (console.md, "Which port")
+
+[[net]]
+name = "duart-to-gps"
+type = "serial"
+from = "duart.TxDA"
+to = ["gps.rx"]                                           # read
+
+[[net]]
+name = "gps-pps"
+type = "edge"
+from = "gps.pps"
+to = ["fpga.P82", "chip.PAI"]                             # inferred: P82 as the Z3805A's; PAI counts 1 PPS edges at 0xfff90d (README.md); open: this design's pin
+
+[[net]]
+name = "ten-megahertz"
+type = "clock"
+from = "ocxo.out"
+to = ["fpga.P7"]                                          # read: the netlist's P7, its PLL's reference (z3816a-trace.md, "Clocks"); the part's model runs on this clock, P7 itself held (pins.rs)
+
+[[net]]
+name = "fpga-pps"
+type = "edge"
+from = "fpga.pps"
+to = ["chip.PGP0"]                                        # inferred: IC1 as the Z3805A's; open: the pin
+
+[[net]]
+name = "fpga-init"
+type = "logic"
+from = "fpga.INIT"
+to = ["chip.PCLK"]                                        # inferred: the loader as the Z3805A's; open
+
+# schema: draft
+[[net]]
+name = "fpga-done"
+type = "wired-and"
+from = ["fpga.DONE", "chip.PF3"]
+to = ["chip.PF3", "fpga.DONE"]                           # read: DDRF 0xf5 leaves PF3 an input (0x24786); the loader drives DONE Low while it programs, PORTF bit 3 cleared and DDRF bit 3 set (0x32822, 0x3282a)
+
+[[net]]
+name = "fpga-program"
+type = "logic"
+from = "chip.PE6"
+to = ["fpga.RESET"]                                       # read: PORTE0 0x40, DDRE 0x40 (0x24766, 0x2476e); the loader drives it low with DONE until INIT reads low (0x32812 to 0x3285a), a cold start pulses it (0x22e30; README.md); inferred: the part's RESET (fpga.rs)
+
+[[net]]
+name = "fpga-readback"
+type = "logic"
+from = "chip.PF6"
+to = ["fpga.M0"]                                          # inferred: as z3805a.toml; DDRF 0xf5 makes PF6 an output (0x24786)
+
+[[net]]
+name = "trim-low"
+type = "analog"
+from = "hex_dac.R4Out"
+to = ["interpolator.trim_low"]                            # inferred: as z3805a.toml
+
+[[net]]
+name = "trim-high"
+type = "analog"
+from = "hex_dac.R3Out"
+to = ["interpolator.trim_high"]                           # inferred: as z3805a.toml
+
+# schema: draft -- an 8-bit parallel bus between parts
+[[net]]
+name = "interpolator-byte"
+type = "bus"
+from = "interpolator.byte"
+to = ["fpga.P3-P6,P8-P11"]                                # read: the netlist's P3 to P6, P8 to P11 (z3816a-trace.md, "Register port")
+
+[[net]]
+name = "efc-word"
+type = "bus"
+from = "efc_shift.Q"
+to = ["efc_dac.DB"]                                       # inferred: as z3805a.toml
+
+[[net]]
+name = "efc"
+type = "analog"
+from = "efc_dac.VOUT"
+to = ["ocxo.efc"]                                         # inferred
+# open: the EFC strobe: no select at 0x306000 in the primary, no write
+# to it found, PE7 an input (DDRE 0x40)
+
+[[net]]
+name = "outer-oven"
+type = "logic"
+from = "chip.PGP5"
+to = ["ocxo.outer_oven"]                                  # read: 0x4996c, 0x49c00 raise PORTGP bit 5 (ovens.md)
+
+[[net]]
+name = "led-heartbeat"
+type = "logic"
+from = "duart.OP6"
+to = ["leds.heartbeat"]                                   # read: OP6 flipped at 0x33e5e (outputs.md, "The heartbeat")
+
+[[net]]
+name = "adc-12b"
+type = "analog"
+from = "rail_12b.out"
+to = ["adc.CH0"]                                          # read: channel 0 (above)
+
+[[net]]
+name = "adc-5v"
+type = "analog"
+from = "rail_5v.out"
+to = ["adc.CH1"]                                          # read: channel 1
+
+[[net]]
+name = "adc-12c"
+type = "analog"
+from = "rail_12c.out"
+to = ["adc.CH2"]                                          # read: channel 2
+
+[[net]]
+name = "adc-minus-12b"
+type = "analog"
+from = "rail_minus_12b.out"
+to = ["adc.CH3"]                                          # read: channel 3
+
+[[net]]
+name = "adc-minus-12c"
+type = "analog"
+from = "rail_minus_12c.out"
+to = ["adc.CH4"]                                          # read: channel 4
+
+[[net]]
+name = "adc-minus-12d"
+type = "analog"
+from = "rail_minus_12d.out"
+to = ["adc.CH5"]                                          # read: channel 5
+
+[[net]]
+name = "adc-current"
+type = "analog"
+from = "ocxo.oven_current"
+to = ["adc.CH6"]                                          # read: channel 6, "Oscillator current", 4.489 c (0x31e66), -10 to 650, 250 nominal; inferred: the oscillator's current, the Z3805A's model's
+
+[[net]]
+name = "adc-antenna-current"
+type = "analog"
+from = "antenna_current.out"
+to = ["adc.CH7"]                                          # read: channel 7
+# read: the table names all eight channels, none the temperature's, so
+# no board_temperature part as z3805a.toml has
+
+# ---------------------------------------------------------------- run-time endpoints
+# external.host: SCPI and the pForth console on the SCI (read: sciR,
+# sciW; console.md, "Which port").  DUART channel B: only a loopback
+# self-test (read: console.md); open: whether it reaches a header
+# (hardware-investigations.md, item 4).
+
+[[net]]
+name = "host-in"
+type = "serial"
+from = "external.host"
+to = ["chip.RXD"]                                         # read: the SCI is the SCPI port (console.md); RS-232, from a secondary source (console.md, "Which port"); open: the connector (item 3)
+
+[[net]]
+name = "host-out"
+type = "serial"
+from = "chip.TXD"
+to = ["external.host"]                                    # read

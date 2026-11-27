@@ -63,6 +63,10 @@ engine-vectors:
 hooks:
 	git config core.hooksPath .githooks
 
+# No --all-features: smartclock-emu's `unicorn` feature is its Unicorn
+# core, which builds QEMU from C (cmake, ninja if found, libclang) and
+# stays out of ci and `make windows`; its default core, mc683xx, is in
+# every build.
 ci: fmt-check clippy test check-no-std doc
 
 fmt:
@@ -72,16 +76,16 @@ fmt-check:
 	$(CARGO) fmt --all -- --check
 
 clippy:
-	$(CARGO) clippy --workspace --all-targets --all-features -- -D warnings
+	$(CARGO) clippy --workspace --all-targets -- -D warnings
 
 # Everything that runs without a receiver.
 test:
-	$(CARGO) test --workspace --all-features
+	$(CARGO) test --workspace
 
 # Tests needing the attached receiver.  Stop smartclockd first: it holds
 # the serial port open.  Never run in CI.
 test-hw:
-	$(CARGO) test --workspace --all-features -- --ignored
+	$(CARGO) test --workspace -- --ignored
 
 # The browser tests' own Playwright and Chromium, into the test
 # directory's node_modules rather than the home directory.
@@ -120,7 +124,7 @@ screenshots:
 # The API documentation, with a rustdoc warning -- a link to nothing,
 # or from public documentation to a private item -- an error.
 doc:
-	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --workspace --no-deps --all-features
+	RUSTDOCFLAGS="-D warnings" $(CARGO) doc --workspace --no-deps
 
 # Regenerate the documentation that is derived from the command table.
 # A test fails if docs/commands.md and the table disagree.
@@ -371,7 +375,8 @@ check-pages: pages
 # the 58503A's and Z3801A's diffs against the Z3805A and the names
 # seeded from them, the addresses their C cites from the Z3805A's,
 # the function check's reading of the status
-# register against its tests, every image's chip-select tables, the
+# register against its tests, every image's chip-select tables and the
+# board files' attachments against them, the
 # hand-written C's magic numbers and ROM pointers, the 58503A 3704's
 # soft-float rounding, the loop's traces and
 # its constants by model (docs/firmware/loop-constants.json) and where
@@ -389,7 +394,7 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 	scpi-tree check-scpi-tree handlers check-module-figures module-figures check-image-diff image-diff \
 	check-seed-names seed-names check-comment-addresses check-common check-common-copies common-copies check-plain-names \
 	check-pforth-words pforth-words check-report-figures report-figures \
-	check-chip-selects chip-selects check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
+	check-chip-selects chip-selects check-boards synthetic-eeprom check-magic-numbers magic-numbers check-rom-pointers check-loop-trace loop-trace \
 	check-loop-constants loop-constants check-loop-gain loop-gain record-access report-link check-status-register \
 	check-gps-fields gps-fields check-softfloat reported-images
 .PHONY: $(FIRMWARE_TARGETS)

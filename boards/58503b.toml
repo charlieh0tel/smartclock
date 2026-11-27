@@ -1,0 +1,407 @@
+# HP / Symmetricom 58503B main board, as its 1.01.04 image drives it.
+#
+# Format, confidence key and doc names as z3805a.toml and
+# boards/README.md.  No board seen: the image is reconstructed from another
+# owner's console dump (third_party/NOTICE; console.md, "In every
+# image"), every part is open.  Its map is the Z3816A's family with
+# three differences (read: chip-selects.md, "58503B 1.01.04"): CS1 is an
+# 8-bit port, CS10 is not a select (CSPAR1 0x00ab: the pin is ECLK), and
+# CS8, at 0x200000, is synchronous, on ECLK (CSOR8 0xb830).  With that
+# the image has no DUART: its serial ISR strings are "ACIA isr" and
+# "SCI isr", its references to the select's window are even addresses
+# 0x200000 and 0x200002, not the 68681's odd registers (image scan), and
+# its IACK select asks AVEC (CSOR4 0x7805).  Its driver uses an
+# MC6850's registers and bits (read: the MC6850 data sheet, Motorola
+# DS9493R4, mc683xx's third_party/datasheets/MC6850.pdf; the part
+# mc683xx-peripherals' stock `mc6850`).  The boot code's first
+# map is the Z3815A's.  The emulator boots it to lock on this file
+# (docs/emulator.md, "The boards"); the parts it needs that the image
+# does not show are the 58503A's, each marked inferred.  The EEPROM
+# starts from a 58503B's, read with pForth, its position replaced by HP
+# Santa Clara Division's (docs/emulator.md, "The EEPROM").
+
+version = 1
+
+# schema: draft
+[board]
+name = "58503b"
+title = "Symmetricom 58503B"
+images = ["../third_party/firmware/images/58503b-1.01.04.bin"]   # read
+options = ["front-panel"]                                 # read: Option 001 (097-58503-12, chapter 3), probed by the 58503A's self-test at 0x5b41e (0x00, 0x08, 0x10, 0x00)
+
+[chip]
+type = "mc68331"                                          # inferred: the image programs an MC68331's SIM, QSM and GPT
+reference_hz = 32768                                      # read: SYNCR 0xcf80 (0x56e, 0x2467c); open: the crystal
+# data: open -- as z3815a.toml, the first boot map leaves CSPAR unwritten
+autovector = []                                           # read: CS4 itself asks AVEC at the level 2 acknowledge (CSOR4 0x7805, 0x24614); nothing for the board to assert
+
+# ---------------------------------------------------------------- memory
+
+# schema: draft -- flash command cycles need a peripheral
+[[memory]]
+name = "flash"
+image = "../third_party/firmware/images/58503b-1.01.04.bin"      # read
+size = 0x80000                                            # read: CSBARBT 0x0006, 512 KiB
+attach = [
+  { select = "CSBOOT", role = "read" },                   # read: CSORBT 0x6870 (0x245c4)
+  { select = "CS6", role = "write" },                     # read: CSBAR6 0x0006, CSOR6 0x7070
+]
+# inferred: the Z3816A's word checksum at 0x45e (README.md), an
+# Intel-style 16-bit part; open: the part
+
+[[memory]]
+name = "ram"
+size = 0x10000                                            # read: CS0/2/3 64 KiB (restart.md, "The chip selects", "The RAM")
+writable = true
+attach = [
+  { select = "CS0", role = "read" },                      # read: CSBAR0 0x1003, CSOR0 0x6830
+  { select = "CS2", role = "write", lane = "upper" },       # read: CSOR2 0x5030
+  { select = "CS3", role = "write", lane = "lower" },       # read: CSOR3 0x3030
+]
+
+# ---------------------------------------------------------------- bus peripherals
+
+[[peripheral]]
+name = "acia"
+type = "mc6850"                                           # read: an MC6850's registers and bits (DS9493R4, Control Register, Status Register): master reset 3, control 0x15 (divide by 16, 8N1) with CR7, CR6:5 01 to send (0x2d276 to 0x2d340); status RDRF, TDRE, FE, OVRN, PE ("ACIA receiver framing error", 0x2d46e); open: the part
+irq = 2                                                   # read: the level 2 autovector is the ACIA's isr (0x20068 holds 0x2d53a); PFPAR 0x04 at 0x246a4 makes PF2 IRQ2
+reset = []                                                # inferred: an MC6850 has no RESET pin; the driver's master reset (0x2d276) starts it
+attach = [
+  { select = "CS8", lines = [1] },                        # read: CSBAR8 0x2000, CSOR8 0xb830, CSPAR1 0x00ab an 8-bit port, synchronous, its cycle E; status/control at 0x200000, data at 0x200002 (0x2d2a0, 0x2d2a6); inferred: ADDR1 to RS
+]
+parameters = { tx_clk_hz = 153_600, rx_clk_hz = 153_600 }  # inferred: Tx CLK and Rx CLK at 16 times the Oncore's 9600 baud, the control word dividing by 16 (DS9493R4, Counter Divide Select Bits); open: the clock's source
+# schema: draft -- no DSACK: PEPAR 0x10 assigns only DS (0x2468c), the
+# selects terminate themselves (synchronous, or fixed waits)
+
+[[unconnected]]
+select = "CS4"                                            # read: CSBAR4 0xfff8, CSOR4 0x7805, the level 2 acknowledge, AVEC from the select itself; inferred: the MC6850 gives no vector (DS9493R4), so nothing answers it; open: what pin 119 reaches
+
+[[peripheral]]
+name = "latch"
+type = "74x374"                                           # inferred: as z3805a.toml
+attach = [
+  { select = "CS1", role = "write", lines = 0 },          # read: CSBAR1 0x3000, CSOR1 0x7030, 8-bit write; move.b to 0x300000 at 0x23726, 0x23762, 0x2378a (image)
+]
+# open: the part
+
+[[peripheral]]
+name = "switch"
+type = "74x244"                                           # inferred: a buffer the CPU reads; open: the part
+attach = [
+  { select = "CS7", role = "read", lines = 0 },           # read: CSBAR7 0x3020, CSOR7 0x6870, 8-bit read; read once at 0x2dbc8 after every EFC write (restart.md, "The switch byte at `0x302000`")
+]
+parameters = { levels = 0xff }                            # inferred; open: what the read does
+
+[[peripheral]]
+name = "fpga"
+type = "xc3042"
+attach = [
+  { select = "CS5", lines = 3 },                          # read: CSBAR5 0x3040, CSOR5 0x7930; the port 0x304000 (interval.md, "In every image")
+  { qspi = 6, mask = 0xf },                               # inferred: the loader as the others'
+]
+[peripheral.parameters]
+design = "lca"                                            # read: 58503b.bit's netlist differs from the hand model's design (fpga-comparison.md, "The five designs"), so the LCA model runs it
+bitstream = "58503b"                                      # read: the bitstream at 0x2f5a8, sha1 3110273c (outputs.md, "The FPGA bitstreams")
+
+[[peripheral]]
+name = "eeprom"
+type = "at28c64b"
+attach = [
+  { select = "CS9", lines = 13 },                         # read: CSBAR9 0x4001, CSOR9 0x78f0
+]
+marking = "open"                                          # open: the dump was read with pForth, not off the part
+[peripheral.parameters]
+image = "../third_party/firmware/images/eeprom/58503b-L00000-eeprom.bin"  # board: a 58503B's dump, its serial number L00000 and its position HP Santa Clara Division's (tools/firmware/scrubbed_eeprom.py; boards/README.md)
+write_cycle_us = 5000                                     # inferred: as z3805a.toml
+
+# ---------------------------------------------------------------- QSPI peripherals
+
+[[peripheral]]
+name = "front_panel"
+type = "hp58503a-front-panel"
+attach = [{ qspi = 0, mask = 0xf }]                       # read: device 0 set up for one 8-bit word and sent the front panel's bytes, as the 58503A's (structures.md, "The QSPI's devices")
+option = "front-panel"                                    # read: the 58503A's protocol: a command opens with the latch's bit 6 low and bit 7 high (0x5b36a), a reset holds bit 7 low 1 s (0x5b3e6), the self-test wants 0x55 then 0xaa (0x5b41e); inferred: the 58503A's Option 001 panel (097-58503-12, chapter 3)
+
+[[peripheral]]
+name = "adc"
+type = "adc0838"
+attach = [{ qspi = 1, mask = 0xf }]                       # inferred: the Z3805A's codes (structures.md)
+[peripheral.parameters]
+vref_volts = 5.0                                          # inferred: as z3805a.toml
+noise_volts = 0.0068359375                                # inferred: as z3805a.toml
+
+[[peripheral]]
+name = "hex_dac"
+type = "mc144110"
+attach = [{ qspi = 2, mask = 0xf }]                       # inferred: as adc
+parameters = { vdd_volts = 5.0 }                          # inferred: as z3805a.toml; open: its VDD rail (item 23)
+
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+[[peripheral]]
+name = "efc_shift"
+# read: device 7 written in SPI mode 2 and read in mode 3 (SPCR0 0x8204
+# and 0x8304, 0x2ee76), as the hex DAC, where the 58503A's writes in 3
+# and reads in 2; the EFC test (0x28bb4) shifts the word read back
+# right a bit before it compares, so it wants the chain to shift on
+# SCK's fall; inferred: the 74x164s on SCK inverted (`clock = "falling"`);
+# open: an inverter or another part
+type = "74x164"
+attach = [{ qspi = 7, mask = 0xf }]                       # read: the EFC writer 0x2dba0 sends the value to the DAC over the QSPI (restart.md, "The switch byte at `0x302000`"); inferred: code 7
+parameters = { cascade = 2, miso = "qh", initial = 0x8000, clock = "falling" }  # inferred: the part as z3805a.toml (efc.md; hardware-investigations.md, item 27)
+
+[[peripheral]]
+name = "efc_dac"
+type = "ad569"
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+parameters = { cs = "low", hbe = "low", ldac = "low", vref_negative_volts = -5.0, vref_positive_volts = 5.0, initial = 0x8000 }  # inferred: as z3805a.toml (efc.md; item 27)
+
+# ---------------------------------------------------------------- beside the bus
+
+[[peripheral]]
+name = "ocxo"
+type = "ocxo"
+[peripheral.parameters]
+hz = 10_000_000                                           # read: 100 ns ticks; open: the part
+efc_vref_negative = -5.0                                  # inferred: as efc_dac's vref_negative_volts
+efc_vref_positive = 5.0                                   # inferred: as efc_dac's vref_positive_volts
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+# board: its G is the EEPROM's oscillator's, the calibration block's,
+# which the run gives it (smartclock-emu's Profile; docs/emulator.md,
+# "The boards"); its offset at the EFC's middle, as every board's, puts
+# it on frequency at the lifetime record's EFC in the EEPROM the run
+# starts with (docs/emulator.md, "The oscillator the EEPROM describes")
+
+[[peripheral]]
+name = "interpolator"
+type = "smartclock-interpolator"                          # inferred: 58503b.bit reads two of the interpolator's inputs in its status bits 2 and 3, as the 58503A's (fpga-comparison.md, "The five designs"); open: the part
+[peripheral.parameters]
+trim_vss = 0.0                                            # inferred: as hex_dac's vss_volts
+trim_vdd = 5.0                                            # inferred: as hex_dac's vdd_volts
+
+[[peripheral]]
+name = "board_temperature"
+type = "temperature-sensor"                               # inferred: as 58503a.toml; open: the part
+[peripheral.parameters]
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+
+[[peripheral]]
+name = "supplies"
+type = "supply-monitor"                                   # inferred: as 58503a.toml; open: the parts
+[peripheral.parameters]
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+
+[[peripheral]]
+name = "gps"
+type = "oncore"
+parameters = { protocol = "motorola-binary", engine = "r5122" }   # read: @@ messages, @@En (gps.md, "In every image"); a shipped 58503B reports a UT Plus Oncore R5122U1152, which the image tells from a VP by its @@Cj model's R (0x58098; gps.md, "The UT Plus"); --gps-engine b4121 for a VP
+
+[[peripheral]]
+name = "lamps"
+type = "lamp-board"                                       # read: GPS Lock, Holdover and Alarm on the latch's bits 0 to 2 (0x333fc ORs 0x10328f, 0x103290, 0x1028ba, the flags of :LED:GPSL, :LED:HOLD and the alarm's, into 0x1026e9; 0x23736 writes them); 097-58503-12 2-12
+
+[[peripheral]]
+name = "leds"
+type = "led-bank"                                         # open: the bank
+
+# ---------------------------------------------------------------- nets
+
+[[net]]
+name = "gps-to-acia"
+type = "serial"
+from = "gps.tx"
+to = ["acia.RxData"]                                      # read: @@ messages through acia_send_message and acia_get_byte (0x2d2f4, 0x2d3a2); inferred: the ACIA is the only serial part but the SCI, which is the host's
+
+[[net]]
+name = "acia-to-gps"
+type = "serial"
+from = "acia.TxData"
+to = ["gps.rx"]                                           # inferred: as gps-to-acia
+
+[[net]]
+name = "gps-pps"
+type = "edge"
+from = "gps.pps"
+to = ["fpga.P82", "chip.PAI"]                             # inferred: P82 as the Z3805A's; open: this design's pin
+
+[[net]]
+name = "ten-megahertz"
+type = "clock"
+from = "ocxo.out"
+to = ["fpga.P7"]                                          # inferred: P7 as the Z3805A's; open: this design's pin
+
+[[net]]
+name = "fpga-pps"
+type = "edge"
+from = "fpga.pps"
+to = ["chip.PGP0"]                                        # inferred: IC1; open
+
+[[net]]
+name = "fpga-init"
+type = "logic"
+from = "fpga.INIT"
+to = ["chip.PCLK"]                                        # inferred
+
+# schema: draft
+[[net]]
+name = "fpga-done"
+type = "wired-and"
+from = ["fpga.DONE", "chip.PF3"]
+to = ["chip.PF3", "fpga.DONE"]                           # read: DDRF 0xf7 leaves PF3 an input (0x246b4); the loader drives DONE Low while it programs, PORTF bit 3 cleared and DDRF bit 3 set (0x31da6, 0x31dae)
+
+[[net]]
+name = "fpga-program"
+type = "logic"
+from = "chip.PE6"
+to = ["fpga.RESET"]                                       # inferred: PE6 an output, DDRE 0xc0 (0x2469c), as fpga.h
+
+[[net]]
+name = "fpga-readback"
+type = "logic"
+from = "chip.PF6"
+to = ["fpga.M0"]                                          # read: DDRF 0xf7 makes PF6 an output (0x246b4); the verifier 0x3280e drives it low and then high (0x3284e to 0x3285e) before it reads QSPI device 12; inferred: the part's M0/RTRIG, as z3805a.toml
+
+[[net]]
+name = "efc-strobe"
+type = "logic"
+from = "chip.PE7"
+to = ["efc_dac.LBE"]                                     # read: the EFC writer pulses PE7 low then high after the DAC word (0x2dbb6; restart.md, "The switch byte at `0x302000`"); inferred: the DAC's load
+
+[[net]]
+name = "efc-word"
+type = "bus"
+from = "efc_shift.Q"
+to = ["efc_dac.DB"]                                       # inferred: as z3805a.toml, the 74HC164s' outputs on the AD569's data inputs (efc.md)
+
+[[net]]
+name = "efc"
+type = "analog"
+from = "efc_dac.VOUT"
+to = ["ocxo.efc"]                                         # inferred
+
+[[net]]
+name = "outer-oven"
+type = "logic"
+from = "chip.PGP5"
+to = ["ocxo.outer_oven"]                                  # read: only doven raises PGP5 (ovens.md, "In every image"); DDRGP 0xbc
+
+[[net]]
+name = "lamp-gps-lock"
+type = "logic"
+from = "latch.Q0"
+to = ["lamps.gps_lock"]                                   # read: bit 0, 0x10328f (:LED:GPSL's handler 0x3db0e)
+
+[[net]]
+name = "lamp-holdover"
+type = "logic"
+from = "latch.Q1"
+to = ["lamps.holdover"]                                   # read: bit 1, 0x103290 (:LED:HOLD's handler 0x3db28)
+
+[[net]]
+name = "lamp-alarm"
+type = "logic"
+from = "latch.Q2"
+to = ["lamps.alarm"]                                      # read: bit 2, 0x1028ba, which 0x38b56 sets with the alarm before 0x4479c drives PF5
+
+[[net]]
+name = "panel-frame"
+type = "logic"
+from = "latch.Q6"
+to = ["front_panel.frame"]                                # read: bit 6 low from a command's first byte (0x5b36a), high after (0x5b3ca)
+
+[[net]]
+name = "panel-run"
+type = "logic"
+from = "latch.Q7"
+to = ["front_panel.run"]                                  # read: bit 7 low 1 s, then high (0x5b3e6)
+
+[[net]]
+name = "alarm-out"
+type = "logic"
+from = "chip.PF5"
+to = ["external.alarm"]                                   # read: 0x4479c drives PF5 low while the alarm is on, as the 58503A's 0x40828, and sets FPGA field 7 (0x449a6); open: whether PF5 is the rear Alarm (097-58503-12, 2-11)
+
+[[net]]
+name = "adc-temperature"
+type = "analog"
+from = "board_temperature.out"
+to = ["adc.CH0"]                                          # inferred: as 58503a.toml (SNAS531B Table 2); open: this board's channels
+
+[[net]]
+name = "adc-double-oven"
+type = "analog"
+from = "ocxo.outer_oven_monitor"
+to = ["adc.CH2"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "adc-plus-15v"
+type = "analog"
+from = "supplies.plus_15v"
+to = ["adc.CH4"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "adc-current"
+type = "analog"
+from = "ocxo.oven_current"
+to = ["adc.CH6"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "adc-5v"
+type = "analog"
+from = "supplies.plus_5v"
+to = ["adc.CH1"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "adc-oven"
+type = "analog"
+from = "ocxo.oven_monitor"
+to = ["adc.CH3"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "adc-minus-15v"
+type = "analog"
+from = "supplies.minus_15v"
+to = ["adc.CH5"]                                          # inferred: as adc-temperature
+
+[[net]]
+name = "trim-low"
+type = "analog"
+from = "hex_dac.R4Out"
+to = ["interpolator.trim_low"]                            # inferred: as 58503a.toml, slot 2 of hdac_set (docs/emulator.md, "The mc683xx device layer")
+
+[[net]]
+name = "trim-high"
+type = "analog"
+from = "hex_dac.R3Out"
+to = ["interpolator.trim_high"]                           # inferred: as trim-low, slot 3
+
+[[net]]
+name = "interpolator-byte"
+type = "bus"
+from = "interpolator.byte"
+to = ["fpga.P3-P6,P8-P11"]                                # inferred: as 58503a.toml (counter.md, "What the netlist"); open: this design's pins
+
+[[net]]
+name = "led-heartbeat"
+type = "logic"
+from = "latch.Q3"
+to = ["leds.heartbeat"]                                   # read: 0x3353e passes mask 8 to 0x2379e, which writes the latch at 0x300000 through 0x236fc (image), not a DUART output (outputs.md, "The heartbeat")
+
+# open: latch.Q4's part: the lamp test lights Q3 and Q4 together
+# (0x2876e), and 0x28f12 to 0x29014 clear Q4 on a fault flag
+
+# ---------------------------------------------------------------- run-time endpoints
+# external.host: SCPI and the pForth console on the SCI (inferred: the
+# only host-side driver, sciR, sciW, SCI isr, image strings; that unit's
+# console session on that port, third_party/firmware/images/58503b-L85376-console.log).
+
+[[net]]
+name = "host-in"
+type = "serial"
+from = "external.host"
+to = ["chip.RXD"]                                         # inferred
+
+[[net]]
+name = "host-out"
+type = "serial"
+from = "chip.TXD"
+to = ["external.host"]                                    # inferred

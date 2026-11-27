@@ -5,6 +5,7 @@
 members = [
     "crates/smartclock",
     "crates/smartclock-cli",
+    "crates/smartclock-emu",
     "crates/smartclock-exporter",
     "crates/smartclock-gps",
     "crates/smartclock-gps-feed",
@@ -21,7 +22,7 @@ resolver = "3"
 [workspace.package]
 version = "1.9.3"
 edition = "2024"
-rust-version = "1.99"
+rust-version = "1.99.1"
 authors = ["Christopher Hoover <ch@murgatroid.com>"]
 license = "GPL-3.0-only"
 repository = "https://github.com/charlieh0tel/smartclock"
@@ -31,6 +32,35 @@ repository = "https://github.com/charlieh0tel/smartclock"
 # is to sit on a machine and log.
 [profile.release]
 strip = "symbols"
+
+# Optimized, with the dev profile's debug assertions and overflow
+# checks kept, for tests too slow unoptimized: the emulator's in CI
+# (`make emulator EMULATOR_PROFILE=checked`).  The mc683xx crates
+# debug_assert!, and an overflow in a device model is a bug to catch.
+[profile.checked]
+inherits = "release"
+debug-assertions = true
+overflow-checks = true
+
+# mc683xx, the emulator's CPU core, optimized in the dev profile too:
+# its interpretation of the CPU32 is nearly all of an emulator test's
+# time, and unoptimized it makes `cargo test` a matter of minutes, not
+# seconds.  smartclock's own crates stay unoptimized, with their debug
+# information.
+[profile.dev.package.mc683xx-board]
+opt-level = 3
+
+[profile.dev.package.mc683xx-cpu32]
+opt-level = 3
+
+[profile.dev.package.mc683xx-mc68331]
+opt-level = 3
+
+[profile.dev.package.mc683xx-modules]
+opt-level = 3
+
+[profile.dev.package.mc683xx-peripherals]
+opt-level = 3
 
 [workspace.lints.rust]
 missing_debug_implementations = "warn"

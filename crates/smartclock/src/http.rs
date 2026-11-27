@@ -1,6 +1,8 @@
-//! The little HTTP server the exporter and the web view share, on
-//! `tiny_http`, behind the `http` feature.  The requests and responses
-//! are every target's; the server is native alone.
+//! The little HTTP server the exporter, the web view and the emulator's
+//! panel page share, on `tiny_http`, behind the `http` feature.  The
+//! requests and responses are every target's; the server is native
+//! alone, so that the emulator's library, which answers its panel
+//! page's requests in a browser too, builds for wasm32 without it.
 //!
 //! Not a web framework: it hands the caller a request's target, or its
 //! method, target and body, and writes back a status, a media type and

@@ -92,12 +92,6 @@ fn variant(id: &str) -> String {
 fn stamp_version() {
     let package = env::var("CARGO_PKG_VERSION").expect("CARGO_PKG_VERSION");
 
-    // Rebuild when the checked-out commit changes, or the stamp is
-    // whatever it was when this last ran.
-    for path in [".git/HEAD", ".git/refs/heads"] {
-        println!("cargo::rerun-if-changed=../../{path}");
-    }
-
     let git = |args: &[&str]| {
         std::process::Command::new("git")
             .args(args)
@@ -107,6 +101,16 @@ fn stamp_version() {
             .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_owned())
             .filter(|text| !text.is_empty())
     };
+
+    // Rebuild when the checked-out commit changes, or the stamp is
+    // whatever it was when this last ran.  Where git keeps them: in a
+    // worktree `.git` is a file, and a path under it is always missing,
+    // so the script ran, and everything above it rebuilt, every build.
+    for path in ["HEAD", "refs/heads"] {
+        if let Some(found) = git(&["rev-parse", "--path-format=absolute", "--git-path", path]) {
+            println!("cargo::rerun-if-changed={found}");
+        }
+    }
 
     let dirty = match git(&["status", "--porcelain"]) {
         Some(_) => "+dirty",

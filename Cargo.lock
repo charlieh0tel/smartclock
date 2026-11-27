@@ -1267,6 +1267,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "smartclock-emu-web"
+version = "1.9.3"
+dependencies = [
+ "clap",
+ "jiff",
+ "js-sys",
+ "smartclock",
+ "smartclock-emu",
+ "thiserror",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "smartclock-exporter"
 version = "1.9.3"
 dependencies = [

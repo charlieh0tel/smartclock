@@ -1,0 +1,34 @@
+[package]
+name = "smartclock-emu-web"
+description = "The SmartClock emulator in a browser: the board on WebAssembly, the panel page its host"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+# Built for the browser by `make emulator-web`, never published.
+publish = false
+
+# A cdylib for wasm-bindgen, and an rlib so its Rust API's tests run
+# natively.
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[lints]
+workspace = true
+
+# wasm-bindgen pinned exactly, as mc683xx's bindings pin it: the CLI that
+# binds the module must be the same version (`make emulator-web`).  The
+# panel page's requests and responses are `smartclock`'s `http`
+# feature's; the command line's options the emulator's library's, parsed
+# by clap.
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+jiff = "0.2.39"
+js-sys = { version = "0.3.107", default-features = false }
+smartclock = { path = "../smartclock", features = ["http"] }
+smartclock-emu = { path = "../smartclock-emu" }
+thiserror = "2.0.21"
+wasm-bindgen = "=0.2.130"

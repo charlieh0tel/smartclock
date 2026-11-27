@@ -420,7 +420,7 @@ EMULATOR_PROFILE ?= dev
 EMULATOR_EEPROM ?= target/smartclock-emu/z3805a-3625A01487-eeprom.bin
 BINDGEN_EXTRA_CLANG_ARGS ?= -I$(shell gcc -print-file-name=include)
 export BINDGEN_EXTRA_CLANG_ARGS
-.PHONY: emulator emulator-unicorn emulator-slow emulate emulator-tools
+.PHONY: emulator emulator-unicorn emulator-slow emulator-wasm emulate emulator-tools
 # What Unicorn's build needs, checked before cargo starts it: cmake and
 # libclang; ninja is used when found, cmake's Makefiles when not.
 # libclang is found where any one of these names it: LIBCLANG_PATH, the
@@ -449,6 +449,80 @@ emulator-unicorn: emulator-tools
 # runs them in the checked profile, as it runs the rest.
 emulator-slow:
 	$(call EMULATOR,test) --profile $(EMULATOR_PROFILE) --test temporary_holdover -- --ignored
+
+# The emulator's library, the board's side, compiled for the browser's
+# target, wasm32-unknown-unknown, on its default core: checked, not
+# built or run, so that nothing it needs leaves it unable to; and the
+# browser's build's crate, smartclock-emu-web, linted there.  The
+# binary, the command line's host, is native alone.  The target is
+# rustup's (`rustup target add wasm32-unknown-unknown`); firmware.yml's
+# `emulator-wasm` job adds it.  Its warnings fail it, as clippy's do.
+WASM_TARGET := wasm32-unknown-unknown
+emulator-wasm:
+	RUSTFLAGS="-D warnings" $(call EMULATOR,check) --lib --target $(WASM_TARGET)
+	$(CARGO) clippy --locked --target $(WASM_TARGET) -p smartclock-emu-web -- -D warnings
+
+# The emulator in a browser, the 58503A's (docs/emulator.md, "In a
+# browser"): a static directory, $(EMULATOR_WEB_DIR), which `make pages`
+# publishes as emulator.html.  smartclock-emu-web built for wasm32-unknown-unknown
+# (--locked, release) and bound by the wasm-bindgen CLI at the crate's
+# exact wasm-bindgen version, `--target web`, without wasm-opt, into
+# pkg/ with its Node entry; the panel page's files, its index the
+# page's own with host.js before its scripts and the site's head tags;
+# and the board file, the
+# image and the EEPROM's dump at their paths in the repository.  Needs
+# the wasm32 target and WASM_BINDGEN, a wasm-bindgen of that version
+# (tools/install-wasm-bindgen.sh installs one).  Serve the directory and
+# open its index.html.
+#
+# test-emulator-web boots it in Node (crates/smartclock-emu-web/tests/
+# node.test.mjs) and in headless Chromium, the browser tests'
+# Playwright (emulator-web.spec.mjs); it needs `make web-deps` once.
+WASM_BINDGEN ?= wasm-bindgen
+EMULATOR_WEB_CRATE := crates/smartclock-emu-web
+EMULATOR_WEB_TARGET = $(or $(CARGO_TARGET_DIR),target)
+EMULATOR_WEB_DIR = $(EMULATOR_WEB_TARGET)/emulator-web
+EMULATOR_WEB_MODULE = $(EMULATOR_WEB_TARGET)/$(WASM_TARGET)/release/smartclock_emu_web.wasm
+EMULATOR_WEB_PAGE := crates/smartclock-emu/src/panel/page
+EMULATOR_WEB_IMAGES := third_party/firmware/images
+EMULATOR_WEB_FILES := boards/58503a.toml $(EMULATOR_WEB_IMAGES)/58503a-3704.bin \
+	$(EMULATOR_WEB_IMAGES)/eeprom/58503a-3710A01056-eeprom.bin
+EMULATOR_WEB_HEAD := <title>58503A in the Browser</title>\n<meta name="description" content="The HP 58503A 3704 firmware booted on an emulated board in the browser, on WebAssembly: the front panel, a console on the host port and simulation controls, nothing installed.">\n<meta name="smartclock-group" content="emulation">
+EMULATOR_WEB_INTRO := <p>The 58503A 3704 firmware, emulated in this page.  The image and EEPROM are from the bench unit (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/emulator.md\#in-a-browser">about</a>).</p>
+.PHONY: emulator-web test-emulator-web
+emulator-web:
+	$(CARGO) build --locked --release --target $(WASM_TARGET) -p smartclock-emu-web
+	rm -rf $(EMULATOR_WEB_DIR)
+	$(WASM_BINDGEN) --target web --remove-name-section --out-name smartclock_emu_web \
+		--out-dir $(EMULATOR_WEB_DIR)/pkg $(EMULATOR_WEB_MODULE)
+	cp $(EMULATOR_WEB_CRATE)/web/node.mjs $(EMULATOR_WEB_DIR)/pkg/
+	cp $(EMULATOR_WEB_PAGE)/panel.css $(EMULATOR_WEB_PAGE)/panel.js $(EMULATOR_WEB_PAGE)/drawings.js \
+		$(EMULATOR_WEB_CRATE)/web/host.js $(EMULATOR_WEB_CRATE)/web/loader.mjs $(EMULATOR_WEB_DIR)/
+	sed -e 's|<script src="drawings.js"></script>|<script src="host.js"></script>\n&|' \
+		-e 's|<title>SmartClock Panel</title>|$(EMULATOR_WEB_HEAD)|' \
+		-e 's|^<main>$$|&\n$(EMULATOR_WEB_INTRO)|' \
+		$(EMULATOR_WEB_PAGE)/panel.html > $(EMULATOR_WEB_DIR)/index.html
+	grep -q 'host.js' $(EMULATOR_WEB_DIR)/index.html
+	for file in $(EMULATOR_WEB_FILES); do \
+		mkdir -p $(EMULATOR_WEB_DIR)/$$(dirname $$file) && cp $$file $(EMULATOR_WEB_DIR)/$$file; \
+	done
+
+test-emulator-web: emulator-web
+	EMULATOR_WEB=$(abspath $(EMULATOR_WEB_DIR)) node --test $(EMULATOR_WEB_CRATE)/tests/node.test.mjs
+	cd $(WEB_TESTS) && EMULATOR_WEB=$(abspath $(EMULATOR_WEB_DIR)) npm run test-emulator-web
+
+# The LCA model's speed, the FPGA's bitstream executed, every edge of
+# the 10 MHz clocked (docs/firmware/fpga-codegen.md, "Performance"):
+# the netlist alone over a second; the Z3805A's boot on it and on the
+# hand model, natively, over the same ten seconds of the board from
+# just past the configuration, the synthetic GPS engine on; and those
+# in the browser's module, in Node, which runs the engine too.  Each prints its times, a measure, not a check; none is quoted
+# in a doc.  Optimized, as the browser's build is, so minutes.
+.PHONY: bench-lca
+bench-lca: emulator-web
+	$(call EMULATOR,test) --release --lib fpga::tests::the_netlists_1_pps_comes_as_the_hand_models_does -- --ignored --nocapture
+	$(call EMULATOR,test) --release --test boot_lca the_lca_models_speed -- --ignored --nocapture
+	EMULATOR_WEB=$(abspath $(EMULATOR_WEB_DIR)) REPOSITORY=$(CURDIR) node $(EMULATOR_WEB_CRATE)/tests/lca-speed.mjs
 
 emulate:
 	$(call EMULATOR,run) -- third_party/firmware/images/z3805a-3543b.bin \

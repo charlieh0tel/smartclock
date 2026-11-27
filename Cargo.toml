@@ -6,6 +6,7 @@ members = [
     "crates/smartclock",
     "crates/smartclock-cli",
     "crates/smartclock-emu",
+    "crates/smartclock-emu-web",
     "crates/smartclock-exporter",
     "crates/smartclock-gps",
     "crates/smartclock-gps-feed",

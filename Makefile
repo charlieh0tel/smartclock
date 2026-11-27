@@ -401,6 +401,27 @@ FIRMWARE_TARGETS = check-types format-c check-format-c check-decompiled check-al
 $(FIRMWARE_TARGETS):
 	$(MAKE) -C third_party/firmware $@
 
+# smartclock-emu on its default core, mc683xx: clippy and every test,
+# the boots of the Z3805A 3543B, the 58503A 3704 and the Z3801A 3543
+# among them.  `make emulate` runs the Z3805A's image, the host port on
+# the terminal; HOST=ADDR serves it over TCP instead (docs/emulator.md).
+# EMULATOR_PROFILE names the cargo profile the tests build in: dev by
+# default, `checked` (Cargo.toml) in firmware.yml, optimized with the
+# debug assertions and overflow checks kept.
+EMULATOR = $(CARGO) $(1) -p smartclock-emu $(2)
+EMULATOR_PROFILE ?= dev
+EMULATOR_EEPROM ?= target/smartclock-emu/z3805a-3625A01487-eeprom.bin
+.PHONY: emulator emulate
+emulator:
+	$(call EMULATOR,clippy) --all-targets -- -D warnings
+	$(call EMULATOR,test) --profile $(EMULATOR_PROFILE)
+
+emulate:
+	$(call EMULATOR,run) -- third_party/firmware/images/z3805a-3543b.bin \
+		--eeprom $(EMULATOR_EEPROM) \
+		--eeprom-dump third_party/firmware/images/eeprom/z3805a-3625A01487-eeprom.bin \
+		$(if $(HOST),--host $(HOST))
+
 # The 58503A's flash programmer over BDM (tools/bdm/README.md):
 # bdm-routine assembles the CPU32 routine into target/bdm, with its
 # symbols and listing; test-bdm tests the pod adapter against a stand-in

@@ -2252,6 +2252,9 @@ negative (`diag_pstat`, `0x1b766`): while it is not 0 `gpsm_task`
 takes `status_screen_snapshot` and prints it, at once while it is
 negative, which it then makes positive, and then each time that many
 seconds have passed.  `gps_init` (`0x4bef6`) clears both.
+These are the Z3805A 3543B's.  The 58503A 3704's: `0x1013f8`, `0x1013f9`,
+`diag_disable_gps_cmds` `0x1b76e`, `diag_pstat` `0x1b786`.  The Z3801A
+3543's: `0x1011c2`, `0x1011c3`, `0x1b456`, `0x1b46e`.
 
 `gps_request_post` (`0x4bd2c`) sets `command_monitor_result`
 (`0x101428`) to `GPS_RESULT_PENDING` (9) for a request from

@@ -1,0 +1,52 @@
+# shellcheck shell=bash
+# Sourced by a guard, tools/ci/report-decompiled-needed or
+# tools/ci/emulator-needed, which sets JOB, the job it decides for, and
+# INPUTS, what that job reads, and passes on its arguments, [BASE |
+# --merge-base REF]: whether any of INPUTS differs between BASE and the
+# working tree, committed or not, untracked files included.  Prints
+# run=true or run=false, appended to $GITHUB_OUTPUT too when that is
+# set, and why to stderr.
+
+# Prints the decision, $1 true or false, and why, $2, and exits.
+decide() {
+  if [ "$1" = true ]; then
+    echo "$JOB runs: $2" >&2
+  else
+    echo "$JOB skipped: $2" >&2
+    if [ "${GITHUB_ACTIONS:-}" = true ]; then
+      echo "::notice title=$JOB skipped::$2"
+    fi
+  fi
+  echo "run=$1"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "run=$1" >> "$GITHUB_OUTPUT"
+  fi
+  exit 0
+}
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+base=${1:-}
+if [ "$base" = --merge-base ]; then
+  ref=${2:?--merge-base needs a REF}
+  if ! base=$(git merge-base "$ref" HEAD 2>/dev/null); then
+    decide true "no merge base with $ref (a shallow clone, or $ref unknown)"
+  fi
+  echo "merge base with $ref: $base" >&2
+fi
+if [ -z "$base" ]; then
+  decide true "no base to compare against"
+fi
+if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+  if ! git fetch -q --no-tags --depth=1 origin "$base" 2>/dev/null \
+      || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+    decide true "base $base neither here nor fetchable from origin"
+  fi
+fi
+changed=$({ git diff --name-only "$base" -- "${INPUTS[@]}"
+  git ls-files --others --exclude-standard -- "${INPUTS[@]}"; } | sort -u)
+if [ -n "$changed" ]; then
+  echo "changed since $base:" >&2
+  while read -r path; do echo "  $path"; done <<< "$changed" >&2
+  decide true "its inputs changed since $base"
+fi
+decide false "none of its inputs changed since $base: ${INPUTS[*]}"

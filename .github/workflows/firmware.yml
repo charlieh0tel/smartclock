@@ -8,34 +8,37 @@ name: firmware
 # assembly alone, every function required, every decompiled function
 # run against the image's own and the figures the documents give, the
 # SCPI trees, the module and pForth figures, the 58503A's, Z3801A's,
-# Z3815A's, Z3817A's, Z3816A's, 58503B's and Z3805A 1.01.03's diffs and
-# the names seeded
-# from them, every image's
-# chip-select tables, the hand-written C's magic numbers and ROM
-# pointers, the addresses the 58503A's and Z3801A's C's comments cite,
-# and the shared C; the
-# board atlas and the block diagram built from their data, every
-# citation in them checked; the
-# FPGA decoder against XACT's test designs; and the FPGA netlists' fast
-# path against their references, and the explainer and detail pages
-# built.
+# Z3815A's, Z3817A's, Z3816A's, 58503B's and Z3805A 1.01.03's diffs
+# and the names seeded from them, every image's chip-select tables, the
+# board files, the
+# loop's traces and its constants by model, the GPS engine's message
+# fields against what the images read, the hand-written C's magic
+# numbers and ROM pointers, the addresses the 58503A's and Z3801A's C's
+# comments cite, and the shared C; the board atlas, the block diagram
+# and the coverage page built from their data, every citation in them
+# checked; the FPGA decoder against XACT's test designs; and the FPGA
+# netlists' fast path against their references, and the explainer and
+# detail pages built.  And, in jobs of their own, the emulator (make
+# emulator) and its tests too slow unoptimized (make emulator-slow), and
+# its check for the browser's target (make emulator-wasm).
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs an m68k toolchain,
 # clang, clang-format and uv the others do not; and so that it fails
-# on its own.  No Rust: none of these targets builds the workspace.  Most
-# of a run is report-decompiled's, the eight images' function checks, a
-# job each beside the rest; checks, the required check, passes if they
-# all do.
+# on its own.  No Rust in the checks: none of their targets
+# builds the workspace.  Most of a run is report-decompiled's, the
+# eight images' function checks, a job each beside the rest; checks,
+# the required check, passes if they all do.
 #
 # On pull requests and pushes to main, not on a branch's own pushes,
 # which its pull request's run checks: both ran each change twice at
 # once.  A branch without a pull request runs it by hand
 # (workflow_dispatch).  On a pull request, report-decompiled runs only
 # where anything it reads changed against its base
-# (tools/ci/report-decompiled-needed); on a push to main and when run by
-# hand it always runs, main's full run the backstop for an input
-# missing from the script's list.
+# (tools/ci/report-decompiled-needed), and the emulator's jobs only
+# where anything they build or read did (tools/ci/emulator-needed); on
+# a push to main and when run by hand they always run, main's full run
+# the backstop for an input missing from a script's list.
 on:
   push:
     branches: [main]
@@ -44,7 +47,8 @@ on:
 
 jobs:
   # The images report-decompiled runs for, the firmware Makefile's
-  # REPORTED_IMAGES, and on a pull request whether it runs.
+  # REPORTED_IMAGES, and on a pull request whether it runs and whether
+  # the emulator's two jobs do.
   plan:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
@@ -53,6 +57,7 @@ jobs:
     outputs:
       images: ${{ steps.images.outputs.images }}
       run: ${{ steps.report-decompiled.outputs.run }}
+      emulator: ${{ steps.emulator.outputs.run }}
     steps:
       # The pin audit.yml carries; moved by hand to match it.
       - &checkout
@@ -72,6 +77,15 @@ jobs:
         run: >-
           if [ "$GITHUB_EVENT_NAME" = pull_request ];
           then tools/ci/report-decompiled-needed "$PULL_BASE";
+          else echo run=true >> "$GITHUB_OUTPUT"; fi
+      # Whether the emulator's jobs need to run, likewise
+      # (tools/ci/emulator-needed).
+      - id: emulator
+        env:
+          PULL_BASE: ${{ github.event.pull_request.base.sha }}
+        run: >-
+          if [ "$GITHUB_EVENT_NAME" = pull_request ];
+          then tools/ci/emulator-needed "$PULL_BASE";
           else echo run=true >> "$GITHUB_OUTPUT"; fi
 
   other-checks:
@@ -136,6 +150,8 @@ jobs:
       - run: make check-status-register
         if: ${{ !cancelled() }}
       - run: make check-chip-selects
+        if: ${{ !cancelled() }}
+      - run: make check-boards
         if: ${{ !cancelled() }}
       - run: make board-atlas
         if: ${{ !cancelled() }}
@@ -272,12 +288,64 @@ jobs:
           IMAGE: ${{ matrix.image }}
         run: make report-decompiled IMAGE="$IMAGE"
 
-  # The required check: fails unless plan and other-checks passed and
-  # each image's report-decompiled passed or, plan finding nothing it
-  # reads changed, was skipped.  always(), so that a failed or cancelled
-  # job before it is a failure here, never a skip.
+  emulator:
+    # smartclock-emu on mc683xx: clippy and every test (make emulator),
+    # then the tests ignored as too slow unoptimized (make
+    # emulator-slow).  Beside other-checks, not after them.  Most of the
+    # time is the tests' boots, CPU-bound m68k interpretation, so the
+    # tests build in the `checked` profile (Cargo.toml), optimized, with
+    # the debug assertions and overflow checks the dev profile has kept.
+    # The Unicorn core, frozen, is not built.  On a pull request, only
+    # where plan finds anything it builds or reads changed.
+    needs: plan
+    if: ${{ needs.plan.outputs.emulator == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # libudev, which serialport needs under the smartclock library the
+      # emulator links (the other Rust jobs install it too).  The compiler
+      # is the one rust-toolchain.toml names, which rustup, already on the
+      # runner, installs on the first cargo call.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libudev-dev
+      - run: cargo --version
+      # The pin ci.yml carried before it called the shared definition:
+      # v2.9.2's commit.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: make emulator EMULATOR_PROFILE=checked
+      - run: make emulator-slow EMULATOR_PROFILE=checked
+
+  emulator-wasm:
+    # smartclock-emu compiled for the browser's target,
+    # wasm32-unknown-unknown (make emulator-wasm): checked, not run,
+    # beside the emulator's job, and smartclock-emu-web linted there;
+    # web.yml's emulator-web job builds and runs it.  The target is added to the compiler
+    # rust-toolchain.toml names, which rustup installs on the first
+    # call.  Run where the emulator's job runs.
+    needs: plan
+    if: ${{ needs.plan.outputs.emulator == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo --version
+      # The pin ci.yml carried before it called the shared definition:
+      # v2.9.2's commit.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: make emulator-wasm
+
+  # The required check: fails unless plan and other-checks passed, the
+  # emulator's two jobs and each image's report-decompiled passed or,
+  # plan finding nothing they read changed, were skipped.  always(), so
+  # that a failed or cancelled job before it is a failure here, never a
+  # skip.
   checks:
-    needs: [plan, other-checks, report-decompiled]
+    needs: [plan, other-checks, report-decompiled, emulator, emulator-wasm]
     if: ${{ always() }}
     runs-on: ubuntu-26.04
     timeout-minutes: 5
@@ -287,8 +355,13 @@ jobs:
           PLAN: ${{ needs.plan.result }}
           OTHER_CHECKS: ${{ needs.other-checks.result }}
           REPORT_DECOMPILED: ${{ needs.report-decompiled.result }}
+          EMULATOR: ${{ needs.emulator.result }}
+          EMULATOR_WASM: ${{ needs.emulator-wasm.result }}
           RUN: ${{ needs.plan.outputs.run }}
+          EMULATOR_RUN: ${{ needs.plan.outputs.emulator }}
         run: >-
-          echo "plan: $PLAN, other-checks: $OTHER_CHECKS, report-decompiled: $REPORT_DECOMPILED, run: $RUN"
+          echo "plan: $PLAN, other-checks: $OTHER_CHECKS, report-decompiled: $REPORT_DECOMPILED, emulator: $EMULATOR, emulator-wasm: $EMULATOR_WASM, run: $RUN, emulator run: $EMULATOR_RUN"
           && [ "$PLAN" = success ] && [ "$OTHER_CHECKS" = success ]
+          && { { [ "$EMULATOR" = success ] && [ "$EMULATOR_WASM" = success ]; }
+          || { [ "$EMULATOR" = skipped ] && [ "$EMULATOR_WASM" = skipped ] && [ "$EMULATOR_RUN" = false ]; }; }
           && { [ "$REPORT_DECOMPILED" = success ] || { [ "$REPORT_DECOMPILED" = skipped ] && [ "$RUN" = false ]; }; }

@@ -26,52 +26,13 @@ INPUTS=(
   third_party/gcc/
   tools/firmware/
   tools/ci/report-decompiled-needed
+  tools/ci/inputs-changed
   docs/firmware/
   README.md
   Makefile
   .github/workflows/firmware.yml
 )
 
-# Prints the decision, $1 true or false, and why, $2, and exits.
-decide() {
-  if [ "$1" = true ]; then
-    echo "report-decompiled runs: $2" >&2
-  else
-    echo "report-decompiled skipped: $2" >&2
-    if [ "${GITHUB_ACTIONS:-}" = true ]; then
-      echo "::notice title=report-decompiled skipped::$2"
-    fi
-  fi
-  echo "run=$1"
-  if [ -n "${GITHUB_OUTPUT:-}" ]; then
-    echo "run=$1" >> "$GITHUB_OUTPUT"
-  fi
-  exit 0
-}
-
-cd "$(git rev-parse --show-toplevel)"
-base=${1:-}
-if [ "$base" = --merge-base ]; then
-  ref=${2:?--merge-base needs a REF}
-  if ! base=$(git merge-base "$ref" HEAD 2>/dev/null); then
-    decide true "no merge base with $ref (a shallow clone, or $ref unknown)"
-  fi
-  echo "merge base with $ref: $base" >&2
-fi
-if [ -z "$base" ]; then
-  decide true "no base to compare against"
-fi
-if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-  if ! git fetch -q --no-tags --depth=1 origin "$base" 2>/dev/null \
-      || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-    decide true "base $base neither here nor fetchable from origin"
-  fi
-fi
-changed=$({ git diff --name-only "$base" -- "${INPUTS[@]}"
-  git ls-files --others --exclude-standard -- "${INPUTS[@]}"; } | sort -u)
-if [ -n "$changed" ]; then
-  echo "changed since $base:" >&2
-  while read -r path; do echo "  $path"; done <<< "$changed" >&2
-  decide true "its inputs changed since $base"
-fi
-decide false "none of its inputs changed since $base: ${INPUTS[*]}"
+JOB=report-decompiled
+# shellcheck source=inputs-changed
+source "$(dirname "${BASH_SOURCE[0]}")/inputs-changed"

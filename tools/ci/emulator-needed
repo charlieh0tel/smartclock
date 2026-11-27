@@ -1,0 +1,42 @@
+#!/bin/bash
+# Whether firmware.yml's emulator and emulator-wasm jobs need to run:
+# whether any file they build or read differs between BASE and the
+# working tree, as tools/ci/report-decompiled-needed decides for
+# report-decompiled, and with the same arguments and output.
+#
+#     tools/ci/emulator-needed [BASE | --merge-base REF]
+#
+# .github/workflows/firmware.yml passes a pull request's base, and runs
+# no guard on a push to main or a run by hand (docs/firmware/README.md,
+# "The checks in CI").
+set -euo pipefail
+
+# What the emulator builds and reads: its crates and the workspace
+# crates they depend on, with the manifest, lock and compiler pin; the
+# board files, the firmware images and bitstreams, and the GPS tables
+# its sky is held to; the FPGA tools that regenerate its netlists and
+# fixtures; the Makefile, whose targets the jobs run; the workflow; and
+# this script and the decision it sources.
+INPUTS=(
+  crates/smartclock-emu/
+  crates/smartclock-emu-web/
+  crates/smartclock/
+  crates/smartclock-gps/
+  crates/smartclock-sim/
+  Cargo.toml
+  Cargo.lock
+  rust-toolchain.toml
+  boards/
+  third_party/firmware/images/
+  docs/firmware/gps-field-exceptions.tsv
+  docs/firmware/gps-setting-exceptions.tsv
+  tools/fpga/
+  Makefile
+  .github/workflows/firmware.yml
+  tools/ci/emulator-needed
+  tools/ci/inputs-changed
+)
+
+JOB=emulator
+# shellcheck source=inputs-changed
+source "$(dirname "${BASH_SOURCE[0]}")/inputs-changed"

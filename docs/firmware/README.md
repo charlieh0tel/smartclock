@@ -2173,7 +2173,8 @@ hand (`workflow_dispatch`), jobs of their own beside
 the Rust CI so that each fails alone: `make check-format-c`,
 `check-types`, `check-module-figures`, `check-scpi-tree`,
 `check-pforth-words`, `check-image-diff`, `check-status-register`, `check-chip-selects`,
-`check-loop-trace`, `check-loop-constants`, `check-loop-gain`, `check-gps-fields`, `check-magic-numbers`, `check-comment-addresses`,
+`check-boards`, `check-loop-trace`, `check-loop-constants`, `check-loop-gain`, `check-gps-fields`,
+`check-fpga-decoder`, `check-magic-numbers`, `check-comment-addresses`,
 `check-common`, `check-plain-names`, `check-rom-pointers` and
 `check-alone`, both without `IMAGE`, the second compiling each
 hand-written `.c` of every image's export alone after the export's
@@ -2229,12 +2230,16 @@ literal cast to a pointer or an operand where its copy of a function
 differs from a base's, points at what the image holds there, not at
 what the C was copied from, its exceptions each a row of the image's
 `rom-pointer-allow.tsv` (`rewrite.md`, "The verification").
-None of the targets builds the workspace;
 `check-chip-selects` reads every image's reset code (`restart.md`,
-"The chip selects").  The job also runs `make board-atlas`, `make
-block-diagram` and `make coverage`, which need only Python: the board
-atlas, the block diagram and the coverage by model built from their
-data, and every file and section that data cites checked.
+"The chip selects"), and `check-boards`, which needs only Python,
+checks every board file's chip-select attachments against the maps its
+images' reset code programs (`boards/README.md`, "Checking").  None of
+these targets builds the workspace; the workflow's separate `emulator`
+job builds the emulator.
+The job also runs `make board-atlas`, `make block-diagram` and `make
+coverage`, which need only Python: the board atlas, the block diagram
+and the coverage by model built from their data, and every file and
+section that data cites checked.
 `check-loop-trace` runs both images' own
 `startup_pll` and `pll_normal` on synthetic readings, the
 routines that reach outside the loop's arithmetic stood in for
@@ -2269,6 +2274,18 @@ pages render (`fpga-comparison.md`, "Reproduce"); both need node and clone
 the XC3000 viewer at its pinned commit, and the long runs,
 `check-readings`, are not CI's.
 
+A second job, `emulator`, runs `make emulator` beside `other-checks`:
+smartclock-emu on mc683xx, its clippy and every test
+([`emulator.md`](../emulator.md)); then `make emulator-slow`, the
+tests ignored as too slow unoptimized, the temporary holdovers.  It
+builds the tests in the `checked` profile (`EMULATOR_PROFILE=checked`),
+optimized with the debug assertions and overflow checks kept, and keeps
+the dependencies' build between runs in rust-cache's cache only, never
+as an artifact.  The Unicorn core, frozen, is not built in CI.  On a
+pull request it and `emulator-wasm` run only where anything they build
+or read changed against its base, as `report-decompiled` does (below):
+`tools/ci/emulator-needed BASE` decides, and holds their list.
+
 On an `ubuntu-26.04` runner it installs `gcc-m68k-linux-gnu` (gcc 15),
 `binutils-m68k-linux-gnu`, `clang-21`, which `check-magic-numbers`
 parses the C with, and the FPGA checks' Icarus Verilog, Yosys and
@@ -2287,8 +2304,9 @@ that changes its code can change the figures.  clang-format is
 `clang-format-21`, named through `CLANG_FORMAT`: 19, 20 and 21 format
 the C alike, and 18 formats three of the files otherwise.  Most of
 the run's time is `report-decompiled`'s.  `checks`, the required check,
-passes only if `other-checks` and every image's `report-decompiled`
-pass, an image's skipped only where the guard below said so.
+passes only if `other-checks`, the emulator's two jobs and every
+image's `report-decompiled` pass, each skipped only where its guard
+said so.
 
 Not on a branch's own pushes: a branch with a pull request ran the job
 twice for each push, once for the push and once for the pull request,

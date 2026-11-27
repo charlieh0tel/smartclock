@@ -957,6 +957,9 @@ What an engine in a Z380x or 58503A must do, from the above:
     send `@@Ea` unasked; from then on, `Ea`, `Ek`, `En` and `Fa`, but
     still `Ba` and `Bn` polls at rate 0 and `Bk` polls, 69 bytes.
   - The Z380x are six-channel only.
+- **A UT Plus**, in the 58503B: answer its list alone ("The UT Plus"),
+  `@@Cj`'s model starting `R`, its options line anything, blank as a
+  shipped one's, and `@@Bo` with one byte, nonzero; no idle mode.
 - **Keep state.**  The firmware takes fix mode from `@@Cg` and position
   hold from `@@At` as the engine reports them.  Keep `@@Ba`/`@@Ea`
   time advancing, and at least one channel with a satellite in mode 8,
@@ -2436,8 +2439,9 @@ every command field, with who acts on it.
 The Z3801A, Z3805A 3543B, both 58503As, the Z3816A, the 58503B and the
 Z3817A talk to an Oncore in its binary `@@` messages, the Z3817A only
 listening ("The Z3817A takes an `@@Ea` stream"); the 58503B names the
-engine `Oncore`, as the Z3816A does.  The Z3805A 1.01.03's engine is a
-Furuno on the Z3815A's protocol ("Which engines each image accepts").
+engine `Oncore`, as the Z3816A does, and takes a VP or a UT Plus ("The
+UT Plus").  The Z3805A 1.01.03's engine is a Furuno on the Z3815A's
+protocol ("Which engines each image accepts").
 The Z3815A's engine is a Furuno GT-74
 (its identification template reads `MODEL # FURUNO GT-74`), on NMEA
 sentences: it takes `GGA`, `GSA`, `GSV`, `RMC` and Furuno's own `anc`,

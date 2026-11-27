@@ -340,10 +340,15 @@ writes is not traced.
 
 No Z3817A board has been traced, so every pin's role is the logic's.
 The FPGA's pins are the register port, P7, P82, P84, P78, P16, P19
-and P72.  The two time references' 1 PPS inputs are P82 and P84 if
+and P72.  None is a DUART line: besides the register port and P7, the
+design's only inputs are P82 and P84, and it takes each as an edge
+(**read**).  So the references' RXD and VALID lines and the CPU's PE7
+can act on it only as a pulse on one of those pins; where the board
+runs them is **open**.  The two time references' 1 PPS inputs are P82 and P84 if
 the board wires them there (**inferred**: they are the design's only
 two 1 PPS inputs, P82 the input the other designs give the GPS
-1 PPS).  Which reference reaches which pin is **open**; the firmware
+1 PPS).  Which reference reaches which pin, and whether PE7 switches
+them before P82, is **open**; the firmware
 selecting P82 alone (above) fits a board that switches the references
 ahead of it.
 
@@ -364,7 +369,11 @@ report 0.1 ns.  The netlist does not explain that by a faster count:
 
 10 ns steps are then the firmware's: an average or filter of 100 ns
 readings over ten or more seconds would give them (**inferred**).
-Where `:SYNC:TINT?`'s value comes from in the 3752 image is **open**.
+The 3752 image's `:SYNC:TINT?` answers the mean of a block of readings,
+10 in 1PPS mode (**read**, `z3817a-3752.md`, "The mean:
+`:SYNChronization:TINTerval?` and the status screen"), and the bench's single readings,
+`:DIAG:PTIM:TINT?`, sit on the 100 ns grid, five of −50 ns on
+2026-11-11 (`z3817a-3752.md`, "On the bench").
 
 ## Confidence
 
@@ -388,10 +397,13 @@ firmware averaging; P82 and P84 as the time references' 1 PPS.
 
 - All of it on a board, and the pins' roles.
 - A kind 3 whose 1 PPS comes after an internal 1 PPS, which the
-  equations keep pending across it, and which kinds the 3752 firmware
-  writes.
-- What the firmware does with the P84 count and with status bits 2
-  and 3, and where `:SYNC:TINT?` comes from.
+  equations keep pending across it; which kinds the 3752 firmware
+  writes is read (`z3817a-3752.md`, "The sync field").
 - Whether the firmware's 0.4000003 s calibration, against the design's
-  4,000,004 and the half tick it adds, leaves a constant offset, and
-  whether the long at `0x10221a` takes it up.
+  4,000,004 and the half tick it adds, leaves the one-tick offset on a
+  board: the long at `0x10221a` is `:DIAG:TOFFset`, which nothing but
+  the command and the EEPROM sets, and the bench unit answers 0
+  (`z3817a-3752.md`, "The time offset", "On the bench").
+
+The firmware never reads the P84 count or status bits 2 and 3
+(`z3817a-3752.md`, "P84, register 4 and the status bits").

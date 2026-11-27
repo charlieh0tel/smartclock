@@ -302,7 +302,8 @@ is a screen from this image.
 ## In every image
 
 Each string this file quoted on 2026-10-09 was looked for in every
-image: 55 of the 88 are in all seven.  The mode lines and suffixes
+image: 55 of the 88 are in all seven images then held (the Z3817A's
+came later and is not in this section).  The mode lines and suffixes
 "Mode suffixes" quotes are covered under "The mode suffixes" below.  The rest divide by
 family:
 

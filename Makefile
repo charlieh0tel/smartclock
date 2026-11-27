@@ -87,9 +87,10 @@ test-hw:
 # directory's node_modules rather than the home directory.
 WEB_TESTS := crates/smartclock-web/tests/browser
 
-# The images for an Oncore engine: all but the Z3815A 4010's and the
-# Z3805A 1.01.03's, whose engine is a Furuno.
-ONCORE_IMAGES := $(filter-out %/z3815a-4010.bin %/z3805a-1.01.03.bin,$(wildcard third_party/firmware/images/*.bin))
+# The images for a Furuno engine, which speak no Oncore binary, and
+# those for an Oncore engine, all the others.
+FURUNO_IMAGES := z3815a-4010 z3805a-1.01.03
+ONCORE_IMAGES := $(filter-out $(addprefix %/,$(addsuffix .bin,$(FURUNO_IMAGES))),$(wildcard third_party/firmware/images/*.bin))
 web-deps:
 	cd $(WEB_TESTS) && npm ci --no-fund --no-audit && npm run install-browser
 

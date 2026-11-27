@@ -42,7 +42,7 @@ const RESET_VECTORS: [[u8; 8]; 2] = [
 ];
 
 /// The boot checksums, each with the receivers whose boot code checks
-/// it (docs/firmware/restart.md, "Boot check").
+/// it (docs/firmware/restart.md, "The installer", "Boot check").
 const CHECKSUMS: [(Layout, &str); 2] = [
     (
         Layout::AmdLanes,

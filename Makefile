@@ -330,8 +330,14 @@ fpga-designs:
 # rendered from the decodes, the references and the waveform figures,
 # which it makes first (tools/fpga/Makefile, explainer).  Needs git,
 # node and Icarus Verilog, not Yosys or pdftotext.
+# The decodes fpga and fpga-detail read, made by one make after the
+# viewer's clone, so that under -j the pages never write them at once.
+.PHONY: fpga-decodes
+fpga-decodes: $(XC3000_VIEWER).commit-$(DECODER_COMMIT)
+	$(MAKE) -f tools/fpga/Makefile decodes
+
 .PHONY: fpga
-fpga:
+fpga: fpga-decodes
 	mkdir -p $(PAGES_DIR)
 	$(MAKE) -f tools/fpga/Makefile explainer EXPLAINER_PAGE=$(abspath $(PAGES_DIR))/fpga.html
 
@@ -341,7 +347,7 @@ fpga:
 # (tools/fpga/Makefile, detail).  Needs node and network access to
 # github.com, as fpga does.
 .PHONY: fpga-detail
-fpga-detail:
+fpga-detail: fpga-decodes
 	mkdir -p $(PAGES_DIR)
 	$(MAKE) -f tools/fpga/Makefile detail DETAIL_PAGE=$(abspath $(PAGES_DIR))/fpga-detail.html
 

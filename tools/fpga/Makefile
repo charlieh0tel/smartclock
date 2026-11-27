@@ -71,7 +71,7 @@ DECODE_TOOLS := $(HERE)/netdump.js $(HERE)/netdump.sh $(HERE)/netdump.html $(HER
 MODELS       := $(HERE)/xc3000.v $(HERE)/probe.v
 
 .PHONY: all figures check check-viewer check-pins check-tiles check-readings \
-  check-blocks check-explainer check-detail check-decoder-upstream explainer detail clean FORCE \
+  check-blocks check-explainer check-detail check-decoder-upstream explainer detail decodes clean FORCE \
   $(IMAGES)
 .PRECIOUS: $(OUT)/%.json $(UPSTREAM)/%.json $(OUT)/%.v $(OUT)/%_tb $(OUT)/%.vcd $(OUT)/%.readout $(OUT)/%.structure \
   $(OUT)/readings/%.readings $(OUT)/runs/%.vcd \
@@ -161,6 +161,9 @@ check-detail: $(DETAIL_DEPS)
 
 detail: $(DETAIL_DEPS)
 	python3 -I $(HERE)/detail.py --netlists $(OUT) --output $(DETAIL_PAGE)
+
+# Every image's decode, which the top Makefile makes once for both pages.
+decodes: $(addprefix $(OUT)/,$(addsuffix .json,$(IMAGES)))
 
 # A fresh decode must still compile and run, and the netlist must not drift
 # from what is committed as a reference (tools/fpga/ref/<image>.stats).

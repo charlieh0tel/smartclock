@@ -372,14 +372,14 @@ span is the firmware's timing.  Method and checks: `docs/stability.md`.
 
 ### HTTP is served with tiny_http
 
-The exporter and the web view serve HTTP with tiny_http, through
-`smartclock::http` (behind the library's `http` feature, so its other
-users do not build it), which holds the receive loop, a thread per
-request, the answer with `Cache-Control: no-store`, and query decoding
-with `form_urlencoded`.  It replaced an in-house server crate because
-a request needs parsing properly: that server read the request line,
-answered and closed, so a client whose headers arrived in a later
-write than its line was reset.
+The exporter, the web view and the emulator's panel page serve HTTP
+with tiny_http, through `smartclock::http` (behind the library's `http`
+feature, so its other users do not build it), which holds the receive
+loop, a thread per request, the answer with `Cache-Control: no-store`,
+and query decoding with `form_urlencoded`.  It replaced an in-house
+server crate because a request needs parsing properly: that server
+read the request line, answered and closed, so a client whose headers
+arrived in a later write than its line was reset.
 
 The in-house server's limits went with it: a cap of 32 requests in
 flight (503 past it), a ten-second deadline for the request and a
@@ -749,7 +749,8 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   address is an address error and the trace bits trace, as on the
   image's CPU.  Was Unicorn's 68020, which has no CPU32 and stood in,
   since the image uses none of the instructions either has alone.
-  Unicorn was removed (decided 2026-11-22): mc683xx's CPU32 is the
+  Unicorn was removed from the harness (decided 2026-11-22; the
+  emulator keeps it as a frozen core): mc683xx's CPU32 is the
   reference, and Unicorn's status register bugs (its read spoiling
   QEMU's lazy condition codes, a code hook's write of PC losing them)
   had needed a probe of the condition codes, traps and `rtr` taken by
@@ -1315,6 +1316,93 @@ and `check-explainer`, part of `check`, fails if it cannot be
 rendered.  A committed copy would only repeat what its sources and
 the build already check.
 
+### The emulator runs in a browser
+
+The emulator runs in a browser, the board on wasm32-unknown-unknown in
+the page and the page drawing it, beside the native binary: the
+58503A's, `crates/smartclock-emu-web`, built by `make emulator-web` into
+a static directory under `target/` (docs/emulator.md, "In a browser").
+`make pages` publishes it at
+https://charlieh0tel.github.io/smartclock/emulator.html; the pages
+workflow builds it with the pinned wasm-bindgen.  `make
+emulator-wasm` (firmware.yml's `emulator-wasm` job) checks that the
+emulator's library still compiles for that target and lints the web
+crate there; web.yml's `emulator-web` job builds it and boots it in Node
+and Chromium.
+
+- The web crate follows mc683xx's JavaScript bindings: a cdylib built
+  `--locked` in release, wasm-bindgen pinned exactly (`=0.2.130`) and
+  its CLI the release's binary at that version
+  (`tools/install-wasm-bindgen.sh`), `--target web
+  --remove-name-section`, no wasm-opt, and a Node entry that
+  instantiates the same module, so Node's test runs what a browser
+  does.  Its checks of what JavaScript passes are mc683xx's, lifted
+  with their license.  No `unsafe` of its own.
+- It is a host like the command line: its own `host::Ports` (no TCP,
+  the host port the page's console, the page answered in the page),
+  `files::InMemory`, the page's clock a frame at a time, and the
+  options every host takes parsed by clap from the library
+  (`options::RunOptions`).  The page is the native panel page, its
+  `ask` handed to the run by `smartclockAsk`, not a page of its own.
+- A frame runs at most 50 ms of board time: a tab that was hidden
+  drops the time it missed, where the native binary catches up.
+- The EEPROM's cells and protection are kept in the browser's storage
+  and the next visit starts from them; a location is asked for only on a click.
+- The page is the 58503A's alone for now: the loader names its files.
+  The other models' boards build in the browser too (an SCI the board
+  file serves is not served there), but no page loads them.
+- The mc683xx crates are plain Rust with no build scripts, so they
+  build for wasm32 as they are; the smartclock library's `link` takes
+  Windows's shim there, TCP alone, since a browser has no Unix sockets
+  either.
+
+- `smartclock-emu` is a library, the board's side, and a binary, the
+  command line's host, in one package rather than two crates: the
+  split is a module boundary, and the library's tests build their runs
+  as the binary does.  What a host gives a run is one trait,
+  `host::Ports`: a line served at an address, the host port on its
+  console, the SCI's capture and the panel page's server.  The page's
+  answers stay the library's, a request to a response
+  (`panel::routes::Shared`), so a browser's host answers them without
+  a server.
+- The library keeps clap, for the value enums the command line takes
+  (`Model`, `Core`, `Traced`), and `smartclock`'s `http` feature, for
+  the page's request and response types; both compile for wasm32.
+  The feature's server, on `tiny_http`, is native alone, so a wasm32
+  build does not pull it in.
+- What the run reads, the host gives: the board file, its images (by
+  mc683xx's `Description::parse_with`), its parts' file parameters
+  (by `Board::load_with`: the EEPROM's dump) and a
+  script, through `files::Files`, and the clock's readings a paced run
+  is stepped to.  The library opens no file of its own but the
+  EEPROM's working file, which its stock part keeps natively; the
+  SCI's capture is the host's to make.
+- In a browser the EEPROM is in memory (`config::Eeprom::Memory`):
+  the stock AT28C64B with its board file's `image` but no `file` or
+  work directory, the image read through the host's files
+  (`Board::load_with`), so one board file serves both hosts.  A power
+  cycle carries the part's `cells()` and `protected()`: the cells are
+  the answer for the image's path, and the protection its `protected`
+  parameter.  A host keeps the same two and gives them back the same
+  way on its next run.  This replaced a snapshot of the part
+  (`Peripheral::save`) restored once the board was built, which needed
+  a native step at build time to make it from the dump, and refused
+  one of another mc683xx release.  A power cut mid-write is the file
+  mode's to get right, not this one's: in memory the write cycle cut off
+  is simply lost.
+- The trace's lines go to standard error unless the host gives a sink
+  (`trace::set_sink`), once, for the process: the trace is a stream of
+  records, not a run's state, so one sink for all is enough.
+- The Unicorn core is native alone: its binding builds QEMU from C.
+
+GPS: there is no web API for raw GPS.  The synthetic engine works as
+it is, and the page seeds its position, on a click, from the browser's
+Geolocation API (position, altitude and accuracy, often from Wi-Fi or
+cell rather than GPS; no satellites, no 1 PPS).  Where the browser has the Web
+Serial API (Chromium only), a page could read a real USB receiver's
+NMEA or UBX stream and drive the emulated engine from it, as an
+external `--gps` engine does natively, though without PPS edges, so
+only as well timed as the serial messages.
 The detailed diagrams, FPGA detail, are generated the same
 way, by one generator for all six designs (`tools/fpga/detail.py`,
 `detail_draw.py`), never drawn by hand per design, so the six share
@@ -2152,6 +2240,44 @@ stands in for one.
   out the Earth-centered position itself, with the same arithmetic as
   the vectors' test.  `jiff` is the workspace's 0.2, not the newest,
   so the lock holds one copy.
+- **The emulator runs the same engine** (decided 2026-11-16): one
+  engine everywhere.  `smartclock-emu`'s own Oncore model, its framer,
+  settings, responses and sky, is gone; the emulator holds
+  `smartclock_gps::engine::Engine` on DUART channel A, on the board's
+  clock (`Engine::second` each emulated second, its held-back answers
+  timed by the board's clock in milliseconds, so a deterministic run
+  stays repeatable), with the 1 PPS still the emulator's own: whoever
+  makes the pulse acts, so the emulator's acts on the engine's cable
+  delay, pulse offset and pulse mode (decided 2026-11-16).  Its
+  provider is the scene at the antenna's place and the run's time,
+  `scenario::Fixed`, completed as the feed completes it (position
+  hold, the Earth-centered position) and unplugged by the
+  `antenna-off` control, so it is held to `scene::DECLARATION` and the
+  `scene` rows too.  Its engine names map onto identities (`b1121`
+  `VP_SIX`, `b4121` `VP_EIGHT`, `b4121-no-time-raim`
+  `VP_EIGHT_WITHOUT_TIME_RAIM`, `r5122` `UT_PLUS_2_2`), a board file's
+  `answers = false` onto `Options::deaf` and its `saved = "58503a"`
+  onto `CONFIGURATION_58503A`, which the Z3817A's board has, in place
+  of the emulator's own `status_rate`.  What the emulator's engine
+  lacked or did otherwise is the shared engine's to change, not the
+  emulator's to add back (docs/emulator.md, "The synthetic GPS
+  engine").
+- **The emulator's engine is either family** (2026-11-17): the slot
+  holds the shared Oncore or the shared GT-74
+  (`smartclock_gps::engine::furuno`), behind an enum of families as the
+  feed's is, by the same names (`gt-74`, `gt-74-without-time-raim`,
+  `gt-74-pulse-early`), a board file's `oncore` or `furuno-gt74` part
+  one part with its protocol checked against its engine's.  A GT-74's
+  1 PPS goes out as its own `tps` reports it available
+  (`furuno::Engine::pulses`), the engine's first-fix gate and control
+  mode, not an emulator rule.  An image of a revision whose board
+  differs from its model's other images', the Z3805A 1.01.03, picks a
+  board file of its own (`Variant`, `boards/z3805a-10103.toml`) by the
+  revision string it holds, and is otherwise its model, so the
+  model's identity rule stays one model a name; the variant file is
+  held to the model's but for its marked lines.  `acc`, which the
+  1.01.03 asks for, is not yet among the engine's sentences
+  (docs/emulator.md, "The boards").
 - **A record takes a leap second once.**  Its UTC offset is the one in
   effect, with a past leap second's step already in it, so a leap
   second announced over another would step it twice.  Where both are
@@ -2250,18 +2376,53 @@ stands in for one.
   helpers have, through the names files.  The exporter should give an
   exception entry no bridge.  The primary's own writes to ROM's range
   are not modeled.
+- **Emulator:** whether the bench 58503A's B4121 runs at eight
+  channels, as the synthetic one does (`docs/emulator.md`, "The
+  synthetic GPS engine"); the daemon
+  and the CLI logging from the emulated receiver; the other images
+  (the Z3801A's boots, on its own board file); the 58503A's and the
+  Z3801A's FPGA design, one bitstream, run as the Z3805A's, checked
+  against its own netlist; the 58503B, the Z3816A and the Z3815A,
+  which boot on their own boards on the LCA model, slower than real
+  time, the 58503B and the Z3815A to lock, the Z3816A to its prompt,
+  its lock not yet reached there; the LCA model's
+  wiring to the board, the Z3817A's (its internal
+  1 PPS on P78, a second 1 PPS on P84 and no interval)
+  (`docs/firmware/fpga-codegen.md`, "Work left"); snapshots of the
+  ADC, GPS engine, OCXO and FPGA models; what a
+  sync field changed from 3 does while it holds the divider (a pick in
+  the model), and the interpolator's reading with the reference bit Low
+  in count mode.
+- **The browser demo:** the other models (only the 58503A is wired),
+  and Web Serial for a real receiver's stream.
 - **The installer in the emulator:** goal, details to be worked out:
   run a dump's own boot code and installer on mc683xx, with the flash
   chips modeled, so that `smartclock-cli flash` programs it over TCP
   and the installer's own code writes the chips.
-- **The rest of the firmware work** is in progress and will follow:
-  the emulator that boots these images and booting the rebuilt C in
-  it.  The FPGA designs decoded as netlists are here
-  (`docs/firmware/fpga-comparison.md`).
 - **FPGA netlists:** where DL.Y goes; what each trace lists as open
   (`docs/firmware/z3805a-trace.md` and its siblings, "Confidence"),
   among them the other four designs' write maps and pins; all of it on
   a board.
+- **The LCA bus cycle at the board's wait states.**  The LCA model's bus cycle takes chip
+  select 5's 12 wait states on every board, though the 58503B, the
+  Z3815A and the Z3816A program 4 (CSOR5 0x7930), so their reads sample
+  late.  Timed at 4, fast-forward slows sharply once the counter runs:
+  the 58503B several times slower, and the Z3816A's lock test did not
+  finish, with `Orbits::find` and `FastForward::advance_watching` most
+  of the time.  It waits for that to be understood.
+- **The LCA model's small gaps**, left by the model-code audit of
+  2026-11-08: `fast_forward_is_the_period_iterated` compares
+  fast-forward with itself, not with the clock; no test makes the
+  quiet and ignored-output checks load-bearing (`orbit.rs`, `learn.rs`), nor the
+  settle margin, `2 * deepest + 2` (`plan.rs`); the model's time, u64
+  picoseconds, overflows about 213 days in (`Executed::run_ahead`);
+  `Plan::free_running` counts only storage bits; a bus cycle is dated
+  from its instruction's start; `Executed::before`'s margin assumes at
+  most one sync step a horizon, unwritten; the sync step's effect end
+  to end is tested only by ignored tests; and the Z3816A's internal
+  1 PPS is reported on the tick before its rise, so it reaches IC1 up
+  to a tick early, since the board takes pulses as ticks
+  (`Ran::pulse`, `Clock::reaching`).
 
 ## Open questions
 
@@ -2308,6 +2469,12 @@ stands in for one.
    `alarm_hardware_update`, `0x341b8`), and no 19.8 MHz clock appears
    in the FPGA design.  What it watches is not traced, so the FPGA
    docs leave it out until it is.
+
+7. **The emulator's `Runner::step_until` and machine clears.**  It
+   reads back a structure a call has just filled, and in some code
+   placements that costs memory-ordering machine clears: one release
+   build layout in eight ran 0.6 to 0.9% slower.  Parked until after
+   mc683xx 0.9.0, now released: open to revisit.
 
 ## Known defects
 

@@ -347,6 +347,35 @@ RS232"); the board is not traced (`../hardware-investigations.md`,
 item 3).  The image cannot show whether channel B is wired to
 a header on the board.
 
+Device 0 is the SCI: the I/O table the kernel's is copied from
+(`0x58670`) gives it init `0x2ed56`, which creates `sciR` and `sciW`,
+read `0x2f15c` and write `0x2f10e`.  That write returns at once,
+writing nothing, while `0x1037fe` is set, and `0x1037fe` follows
+`:SOURce:PTIMe:TCODe:CONTinuous`'s cell, `0x102532` (`0x2ef6e`,
+`0x2f328`).  The continuous time code runs from power-up, a binary
+frame of 17 bytes and a CR each second on the SCI (run in the
+emulator), so a host sees its commands echoed, the echo not muted,
+and parsed, and no answer or prompt, until it sends `:PTIMe:TCODe:CONTinuous OFF`
+(`../emulator.md`, "The boards"; the emulator's `--time-code-off`
+sends it as a client would).
+
+The cell is set at power-up from the image, not the EEPROM.  No
+instruction stores to `0x102532` by its address; `system_init`
+(`0x22c7c`) copies `0x95` bytes of initialized data from `0x400de` to
+`0x10249e` (`0x22cc8` to `0x22ce2`), whose last byte is the cell, and
+the image's byte there, `0x40172`, is `0x01`.  That copy runs before
+`nv_restore` (`0x22ce4`), and the NV register cannot carry the cell
+over it: the cell's descriptor (`0x43756`, value at `+0xc`) has flags
+0, no `nv_save`, and is not in `nv_save`'s setting table (`0x426a4`,
+18 descriptors), whose values `nv_load_slot` is the only power-up path
+to restore; the parameter record keeps only the SCI's baud, parity,
+pacing and echo.  So every power-up starts the time code, whatever the
+EEPROM holds, and only `:PTIMe:TCODe:CONTinuous OFF` stops it until
+the next.  It agrees with a secondary source,
+<https://www.realhamradio.com/GPS_Z3816A_Receiver.htm>: a Z3816A "first
+used" may be in "time of day" mode, and GPSCon is to be stopped and
+`PTIM:TCOD:CONT 0` sent to it.
+
 The Z3801A's image, revision 3543, does the reverse.  It has no SCI
 driver: its host port is DUART channel B, with the exchanges `drtR`
 and `drtW` (`0x460c`) and the interrupt messages `DUARTB isr signaling
@@ -358,7 +387,7 @@ DUART channel B: `scpi_port_open` (`0x1dee6`) opens I/O device 0,
 whose entry in the I/O table (`0x5171a`) is `drtb_read` and
 `drtb_write`, and the SCI, device 3, carries only the ES message,
 `sci_write` (`0x20152`) dropping text under the flag `sci_init` sets
-(`0x10329c`, at `0x1ffc8`).
+(`0x10329c`, at `0x1ffc8`; `../emulator.md`, "The ports").
 
 ## The Z3801A image
 

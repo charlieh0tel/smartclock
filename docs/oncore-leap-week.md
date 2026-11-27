@@ -158,8 +158,8 @@ The 58503A's own leap scheduling cannot explain this event.  It decodes
 no leap fields, acts only on the Oncore's pending flag `@@Bj`, and
 books leaps for a quarter's end
 ([`firmware/58503a-3704.md`](firmware/58503a-3704.md#time-reset-and-the-oncores-time)).
-An emulator ran it with this unit's EEPROM and a synthetic Oncore
-(`@@Bj` 0, a correct 2026 date, no WN_LSF model) from 2026-10-24 23:35
+The emulator ([`emulator.md`](emulator.md)) ran it with this unit's
+EEPROM and a synthetic Oncore (`@@Bj` 0, a correct 2026 date, no WN_LSF model) from 2026-10-24 23:35
 UTC, and `*STB?` stayed 0 through 00:25.  This narrow control says
 nothing about the races or the Oncore.
 

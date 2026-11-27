@@ -239,6 +239,148 @@ values: `ISR AND IMR` `00`, IVR `43`, DDRE `40`, DDRF `f7`, PORTC `7f`
 and PF3 1 (the FPGA configured) on both units; anything else is worth
 recording, PE0's level among it.
 
+## Register reads through the console
+
+`smartclock-cli read-registers` reads, through the pForth console, the
+registers that bear on items 21 and 26 and whose reads change
+nothing.  It enters and leaves the console as `read-memory` does
+(`firmware/console.md`, "Reading memory through it"): an empty line,
+`:SYSTem:LANGuage "PFORTH"` if no console prompt answers, `hex`, one
+`<address> c@ u.` or `w@ u.` per register, `decimal`, then `halt`,
+checked with `:SYSTem:LANGuage?`.  Nothing is stored, defined or
+executed: it does not take `read-memory`'s fallback through the
+installer, which uses `execute`, so if `halt` does not bring back the
+primary the port stays at the console, for `halt` by hand or a power
+cycle.  It is a dry run unless given `--read` and `--serial`, as
+`flash` needs `--write` and `--serial`:
+
+    smartclock-cli read-registers --model z3805a      # prints the plan; opens nothing
+    sudo systemctl stop smartclockd@<port>
+    smartclock-cli --device <port> --capture regs.jsonl \
+        read-registers --model z3805a --read --serial 3625A01487
+    sudo systemctl start smartclockd@<port>
+
+`--model 58503a --serial 3710A01056` for the 58503A.  Before any
+register it reads, a byte at a time, the EEPROM's model at
+`0x400012` and serial at `0x400024` and the revision string in the
+flash (`3543B` at `0x12eee`, `3704` at `0x1309c`), and stops on a
+mismatch.  Its output is a Markdown table, one row per register: the
+value the reset code leaves, the value read and its fields named.
+About 30 requests; a few seconds at 19200 baud.
+
+*What it reads, and what each answer means.*
+
+| Item | Register | Address | The image | What the read says |
+| ---- | -------- | ------- | --------- | ------------------ |
+| 21 | DUART IVR | `0x200019` | `0x43` (`boot_duart_early_init` `0x500`, `duart_init` `0x1da1a`; 3704 `0x1d86c`) | the vector the DUART puts on the bus at an acknowledge: `0x43`, vector 67, settles the vector half of item 21; `0x0f` is its reset value, the 68681's uninitialized vector (MC68681 4.2.19) |
+| 21 | DUART ISR | `0x20000b` | varies | what is pending; with the IMR, whether /INTR is low at the read |
+| 21 | IMR, `duart_shadow` + 4 | `0x102ed4`; 3704 `0x1031f8` | varies | the IMR is write-only (MC68681 Table 4-1), so the code's copy (`firmware/structures.md`, "The DUART's shadows") |
+| 21 | PORTE0 | `0xfffa11` | varies | PE0, DSACK0's pin, a discrete input under PEPAR `0x32` and DDRE `0x40`, so a read returns the pin (MC68331UM 4.9.3): 1 is a pull-up or a tie to a line idling high, 0 a tie low; the rest read their latch |
+| 21 | DDRE | `0xfffa15` | `0x40` | PE6 alone an output (the FPGA's PROGRAM) |
+| 21 | PORTF0 | `0xfffa19` | varies | PF3, the FPGA's DONE, the one input, reads its pin; every other bit, PF2 as IRQ2 and the 58503A's PF5 included, reads its latch (4.9.3), so not /IRQ2's level |
+| 21 | DDRF | `0xfffa1d` | `0xf7` | PF3 alone an input (the FPGA's DONE) |
+| 26 | PORTC | `0xfffa41` | `0x7f`, its reset value; no image writes it | PC1's latch, which drives pin 119 only where CSPAR0 makes CS4 a discrete output, as 3633's boot code does; 3704 and 3543B make it a select.  The MC68331 has no DDRC: port C is output only (D.3.22) |
+
+The tool prints `ISR AND IMR` after the table: what is both pending
+and enabled, so whether /INTR is low at the reads.  Zero is the idle
+state.  It is one look, which the handler clears within microseconds,
+and no register shows /IRQ2's pin, so it is not item 21's answer.
+
+*The SIM's supervisor-only registers.*  CSPAR0 and CSPAR1, CSBARBT to
+CSBAR10, CSORBT to CSOR10, PICR (with PIV, its low byte), PITR, PEPAR,
+PFPAR, SIMCR and SYPCR are "S" registers, supervisor access only, in
+MC68331UM Table D-3.  The console runs in user mode (`firmware/restart.md`,
+"Restarting", the logged `SR = 0010`).  The ports above are "S/U",
+opened to user mode by SIMCR's SUPV 0: every image writes SIMCR
+`0x014a` (Z3805A `0x145a2`, 3704 `0x145fc`).  So the console cannot
+read the chip-select values items 21 and 26 ask about, and what they
+are is the reset code's (`firmware/chip-selects.md`): CS4 a select in
+both images (CSPAR0 `0x2bff`, field 10, 8-bit), enabled only in the
+Z3805A's (CSOR4 `0x7830`, internal DSACK, 0 wait; the 58503A leaves
+CSBAR4 and CSOR4 at reset, BYTE disabled); CS8 and CS10 external DSACK
+(CSOR8 `0x3bf0`, CSOR10 `0x2bc4`, DSACK field 1111) and every other
+select internal; PICR `0x0542`, the PIT at level 5 with vector `0x42`.
+MC68331UM does not say what a user-mode read of an "S" register
+returns.
+On 2026-10-10 a bench Z3801A read them through the console as zero
+(`firmware/restart.md`); the mc683xx core answers the first with a bus
+error, which no handler claims, and the watchdog restarts the unit
+("Emulator results" below).  `--supervisor-registers` reads them
+after everything else, so the first tells which is right, at the risk
+of a restart and a `Re-boot` in the log; values of zero answer only
+that, not item 21 or 26.  Ask first, and use it once.
+
+*DSACK1.*  Not readable, and not needed: chip select 8 asks for an
+external acknowledge (CSOR8's DSACK 1111), and PEPAR `0x32` makes PE1
+DSACK1 and leaves PE0 a port pin, so a DUART cycle can end only by
+DSACK1; without one, the bus monitor (SYPCR `0xcc`, BME set) ends it
+with a bus error and the unit restarts.  A DUART that works under that
+firmware has its /DTACK on DSACK1, directly or through logic; which,
+is item 21's step 5.
+
+*Never read, and refused if asked for* (the tool checks every address
+before it sends anything; the dry run lists them):
+
+- DUART MR1/MR2 (`0x200001`, `0x200011`): a read moves the mode
+  register pointer (MC68681 4.2.1), so the code's next MR1 write lands
+  in MR2.
+- DUART `0x200005` and `0x200015`: "do not access", factory test;
+  "Reading this location will result in undesired effects ... Register
+  contents may also be changed" (MC68681 Table 4-1).
+- RHRA and RHRB (`0x200007`, `0x200017`): a read takes a character
+  from the receive FIFO, channel B's being the console's own input.
+- IPCR (`0x200009`): a read clears its change bits and ISR[7]
+  (SCC68692, IPCR).
+- CUR and CLR (`0x20000d`, `0x20000f`): valid only with the counter
+  stopped (MC68681 3.5, 4.2.17).
+- Start and stop counter (`0x20001d`, `0x20001f`): address-triggered
+  commands; a read restarts or stops the counter, the second clearing
+  ISR[3] (MC68681 3.5).
+- Even addresses in chip select 8's window: it is the lower byte lane
+  only.
+- Chip select 5's window, `0x300000` to `0x30ffff`: the lamp latch,
+  S1, the FPGA's registers and the EFC strobe at `0x306000`.  Whether
+  a read strobes the latch or the AD569's /LBE depends on the decode
+  items 20 and 27 trace; an FPGA register read may latch its counter.
+- Chip select 4's window, `0x500000` to `0x5007ff`: no known part on
+  the Z3805A; on the 58503A no select answers, so a bus error and a
+  restart.
+- SWSR and the SIM's factory test registers; and any address no select
+  maps, which ends in a bus error.
+
+*What reads cannot settle* in items 20 to 27, so the tool leaves out:
+item 20's latch and item 27's chain are write-only or strobed by a
+read (above); item 22 is done; item 23 is a rail; item 24's QSPI setup
+is the image's and the panel's presence already known; item 25's PF5
+is an output, whose PORTF0 bit reads the latch (4.9.3), not the pin,
+so the table shows what the code drives, not where it goes; item 26's
+wiring is continuity.
+
+*Emulator results*, 2026-10-24, the bench units' EEPROM dumps, each
+run ending back in `"PRIMARY"`:
+
+| Register | Image | Z3805A Unicorn | Z3805A mc683xx | 58503A Unicorn | 58503A mc683xx |
+| -------- | ----- | -------------- | -------------- | -------------- | -------------- |
+| DUART IVR | `0x43` | `43` | `43` | `43` | `43` |
+| DUART ISR | | `11`, TxRDYA, TxRDYB | `11` | `11` | `11` |
+| IMR shadow | | `22`, RxRDYA, RxRDYB | `22` | `22` | `22` |
+| PORTE0 | | `40` | `ff` | `40` | `ff` |
+| DDRE | `0x40` | `40` | `40` | `40` | `40` |
+| PORTF0 | | `ff` | `ff` | `ff` | `ff` |
+| DDRF | `0xf7` | `f7` | `f7` | `f7` | `f7` |
+| PORTC | `0x7f` | `00` | `7f` | `00` | `7f` |
+| the "S" registers | as above | all 32 as the image sets them | SIMCR: bus error, watchdog restart | all 32 as the image sets them | SIMCR: bus error, watchdog restart |
+
+The cores differ only in how each models the SIM, none of it a board
+fact: Unicorn's SIM ignores privilege, so it reads the "S" registers
+as written, starts PORTC at zero and reads PE0's latch; mc683xx gives
+PORTC its reset `0x7f`, reads port E's input pins high, and takes a
+user-mode "S" access to the external bus, where nothing answers.  After its restart the tool found
+the port already at SCPI and checked it there, sending no `halt`.  On
+the bench, `ISR AND IMR` should be `00`, IVR `43`, DDRE `40`, DDRF
+`f7`, PORTC `7f` and PF3 1 (the FPGA configured) on both units;
+anything else is worth recording, PE0's level among it.
+
 ## 1. The word that chooses G
 
 *Open item:* what drives bit 8 of the read-only port at `0x302000`
@@ -1281,7 +1423,8 @@ The board's own bank, the DUART's OP2 to OP7, is item 17's and
 - [ ] TODO: note whether the Z3805A fits all six lamps of the
   Z3801A's panel, or a header for them, and what Power is wired to.
 - [ ] TODO: note whether the latch has a reset or clear input tied to
-  the board's reset, or keeps its outputs through a reset.
+  the board's reset, or keeps its outputs through a reset.  The
+  emulator keeps them through a watchdog reset, assuming it has none.
 
 *Photos:* no part on the Z3805A's component side can be tied to chip
 select 5 by its traces.  The board's lamps are on a separate narrow
@@ -1303,7 +1446,8 @@ neither U44's designator nor its marking was read there.  On the
 2026-10-30 photo of the board out of the chassis (`board-atlas.html`)
 U44 reads 74ABT574, beside J13, as on the Z3801A.  If U44 is
 the latch, the part itself keeps its outputs through a reset,
-unless its /OE is tied to the reset line.  Suggests; the bench still has to tie CS5's decode to U44's
+unless its /OE is tied to the reset line, as the emulator assumes it
+is not.  Suggests; the bench still has to tie CS5's decode to U44's
 clock and follow its outputs.
 
 *Which select.*  Settled from the image (`firmware/restart.md`, "The
@@ -1354,7 +1498,7 @@ Expected:
 | Hypothesis | Reads |
 | ---------- | ----- |
 | U44 is the latch, strobed by chip select 5 at `0x300000` | CP on a '138 output: /Y0 if its A0 and A1 are ADDR13 and ADDR14 and A2 is a constant or ADDR15; an enable on pin 120; perhaps R/W on another enable |
-| The latch keeps its outputs through a reset | /OE 0 Ω to ground, and no /MR |
+| The latch keeps its outputs through a reset (the emulator) | /OE 0 Ω to ground, and no /MR |
 | A reset blanks the lamps | /OE to U28 pin 6 or to a line that follows it; the latch keeps its data, the lamps go dark during reset and come back at the next write |
 | A reset clears the latch | a '273 with /MR on U28 pin 5 or U33 pin 68 |
 | Bits 3, 6 and 7 are free | Q3, Q6 and Q7 reach no header pin, or header pins no lamp is on |
@@ -1433,20 +1577,23 @@ recount from pin 1.
    U33 pin 123 (CS8), and U3 pin 10 (/DTACK) to U33's PE1/DSACK1 pin
    (its number from MC68331UM Figure 3-2) and to pin 89 (PE0/DSACK0),
    the firmware's external acknowledge for both selects.  The primary's
-   PEPAR assigns DSACK1 only and leaves PE0 a port pin
-   (`firmware/restart.md`, "The chip selects"), so DSACK1 is the one
-   expected.
+   PEPAR assigns DSACK1 only and leaves PE0 a port pin (board files,
+   `boards/z3805a.toml`), so DSACK1 is the one expected.
+
+The new CPU core's board files rely on level 2 for every model's
+serial chip, so this check is wanted before they do.
 
 *Register reads* ("Register reads through the console" above;
-`read-registers`, on the running unit).  They settle the vector, not
-the level: the IVR should read back the image's `0x43`, vector 67.
-The level is CS10's IPL 2 and PF2's IRQ2 assignment (PFPAR `0x04`),
-both "S" registers the user-mode console cannot read, and the image's
-in any case; a register cannot show which pin a wire reaches, so steps
-1 and 5 stay.  CS8's and CS10's DSACK fields are 1111, external; every
-other select's is internal.  DSACK1 follows from PEPAR `0x32` and a
-working DUART; PE0's level, in the table, says only whether that pin
-is pulled up.  PF2 reads its latch, not /IRQ2 (MC68331UM 4.9.3).
+`read-registers`, on the running unit).  They settle the
+vector, not the level: the IVR reads back `0x43`, vector 67, on both
+emulated boards, and the bench should agree.  The level is CS10's IPL
+2 and PF2's IRQ2 assignment (PFPAR `0x04`), both "S" registers the
+user-mode console cannot read, and the image's in any case; a
+register cannot show which pin a wire reaches, so steps 1 and 5 stay.
+CS8's and CS10's DSACK fields are 1111, external; every other
+select's is internal.  DSACK1 follows from PEPAR `0x32` and a working
+DUART; PE0's level, in the table, says only whether that pin is
+pulled up.  PF2 reads its latch, not /IRQ2 (MC68331UM 4.9.3).
 
 Expected:
 
@@ -1506,7 +1653,7 @@ disabled; its command addresses, `0x1555` and `0x0aaa` in the part
 (`0x401555`, `0x400aaa`), appear nowhere in the Z3805A 3543B
 decompiled C, so the firmware is taken not to use it.
 
-*Changes:* the harness's EEPROM model can follow
+*Changes:* the harness's and the emulator's EEPROM model can follow
 the part's data sheet: its write time, page mode, toggle or data
 polling.
 
@@ -1571,7 +1718,8 @@ Expected:
 | Clock not the QSPI's | step 6's low time not 4.17 µs: something between SCK and pin 12; record it |
 
 *Changes:* whether `quirks.md` records the hex DAC's clock as too
-fast for its part.
+fast for its part, and the emulator's QSPI timing note (`emulator.md`)
+for device 2.
 
 ## 24. The 58503A's front panel
 
@@ -1690,7 +1838,8 @@ Expected:
 
 *Changes:* `firmware/58503a-3704.md`'s "The front panel" loses its
 "by that use" and "not settled" clauses; `firmware/structures.md`'s
-QSPI device 0 for the 58503A gets its select.
+QSPI device 0 for the 58503A gets its select; the emulator could model
+the panel's replies.
 
 ## 25. The 58503A's alarm outputs
 
@@ -1851,8 +2000,10 @@ are tied.  On the Z3805A and 58503A the parts are not yet found.
   output 3 (item 20's decoder), and the second '164's QH (pin 13) to
   U33's MISO; read CS, HBE and LDAC to their ties.
 
-*Changes:* `efc.md` drops *inferred* where the bench settles it, and
-`firmware/restart.md`'s `0x306000` row gets its device.
+*Changes:* the board files' `efc_dac` entries get their designators
+and wiring; `efc.md` and `emulator.md`, "The oscillator", drop
+*inferred* where the bench settles it; and `firmware/restart.md`'s
+`0x306000` row gets its device.
 
 ## 28. What implements the interpolator
 
@@ -1926,4 +2077,200 @@ Unpowered ("Working on the open Z3805A board" above):
 Q2, U37) and `z3805a-analog-back.jpg` (the solder side under them),
 both in `board-atlas.html`.
 
-*Changes:* the atlas's U36, CR18 and CR19 rows get their roles.
+*Changes:* the atlas's U36, CR18 and CR19 rows get their roles; the
+emulator's interpolator model (`emulator.md`) its parts.
+
+## 29. Feeding the Z3817A its references
+
+*Open item:* `firmware/z3817a-3752.md`, "Feeding it" and "Not
+established".  The Z3817A has no GPS engine; it takes two references,
+TIMEREF1 and TIMEREF2, each a pulse, a VALID line and a Motorola
+Oncore binary stream on RXD.  From the image (*read* there): VALID
+and a live pulse make the reference good with no stream, which the
+bench showed on 2026-11-09; a stream's time and position are taken
+unasked.  The image sends its references nothing: its GPS task refuses
+every request the loop or SCPI posts that would transmit, its own
+start-up script among them (*read* and *emulated* there, "What it
+sends"), so the 1 PPS check is never turned off and an unanswered
+`@@Ea` stream qualifies the GPS record (*emulated*).  PE7 high selects
+TIMEREF1: the firmware's own text says so (*read*), and the bench
+unit's log, its time from power-on to "GPS reference valid" with
+TIMEREF2 alone fed, is a start on TIMEREF1 and a switch at the 300th
+pass.  PE5 is the selected reference's VALID, asserted high
+(*inferred*).  The read-only addendum, below, was answered on
+2026-11-11 as the code gives, and the same day an unanswered `@@Ea`
+stream on TIMEREF2 qualified the GPS record (*bench*, step 5, below).
+Not settled on the board: PE5 by a test, whether PE7 switches RXD as
+well as the pulse, the PP2S mode, and the interval's 10 ns steps over
+a long run.
+
+- [ ] TODO: passive, the transmit line (step 1), to confirm it is silent.
+- [x] Which TIMEREF PE7 selects (step 2): TIMEREF1, by the firmware's
+  text and the bench log's timing.
+- [ ] TODO: PE5 (step 3), to confirm the inference.
+- [ ] TODO: PP2S against 1 PPS (step 4).
+- [x] An unanswered stream (step 5): 2026-11-11, below; step 6 only if
+  step 1 finds a burst.
+- [ ] TODO: RXD and PE7: feed TIMEREF1's RXD (pin 4) with TIMEREF2
+  selected, to confirm that the selector switches RXD too.
+- [ ] TODO: the interval's steps (step 7).
+- [x] The read-only addendum, below: 2026-11-11.
+
+*Rules.*  Every step that drives an input sends to the receiver and
+needs the owner's agreement first (`AGENTS.md`, "Hardware"); steps 1
+and 7 only read.  The Z3817A's self-tests are never run: not `*TST?`,
+`:DIAGnostic:TEST?`, `:DIAGnostic:TEST:FLASh?` or `:DIAGnostic:ADC?`,
+whatever a step seems to want.  Nor any command `AGENTS.md` forbids.
+The feed never sends `@@Ao`, `@@Bh` or `@@Ci` (`firmware/gps.md`,
+"Framing"); it answers the module's `@@Ao` with `@@Ap`.
+
+*Hardware.*  The owner's breakout, its DB25:
+
+| Signal | TIMEREF1 | TIMEREF2 |
+| ------ | -------- | -------- |
+| VALID | 9 | 22 |
+| PPS | 5 | 7 |
+| RXD | 4 | 6 |
+| RETURN | 18 | 20 |
+
+10 MHz OUT A is pins 2 and 15, OUT B 3 and 16, each a pair.  RXD goes
+through the module's series resistor to the LED of an HCPL-0600
+optocoupler: drive it with 5 V TTL from a UART, 9600 baud, 8N1
+(`firmware/z3817a-3752.md`, "The Oncore link"), between RXD and its
+RETURN.  Never RS-232 levels: their negative swing reverse-biases the
+LED past its reverse-voltage rating (HCPL-0600 data sheet, absolute
+maximum ratings).  A 5 V FT232R, its sense not inverted, drives it;
+a 3.3 V FTDI cable did not (*bench*, 2026-11-11, step 5).  VALID is
+asserted, as the breakout does it, by its jumper to +5 V through 33 Ω.
+
+*Read-only SCPI* (`docs/scpi/z3817a-3752.txt`), read after each
+change: `:SYSTem:STATus?` (its ACQUISITION line ends
+`[ TIMEREF<n> <prefix><1PPS|PP2S> <verdict> ]`, the prefix `(GPS) `
+when the VALID path is not valid, and it prints the stream's time and
+the GPS record's state), `:SOURce:SYNChronization:STATe?`,
+`:SOURce:SYNChronization:TINTerval?`,
+`:SOURce:SYNChronization:FFOMerit?`,
+`:SOURce:GPSystem:REFerence:VALid?` (the GPS record alone),
+`:DIAGnostic:REFerence:STATus?` (its handler, `0x3cafa`, only reads,
+and fills in the selected TIMEREF, 1 or 2; the mode, 1 for 1PPS and 2
+for PP2S; then 1 or 0 for the external record valid, the GPS record
+valid and the pulse alive, as `+r,+m,e,g,p`) and
+`:DIAGnostic:LOG:READ?`.
+
+*Procedure.*
+
+0. Baseline: VALID and a 1 PPS on TIMEREF2, as on 2026-11-09, nothing
+   on either RXD.  Read everything above.
+1. *Transmit, passive.*  Scope each DB25 pin not in the table,
+   triggered on any edge, for a minute.  The image, read and emulated,
+   sends nothing on channel A; an earlier reading, which missed the
+   task's refusal, had the unanswered start-up script send `@@Cg` with
+   mode 0 every 20 to 21 s, 8 bytes at 9600 baud,
+   `40 40 43 67 00 24 0d 0a`.  Decode any burst and record the pin.
+2. *PE7.*  Move the pulse and VALID to TIMEREF1, TIMEREF2's jumper
+   off and its pulse removed.  Read `:SYSTem:STATus?` until its bracket
+   settles: with no good reference the firmware switches every 300
+   passes or so.  If the board can be reached, read PE7 at the
+   MC68331 with a DC meter (pin from `third_party/motorola/MC68331UM.pdf`)
+   with each TIMEREF selected.
+3. *PE5.*  With TIMEREF1 selected and pulsed: (a) both VALID jumpers
+   on; (b) TIMEREF1's alone; (c) TIMEREF2's alone.  Read the bracket
+   after each, 30 s apart.
+4. *PP2S.*  On the selected TIMEREF, with VALID, replace the 1 PPS by
+   a pulse every 2 s of the same level and width (the 33120A).  Read
+   the bracket for 3 minutes; then restore the 1 PPS and read again.
+   With the owner's agreement, `:DIAGnostic:SYSTem:DOUTput 1` first
+   puts the firmware's debug lines on the SCPI port, among the
+   answers: "pllp: Switched to PP2S mode" and "Switched to 1PPS mode"
+   here, "pllp: Switched gps ref" in step 2 (*read*; *emulated*,
+   `firmware/z3817a-3752.md`, "Emulated").  It persists: it is saved
+   to the EEPROM's NV register when set and restored at every
+   power-up (*read*; *emulated* through two power cycles,
+   `firmware/z3817a-3752.md`, "The debug output persists"), so a power
+   cycle does not undo it.  Stop the daemon before sending it, as the
+   lines are no answer it expects; when done, send
+   `:DIAGnostic:SYSTem:DOUTput 0`, read `:DIAGnostic:SYSTem:DOUTput?`
+   back as 0, and only then start the daemon again.  Not `clear_nv`
+   or `:SYSTem:PRESet`, which discard every saved setting.  The bench
+   unit's EEPROM dump holds it off.
+5. *An unanswered stream.*  VALID and the 1 PPS on the selected
+   TIMEREF; on its RXD a 76-byte `@@Ea` each second, its time
+   advancing, one channel in mode 8 on a satellite used for position,
+   and nothing else.  If `:SYSTem:STATus?` shows no time within 10 s,
+   invert the UART's sense and try again.
+6. *An answered stream*, only if step 1 found a burst: the emulated
+   image sends nothing to answer, so there is nothing for a feeder to
+   echo.  If a pin bursts after all, answer as the burst asks, with
+   VALID on, then off.
+7. *The interval's steps.*  Locked on VALID and a 1 PPS, read
+   `:SOURce:SYNChronization:TINTerval?` every 10 s for half an hour,
+   and tabulate each value modulo 10 ns and modulo 100 ns.  The
+   firmware's reading is a count of 100 ns plus 50 ns, less the
+   configuration's offset, plus `:DIAGnostic:TOFFset` (*read*,
+   `counter_read`, `0x45810`), and the interval a mean of ten
+   (`firmware/interval.md`).
+
+Expected:
+
+| Hypothesis | Reads |
+| ---------- | ----- |
+| The module sends nothing (read; emulated) | step 1: no pin bursts, whatever the references |
+| Transmit reaches the connector and the module sends | step 1: a pin bursts; the image has no path to it ("What it sends"), so a burst would be another part's, or the reading wrong |
+| PE7 high selects TIMEREF1 (read; the bench log's timing) | step 2: the bracket settles on TIMEREF1 with PE7 high, on TIMEREF2 with it low |
+| PE5 is the selected reference's VALID, asserted high (inferred) | step 3: Valid, no prefix, in (a) and (b); `(GPS) ` and Invalid in (c), the loop to holdover and the hunt resuming |
+| PE5 is the other reference's VALID | step 3: Valid in (a) and (c), `(GPS) ` Invalid in (b) |
+| PP2S taken as the firmware reads it | step 4: after a minute or so without a good reference the bracket reads PP2S, then Valid; back to 1PPS after the 1 PPS returns, in about a minute if the PP2S was taken for less than 300 s, else after about five minutes on the other TIMEREF and back (emulated, `firmware/z3817a-3752.md`, "Emulated", runs e and e') |
+| A stream qualifies the GPS record unasked (emulated) | step 5: the time appears in `:SYSTem:STATus?`; with VALID off, `(GPS) 1PPS Valid` 35 s or so after the stream starts, `:SOURce:GPSystem:REFerence:VALid?` 1, and `GPS reference valid at` the stream's date in the log |
+| A stream is taken but does not qualify | step 5: the time appears; the GPS record stays `Invalid: not tracking` and `:SOURce:GPSystem:REFerence:VALid?` 0 |
+| A mean of ten 100 ns counts | step 7: every value one residue modulo 10 ns, many residues modulo 100 ns |
+| One count, no mean | step 7: one residue modulo 100 ns |
+| An interpolator after all | step 7: values off any 10 ns grid |
+
+*Read-only addendum.*  Queries only, nothing set, each spelled as the
+3752 tree has it (`docs/scpi/z3817a-3752.txt`; it has no
+`:STATus:QUEStionable:HARDware`, so the hardware condition is
+`:STATus:OPERation:HARDware:CONDition?`).  Sent 2026-11-11, the unit
+locked to TIMEREF2 on VALID and a 1 PPS with nothing on RXD; each
+answer is what `firmware/z3817a-3752.md` gives ("On the bench"):
+
+| Query | Answer | Reading |
+| ----- | ------ | ------- |
+| `:DIAG:REF:STAT?` | `+2,+1,1,0,1` | TIMEREF2, 1PPS, the VALID record valid, the GPS record not, the pulse alive |
+| `:LED:ALAR?` | `0` | not failed since its last cold start |
+| `:LED:GPSL?`, `:LED:HOLD?` | `1`, `0` | startup or normal PLL |
+| `:DIAG:ROSC:EFC:MODE?` | `NORM` | no failure's user EFC |
+| `:STAT:OPER:HARD:COND?` | `+0` | no bit of `0x70cf`: no self-test failure, the GPS's among them |
+| `:DIAG:IDEN:GPS?` | `-230` | data corrupt or stale: no engine has identified itself |
+| `:DIAG:TOFF?` | `0` | the EEPROM image's 0 |
+| `:DIAG:PTIM:TINT?`, five times | `-5.00E-008` each | −50 ns, on the grid of 50 ns plus a multiple of 100 ns |
+
+They close the point `firmware/z3817a-3752.md` once left open
+("Failing the unit", "Against the bench"): the GPS task answers the
+requests it refuses as done, so the GPS self-test passes and the
+start-up sequence runs to power-up's wait with nothing answering.
+
+*Step 5, 2026-11-11* (*bench*; `firmware/z3817a-3752.md`, "Feeding
+it", "On the bench, 2026-11-11: an `@@Ea` stream", which has the
+times).  VALID and the 1 PPS on TIMEREF2, on its RXD an eight-channel
+`@@Ea` each second, 0.3 s after the UTC second, a dummy position of
+0, 0, nothing answered.  A 3.3 V FTDI cable on TIMEREF2's RXD changed
+nothing in 10 minutes; a 5 V FT232R worked.  After a power-loss reboot
+the module started on TIMEREF1, and the stream went unheard
+(`:DIAG:REF:STAT?` `+1,+1,0,0,0` after 29 messages); after the hunt to
+TIMEREF2 it was decoded at once: `:DIAG:REF:STAT?` `+2,+1,1,1,1` and
+`:SOURce:GPSystem:REFerence:VALid?` 1 within 27 s, the status screen
+tracking 8 with the PRNs, the time with `[?]` and `MODE Hold`, `GPS
+1PPS Synchronized` by 2 minutes, `Locked to TIMEREF2: stabilizing freq`
+at 5 (TFOM 4, then 3; FFOM 1), and "GPS lock started" in the log
+stamped with the stream's date.  Stopped: the fourth field 0 within
+10 s, `VALid?` 0 by 45 s, `GPS 1PPS Invalid: GPS rcvr failed`, the
+time running on without `[?]`, the lock held on VALID.  So "A stream
+qualifies the GPS record unasked" holds, with VALID on; the time
+appears at once, so the UART's sense needs no inverting.  That PE7
+switches RXD too is *inferred* from this one sample (the TODO above).
+Why the fourth field and `VALid?` part, and why the `[?]` stays away,
+is *read* there.
+
+*Changes:* `firmware/z3817a-3752.md`'s "Feeding it" and "Emulated"
+take the bench's word where it settles them; `firmware/gps.md`'s
+Z3817A paragraph follows.

@@ -6,13 +6,15 @@ Z3817A), taken apart and documented.
 
 **Docs site:** the FPGA explainer and detailed diagrams, the board atlas
 and block diagram, the loop analysis, the pForth words and the SCPI
-trees, and how far each image is covered, at
+trees, and how far each image is covered, and the 58503A
+emulated in the browser, at
 <https://charlieh0tel.github.io/smartclock/>.
 
 **Where to start:**
 [Firmware notes](docs/firmware/README.md)
 · [Tooling](docs/tooling.md)
 · [Monitoring](docs/monitoring.md)
+· [Emulation](docs/emulation.md)
 
 - **[Firmware](#the-firmware):** nine ROM images read and documented:
   the SCPI trees, the 1 PPS measurement, the disciplining loop, the GPS
@@ -32,6 +34,12 @@ trees, and how far each image is covered, at
   traced and compared
   ([illustrated](https://charlieh0tel.github.io/smartclock/fpga.html),
   [in detail](https://charlieh0tel.github.io/smartclock/fpga-detail.html)).
+- **[Emulation](docs/emulation.md):** the receivers' own firmware
+  booted on a modeled board, the host port on a terminal or over TCP and
+  the front panel in a browser: the Z3805A, 58503A, Z3801A and Z3817A on
+  hand-written FPGA models, the 58503B, Z3815A and Z3816A on their
+  bitstreams executed
+  ([the 58503A in a browser](https://charlieh0tel.github.io/smartclock/emulator.html)).
 - **[Monitoring](#monitoring):** a Rust library, a logging daemon, a
   browser view and a Prometheus exporter, in daily use against real
   receivers.
@@ -227,6 +235,13 @@ Without a receiver, use the simulator; every tool takes
     smartclockd     --device tcp://127.0.0.1:5025 ...
     smartclock-cli  --device tcp://127.0.0.1:5025 diagnose
 
+Or boot a receiver's own firmware in the emulator: `make
+emulate` runs the Z3805A 3543B with its host port on the terminal, and
+`make emulate HOST=127.0.0.1:5025` serves it over TCP as the simulator
+does ([`docs/emulator.md`](docs/emulator.md)).  The 58503A, front panel
+and all, runs in a browser at
+<https://charlieh0tel.github.io/smartclock/emulator.html>.
+
 ## Development
 
 `make ci` runs CI's Rust checks: formatting, clippy, the tests, the
@@ -236,7 +251,8 @@ which a rustdoc warning is an error.  The tests include
 `make check-engine-vectors`, the Oncore and Furuno models' recorded exchanges;
 `make engine-vectors` rewrites their answers from the model.
 The firmware's checks are their own CI job.  `make test-web` runs the
-browser tests, after `make web-deps` once.  `make hooks`, once per
+browser tests, the web view's pages and the emulator's panel page,
+after `make web-deps` once.  `make hooks`, once per
 clone, sets up the repository's git hooks.  `make pages` builds the
 HTML pages and their landing page into
 `target/pages/` and fails on an error in one: the generated ones from
@@ -264,6 +280,10 @@ page's generator gives each table, figure or listing meant to scroll
 inside its own frame; the pages workflow runs it too.
 `make lint-workflows` lints `.github/workflows` with actionlint, a
 pinned release it fetches into `target/tools` and checks by SHA-256.
+`make emulator` runs the emulator's clippy and tests; `make
+emulator-wasm` checks it compiles for wasm32, and `make emulator-web`
+builds the browser demo into `target/emulator-web/`, which `make pages`
+publishes ([`docs/emulator.md`](docs/emulator.md)).
 
 ## Documentation
 
@@ -283,6 +303,9 @@ pinned release it fetches into `target/tools` and checks by SHA-256.
 | [oncore-vp](https://github.com/charlieh0tel/oncore-vp) | the Motorola VP Oncore GPS engine of the 58503A, Z3801A and Z3805A, in a repository of its own: its memory map, clocking, board notes and photos |
 | [`docs/oncore-leap-week.md`](docs/oncore-leap-week.md) | the 58503A's Time Reset at the end of GPS week 2441, and the 256-week leap-parameter bugs it resembles |
 | [`docs/sensors.md`](docs/sensors.md) | logging the host's sensors beside the receivers |
+| [`docs/emulation.md`](docs/emulation.md) | the emulator: what runs, how to start it, and where each model's evidence is |
+| [`docs/emulator.md`](docs/emulator.md) | the emulator in full: options, ports, the board models and their evidence, the panel page, scripts and tracing |
+| [`boards/`](boards/) | the board files the emulator's mc683xx core runs, one a model, each fact marked with how it is known |
 | [`docs/firmware/`](docs/firmware/) | the firmware: the 1 PPS measurement, the disciplining loop, the GPS engine interface, the Oncore messages each image sends and decodes, the pForth console, and the eight images in C |
 | [`docs/firmware/rewrite.md`](docs/firmware/rewrite.md) | the rewrite's method, checks and limits, shown on the Z3805A 3543B, and the rules for shared C |
 | [`docs/firmware/58503a-3704.md`](docs/firmware/58503a-3704.md) | the 58503A 3704 against the Z3805A 3543B, and its rewrite |

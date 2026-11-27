@@ -37,6 +37,14 @@ receiver.
 | `smartclock-cli dump-pforth` | every word an image's pForth console knows ([`firmware/pforth/README.md`](firmware/pforth/README.md)) |
 | `smartclock-cli dump-oncore` | the Oncore messages an image knows and what sends them ([`firmware/oncore/README.md`](firmware/oncore/README.md)) |
 
+## Emulating a receiver
+
+| Tool | What it is |
+| ---- | ---------- |
+| `smartclock-emu` | a receiver's own firmware booted on an emulated CPU32, its host port on the terminal or over TCP, its front panel in a browser ([`emulator.md`](emulator.md)) |
+| `smartclock-emu-web` | the 58503A emulated in a browser, on WebAssembly, published at <https://charlieh0tel.github.io/smartclock/emulator.html> ([`emulator.md`](emulator.md#in-a-browser)) |
+| [`boards/`](../boards/) | the board files the emulator's mc683xx core runs, one a model, each fact marked with how it is known |
+
 ## Simulating the loop
 
 | Tool | What it is |

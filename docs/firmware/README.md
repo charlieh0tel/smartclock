@@ -117,6 +117,9 @@ seven Oncore images' message tables and request scripts in `oncore/`.
 - [Restarting](restart.md)
 - [Chip selects](chip-selects.md), every image's, generated from its
   reset code
+- [Board files](../../boards/README.md), each model's board for the
+  emulator's mc683xx core, its attachments checked against those maps
+  (`make check-boards`)
 - [Pulse, time-tag and output commands](outputs.md), and the FPGA
   bitstreams and their decode pipeline
 - [The FPGA designs](fpga-comparison.md), decoded and simulated: the
@@ -203,8 +206,9 @@ following, and how.
   `0x32812` to `0x3285a`), and which a cold start pulses (`0x22e30`;
   `restart.md`).  A Low on DONE/PROGRAM and RESET together is how the
   XC3000 clears its configuration (`third_party/xilinx/xc3000.pdf`,
-  Figure 20, 7-19), so PE6 is taken to be the part's RESET; that is
-  inferred, not traced on a board.
+  Figure 20, 7-19), so the board files and the emulator (`fpga.rs`)
+  take PE6 to be the part's RESET; that is inferred, not traced on a
+  board.
 - What 3704's PWMA pin, low while the holdover-recovery flag is set,
   is wired to (`loop.md`).
 - Whether anything reaches the rest of the ROM defaults block by a

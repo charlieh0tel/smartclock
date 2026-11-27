@@ -42,7 +42,8 @@ pub(crate) struct ReadRegistersArgs {
     /// Also read the SIM's supervisor-only registers: the chip
     /// selects, PICR, PITR, PEPAR, PFPAR, SIMCR and SYPCR.  The console
     /// runs in user mode, where they are not readable: a bench Z3801A
-    /// read them as zero.  Read last, after everything else.
+    /// read them as zero, and mc683xx answers with a bus error that
+    /// restarts the unit.  Read last, after everything else.
     #[arg(long)]
     supervisor_registers: bool,
 }
@@ -109,7 +110,7 @@ const EEPROM_MODEL: (u32, usize) = (0x40_0012, 6);
 const EEPROM_SERIAL: (u32, usize) = (0x40_0024, 10);
 
 /// The DUART on chip select 8: register n at `DUART + 2n + 1`, its
-/// lower byte lane (`docs/firmware/README.md`; MC68681 Table 4-1).
+/// lower byte lane (`boards/z3805a.toml`; MC68681 Table 4-1).
 const DUART: u32 = 0x20_0000;
 /// Chip select 8's window.
 const DUART_END: u32 = 0x20_0800;

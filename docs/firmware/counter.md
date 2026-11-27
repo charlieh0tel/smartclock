@@ -5,7 +5,8 @@ time-interval counter: the registers it writes and reads, the order it
 writes them in each second, how it waits for a reading and turns it
 into seconds, and what the loop does with the result: the firmware's
 view of the FPGA.  The design's own view, from its decoded bitstream,
-is `z3805a-trace.md`.
+is `z3805a-trace.md`, and the emulator's model of the counter
+(`crates/smartclock-emu/src/board/fpga/z3805a.rs`) follows both.
 `interval.md` covers the same routines in the Z3816A image at a
 coarser grain.
 
@@ -204,7 +205,7 @@ set from it); which
   so a count below the preset is negative.
 - `interpolator_read` (`0x40c56`) complements `fpga_read_byte(0x10)`;
   `counter_read` keeps the low byte.  The FPGA returns the reading
-  complemented (read).
+  complemented (read; the emulator's model complements it).
 - The fraction is `double_divide_reversed` (`0x5da6a`, A0:A1 / D0:D1):
   `(interpolated − offset)` in A0:A1 over the scale in D0:D1.
   `offset` and `scale` are `counter_configuration` `+0x18` and `+0x1c`.
@@ -323,8 +324,9 @@ arithmetic, but its reading would be ready right after the 1 PPS, not
 at 0.4 s.  Neither is excluded by the code.  The bitstream, decoded and
 simulated, gives the first.
 
-What the firmware needs from a model of the counter is the same
-either way (below).
+The emulator's `fpga/z3805a.rs` follows the netlist, and a differential test
+holds it to the netlist's simulation.
+What the firmware needs from the model is the same either way (below).
 
 ## The 0.4000003 s calibration
 
@@ -469,7 +471,7 @@ status bit 1 is the start bit, bit 0 the stop bit, bits 2 and 3 two of the inter
 internal 1 PPS 100 ns earlier and later, and kind 3 restarts the
 divider on the next GPS 1 PPS.
 
-## What a model needs
+## What the emulator needs
 
 Whatever the edges, the firmware sees only this:
 

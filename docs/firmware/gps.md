@@ -1384,7 +1384,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_INIT` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
 | script | `GPS_SCRIPT_INIT` | `@@Ek` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_INIT` | `@@Ek` | rate | - | sets, refused | z3817a-3752 |
-| script | `GPS_SCRIPT_INIT` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT` | `@@Ta` | drift reference, setting, Hz per step | - | asks | z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_INIT` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `$PFEC,GPclr` | clear mode | - | sets | z3815a-4010, z3805a-1.01.03 |
@@ -1459,7 +1459,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ea` | rate | - | sets, refused | z3817a-3752 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ek` | rate | - | sets | 58503a-3704, z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ek` | rate | - | sets, refused | z3817a-3752 |
-| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_INIT_DEFAULTS` | `@@Ta` | drift reference, setting, Hz per step | - | asks | z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_PPS_CHECK` | - | - | posts | z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_RAIM_ARGUMENTS` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
 | script | `GPS_SCRIPT_INIT_DEFAULTS` | step `GPS_STEP_STATUS_MONITOR` | - | - | posts | z3815a-4010, z3805a-1.01.03 |
@@ -1553,7 +1553,7 @@ with no row is one the engine does not speak.
 | script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Cg` | mode | - | asks, refused | z3817a-3752 |
 | script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Cj` | no command row | - | sets | z3805a-3543b, z3801a-3543, 58503a-3704 |
 | script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Gj` | no command row | - | asks | z3816a-4001, 58503b-1.01.04 |
-| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ta` | values | - | asks | z3816a-4001, 58503b-1.01.04 |
+| script | `GPS_SCRIPT_QUERY_SETTINGS` | `@@Ta` | drift reference, setting, Hz per step | - | asks | z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ah` | select option | `satellite_select` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
 | script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ah` | select option | `satellite_select` (holder) | sets, refused | z3817a-3752 |
 | script | `GPS_SCRIPT_SATELLITE_SELECT` | `@@Ai` | channel, satellite | `manual_satellites` (holder) | sets | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04 |
@@ -1642,7 +1642,7 @@ with no row is one the engine does not speak.
 | list | `0x57be2` | `@@Bj` | mode | - | asks | z3816a-4001 |
 | list | `0x57be2` | `@@Cg` | mode | - | asks | z3816a-4001 |
 | list | `0x57c46` | `@@Bo` | mode | - | sets | z3816a-4001 |
-| list | `0x57c46` | `@@Ta` | values | - | asks | z3816a-4001 |
+| list | `0x57c46` | `@@Ta` | drift reference, setting, Hz per step | - | asks | z3816a-4001 |
 | list | `0x58858` | `@@AB` | application type | `application` (holder) | asks | z3817a-3752 |
 | list | `0x58858` | `@@AD` | fix threshold, output threshold | `correction_thresholds` (holder) | asks | z3817a-3752 |
 | list | `0x58858` | `@@Aa` | hours, minutes, seconds | - | asks | z3817a-3752 |
@@ -1692,7 +1692,7 @@ with no row is one the engine does not speak.
 | list | `0x59f90` | `@@Bj` | mode | - | asks | 58503b-1.01.04 |
 | list | `0x59f90` | `@@Cg` | mode | - | asks | 58503b-1.01.04 |
 | list | `0x59ff4` | `@@Bo` | mode | - | sets | 58503b-1.01.04 |
-| list | `0x59ff4` | `@@Ta` | values | - | asks | 58503b-1.01.04 |
+| list | `0x59ff4` | `@@Ta` | drift reference, setting, Hz per step | - | asks | 58503b-1.01.04 |
 | list | `command_monitor_queries` | `$PFEC,GPzzz` | not spoken | - | sets | z3815a-4010, z3805a-1.01.03 |
 | sequence | `gps_diag_sequence` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
 | sequence | `gps_diag_sequence` | script `GPS_SCRIPT_ENGINE_SELFTEST` | - | - | posts, refused | z3817a-3752 |
@@ -1733,7 +1733,7 @@ with no row is one the engine does not speak.
 | sequence | `gps_selftest_run` | step `GPS_STEP_LINK_RESET` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3817a-3752, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
 | monitor | `command_monitor` | script `GPS_SCRIPT_OUTPUTS_ON` | - | - | posts | z3805a-3543b, z3801a-3543, 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
 | SCPI | `: (field 577 set)` | step `GPS_STEP_FIELD_577_SET` | - | - | posts, refused | z3817a-3752 |
-| SCPI | `:DIAGnostic:GPSystem:DCXO` | `@@Ta` | values | - | sets | 58503b-1.01.04 |
+| SCPI | `:DIAGnostic:GPSystem:DCXO` | `@@Ta` | drift reference, setting, Hz per step | - | sets | 58503b-1.01.04 |
 | SCPI | `:DIAGnostic:GPSystem:DCXO` | step `GPS_REQUEST_DCXO` | - | - | posts | z3805a-1.01.03 |
 | SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe` | `@@Bn` | rate, algorithm, alarm limit, pulse mode, not used | `raim_algorithm` (holder), `raim_alarm_limit` (holder), `pulse_mode` (holder) | sets | z3805a-3543b, z3801a-3543 |
 | SCPI | `:DIAGnostic:GPSystem:POSition:HOLD:RAIM:STATe` | script `GPS_SCRIPT_TRAIM` | - | - | posts | 58503a-3704, z3816a-4001, 58503b-1.01.04, z3815a-4010, z3805a-1.01.03 |
@@ -2049,14 +2049,29 @@ specification; in short:
   gives it "up to ten seconds" (VP p. 107); two captures of a real VP
   had `@@Ca` answered 5.2 and 7.1 seconds after it was sent, and the
   model takes a time between them.
-- **`@@Ta` is a gap.**  It is in no manual here.  The 58503B
-  1.01.04 sets it by `:DIAGnostic:GPSystem:DCXO` and answers
-  `:DIAGnostic:GPSystem:DCXO?` with what its response leaves
-  (`scpi_query_DIAGnostic_GPSystem_DCXO`), and the Z3816A 4001 and the
-  58503B decode the response; the model keeps the values it is given
-  and answers with them (`stored`).  With nothing to say what the values are,
-  there is no field of the settings to hold them in and nothing for a
-  holder to do.
+- **`@@Ta` is a VP's DCXO record, and a gap.**  It is in no manual;
+  the VP's firmware gives it
+  ([oncore-vp's `docs/memory-map.md`](https://github.com/charlieh0tel/oncore-vp/blob/main/docs/memory-map.md),
+  "Learned oscillator offset" and "QSPI devices").  Command and
+  response carry the same five bytes: the drift reference, a word in Hz
+  at L1; the setting of the DCXO that tunes the engine's reference, a
+  byte; and Hz at L1 per step of it, a word.  The engine takes them only
+  with each word below `0x8000` and the byte below `0xd8`, so all five
+  `0xff` asks, and answers with its record either way; its defaults are
+  20625, `0x67` and 350, and once a power-up, after more than ten steady
+  fixes, it updates the record from the drift it measures and saves it.  The 58503B 1.01.04
+  sets the three by `:DIAGnostic:GPSystem:DCXO`, clamped to 32767, 215
+  and 65535 (`scpi_param_DIAGnostic_GPSystem_DCXO`, `0x446cc`), so a
+  step above 32767 is sent and not taken.  It and the Z3816A 4001 ask
+  for the record and decode it to `gps.dcxo_drift_reference`,
+  `dcxo_setting` and `dcxo_hz_per_step` (`0x101746` / `0x101422` on),
+  which the instrument state page prints as `Offs`, `Warp` and `Step`
+  and the 58503B's `:DIAGnostic:GPSystem:DCXO?` returns, -230 while
+  all three are 0; both send it to a VP alone.  The model keeps any
+  five bytes but the query, from zeros, and answers with them
+  (`stored`): no range, no defaults, so that query fails until
+  something sets them.  No holder could act on it: a provider has no
+  DCXO.
 - **Every field of a message the model speaks is the record's, the
   model's own state or the manual's value for not known.**  A record
   has all nine tracking modes (VP p. 72), each satellite's momentum
@@ -2301,7 +2316,9 @@ every command field, with who acts on it.
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|
-| `@@Ta` | values | 58503b-1.01.04 | stored |
+| `@@Ta` | drift reference | 58503b-1.01.04 | stored |
+| `@@Ta` | setting | 58503b-1.01.04 | stored |
+| `@@Ta` | Hz per step | 58503b-1.01.04 | stored |
 
 | Command | Field | Set by | Who acts | How |
 |---|---|---|---|---|
@@ -2369,7 +2386,9 @@ every command field, with who acts on it.
 | `@@En` | alarm limit | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_alarm_limit` |
 | `@@En` | pulse mode | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `pulse_mode` |
 | `@@En` | not used | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: not used, nothing to do |
-| `@@Ta` | values | 58503b-1.01.04 | gap | stored |
+| `@@Ta` | drift reference | 58503b-1.01.04 | gap | stored |
+| `@@Ta` | setting | 58503b-1.01.04 | gap | stored |
+| `@@Ta` | Hz per step | 58503b-1.01.04 | gap | stored |
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |

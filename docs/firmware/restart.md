@@ -582,7 +582,8 @@ acknowledge a 16-bit cycle, its byte on DATA7 to DATA0
 PEPAR differs by model: the Z3801A's, 58503A's and Z3816A's primaries
 write `0x32` too (`0x142c2`; 3704 `0x14614`; `0x2475e`), the
 Z3815A's `0x13`, DS, DSACK1 and DSACK0 (`0x24c26`), the 58503B's
-`0x10`, DS alone (`0x2468c`).  The flash and
+`0x10`, DS alone (`0x2468c`); the Z3816A's, Z3815A's and 58503B's boot
+code writes `0x10` (`../../boards/README.md`).  The flash and
 RAM selects split one window between reads and writes, or between
 the bytes of a word, so that each part's /OE and /WE can take a chip
 select directly.  For the flash they do, read with a meter on the

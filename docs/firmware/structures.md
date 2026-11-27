@@ -246,6 +246,61 @@ the time and date, and 80 bytes of text.  The reset records are a log of 32,
 (`0x33114`) counts the valid ones from the first, at most `0x20`, into
 `log_entry_count`, and `reset_record_write` writes the next.
 
+The 58503B 1.01.04 and the Z3816A 4001, which have no export, keep the
+58503A 3704's layout (58503a-3704.md, "EEPROM"): the same four records,
+the NV register's two 160-byte slots at `0x4000c0` and `0x400160`, the
+reset records from `0x400200` and the log pages from `0x400d80`, each
+checksummed as above.  Their tags are their own: the identification
+record's three bytes at `+0x27` are `CQB` and `S2`, the NV slots' first
+two `CQ` and `S2`, and a slot's revision is `1.01.04` or `4001`; each
+image's `nv_save` packs 23 numeric descriptors and 19 or 18 settings
+(`0x4308a`, `0x430e6`; `0x42648`, `0x426a4`).  What each does with a
+bad record, by its readers: the parameter record's SCI settings take
+their defaults, which the 58503B writes back (`0x40f64`); a bad
+identification record gives the model, serial number `0` and suffix
+`A`; the Z3816A's bad lifetime record the date 1994-01-01, count 0 and
+EFC `0x49000000` (`0x402c2`), its bad calibration block zeros
+(`0x404a6`); neither NV slot good, the
+defaults, saved to slot 0, the EEPROM's self-test failed and the
+configuration reported lost (`nv_restore`, `0x42a8c` and `0x4207c`).
+The 58503B's slot erase writes `0xf0` with a setting's value, the byte
+at `0x10299e` (descriptor `0x43d40`, 0 to 3, its command not traced),
+in a slot's first byte, and its `nv_restore`, finding both slots so
+marked alike with 2 or 3, keeps that value over the defaults
+(`0x42a44`; `0x42b18` to `0x42b3e`).  The power-up self-test's EEPROM test is
+whether the current slot is good (`0x28eda`, `0x28e52`).  The emulator's
+synthetic EEPROMs for the two are built to this (`../emulator.md`, "The
+EEPROM").  A 58503B's EEPROM, read with pForth, confirms it on a real
+unit: the identification record's serial number at `+0x14`, suffix at
+`+0x26` and `CQB` at `+0x27`; the slots' `CQ` and their checksum over
+`+8` to the end; every record's checksum good; slot 0 holding the
+defaults, byte for byte the synthetic image's slot but for its first
+byte and sequence number, and invalidated with `0xf1` in its first
+byte, the erase mark with the setting's value 1.  Its parameter
+record differs from the ROM's defaults at `+8` and `+0xc`, the echo
+bytes, 0 where the defaults have 1: the unit's settings, echo off,
+which its port keeps in the emulator.
+The 58503B's lifetime record and calibration block differ from the
+58503A's.  `0x408b0` reads the lifetime record: the date at `+2` and
+count at `+6` into `0x102702` and `0x102706`, and the EFC at `+0xa`, a
+float, into `0x1026fe`, 524288.0 (`0x49000000`) when the bits
+`0xe8000000` are all set or the checksum fails.  `0x40cf0` reads the
+calibration block: `+2` into `0x10270a`, `+6` into `0x102712`, `+0x18`
+into `0x10270e` (0 when erased), the cable delay's word at `+0xa`
+into `0x102716`, and the oscillator type at `+0x1c` into `0x102726`
+(`0x40c66`, 0 when erased); then `0x40baa` takes the three EFC
+calibration floats, `+0xc` the DAC-to-ADC ratio (`0x10271a`), `+0x10`
+G (`0x10271e`) and `+0x14` B (`0x102722`), when none is erased, G is
+not 0, and the block's type is the one in force or erased, else the type's defaults
+(`0x40b5e`: G from `0x40dfc`, B 0, the ratio 16.0; loop.md, "In every
+image").  The dump's calibration block holds a G of its own, which
+the emulator's 58503B oscillator takes (`../emulator.md`, "The
+boards").
+`:PTIMe:GPSystem:POSition`'s three values (descriptor `0x4438a`) are
+packed at a slot's `+0x20`, `+0x24` and `+0x28`: latitude and
+longitude in milliarcseconds, 32 bits each, and the ellipsoid height
+in centimeters, 24 bits signed.
+
 ## The serial settings
 
 Each serial port's settings are a record in RAM: `duartb_settings`

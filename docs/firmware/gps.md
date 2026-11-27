@@ -853,6 +853,100 @@ What the 58503B and the Z3816A do with a UT Plus, after `@@Cj` has
 chosen its path.  Addresses are the Z3816A's, with the 58503B's after
 a slash where given.
 
+A shipped 58503B reports its engine as model R5122U1152, software
+98-P36848P, version 2, revision 2, of 1998: a UT Plus Oncore, eight
+channels (`third_party/motorola/ut-engg-notes.pdf` p. 2), of the
+straight-OSX R5122U115x models (p. 3).  Synergy's replacement chart
+lists the 58503B against both the eight-channel VP and the UT Plus:
+"Original HP 58503B units were delivered with 8 channel Motorola VP
+Oncore receivers.  Later units used an 8 channel UT+ Oncore"
+(`SSR-VP-UT-and-GT-Drop-In-ReplacementsTN484-D-031925.pdf` p. 6).
+
+The UT Plus supports 29 binary commands, and only those (p. 11):
+`Ab`, `Aw`, `Ac`, `Aa`, `Ad`, `Ae`, `Af`, `Ag`, `Ea`, `Bb`, `Bj`, `Aq`,
+`Ap`, `Ao`, `Cb`, `Be`, `Sz`, `Cj`, `Fa`, `Cf`, `Bo`, `Az`, `Ay`, `AP`,
+`As`, `At`, `En`, `Am`, `Gj`.  So no six-channel message, no `@@Ek`, no
+`@@Cg`: "The VP was the ONLY Oncore ever supplied with a Position
+Fix/Idle command", and a GT or UT starts again after `@@Cf` or its
+self-test without one (VPCommands.pdf p. 118).  `@@Bo` (UTC offset
+status), `@@Sz` and `@@Gj` are not in VPCommands.pdf.  Motorola's
+Oncore User's Guide, TRM0003 revision 3.2, June 1998
+(`third_party/motorola/oncore-ut-users-guide/`), gives `@@Bo`
+(`ch6.pdf` pp. 6.80-6.81) and `@@Sz` (p. 6.38); `@@Gj` is in neither.
+
+**Its `@@Cj`.**  A shipped 58503B's GPS ID reply, as
+`:DIAGnostic:IDENtification:GPSystem?` gives it, reads, line by line:
+
+    COPYRIGHT 1991-1997 MOTOROLA INC.
+    SFTW P/N #     98-P36848P
+    SOFTWARE VER # 2
+    SOFTWARE REV # 2
+    SOFTWARE DATE  APR 24 1998
+    MODEL #    R5122U1152
+    HWDR P/N # ...
+    SERIAL #   ...
+    MANUFACTUR DATE ...
+    (26 blanks)
+
+Each line after the copyright is 26 characters, left-justified and
+padded with spaces, in TRM0003's 294-byte grid (`ch6.pdf` pp.
+6.40-6.41).  The hardware line's label is `HWDR P/N #`, where TRM0003
+has `HDWR`, and the options line is blank: no `OPTIONS LIST` label and
+no value.  The hardware part number, serial number and manufacture
+date are the unit's own and are not given here; the emulator's are
+those of the shared engine's `UT_PLUS_2_2`, a unit's published in an
+`ntpd` clock log.
+
+**Telling them apart.**  The 58503B 1.01.04's `@@Cj` decoder
+(`0x58098`) finds each line's value by its label (the table at
+`0x5a21e`), then reads the model's: when it starts `MODEL #    `
+(`0x5a353`), its next character, the model number's first, chooses
+the engine's path; and the version × 10 plus the revision (`atoi` of
+`SOFTWARE VER #` and `SOFTWARE REV #`) its abilities.  Bits of
+`0x1017e8` and `0x1017e9`:
+
+| Model | Path | Sets | By software |
+| ----- | ---- | ---- | ----------- |
+| `B...`, a VP | `0x56f80` | `0x1017e8` bit 1; bit 6; `0x1017b6` = 1 | bit 0 at 10.0 or later; bit 5 with an `I` in `OPTIONS LIST`; `0x1017e9` bit 7 at 8.4 |
+| `R...`, a UT Plus | `0x56f46` | `0x1017e8` bit 2; bit 7, so 8 channels (`0x58294`, `0x1017e6`); bits 0 and 5; `0x1017b6` = 0 | `0x1017e8` bit 6 and `0x1017e9` bit 6 at 3.0 or later |
+| anything else | `0x56fb0` | neither, both cleared | -- |
+
+The send filters (`docs/firmware/oncore/58503b-1.01.04.txt`) then pass:
+
+| Filter | Passes | Messages |
+| ------ | ------ | -------- |
+| `0x582bc` | a VP | `Ah`, `Ai`, `Aj`, `Ak`, `Al`, `An`, `Ar`, `Au`, `Av`, `Ax`, `AB`, `AC`, `AD`, `Bc`, `Bd`, `Bh`, `Bk`, `Ce`, `Cg`, `Ci`, `Ta` |
+| `0x582cc` | not a VP | `Bo` |
+| `0x58316` | `Ba` (`0x1e`): a VP, at 6 channels, or 8 at rate 0; `Ea` (`0x33`), `En`: 8 channels; `Ek`: a VP at 8 | `Ba`, `Ea`, `Ek` |
+| `0x58408` | bit 5, then `0x58316` | `Bn`, `En` |
+| `0x5842c` | bit 6: a VP, or a UT Plus of 3.0 on | `Am` |
+| `0x58450` | `0x1017e9` bit 6: a UT Plus of 3.0 on | `Gj` |
+| `0x5843c` | `0x1017e9` bit 7: a VP of 8.4 | the second `Ar` (`0x3e`) |
+| `0x582f6`, `0x58306` | bit 7 clear, set | `Ca` (`0x2b`), `Fa` (`0x36`) |
+| `0x582ac` | a UT Plus | `Fa` (`0x3d`) |
+
+So to a UT Plus of software 2.2 the image sends `Aa`, `Ab`, `Ac`, `Ad`,
+`Ae`, `Af`, `Ag`, `Ao`, `Aq`, `As`, `At`, `Aw`, `Ay`, `Az`, `Bb`,
+`Bj`, `Bo`, `Cf`, `Cj`, `Ea`, `En` and `Fa`, every one in the UT Plus's
+list; `@@Ao` it matches by `@@Ap`, which the list has too.  Before
+`@@Cj` neither path's bit is set, so only the unfiltered messages and
+`Bo` go.  Read from the ROM, not run but in the emulator.
+
+**The blank options line and Time RAIM.**  The decoder reads
+`OPTIONS LIST` only on the VP path: its `I` sets bit 5 there
+(`0x58164` to `0x5818c`, `strchr` of the line's value), while the UT
+Plus path sets bit 5 whatever the line holds (`0x56f66`).  The
+decoder's only label lookup is `0x58248`, which returns null for a
+line without its label; the UT path asks it for the model, the version
+and the revision alone, so the blank options line and the `HWDR`
+label are never looked up.  `gps_message_supported` (`0x58464`)
+passes Time RAIM, script `0x6b`, `Bn` and `En`, after `@@Cj` on a UT
+Plus or with bit 5 (`0x58486` to `0x58494`).  So the reply's blank
+options do not stop `@@En`: in the emulator the 58503B sends the UT
+Plus the same bytes, `@@En` with them, with the blank line as with
+`OPTIONS LIST    XX`, and the SCPI identity query prints the lines as
+they came (`0x3a4b0`, pointers into the record).
+
 **Scripts.**  The same as a VP's: the power-up scripts `0x5b` and
 `0x5c` serve both engines, and the send filters choose the messages.
 Filter `0x55f0e` / `0x582bc` passes a VP alone and drops `Ah`, `Ai`,
@@ -892,6 +986,10 @@ one comes the UTC offset is not known on the UT Plus path, which the
 VP path sets known itself.  UTC time mode appears to need it known
 (Z3816A function `0x4f93e`, its read at `0x4f9f8`; 58503B `0x57b38`):
 inferred.  So a UT Plus must answer `@@Bo`, with a nonzero offset.
+The emulator's engine, the shared one, answers either mode with GPS
+time less UTC from its record, 18 by default, and in mode 1 sends it
+again at each change of the offset, which the emulator's fixed sky
+never makes.
 
 **`@@Gj`.**  ut-engg-notes.pdf p. 11 names it Leap Second Pending
 Status Message; its layout is in neither TRM0003 revision 3.2 nor
@@ -1001,6 +1099,54 @@ The start-up the engine sees: the init script (Z380x `0x48`, 58503A
 (UTC or GPS time), `@@Ag` (`:GPS:EMANgle`), `@@Az`, `@@Am`
 (ignored satellites), then a hold or survey script.  The console can
 send any message in the table.
+
+**Why the script must finish.**  The 58503A's init script opens with
+step `0x49` 1 (`0x5227c`'s first record), `gps.pps_check_disabled`,
+and turns the check on again only at its next to last step; while it
+is off, `gps_receiver_status_update` counts the engine as not fixing,
+so no channel counts as tracking and the reference cannot qualify.
+An engine that stops answering partway, at `@@Cj` say, leaves it off
+until a later script runs to its end.  The hold scripts (`0x5a`,
+`0x60`) do the same around their `@@Cg` 0 and 1.  Read from the ROM
+and the C, not run.
+
+**The Z3817A.**  Its GPS task is the 58503A's, script `0x54` opening
+and closing with its step `0x4b`, the same flag, but the task refuses
+the script and every message the loop, the console or SCPI posts, keeping nine
+console steps that print or set and never transmit
+(`gps_request_admitted`, `0x52abc`, whose list the 58503A's and the
+Z3815A's builds leave empty), and answers each refusal as done, so it
+sends nothing, its posters never retry, and the gate never closes: an
+`@@Ea` stream no request asked for qualifies the GPS record
+(read; emulated, [`z3817a-3752.md`](z3817a-3752.md), "What it sends",
+"Emulated").  It differs where
+an engine's answers matter less: fix mode, position hold and a 1 s
+status rate are preset at start, the command monitor never runs, the
+status monitor never re-requests the outputs and wants `@@Ea` or
+`@@Ba` within 4 s, and the channel count follows the last status
+message.  It also takes a second reference, a VALID line on PE5, that
+makes the reference good with the pulse alone, with no stream; the
+bench unit locked that way.  Its table adds `@@Sz`, the UT Plus Oncore's "Power-on Failure Message"
+(`third_party/motorola/ut-engg-notes.pdf`, p. 11), 7 bytes with no
+data, whose decoder sets a byte nothing reads: an engine's failed
+power-on is not acted on.
+
+**`@@Sz`.**  The Z3816A 4001's and the 58503B 1.01.04's tables have it
+too, entry `0x38`, kind 2, 7 bytes (`oncore/z3816a-4001.txt`,
+`oncore/58503b-1.01.04.txt`), and each decoder (Z3816A `0x55e76`,
+58503B `0x58224`) is the Z3817A's three instructions: it stores 1
+through its entry's record pointer and returns.  The byte is at the
+same offset in each image's GPS record, `+0x3da` (Z3816A `0x101296`
+in `0x100ebc`, 58503B `0x1015ba` in `0x1011e0`, each `0x61e` bytes,
+which the GPS task's start clears whole, at Z3816A `0x50b20` and
+58503B `0x52e5e`).  In each image the table's entry is the only copy of the
+address and of the decoder's, and `record_access.py` over the record
+finds no access to the byte through a register or an index and no
+pushed address in reach of it.  So no image decodes `@@Sz` into
+anything: the three that know it record its arrival and never look.
+The two scans ran with a stand-in function list, every call target
+(neither image has a conventions file), which can add a spurious
+access but not hide one.
 
 ## The engines on the bench
 

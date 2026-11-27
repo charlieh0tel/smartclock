@@ -266,7 +266,8 @@ a board.
 
 So TI is t_internal − t_GPS, with t_internal the divider epoch whose
 tap is the first after the GPS edge: TI runs from −0.4 s to +0.6 s.
-This is the order `counter.md`'s "Which 1 PPS edges" reads best.
+This is the order `counter.md`'s "Which 1 PPS edges" reads best, and
+the one the emulator's `fpga/z3805a.rs` models, status bits and all.
 
 The count's other edges:
 
@@ -290,7 +291,7 @@ The count's other edges:
 - **The preset after a start** gives AH.Y a pulse one clock long: it
   resets AI and BJ at once and AH a clock later (CF.X).  The
   interpolator would measure it, but the firmware reads the
-  interpolator only after the next start.
+  interpolator only after the next start; the emulator leaves it out.
 
 ## The 1 PPS divider
 

@@ -193,7 +193,7 @@ count stage, the start pipeline AF, AG, AI, AJ, AK, BI, BJ, BK, and the
 stop CI; it clears the tick CG through CG's own G term (CG has no
 reset), and CG.X, EI.Y registered on GCLK (`F = EI_Y`), resets the
 start capture BH.  Clearing it lets the next count run.  This is the
-preset of `counter.md`'s "What a model needs".
+preset of `counter.md`'s "What the emulator needs".
 
 The stages (**read** from the clock and reset nets):
 

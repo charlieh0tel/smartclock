@@ -145,6 +145,30 @@ docs:
 	$(CARGO) run -q -p smartclock-cli -- dump-oncore --models $(ONCORE_IMAGES) \
 		> docs/firmware/oncore/models.md
 
+# Lint .github/workflows with actionlint, which reads
+# .github/actionlint.yaml, and runs shellcheck on run: steps if found.
+# The release's linux_amd64 tarball is fetched into target/tools once
+# and checked against its pinned SHA-256 on every run; not part of ci.
+# To bump, set the version and the tarball's line from the release's
+# actionlint_VERSION_checksums.txt.
+ACTIONLINT_VERSION = 1.7.12
+ACTIONLINT_SHA256 = 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+ACTIONLINT_TARBALL = target/tools/actionlint_$(ACTIONLINT_VERSION)_linux_amd64.tar.gz
+ACTIONLINT_DIR = target/tools/actionlint-$(ACTIONLINT_VERSION)
+.PHONY: lint-workflows
+lint-workflows:
+	@test "$$(uname -sm)" = "Linux x86_64" || \
+	    { echo "lint-workflows fetches actionlint for Linux x86_64 only, not $$(uname -sm)" >&2; exit 2; }
+	@test -f $(ACTIONLINT_TARBALL) || { mkdir -p $(dir $(ACTIONLINT_TARBALL)) && \
+	    curl -fSL --retry 3 -o $(ACTIONLINT_TARBALL).part \
+	        https://github.com/rhysd/actionlint/releases/download/v$(ACTIONLINT_VERSION)/$(notdir $(ACTIONLINT_TARBALL)) && \
+	    mv $(ACTIONLINT_TARBALL).part $(ACTIONLINT_TARBALL); }
+	@echo "$(ACTIONLINT_SHA256)  $(ACTIONLINT_TARBALL)" | sha256sum -c --quiet || \
+	    { echo "$(ACTIONLINT_TARBALL) does not match ACTIONLINT_SHA256" >&2; exit 1; }
+	@rm -rf $(ACTIONLINT_DIR) && mkdir -p $(ACTIONLINT_DIR) && \
+	    tar -xzf $(ACTIONLINT_TARBALL) -C $(ACTIONLINT_DIR) actionlint
+	$(ACTIONLINT_DIR)/actionlint .github/workflows/*.yml
+
 # The published pages, into PAGES_DIR, each failing on an error in its
 # source; .github/workflows/pages.yml publishes them on GitHub Pages, at
 # https://charlieh0tel.github.io/smartclock/<page>.html.  The generated

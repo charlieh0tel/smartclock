@@ -53,6 +53,10 @@ fn threshold(session: &mut Session<Box<dyn Transport + Send>>) -> f64 {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "reads the working file while the emulator holds its lock, which Windows enforces"
+)]
 fn a_saved_setting_survives_a_kill_and_a_restart() {
     let eeprom = Scratch::new("persist");
     let dump = std::fs::read(common::dump()).expect("the dump");

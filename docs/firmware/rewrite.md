@@ -243,7 +243,7 @@ nothing is taken for common that is not:
    (`duart.c`'s input debounces and `duart_stop`, `duarta.c`'s driver,
    `drta_send_message` among it, and the two
    transmit tests, so that `common/duart.c` and `common/duarta.c` went,
-   to come back for the six images with a DUART, below), and four its code changes, `exception_name`, which names an
+   to come back for the images with a DUART, below), and four its code changes, `exception_name`, which names an
    unknown vector by its offset, `selftest_request`, which keeps the
    request's source, `scpi_set_DIAGnostic_GPSystem_UTC`, which takes a
    number out of range as 1, and `lamp_test_command`, which flashes

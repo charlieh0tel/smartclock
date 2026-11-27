@@ -75,8 +75,9 @@ and where each part lives, is drawn in
 
 The Oncore is on channel A of a 68681 DUART at `0x200000`, whose
 sixteen registers sit on odd byte addresses (`0x200001` + 2*n).
-`rewritten/common/duarta.c` is the driver: `duarta_isr` puts each
-received byte in a ring, `drta_get_byte` takes one, and
+`rewritten/common/duarta.c` is the driver, in each image with a DUART: `duarta_isr` puts each
+received byte in a ring, `drta_get_byte` takes one, each image's own
+in its `duarta.c`, its overrun message the image's text, and
 `drta_send_message` sends a command by interrupt.  In the Z3816A 4001:
 
 | Function | Role |

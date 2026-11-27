@@ -240,9 +240,11 @@ failing on any difference.  Then, unless given `--stay-in-console`, it
 returns the port to SCPI, after a failed read as well.  It sends
 `halt` and checks that `:SYSTem:LANGuage?` answers `"PRIMARY"`
 ("Leaving it"); a port where an empty line brings no console prompt,
-as after a restart, gets only that check, without `halt`.  If not, it
-falls back to the installer: it checks
-that the cell and `trap #11` of exactly one known image are where that
+as after a restart, is already at SCPI and gets only that check,
+without `halt`; `smartclock-cli flash`'s readback returns the same
+way ([`restart.md`](restart.md), "The flasher").  If not, it falls
+back to the installer: it checks that the cell and `trap #11` of
+exactly one known image are where that
 image has them, sends `<cell> execute`, checks that the installer
 answers `:SYSTem:LANGuage?` with `"INSTALL"`, sends `:SYSTem:LANGuage
 "PRIMARY"`, and checks for `"PRIMARY"` again ("Forced installer entry
@@ -338,7 +340,11 @@ Channel B of the DUART buffers no data (`gps.md`, "The GPS receiver link"), its
 transmit register (`0x200017`) is written only by the loopback
 self-test, and the remaining references reset it.  So the console,
 like SCPI, is on the SCI, and nothing in the firmware runs a console
-on another port.  The image cannot show whether channel B is wired to
+on another port.  The port is RS-232, not the Z3801A's RS-422, by a
+secondary source, <https://www.realhamradio.com/GPS_Z3816A_Receiver.htm>
+(its table, and "the serial port in the Z3816A is already set up for
+RS232"); the board is not traced (`../hardware-investigations.md`,
+item 3).  The image cannot show whether channel B is wired to
 a header on the board.
 
 The Z3801A's image, revision 3543, does the reverse.  It has no SCI

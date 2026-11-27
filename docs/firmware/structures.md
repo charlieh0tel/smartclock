@@ -1443,7 +1443,11 @@ and 58503B images set it up for one 8-bit word and send it the bytes
 of their front panel's routines (`0x4812e` and `0x53736` to `0x5395c`
 in 3704, beside the latch bits 6 and 7 of `outputs.md`), and the
 Z3815A's differs again.  So device 0 is each product's own, and the
-Z3805A's has no user.
+Z3805A's has no user.  Device 7 is set up as here in the Z3801A 3543
+and the 58503A (3633, 3704); the 58503B (`0x2ee76`), Z3815A 4010
+(`0x30f80` to `0x30f86`) and Z3816A 4001 (`0x2f886`) images write it
+in mode 2 and read it in mode 3, divider 4, as device 2, and their EFC tests shift the word read back right a
+bit before comparing it.
 
 ## The EFC's gain
 

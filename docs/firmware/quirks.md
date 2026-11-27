@@ -191,6 +191,10 @@ name ("The 58503A 3704").
   writes (`0x5832a`), and tests its count of tries, D3, before any
   sentence sets it, as the task's entry left it.
 
+- **The Z3805A 1.01.03's `gpsm_task` (`0x4de70`)** matches a response
+  by the word at `0x101b84`, as its length, which nothing in the image
+  writes (`0x4e358`).
+
 - **The Z3815A 4010's `parameter_record_read` (`0x4528e`)**, when
   the record is good, returns D3 as its caller left it, which it never
   sets (`0x45358`), as the 58503A 3704's does.

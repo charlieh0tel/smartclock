@@ -95,6 +95,7 @@ use crate::oncore::MAX_RESPONSE;
 use crate::oncore::MESSAGES;
 use crate::oncore::MessageId;
 use crate::oncore::OVERHEAD;
+use crate::oncore::TA_DCXO;
 use crate::oncore::TRAILER;
 use crate::oncore::command_length;
 use crate::oncore::encode;
@@ -2432,6 +2433,58 @@ fn the_mask_angle_starts_at_the_models_default() {
         let frames = ask(&mut engine, &record, AG_MASK_ANGLE, &[0xff]);
         assert_eq!(only(&frames, AG_MASK_ANGLE), [mask]);
         assert_eq!(engine.settings().mask_angle, Degrees(mask));
+    }
+}
+
+/// `@@Ta`'s record at power-up, as a VP's firmware loads it with its
+/// EEPROM record bad: 20625, `0x67` and 350 (oncore-vp,
+/// `docs/memory-map.md`, "Learned oscillator offset").
+const DCXO_POWER_UP: [u8; 5] = [0x50, 0x91, 0x67, 0x01, 0x5e];
+/// The command that asks for `@@Ta`'s record.
+const DCXO_QUERY: [u8; 5] = [0xff; 5];
+
+#[test]
+fn the_dcxo_record_starts_at_its_defaults_and_again_after_cf() {
+    let mut engine = powered_up(&VP_EIGHT);
+    let frames = ask(&mut engine, &Record::EMPTY, TA_DCXO, &DCXO_QUERY);
+    assert_eq!(only(&frames, TA_DCXO), DCXO_POWER_UP);
+    ask(
+        &mut engine,
+        &Record::EMPTY,
+        TA_DCXO,
+        &[0x50, 0x1b, 0x50, 0x00, 0xb9],
+    );
+    ask(&mut engine, &Record::EMPTY, CF_SET_TO_DEFAULTS, &[]);
+    let frames = ask(&mut engine, &Record::EMPTY, TA_DCXO, &DCXO_QUERY);
+    assert_eq!(only(&frames, TA_DCXO), DCXO_POWER_UP);
+}
+
+/// A set in range takes all three and is answered with them; one with
+/// any of the three out of range, the query among them, takes none and
+/// is answered with the record as it was.  The 58503B 1.01.04's
+/// `:DIAGnostic:GPSystem:DCXO` sends a step up to 65535, of which 32768
+/// on is out of range.
+#[test]
+fn the_dcxo_record_takes_all_three_in_range_or_none() {
+    let set = [0x50, 0x1b, 0x50, 0x00, 0xb9];
+    let mut engine = powered_up(&VP_EIGHT);
+    let frames = ask(&mut engine, &Record::EMPTY, TA_DCXO, &set);
+    assert_eq!(only(&frames, TA_DCXO), set);
+    let edges = [0x7f, 0xff, 0xd7, 0x7f, 0xff];
+    let frames = ask(&mut engine, &Record::EMPTY, TA_DCXO, &edges);
+    assert_eq!(only(&frames, TA_DCXO), edges);
+    ask(&mut engine, &Record::EMPTY, TA_DCXO, &set);
+    let refused: [[u8; 5]; 6] = [
+        [0x80, 0x00, 0x50, 0x00, 0xb9],
+        [0x50, 0x1b, 0xd8, 0x00, 0xb9],
+        [0x50, 0x1b, 0x50, 0x80, 0x00],
+        [0x50, 0x1b, 0x50, 0xff, 0xff],
+        [0x40, 0x00, 0x60, 0xc0, 0x00],
+        DCXO_QUERY,
+    ];
+    for data in refused {
+        let frames = ask(&mut engine, &Record::EMPTY, TA_DCXO, &data);
+        assert_eq!(only(&frames, TA_DCXO), set, "{data:02x?}");
     }
 }
 

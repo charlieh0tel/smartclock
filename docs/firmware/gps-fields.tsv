@@ -289,9 +289,9 @@ Gj	response	leap hour	15	1	1	-	-	M12+	153	z3816a-4001,58503b-1.01.04	-	console	r
 Gj	response	leap minute	16	1	1	-	-	M12+	153	z3816a-4001,58503b-1.01.04	-	console	record.leap	-	Leap	-	-
 Gj	response	leap second	17	1	1	-	-	M12+	153	z3816a-4001,58503b-1.01.04	-	console	record.leap	-	Leap	-	-
 Sz	response	constant	4	1	1	-	-	UT	6.39	-	-	-	fixed	-	-	-	the images frame it one byte short, with no data
-Ta	command	drift reference	4	2	1	-	-	-	-	58503b-1.01.04	-	-	stored	-	-	gap	taken below 0x8000 (oncore-vp memory-map.md); all five 0xff asks
-Ta	command	setting	6	1	1	-	-	-	-	58503b-1.01.04	-	-	stored	-	-	gap	taken below 0xd8
-Ta	command	Hz per step	7	2	1	-	-	-	-	58503b-1.01.04	-	-	stored	-	-	gap	taken below 0x8000
+Ta	command	drift reference	4	2	1	-	-	-	-	58503b-1.01.04	-	-	honored:the record alone, no DCXO to tune	-	-	engine	taken below 0x8000 (oncore-vp memory-map.md); all five 0xff asks
+Ta	command	setting	6	1	1	-	-	-	-	58503b-1.01.04	-	-	honored:the record alone, no DCXO to tune	-	-	engine	taken below 0xd8
+Ta	command	Hz per step	7	2	1	-	-	-	-	58503b-1.01.04	-	-	honored:the record alone, no DCXO to tune	-	-	engine	taken below 0x8000
 Ta	response	drift reference	4	2	1	-	-	-	-	z3816a-4001,58503b-1.01.04	-	z3816a-4001=console,58503b-1.01.04=reported	setting.Ta	-	-	-	Hz at L1 (oncore-vp memory-map.md)
 Ta	response	setting	6	1	1	-	-	-	-	z3816a-4001,58503b-1.01.04	-	z3816a-4001=console,58503b-1.01.04=reported	setting.Ta	-	-	-	the DCXO's
 Ta	response	Hz per step	7	2	1	-	-	-	-	z3816a-4001,58503b-1.01.04	-	z3816a-4001=console,58503b-1.01.04=reported	setting.Ta	-	-	-	Hz at L1

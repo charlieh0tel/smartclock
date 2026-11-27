@@ -97,10 +97,17 @@ ADDRESSES = {
 RAND_SEED = 0x103936
 
 
+def new_run(machine: mc683xx.Machine, **limits) -> mc683xx.End:
+    """How a run ended: a stop request only ever ends the run it is made
+    in, and one an earlier run ended for another reason with is dropped."""
+    machine.stop_request().withdraw()
+    return machine.run_limited(**limits).end
+
+
 def run_call(machine: mc683xx.Machine, begin: int, reach: int = RETURN, instructions: int = STEP_LIMIT) -> mc683xx.End:
     """How a call's run from begin ended; it fails on a fault, an
     exception or a halt."""
-    end = machine.run_limited(begin=begin, reach=reach, instructions=instructions).end
+    end = new_run(machine, begin=begin, reach=reach, instructions=instructions)
     match end:
         case mc683xx.End.Fault() | mc683xx.End.Exception() | mc683xx.End.Stop(mc683xx.Stop.Halted()):
             raise RuntimeError(f"{begin:x}: {end}")

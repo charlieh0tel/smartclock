@@ -43,7 +43,7 @@ from dataclasses import dataclass, replace
 import mc683xx
 
 from decompiled_check import installer_records
-from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine, run_call
+from libc_check import BUFFER, BUFFER_SPACING, RAM, RAM_SIZE, RETURN, ROM, ROM_SIZE, STEP_LIMIT, Machine, new_run, run_call
 from rebuild_link import IMAGE_PREFIX, LOADED, REBUILT, REBUILT_DATA, Section
 from status_register import Cpu, Trace
 
@@ -3126,6 +3126,7 @@ def snapshot(m: RebuiltMachine) -> dict[int, bytes]:
 
 
 def reset(m: RebuiltMachine, memory: dict[int, bytes]) -> None:
+    assert not m.stop_request.pending
     for start, contents in memory.items():
         m.machine.poke_bytes(start, contents)
     m.next_allocation = m.first_allocation
@@ -3687,6 +3688,7 @@ class Run:
         finally:
             for hook in hooks:
                 machine.remove_hook(hook)
+            m.stop_request.withdraw()
             m.path = None
         if self.trace is not None:
             self.trace.settled(m.reader)
@@ -3740,14 +3742,14 @@ def self_looped(machine: mc683xx.Machine, begin: int, instructions: int) -> mc68
     one of SELF_BRANCHES, runs it twice, as the run would go on at it,
     and ends there; any other branch to itself it runs on at."""
     started = machine.instructions
-    end = machine.run_limited(begin=begin, reach=RETURN, instructions=instructions, self_loop=True).end
+    end = new_run(machine, begin=begin, reach=RETURN, instructions=instructions, self_loop=True)
     if not isinstance(end, mc683xx.End.SelfLoop):
         return end
     if any(machine.peek_bytes(end.pc, len(branch)) == branch for branch in SELF_BRANCHES):
-        machine.run_limited(instructions=1)
+        new_run(machine, instructions=1)
         return end
     left = instructions - (machine.instructions - started)
-    return machine.run_limited(reach=RETURN, instructions=left).end if left > 0 else end
+    return new_run(machine, reach=RETURN, instructions=left) if left > 0 else end
 
 
 def literal_region(m: RebuiltMachine, at: int) -> int | None:

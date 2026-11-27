@@ -1,14 +1,17 @@
 name: web
 
-# The browser tests for smartclock-web's pages, `make test-web`: every
-# page against a faked API, for switching receivers, a daemon going and
-# coming back, and the other edges they must handle alike.
+# The browser tests, `make test-web`: smartclock-web's pages against a
+# faked API, for switching receivers, a daemon going and coming back,
+# and the other edges they must handle alike; and smartclock-emu's
+# panel page, against a faked run and a running 58503A.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs Node and a browser the
 # others do not.  Narrowed to the files that can change what it tests:
 # smartclock-web, the workspace crates it links, the workspace manifest
-# and lock file, the compiler pin, and the Makefile whose target it runs.
+# and lock file, the compiler pin, and the Makefile whose target it runs;
+# and the panel page, served by the emulator, which runs a board file and
+# the 58503A's image and EEPROM from the bench unit.
 # On a push `paths` narrows it; on a pull request the `changed` job
 # does, since main's ruleset requires `pages` and a workflow filtered
 # out never reports.  A job skipped by its `if` passes a required
@@ -23,6 +26,11 @@ on:
       - "crates/smartclock-web/**"
       - "crates/smartclock/**"
       - "crates/smartclock-log/**"
+      - "crates/smartclock-emu/**"
+      - "crates/smartclock-sim/**"
+      - "boards/**"
+      - "third_party/firmware/images/58503a-3704.bin"
+      - "third_party/firmware/images/eeprom/58503a-3710A01056-eeprom.bin"
       - "Cargo.toml"
       - "Cargo.lock"
       - "rust-toolchain.toml"
@@ -48,7 +56,7 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" != pull_request ] ||
             git diff --name-only HEAD^1 HEAD |
-            grep -qE '^(crates/(smartclock-web|smartclock|smartclock-log)/|Cargo\.(toml|lock)$|rust-toolchain\.toml$|Makefile$|\.github/workflows/web\.yml$)'
+            grep -qE '^(crates/(smartclock-web|smartclock|smartclock-log|smartclock-emu|smartclock-sim)/|boards/|third_party/firmware/images/(58503a-3704\.bin|eeprom/58503a-3710A01056-eeprom\.bin)$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|Makefile$|\.github/workflows/web\.yml$)'
           then
             echo test=true >> "$GITHUB_OUTPUT"
           fi
@@ -67,9 +75,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: crates/smartclock-web/tests/browser/package-lock.json
-      # serialport, under the library the server links, needs libudev.
+      # serialport, under the library the servers link, needs libudev.
       # The compiler is the one rust-toolchain.toml names, which rustup
-      # installs on the first cargo call.
+      # installs on the first cargo call; the emulator's mc683xx core is
+      # Rust from crates.io and needs nothing more.
       - run: sudo apt-get update && sudo apt-get install -y libudev-dev
       # Playwright's Chromium into the test directory, as `make web-deps`
       # does, with the system libraries it needs on a bare runner.

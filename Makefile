@@ -100,9 +100,10 @@ web-deps:
 
 # The web pages in a browser, against a faked API: switching receivers,
 # a daemon going and coming back, and the other edges every page must
-# handle alike.  Needs `make web-deps` once.
+# handle alike; and the emulator's panel page, against a faked run and
+# a running 58503A.  Needs `make web-deps` once.
 test-web:
-	$(CARGO) build -p smartclock-web
+	$(CARGO) build -p smartclock-web -p smartclock-emu
 	cd $(WEB_TESTS) && npm test
 
 # The README's screenshots, into docs/images.  Give a running web view

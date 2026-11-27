@@ -68,6 +68,10 @@ pub(crate) struct Receiver {
 
 /// The cores this build has, as `--core` names them: mc683xx, the
 /// default, and Unicorn with the `unicorn` feature.
+#[cfg(feature = "unicorn")]
+pub(crate) const CORES: &[&str] = &[MC683XX, UNICORN];
+/// The cores this build has, as `--core` names them: mc683xx, the
+/// default, and Unicorn with the `unicorn` feature.
 #[cfg(not(feature = "unicorn"))]
 pub(crate) const CORES: &[&str] = &[MC683XX];
 /// The cores, as `--core` names them.

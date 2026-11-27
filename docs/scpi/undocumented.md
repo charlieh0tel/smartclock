@@ -449,8 +449,8 @@ limits, a getter and a setter -- and the limits given are the record's.
   them as `@@Ta`.
 - **Parameters:** a VP engine's drift reference in Hz at L1, the
   setting of its DCXO and Hz at L1 per step of the setting; the engine
-  takes none of them unless each is in its range, the third below
-  32768 ([`../firmware/gps.md`](../firmware/gps.md), "The fields").
+  takes none of them unless all three are in its range, the third
+  below 32768 ([`../firmware/gps.md`](../firmware/gps.md), "The fields").
 
 ### `:SOURce:PTIMe:TDATe:GPS`
 

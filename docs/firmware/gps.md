@@ -2049,29 +2049,32 @@ specification; in short:
   gives it "up to ten seconds" (VP p. 107); two captures of a real VP
   had `@@Ca` answered 5.2 and 7.1 seconds after it was sent, and the
   model takes a time between them.
-- **`@@Ta` is a VP's DCXO record, and a gap.**  It is in no manual;
-  the VP's firmware gives it
+- **`@@Ta` is a VP's DCXO record.**  It is in no manual; the VP's
+  firmware gives it
   ([oncore-vp's `docs/memory-map.md`](https://github.com/charlieh0tel/oncore-vp/blob/main/docs/memory-map.md),
   "Learned oscillator offset" and "QSPI devices").  Command and
   response carry the same five bytes: the drift reference, a word in Hz
   at L1; the setting of the DCXO that tunes the engine's reference, a
-  byte; and Hz at L1 per step of it, a word.  The engine takes them only
-  with each word below `0x8000` and the byte below `0xd8`, so all five
-  `0xff` asks, and answers with its record either way; its defaults are
-  20625, `0x67` and 350, and once a power-up, after more than ten steady
-  fixes, it updates the record from the drift it measures and saves it.  The 58503B 1.01.04
-  sets the three by `:DIAGnostic:GPSystem:DCXO`, clamped to 32767, 215
-  and 65535 (`scpi_param_DIAGnostic_GPSystem_DCXO`, `0x446cc`), so a
-  step above 32767 is sent and not taken.  It and the Z3816A 4001 ask
+  byte; and Hz at L1 per step of it, a word.  The engine takes all
+  three only if each word is below `0x8000` and the byte below `0xd8`,
+  else none, so all five `0xff` asks, and answers with its record
+  either way.  It saves a set at once, its EEPROM's default being
+  20625, `0x67` and 350, and once a power-up, after more than ten
+  steady fixes, updates the record from the drift it measures and
+  saves it.  The 58503B 1.01.04 sets the three by
+  `:DIAGnostic:GPSystem:DCXO`, clamped to 32767, 215 and 65535
+  (`scpi_param_DIAGnostic_GPSystem_DCXO`, `0x446cc`), so a step above
+  32767 is sent and the whole set ignored.  It and the Z3816A 4001 ask
   for the record and decode it to `gps.dcxo_drift_reference`,
   `dcxo_setting` and `dcxo_hz_per_step` (`0x101746` / `0x101422` on),
   which the instrument state page prints as `Offs`, `Warp` and `Step`
   and the 58503B's `:DIAGnostic:GPSystem:DCXO?` returns, -230 while
-  all three are 0; both send it to a VP alone.  The model keeps any
-  five bytes but the query, from zeros, and answers with them
-  (`stored`): no range, no defaults, so that query fails until
-  something sets them.  No holder could act on it: a provider has no
-  DCXO.
+  all three are 0; both send it to a VP alone.  The model takes and
+  answers it so, from the defaults at power-up and after `@@Cf`, so
+  that query answers 20625, 103 and 350 until something sets them.
+  It has no DCXO to tune and does not trim, and keeps the record
+  through a power cycle no more than it keeps the other settings
+  (`saved.rs`); a VP keeps it in EEPROM.
 - **Every field of a message the model speaks is the record's, the
   model's own state or the manual's value for not known.**  A record
   has all nine tracking modes (VP p. 72), each satellite's momentum
@@ -2316,9 +2319,6 @@ every command field, with who acts on it.
 
 | Command | Field | Set by | The engine has it |
 |---|---|---|---|
-| `@@Ta` | drift reference | 58503b-1.01.04 | stored |
-| `@@Ta` | setting | 58503b-1.01.04 | stored |
-| `@@Ta` | Hz per step | 58503b-1.01.04 | stored |
 
 | Command | Field | Set by | Who acts | How |
 |---|---|---|---|---|
@@ -2386,9 +2386,9 @@ every command field, with who acts on it.
 | `@@En` | alarm limit | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `raim_alarm_limit` |
 | `@@En` | pulse mode | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine, holder | honored; `pulse_mode` |
 | `@@En` | not used | 58503a-3704, z3816a-4001, 58503b-1.01.04 | engine | honored: not used, nothing to do |
-| `@@Ta` | drift reference | 58503b-1.01.04 | gap | stored |
-| `@@Ta` | setting | 58503b-1.01.04 | gap | stored |
-| `@@Ta` | Hz per step | 58503b-1.01.04 | gap | stored |
+| `@@Ta` | drift reference | 58503b-1.01.04 | engine | honored: the record alone, no DCXO to tune |
+| `@@Ta` | setting | 58503b-1.01.04 | engine | honored: the record alone, no DCXO to tune |
+| `@@Ta` | Hz per step | 58503b-1.01.04 | engine | honored: the record alone, no DCXO to tune |
 | `$PFEC,GPset` | A almanac validity | none | gap | stored |
 | `$PFEC,GPset` | D PDOP threshold | none | engine | honored: a 2D fix above it, none 3D at 0 |
 | `$PFEC,GPset` | G geodetic ID | none | gap | stored |

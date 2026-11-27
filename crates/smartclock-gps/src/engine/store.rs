@@ -127,6 +127,13 @@ pub(super) const CABLE_DELAY_MOST: u32 = 999_999;
 /// and a UT Plus's, which has two modes more.
 const CORRECTION_MOST_VP: u8 = 1;
 const CORRECTION_MOST_UT_PLUS: u8 = 3;
+/// What `@@Ta` takes: its words below this, its setting below
+/// [`DCXO_SETTING_LIMIT`] ([`TA_DCXO`]).
+const DCXO_WORD_LIMIT: u16 = 0x8000;
+const DCXO_SETTING_LIMIT: u8 = 0xd8;
+/// `@@Ta`'s record at power-up: a drift reference of 20625 Hz at L1, setting
+/// `0x67` and 350 Hz a step.
+const DCXO_DEFAULT: [u8; 5] = [0x50, 0x91, 0x67, 0x01, 0x5e];
 
 /// What values a setting takes.
 #[derive(Debug, Clone, Copy)]
@@ -148,6 +155,10 @@ enum Takes {
     /// A latitude and longitude within range, then a height as
     /// [`Self::Height`].
     Position,
+    /// `@@Ta`'s record, all of it or none: its drift reference and Hz
+    /// per step below [`DCXO_WORD_LIMIT`], its setting below
+    /// [`DCXO_SETTING_LIMIT`].
+    Dcxo,
 }
 
 impl Takes {
@@ -168,6 +179,11 @@ impl Takes {
                     }
             }
             (Self::Height, _) => height_takes(data, model),
+            (Self::Dcxo, &[a, b, setting, c, d]) => {
+                u16::from_be_bytes([a, b]) < DCXO_WORD_LIMIT
+                    && setting < DCXO_SETTING_LIMIT
+                    && u16::from_be_bytes([c, d]) < DCXO_WORD_LIMIT
+            }
             (Self::Position, &[a, b, c, d, e, f, g, h, ref height @ ..]) => {
                 latitude_takes(i32::from_be_bytes([a, b, c, d]))
                     && longitude_takes(i32::from_be_bytes([e, f, g, h]))
@@ -228,8 +244,7 @@ impl Setting {
     }
 }
 
-/// Every setting: pp. 9 to 69, and `@@Ta`, which is in no manual here
-/// ([`TA_DCXO`]).
+/// Every setting: pp. 9 to 69, and `@@Ta` ([`TA_DCXO`]).
 const SETTINGS: [Setting; 23] = [
     setting(AB_GMT_CORRECTION, &[QUERY; 3], &[0; 3], Takes::Anything),
     // A UT Plus's starts at the horizon (UT p. 6.21).
@@ -306,7 +321,7 @@ const SETTINGS: [Setting; 23] = [
         &[0, 32],
         Takes::Bytes(127),
     ),
-    setting(TA_DCXO, &[QUERY; 5], &[0; 5], Takes::Anything),
+    setting(TA_DCXO, &[QUERY; 5], &DCXO_DEFAULT, Takes::Dcxo),
 ];
 
 /// The datum an Oncore starts on, WGS-84 (`@@Ao`, p. 45).

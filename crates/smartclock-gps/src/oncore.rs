@@ -232,9 +232,9 @@ pub const FA_SELF_TEST: MessageId = MessageId::new(*b"Fa");
 pub const GJ_LEAP_SECOND_PENDING: MessageId = MessageId::new(*b"Gj");
 /// `@@Sz`, System Power-On Failure.
 pub const SZ_POWER_ON_FAILURE: MessageId = MessageId::new(*b"Sz");
-/// `@@Ta`, in no manual here.  Its three decoders fill the three values
-/// `:DIAGnostic:GPSystem:DCXO?` returns
-/// (`docs/firmware/oncore/58503b-1.01.04.txt`; `docs/scpi/undocumented.md`).
+/// `@@Ta`, a VP's DCXO record, in no manual: its firmware's, as
+/// <https://github.com/charlieh0tel/oncore-vp/blob/main/docs/memory-map.md>
+/// has it ("Learned oscillator offset").
 pub const TA_DCXO: MessageId = MessageId::new(*b"Ta");
 
 /// Which form of a per-channel message an ID is

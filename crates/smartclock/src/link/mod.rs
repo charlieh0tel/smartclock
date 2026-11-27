@@ -25,7 +25,7 @@ use std::time::Duration;
 use crate::client::DEADLINE;
 
 #[cfg_attr(unix, path = "unix.rs")]
-#[cfg_attr(windows, path = "windows.rs")]
+#[cfg_attr(not(unix), path = "windows.rs")]
 mod os;
 
 /// How a client names a TCP address.

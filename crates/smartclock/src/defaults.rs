@@ -3,11 +3,12 @@
 //! and settings files in `packaging/`, on where that is.
 //!
 //! Where things are differs between Unix and Windows, and that is all
-//! here; how a connection is made differs too, and is in `link`.  On
-//! Unix a daemon's clients find it by its socket under [`RUN_DIR`].
-//! Windows has no Unix sockets, so a daemon listens on [`TCP_LISTEN`]
-//! and its clients ask [`DAEMON`]; a second daemon there needs a port of
-//! its own, and its clients told which.  The sensor service likewise
+//! here (wasm32, which has no Unix sockets either, takes Windows's);
+//! how a connection is made differs too, and is in `link`.  On Unix a
+//! daemon's clients find it by its socket under [`RUN_DIR`].  Windows
+//! has no Unix sockets, so a daemon listens on [`TCP_LISTEN`] and its
+//! clients ask [`DAEMON`]; a second daemon there needs a port of its
+//! own, and its clients told which.  The sensor service likewise
 //! listens on [`SENSOR_LISTEN`], and its clients ask [`SENSORD`].
 
 #[cfg(unix)]
@@ -22,7 +23,7 @@ mod os {
 }
 
 /// Where a receiver daemon listens where there are no Unix sockets.
-#[cfg(windows)]
+#[cfg(not(unix))]
 macro_rules! tcp_listen {
     () => {
         "127.0.0.1:9978"
@@ -30,14 +31,16 @@ macro_rules! tcp_listen {
 }
 
 /// Where the sensor service listens where there are no Unix sockets.
-#[cfg(windows)]
+#[cfg(not(unix))]
 macro_rules! sensor_listen {
     () => {
         "127.0.0.1:9977"
     };
 }
 
-#[cfg(windows)]
+// Windows's, and wasm32's, where nothing reads them: a browser has no
+// daemon to find.
+#[cfg(not(unix))]
 mod os {
     pub(super) const RUN_DIR: &str = r"C:\ProgramData\smartclockmon\run";
     pub(super) const LOG_DIR: &str = r"C:\ProgramData\smartclockmon\log";

@@ -1,5 +1,6 @@
 //! The little HTTP server the exporter and the web view share, on
-//! `tiny_http`, behind the `http` feature.
+//! `tiny_http`, behind the `http` feature.  The requests and responses
+//! are every target's; the server is native alone.
 //!
 //! Not a web framework: it hands the caller a request's target, or its
 //! method, target and body, and writes back a status, a media type and
@@ -14,29 +15,41 @@
 //! for any of the three, and they went with it (`PLAN.md`).
 
 use std::borrow::Cow;
+#[cfg(not(target_family = "wasm"))]
 use std::io;
+#[cfg(not(target_family = "wasm"))]
 use std::io::Read as _;
+#[cfg(not(target_family = "wasm"))]
 use std::net::TcpListener;
+#[cfg(not(target_family = "wasm"))]
 use std::ops::ControlFlow;
+#[cfg(not(target_family = "wasm"))]
 use std::sync::Arc;
+#[cfg(not(target_family = "wasm"))]
 use std::thread;
+#[cfg(not(target_family = "wasm"))]
 use std::time::Duration;
 
+#[cfg(not(target_family = "wasm"))]
 use tiny_http::Header;
+#[cfg(not(target_family = "wasm"))]
 use tiny_http::Server;
 
 /// Sent with every answer: each is the state of the moment, and a
 /// cached one is a stale reading shown as current.
+#[cfg(not(target_family = "wasm"))]
 const CACHE_CONTROL: (&str, &str) = ("Cache-Control", "no-store");
 /// The media type of the answers this module writes itself.
 const TEXT: &str = "text/plain; charset=utf-8";
 /// The most of a request's body read: past it the request is refused.
 /// No caller takes more than a line.
+#[cfg(not(target_family = "wasm"))]
 const BODY_LIMIT: u64 = 64 * 1024;
 /// How long the server waits before it starts accepting again on a
 /// listener that failed: long enough that a failure that lasts, no file
 /// descriptor free, is not a busy loop, short enough that a page
 /// polling it hardly notices.
+#[cfg(not(target_family = "wasm"))]
 const ACCEPT_RETRY: Duration = Duration::from_millis(100);
 
 /// Why the server could not start, or start again.
@@ -150,6 +163,7 @@ impl Response {
     }
 
     /// The answer as `tiny_http` writes it.
+    #[cfg(not(target_family = "wasm"))]
     fn into_tiny(self) -> tiny_http::Response<std::io::Cursor<Vec<u8>>> {
         let allow = self.allow.map(|allow| ("Allow", allow));
         let headers = [("Content-Type", self.kind), CACHE_CONTROL]
@@ -209,6 +223,7 @@ pub fn value(query: &str, key: &str) -> Option<String> {
 /// The listener `serve` would serve on `listen`, bound now, so that a
 /// caller serving it on a thread of its own hears of a bind that fails
 /// before the thread starts, and can say where it bound port 0.
+#[cfg(not(target_family = "wasm"))]
 pub fn bind(listen: &str) -> Result<TcpListener, ServeError> {
     TcpListener::bind(listen).map_err(|source| ServeError::Bind {
         listen: listen.to_owned(),
@@ -222,6 +237,7 @@ pub fn bind(listen: &str) -> Result<TcpListener, ServeError> {
 /// `answer` is given the request's target, its path and any query
 /// string, and returns what to send.  It runs on a thread of its own
 /// per request, so it may block.
+#[cfg(not(target_family = "wasm"))]
 pub fn serve<F>(listen: &str, answer: F) -> Result<(), ServeError>
 where
     F: Fn(&str) -> Response + Send + Sync + 'static,
@@ -230,6 +246,7 @@ where
 }
 
 /// Serve `answer` on `listener`, as `serve` does.
+#[cfg(not(target_family = "wasm"))]
 fn serve_on<F>(listener: TcpListener, answer: F) -> Result<(), ServeError>
 where
     F: Fn(&str) -> Response + Send + Sync + 'static,
@@ -245,6 +262,7 @@ where
 /// that fails for want of a file descriptor among them, so a server
 /// whose accepting fails is replaced by one on the same listener,
 /// `ACCEPT_RETRY` later, rather than the page going dark for good.
+#[cfg(not(target_family = "wasm"))]
 pub fn serve_requests_on<F>(listener: TcpListener, answer: F) -> Result<(), ServeError>
 where
     F: Fn(&Request) -> Response + Send + Sync + 'static,
@@ -269,6 +287,7 @@ where
 /// What each server `start` gives accepts, by `accept`, handed to
 /// `handle`; a server whose `accept` fails is dropped, and after `retry`
 /// another started.  Until `start` fails, or `handle` says to stop.
+#[cfg(not(target_family = "wasm"))]
 fn keep_accepting<S, T>(
     mut start: impl FnMut() -> Result<S, ServeError>,
     mut accept: impl FnMut(&S) -> io::Result<T>,
@@ -294,6 +313,7 @@ fn keep_accepting<S, T>(
 }
 
 /// `request` answered by `answer` on a thread of its own.
+#[cfg(not(target_family = "wasm"))]
 fn answer_on_a_thread<F>(mut request: tiny_http::Request, answer: Arc<F>)
 where
     F: Fn(&Request) -> Response + Send + Sync + 'static,
@@ -316,6 +336,7 @@ where
 
 /// `request` as the caller is given it, or the refusal of one whose
 /// body is past `BODY_LIMIT` or cannot be read.
+#[cfg(not(target_family = "wasm"))]
 fn read(request: &mut tiny_http::Request) -> Result<Request, Response> {
     let method = match request.method() {
         tiny_http::Method::Get | tiny_http::Method::Head => Method::Get,
@@ -341,7 +362,7 @@ fn read(request: &mut tiny_http::Request) -> Result<Request, Response> {
     })
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(target_family = "wasm")))]
 mod tests {
     use std::io::Read as _;
     use std::io::Write as _;

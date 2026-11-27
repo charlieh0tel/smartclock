@@ -1,5 +1,6 @@
-//! Windows: there are no Unix sockets.  These types stand in for them,
-//! so that `link` names them on every platform, and none can be made.
+//! Windows, and wasm32: there are no Unix sockets.  These types stand
+//! in for them, so that `link` names them on every platform, and none
+//! can be made.
 
 use std::io;
 use std::io::Read;

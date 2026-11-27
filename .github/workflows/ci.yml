@@ -18,14 +18,16 @@ jobs:
     #                  because audit.yml already does it on the schedule a
     #                  called workflow cannot have -- see the note there.
     #   check-args     --all-targets, or clippy never sees the tests,
-    #                  which are the larger half of this workspace
+    #                  which are the larger half of this workspace; not
+    #                  --all-features, whose one feature is
+    #                  smartclock-emu's Unicorn core (make emulator)
     uses: charlieh0tel/deb-workflows/.github/workflows/rust-ci.yml@v1
     with:
       # serialport needs libudev on Linux.
       build-deps: "libudev-dev"
       fmt-toolchain: ""
       audit: false
-      check-args: "--workspace --all-targets --all-features"
+      check-args: "--workspace --all-targets"
 
   no-std:
     # smartclock-gps, smartclock-ubx and smartclock-gps-ublox are no_std

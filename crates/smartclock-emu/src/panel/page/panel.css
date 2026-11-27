@@ -1,0 +1,215 @@
+/* smartclock-emu's panel page's style (docs/emulator.md, "The panel
+   page"): the page's colors, the status line, the control strip, the
+   console, and the drawings' classes. */
+
+:root {
+  --page: #1c1e20;
+  --ink: #c9cdd1;
+  --ink-dim: #80868c;
+  --bezel: #dcdad3;
+  --bezel-edge: #b9b6ad;
+  --bezel-text: #3c3d3f;
+  --group: #dfddd7;
+  --group-edge: #c4c1b9;
+  --rule: #c2bfb7;
+  --band: #141515;
+  --band-text: #e9e9e6;
+  --vfd: #060a0a;
+  --vfd-on: #48e6cf;
+  /* The faint ghost of an unlit segment, as a real VFD shows: the lit
+     color at about a sixth over the display's. */
+  --vfd-off: #112d2a;
+  --lamp-on: #e6f23c;
+  --lamp-off: #2b2b29;
+  --key-dark: #4c4d4f;
+  --key-mid: #b4b1aa;
+  --key-light: #d9d3ca;
+  --key-blue: #6b97d4;
+  --key-text: #1e1f20;
+  --key-text-light: #f3f3f1;
+  --blue-text: #6b8fc8;
+  --plate: #d4d2cc;
+  --plate-edge: #b5b3ac;
+  --window: #c4c6c3;
+  --window-edge: #9fa4a1;
+  --screw: #151515;
+  --led-green: #6dff8f;
+  --led-red: #ff3b3b;
+  --led-amber: #ffb52a;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --page: #eceae6;
+    --ink: #2e3134;
+    --ink-dim: #6a6f74;
+  }
+}
+:root[data-theme="light"] {
+  --page: #eceae6;
+  --ink: #2e3134;
+  --ink-dim: #6a6f74;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px 16px;
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 1100px; margin: 0 auto; }
+#panel svg { display: block; width: 100%; height: auto; }
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 14px;
+  color: var(--ink-dim);
+  font: 13px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.status b { color: var(--ink); font-weight: 600; }
+/* Fixed widths, so the strip does not shift as the numbers grow. */
+#link { display: inline-block; min-width: 13ch; }
+#cycle { display: inline-block; min-width: 14ch; text-align: right; }
+#seconds { display: inline-block; min-width: 10ch; text-align: right; }
+.status .down { color: #e0604e; }
+.board-leds { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.board-leds span::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #3a3d3a;
+  vertical-align: 0;
+}
+.board-leds span.lit::before { background: #ff4b3a; box-shadow: 0 0 6px #ff4b3a; }
+
+/* The simulation's controls: the emulator's, not the instrument's,
+   so drawn as a tool strip apart from the panel's face. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px dashed var(--ink-dim);
+  border-radius: 6px;
+  font: 13px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.controls .heading { color: var(--ink-dim); margin-right: 6px; }
+.controls button {
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink-dim);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.controls button:hover:not(:disabled) { border-color: var(--ink); }
+.controls button:disabled { color: var(--ink-dim); cursor: default; opacity: 0.6; }
+.controls button[aria-pressed="true"] { border-color: #e0604e; color: #e0604e; }
+.controls button[hidden] { display: none; }
+
+/* The console on the host port, under the controls. */
+.console {
+  margin-top: 16px;
+  border: 1px solid var(--ink-dim);
+  border-radius: 6px;
+  font: 13px/1.35 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.console .who {
+  padding: 6px 12px;
+  color: var(--ink-dim);
+  border-bottom: 1px solid var(--ink-dim);
+}
+/* Tall enough for :SYSTem:STATus?'s screen whole, its 23 lines (the
+   fixtures in crates/smartclock/tests/fixtures/status_screen) with the
+   command before it and the prompt after. */
+.console pre {
+  --rows: 26;
+  margin: 0;
+  padding: 8px 12px;
+  height: calc(var(--rows) * 1.35em);
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--ink);
+  font: inherit;
+}
+.console pre .byte { color: var(--ink-dim); }
+.console form { display: flex; border-top: 1px solid var(--ink-dim); }
+.console input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+}
+.console input:disabled { color: var(--ink-dim); }
+/* The quick lines, a row of buttons above the input. */
+.console .quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--ink-dim);
+}
+.console .quick button {
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink-dim);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.console .quick button:hover:not(:disabled) { border-color: var(--ink); }
+.console .quick button:disabled { color: var(--ink-dim); cursor: default; opacity: 0.6; }
+
+.bezel { fill: var(--bezel); stroke: var(--bezel-edge); stroke-width: 3; }
+.band { fill: var(--band); }
+.group { fill: var(--group); stroke: var(--group-edge); stroke-width: 1.5; }
+.rule { fill: var(--rule); }
+.heading-line { fill: var(--band-text); font-family: Arial, Helvetica, sans-serif; font-size: 18px; }
+.badge { fill: var(--band-text); }
+.badge-text { fill: var(--band); font: italic 700 20px/1 Arial, Helvetica, sans-serif; }
+.on-light .badge { fill: var(--bezel-text); }
+.on-light .badge-text { fill: var(--bezel); }
+.on-light .heading-line { fill: var(--bezel-text); }
+.label { fill: var(--bezel-text); font: 400 13px/1 Arial, Helvetica, sans-serif; letter-spacing: 1px; }
+.group-title { fill: var(--bezel-text); font: 400 15px/1 Arial, Helvetica, sans-serif; letter-spacing: 1.5px; }
+.led-label { fill: var(--band-text); font: 400 12px/1 Arial, Helvetica, sans-serif; }
+.on-light .led-label { fill: var(--bezel-text); }
+.clear-alarm { fill: var(--blue-text); font: 400 14px/1.1 Arial, Helvetica, sans-serif; }
+
+.vfd { fill: var(--vfd); }
+.seg { stroke: var(--vfd-off); stroke-linecap: round; fill: none; }
+.dot { fill: var(--vfd-off); }
+.seg.on { stroke: var(--vfd-on); }
+.dot.on { fill: var(--vfd-on); }
+
+.lamp { fill: var(--lamp-off); }
+.lamp.on { fill: var(--lamp-on); filter: url(#lamp-glow); }
+
+.led { stroke: rgba(0, 0, 0, 0.5); stroke-width: 1; fill-opacity: 0.22; }
+.led.on { fill-opacity: 1; filter: url(#led-glow); }
+
+.key { cursor: pointer; }
+.key rect.cap { stroke: rgba(0, 0, 0, 0.45); stroke-width: 1.2; }
+.key rect.shade { fill: rgba(0, 0, 0, 0.28); }
+.key text { font: 600 14px/1 Arial, Helvetica, sans-serif; pointer-events: none; }
+.key:hover rect.cap { stroke: rgba(0, 0, 0, 0.8); }
+.key.pressed .face { transform: translate(0, 3px); }
+.key:focus { outline: none; }
+.key:focus-visible rect.cap { stroke: var(--key-blue); stroke-width: 3; }
+.plate { fill: var(--plate); stroke: var(--plate-edge); stroke-width: 3; }
+.window { fill: var(--window); stroke: var(--window-edge); stroke-width: 10; }
+.screw { fill: var(--screw); }
+.handle { fill: none; stroke: #121212; stroke-width: 26; stroke-linecap: round; stroke-linejoin: round; }

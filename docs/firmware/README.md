@@ -2248,7 +2248,7 @@ disagree, or if the tables made from that file in `loop.md` and
 (`tools/firmware/loop_constants.py`).  `check-loop-gain` does the same
 for where each image's G comes from and whether the EEPROM's
 calibration block can change it, `loop-gain.json`, and decodes every
-EEPROM in `third_party/firmware/images/eeprom/` by its unit's image's
+unit's EEPROM in `third_party/firmware/images/eeprom/` by its image's
 rules for the tables' last column (`tools/firmware/loop_gain.py`).  `check-gps-fields` runs each
 Oncore image's own message decoders, notes the bytes of
 each message they read and where they store them, scans the image for

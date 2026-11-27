@@ -1096,6 +1096,175 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   2026-11-13).  A primary function matched inside the
   installer's records, the installer's copy's bytes, has no row.
 
+### The emulator
+
+`smartclock-emu` boots the images on a modeled board, so the daemon and
+CLI can talk to it as to a receiver.  `docs/emulator.md` has the models
+and their evidence.
+
+- **The cores**: mc683xx, a native MC68331 under MIT or Apache-2.0
+  (docs/cpu-core-brief.md), is the default core and in every build, so
+  the emulator can be distributed.  Unicorn, GPL-2.0-only, is a
+  development core behind the `unicorn` feature, off by default: a
+  build with it is a local tool, never distributed, and ci.yml leaves
+  out `--all-features`.  Frozen: CI builds and tests mc683xx alone
+  (`make emulator`), and `make emulator-unicorn`, by hand, runs the
+  peripheral checks that hold mc683xx to Unicorn.
+- mc683xx is pinned to an exact version and bumped only on purpose,
+  crates and the harness's Python module alike: the crates to their
+  0.9.0 release on crates.io.  Its crates
+  are optimized in the dev profile, since its interpretation is nearly
+  all of a test's time.
+- The EEPROM's working file takes each written byte in one unbuffered
+  write, so a kill loses nothing, but is not synced byte by byte (a
+  disk flush for each of a record's 128 bytes): the firmware's
+  checksummed two-slot NV register already survives a torn record.
+- The OCXO and the FPGA know nothing of each other: the OCXO's output
+  is a clock signal, and the board alone joins it to the FPGA's clock
+  input.
+- The FPGA model acts at the level of events, not clock edges: an
+  earlier exact version, counting the oscillator's edges, was dropped.
+  Each pulse, tap and edge is a whole tick, an integer, at the first
+  cycle the clock net's integer phase reaches it; only the part of a
+  period at a GPS 1 PPS, the interpolator's, is an `f64`.  A phase in
+  `f64` seconds could name the cycle before an edge with a steered
+  oscillator, hours to days in, and the board's run stalled there.
+  It is held to the netlist, within a tick, by a differential test
+  (`tools/fpga/differential.py`, a fixture replayed by a unit test).
+  Replacing it with the LCA model, which executes each bitstream's
+  netlist for every image rather than the Z3805A alone, the counters
+  fast-forwarded between events, is `docs/firmware/fpga-codegen.md`.
+- The LCA model's netlists are decoded at build time and checked in as
+  data (`tools/fpga/lcanet.py`, `board/fpga/<image>.netlist`, one for
+  each of the six bitstreams,
+  regenerated and diffed by `make -f tools/fpga/Makefile check-lca`):
+  the decoder has no license and runs in node or Chrome, so the
+  emulator cannot decode at run time.  One event-driven evaluator
+  (`board/fpga/lca.rs`), at `tools/fpga/xc3000.v`'s delays, is to run
+  every netlist; on each of the six it agrees with Icarus to the
+  picosecond, on that image's differential cases
+  (`docs/firmware/fpga-codegen.md`, "Status"); data rather than
+  generated Rust, so that there is one evaluator to review.  Counter
+  fast-forward (`board/fpga/lca/fast_forward.rs`) moves it on between
+  events from tables learned by running the evaluator on each stage
+  alone, held to the clocked model node for node by its tests; one
+  fast-forward per netlist a thread runs keeps them, so a design reset
+  or configured again learns nothing twice.  The telecom pair's two
+  clocks are both the model's, fast-forwarded together over their joint
+  period, each domain's dividers groups of their own and the detector
+  that compares them woken where the other's ticks: no orbit of the
+  joint state, and no model per domain (`docs/firmware/fpga-codegen.md`,
+  "Two clocks").  `Fpga`
+  drives any model of a design through `board/fpga/logic.rs`'s `Logic`,
+  the LCA model among them (`board/fpga/executed.rs`), which the board
+  runs, fast-forwarded, when its file says `design = "lca"`: opt-in,
+  the hand models the default, until it runs in the browser with room
+  to spare.  The board's LCA wiring (`board/fpga/pins.rs`) takes the
+  internal 1 PPS on P83 and the interval on P81, as five of the six
+  designs have them; the Z3817A's, its 1 PPS on P78, no interval and a
+  second 1 PPS on P84, runs on the LCA model in its tests alone, its
+  board on its hand model (`board/fpga/z3817a.rs`).
+- The board file names the FPGA's design, `design = "z3805a"`,
+  `"58503a-z3801a"`, `"z3817a"` or `"unmodeled"`, not its bitstream.
+  The models are hand-written, the Z3817A's sharing the Z3805A's
+  divider, sync and stop (`board/fpga/timebase.rs`), and use none of
+  the bitstream's bits: the Z3805A's once read the
+  board file's `.bit` only to compare it with two embedded copies and
+  pick the design, and the firmware sends its own at boot, of which
+  the model takes the length count and the readback.  So the emulator
+  reads none, and a test checks each board's name against the
+  bitstream its images carry.  The LCA model
+  (`docs/firmware/fpga-codegen.md`) picks its netlist by the hash of
+  the configuration the firmware sends to DONE, the board file saying
+  `design = "lca"` and optionally asserting `bitstream = "z3805a"`; it
+  refuses a configuration it does not know, stopping the run.  The
+  hashes are a table beside the netlists, which a test holds to the
+  `.bit` files.
+- The DUART's receiver has no flow control, as the board has none: a
+  character past the FIFO is lost and sets overrun.
+- The trace is ASCII `key=value` records stamped with the board's
+  cycle; `--deterministic` repeats a boot to the instruction, and the
+  default paces the board to the wall clock.  On mc683xx the host
+  steps the run (`mc683xx::Run`): deterministic runs in our own slices
+  with `Board::run_until`, so that a replay lands on its cycles; paced
+  ones a frame at a time with `Board::run_frame_with`, to the host's
+  clock's reading, which the binary takes from `Instant` and a browser
+  would from its own clock, the board reading none.  A paced frame
+  ends at the run's own next time (a script's step, the run's end, the
+  external 1 PPS's edge) by being given the clock reading that time is
+  due at, which keeps the pacing's line rather than starting it again
+  and dropping time; `run_until_paced`, which reads `Instant` and
+  sleeps, is not used, nor a copy of mc683xx's own pacer.
+- The command line is checked once, into the run it asks for
+  (`config.rs`, `RunConfig`), before either core runs; nothing after
+  reads it.  A run starts from the command line's defaults
+  (`RunConfig::new`), so a host other than the command line makes one
+  the same way.  The two cores share their run loops' pieces (`run.rs`:
+  what runs alongside, the slice's length) but keep a loop each:
+  Unicorn's machine delivers the interrupts and resets between its
+  slices and does not end a slice at `--stop-after`, and unifying
+  the two would mean reworking the Unicorn core, which is frozen.
+  mc683xx's is a board side, a power-up's board, and a run side, what
+  outlives a power cycle, its slice's end in one documented order
+  (docs/emulator.md, "The mc683xx backend").
+
+### The emulator's indicators stay observable from outside
+
+A GUI or TUI for the emulated receiver's lamps, LEDs and 58503A display
+is wanted someday, and nothing done before then may foreclose it.  Two
+ways in are kept:
+
+- The trace's `indicator` and `display` records (docs/emulator.md,
+  "Tracing") are an interface, not debugging output: a front end can
+  run `smartclock-emu --indicators`, read them from standard error, and
+  press keys through `--script`.  Their fields change only compatibly,
+  and the unit tests in `indicators.rs` and `board/front_panel.rs` pin
+  a record each.
+- On mc683xx boards an indicator is a net ending at a part
+  (`lamp-board`, `led-bank`), so a front end is one more part on those
+  nets, named in the board file, with the device models untouched.  A
+  model drives its pins; it does not report its indicators itself.  The
+  stock SCC68692 and 74x374 report nothing; the sinks report the
+  `indicator` records from the nets' levels.  mc683xx-board's net
+  observers would serve as well; the sinks were kept since the
+  decision has the indicators named in the board file.  On Unicorn the
+  models still report theirs through `crate::indicators`.
+
+`--panel` is the first such front end, a browser page rather than a
+GUI, since the project's views are browser views and `smartclock::http`
+already serves them (docs/emulator.md, "The panel page").  It reads the
+sinks' levels and the front panel part's display through the run loop,
+which publishes a copy for the server's threads, so neither the models
+nor the nets know it is there.  A key clicked is pressed where a
+script's is and traced as a `key` record a script replays, so a run
+with a page stays repeatable.
+
+The page's simulation controls (docs/emulator.md, "The controls") take
+the key's path: queued, applied at the end of a slice (or of a paced
+frame's quantum), traced as an
+`event` record that a script's `event` step replays.  A power cycle
+builds the board again from its file, as the run read it at its start,
+rather than resetting each part by hand, so that every part is at its
+own power-up as at the run's start;
+what is not the board's to lose (the EEPROM's file, the antenna, the
+warm-up's place, the oscillator crystal's aging and noise) is carried, and the run's clock, which scripts and
+records count, goes on while the chip's starts again.  The reset is
+the watchdog's own, since a reset from outside is a cold start to the
+firmware: mc683xx 0.3.0's `Board::reset_for(ResetCause::Watchdog)`,
+the software watchdog's reset given at once.  It replaced hanging the
+CPU until the watchdog fired, from when mc683xx gave a host no other
+way to that reset, which ended in a double bus fault when it came
+within a few hundred cycles of power-on.
+
+The page's console on the host port keeps `--host` as it was and sits
+beside it: one typist at a time, a TCP client while one is connected,
+else the page holding a writer lease its polls renew.  With `--panel`
+and neither `--host` nor `--script`, the page has the port, not the
+terminal: standard input and output leave it, so that nobody types at
+it beside the page.  Its lines take the keys' path, queued whole and
+put on the port at the end of a slice, and are traced as `console`
+records a script's `send` replays.
+
 ### The FPGA designs as netlists
 
 `tools/fpga/` decodes the XC3042 bitstreams through the XC3000 viewer

@@ -1,0 +1,343 @@
+# HP Z3817A main board, as its 3752 image drives it.
+#
+# Format, confidence key and doc names as z3805a.toml and
+# boards/README.md; z3817a-3752.md is docs/firmware/z3817a-3752.md.  No
+# board seen: every part is open.  The image is a Z3815A derivative
+# (z3817a-3752.md, "The base"), its map the second family's with no
+# switch word and no CS10, CS7 the boot code's write window at 0x306000
+# (read: chip-selects.md, "Z3817A 3752").  No GPS engine of its own: it
+# disciplines its oscillator to one of two time references, TIMEREF1
+# and TIMEREF2, each a pulse and an Oncore binary stream, PE7 selecting
+# one and PE5 a valid line (z3817a-3752.md, "The time references").  The
+# emulator has no Z3817A model: run it with `--board boards/z3817a.toml`
+# and another model's `--model` (docs/emulator.md, "The boards").  The
+# FPGA runs the Z3817A's own design (z3817a-trace.md); nothing drives
+# its P84, the design's second 1 PPS, which the firmware never selects.
+
+version = 1
+
+# schema: draft
+[board]
+name = "z3817a"
+title = "HP Z3817A"
+images = ["../third_party/firmware/images/z3817a-3752.bin"]      # read
+
+[chip]
+type = "mc68331"                                          # inferred: the image programs an MC68331's SIM, QSM and GPT
+reference_hz = 32768                                      # read: SYNCR 0xcf80 (0x245a8); open: the crystal
+# data: open -- as z3815a.toml, the first boot map leaves CSPAR unwritten
+autovector = []                                           # read: the primary's CS4 IACK is vectored, external DSACK (CSOR4 0x2bc4); the boot code's asks AVEC itself (CSOR4 0x7805)
+
+# ---------------------------------------------------------------- memory
+
+# schema: draft -- flash command cycles need a peripheral
+[[memory]]
+name = "flash"
+image = "../third_party/firmware/images/z3817a-3752.bin"  # read
+size = 0x80000                                            # read: CSBARBT 0x0006, 512 KiB
+attach = [
+  { select = "CSBOOT", role = "read" },                   # read: CSORBT 0x6870 (0x244f0; chip-selects.md)
+  { select = "CS6", role = "write" },                     # read: CSBAR6 0x0006, CSOR6 0x7070
+]
+# inferred: the Z3815A's installer byte for byte (z3817a-3752.md, "The
+# base"), so its flash; open: the part
+
+[[memory]]
+name = "ram"
+size = 0x10000                                            # read: CS0/2/3 64 KiB (restart.md, "The chip selects", "The RAM")
+writable = true
+attach = [
+  { select = "CS0", role = "read" },                      # read: CSBAR0 0x1003, CSOR0 0x6830
+  { select = "CS2", role = "write", lane = "upper" },       # read: CSOR2 0x5030
+  { select = "CS3", role = "write", lane = "lower" },       # read: CSOR3 0x3030
+]
+
+# ---------------------------------------------------------------- bus peripherals
+
+[[peripheral]]
+name = "duart"
+type = "mc68681"
+irq = 2                                                   # inferred: CS4 the level 2 IACK; PFPAR 0x04 at 0x245d0 makes PF2 IRQ2
+reset = ["power-on", "external"]                          # inferred: as z3805a.toml
+attach = [
+  { select = "CS8", lines = [1, 2, 3, 4], lane = "lower" },  # read: CSBAR8 0x2000, CSOR8 0x3bf0 (primary; the boot code's 0xb830 is synchronous, on ECLK); channel A set up at 0x2ddda (z3817a-3752.md, "The Oncore link")
+  { select = "CS4", role = "iack", lane = "lower" },      # read: CSBAR4 0xfff8, CSOR4 0x2bc4 (0x24540)
+]
+dsack = "DSACK1"                                        # inferred: DSACK1 alone gives a 16-bit port (MC68331UM 4.4.2, Table 4-12), the DUART on its lower lane, odd addresses; read: PEPAR 0x12 assigns DSACK1 and DS (0x245b8; z3817a-3752.md, "Layout and chip selects")
+marking = "68681-class"                                   # read: the 68681's registers; open: the part
+[peripheral.parameters]
+x1_hz = 3686400                                           # inferred: CSRA 0xbb with ACR 0xa0 9600 and CSRB 0xcc 19200 from the 68681's 3.6864 MHz table (z3817a-3752.md, "The Oncore link"); open: the crystal
+
+[[peripheral]]
+name = "latch"
+type = "74x374"                                           # inferred: as z3805a.toml
+attach = [
+  { select = "CS1", role = "write", lines = 0 },          # read: CSBAR1 0x3000, CSOR1 0x7030, 8-bit write; latch_bits_set 0x2364c writes 0x300000
+]
+# open: the part, and what its bits drive (no lamp named)
+
+[[peripheral]]
+name = "fpga"
+type = "xc3042"
+attach = [
+  { select = "CS5", lines = 3 },                          # read: CSBAR5 0x3040, CSOR5 0x7930, 8-bit, 4 wait; fpga_write 0x451c8 and fpga_read 0x451dc at 0x304000
+  { qspi = 0xc, mask = 0xf },                             # read: qspi_queue_setup (0x2f6d8) sends the loader's devices 12, 16 and 19 (0x2e6a6, 0x327d0, 0x32c6a) on code 0xc
+]
+marking = "XC3042"                                        # inferred: a 3860-byte XC3000 bitstream, as the others' (outputs.md); open: the board
+[peripheral.parameters]
+design = "z3817a"                                         # read: the design of z3817a.bit, a sixth one; bitstream at 0x2ffe4 (outputs.md, "The FPGA bitstreams"; z3817a-trace.md)
+
+[[peripheral]]
+name = "efc_strobe"
+type = "efc-strobe"                                       # inferred: the EFC DAC's load, as z3805a.toml
+attach = [
+  { select = "CS7", role = "write", lines = 0 },          # read: CSBAR7 0x3060, CSOR7 0x7070, 8-bit write; efc_write (0x2e67c) clears 0x306000 after QSPI device 5 (0x2e692), as the Z3805A's after its device 7
+]
+
+[[peripheral]]
+name = "eeprom"
+type = "at28c64b"
+attach = [
+  { select = "CS9", lines = 13 },                         # read: CSBAR9 0x4001, CSOR9 0x78f0
+]
+marking = "open"                                          # open: no photo
+[peripheral.parameters]
+image = "../third_party/firmware/images/eeprom/z3817a-3832A03064-eeprom.bin"  # board: the bench unit's dump
+write_cycle_us = 5000                                     # inferred: as z3805a.toml
+
+# ---------------------------------------------------------------- QSPI peripherals
+# qspi_queue_setup (0x2f6d8) takes devices 5 to 19, where the Z3805A's
+# takes 0 to 12; the codes below are its command bytes' PCS bits
+# (read).  Devices 15, 17 and 18 (codes 0xf, 0xc, 0xc) are set up and
+# 15 never sent; nothing is attached on 0xf.
+
+[[peripheral]]
+name = "adc"
+type = "adc0838"
+attach = [{ qspi = 0xa, mask = 0xf }]                     # read: device 10, adc_read 0x2e664 and qspi_adc_test 0x287ce, two 16-bit words, mode 0, divider 24, the first on code 0xe, the second, 0xe000 in the test, on code 0xa; inferred: an ADC0838 answering the second word as the Z3805A's its one (structures.md), the first's code selecting nothing
+[peripheral.parameters]
+vref_volts = 5.0                                          # inferred: as z3805a.toml
+noise_volts = 0.0068359375                                # inferred: as z3805a.toml
+
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+[[peripheral]]
+name = "efc_shift"
+type = "efc-shift-register"                               # inferred: sixteen stages shifting on SCK's fall, its last on MISO: the self-test shifts its reading right once (0x288c4), which a chain shifting on the rise, the Z3805A's 74HC164s, would fail; open: the parts
+attach = [{ qspi = 5, mask = 0xf }]                       # read: device 5, one 16-bit word, mode 2 to write and 3 to read, divider 4, code 5 (0x2f8b2), where the Z3805A's writes in mode 3 and reads in mode 2; efc_write 0x2e684, qspi_efc_test 0x288a4
+parameters = { initial = 0x8000 }                         # inferred: as z3805a.toml
+
+[[peripheral]]
+name = "efc_dac"
+type = "ad569"
+# inferred: initial 0x8000, mid-scale, as z3805a.toml
+parameters = { cs = "low", hbe = "low", ldac = "low", vref_negative_volts = -5.0, vref_positive_volts = 5.0, initial = 0x8000 }  # inferred: as z3805a.toml (efc.md; item 27)
+
+# read: no hex DAC: no device sends three 12-bit words, and the
+# interpolator its trims would set is gone (z3817a-3752.md, "How it
+# differs from the Z3815A")
+
+# ---------------------------------------------------------------- beside the bus
+
+[[peripheral]]
+name = "ocxo"
+type = "ocxo"
+[peripheral.parameters]
+hz = 10_000_000                                           # read: counter_read 0x45810, count x 100 ns (z3817a-3752.md, "How it differs from the Z3815A"); open: the part
+efc_vref_negative = -5.0                                  # inferred: as efc_dac's vref_negative_volts
+efc_vref_positive = 5.0                                   # inferred: as efc_dac's vref_positive_volts
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+
+[[peripheral]]
+name = "osc_link"
+type = "efc-monitor"                                      # read: the oscillator of kind 0 (EEPROM 0x40009c) reports its EFC reading on DUART channel B, 0x55, 24 bits, a byte, a sum; ten seconds without one fails the unit, "osc code: 1" (0x3374c, 0x4d4b0; z3817a-3752.md, "The board as the image drives it"); open: the part
+[peripheral.parameters]
+counts_per_efc = 16.24465560913086                        # board: the bench unit's a/d calibration, EEPROM 0x40008c (0x41892)
+efc_vref_negative = -5.0                                  # inferred: as efc_dac's vref_negative_volts
+efc_vref_positive = 5.0                                   # inferred: as efc_dac's vref_positive_volts
+baud = 19200                                              # read: CSRB 0xcc (0x2ddda)
+period_seconds = 1                                        # inferred: within the ten seconds the firmware allows
+ready_seconds = 784                                       # read: the status byte's bit 0 the ready bit (0x33542) power-up's warm-up waits for (0x31e16); emulated: 784 puts the log's "GPS lock started" at 00:14:11 on the bench's feed, where the bench unit's log has it (z3817a-3752.md, "The warm-up"); open: the oscillator's warm-up
+
+[[peripheral]]
+name = "supplies"
+type = "supply-monitor"                                   # read: the ADC's only channels are supplies, 1 to 5 (0x32498); open: the dividers
+[peripheral.parameters]
+adc_vref_volts = 5.0                                      # inferred: as adc's vref_volts
+
+# The selected reference's Oncore stream on DUART channel A: an engine
+# a 58503A configured, which the module cannot command (gps.md, "Which
+# engines each image accepts"), deaf, fixing from power-up and sending
+# `@@Ea`, `@@En` and `@@Bb` unasked as that configuration has it; it
+# also hears what the module transmits (`expect-gps`).  The bench unit
+# was fed nothing on RXD on 2026-11-09 (z3817a-3752.md, "Two ways to a
+# good reference"), which is the engine without `saved`
+# (docs/emulator.md, "The synthetic GPS engine").
+[[peripheral]]
+name = "gps"
+type = "oncore"
+[peripheral.parameters]
+protocol = "motorola-binary"                              # read: the 58503A 3704's message table at 0x575d8 (z3817a-3752.md, "The Oncore link")
+engine = "b4121-no-time-raim"                             # read: eight-channel @@Ea, @@Ek, @@En in the table; open: the references' engines, and Time RAIM, never asked, as the module sends nothing (z3817a-3752.md, "What it sends")
+answers = false                                           # read: the image refuses every engine request internally and sends its engine nothing (gps.md, "Which engines each image accepts")
+saved = "58503a"                                          # inferred: an engine a 58503A configured (smartclock-gps, CONFIGURATION_58503A); the bench's 2026-11-09 feed had nothing on RXD
+
+[[peripheral]]
+name = "timeref"
+type = "timeref-selector"                                 # read: PE7 the selector, PE5 the valid line, the pulse on PAI (z3817a-3752.md, "The time references"); open: the parts
+[peripheral.parameters]
+timeref1 = "none"                                         # board: nothing on TIMEREF1, 2026-11-09
+timeref1_valid = false                                    # board: as timeref1
+timeref2 = "1pps"                                         # board: a 1 PPS on TIMEREF2, 2026-11-09
+timeref2_valid = true                                     # board: VALID asserted on TIMEREF2, 2026-11-09; inferred: high asserted, PE5 steady high validating the external record
+select_high = 1                                           # inferred: the byte 0 with PE7 high TIMEREF1 (z3817a-3752.md, "TIMEREF1 or TIMEREF2: PE7"); emulated: as the bench unit's log has it ("Emulated"); open on the board (hardware-investigations.md, item 29)
+
+# ---------------------------------------------------------------- nets
+
+[[net]]
+name = "gps-to-duart"
+type = "serial"
+from = "gps.tx"
+to = ["duart.RxDA"]                                        # read: channel A the Oncore port (z3817a-3752.md, "The Oncore link"); open: whether the selector switches it
+
+[[net]]
+name = "duart-to-gps"
+type = "serial"
+from = "duart.TxDA"
+to = ["gps.rx"]                                           # read: drta_send_message 0x2d1aa; open: whether it reaches the connector (z3817a-3752.md, "Not established")
+
+[[net]]
+name = "reference-pulse"
+type = "edge"
+from = "timeref.pulse"
+to = ["fpga.P82", "chip.PAI"]                             # read: gps_pps_check 0x33d08 counts it on PAI, PACTL 0x50; P82 the design's start with register 4's bit 0 clear, as the firmware leaves it (z3817a-trace.md); inferred: the selected reference reaches P82; open: the board
+
+[[net]]
+name = "reference-valid"
+type = "logic"
+from = "timeref.valid"
+to = ["chip.PE5"]                                         # read: gps_alternate_status 0x51d64, porte_read_steady(0x20); DDRE 0xc0 leaves PE5 an input
+
+[[net]]
+name = "reference-select"
+type = "logic"
+from = "chip.PE7"
+to = ["timeref.select"]                                   # read: 0x4d430 toggles PE7, 0x4d46e sets it from pll + 0x4b; DDRE 0xc0 makes it an output
+
+[[net]]
+name = "ten-megahertz"
+type = "clock"
+from = "ocxo.out"
+to = ["fpga.P7"]                                          # read: P7 the design's GCLK, divided by 10,000,000 to its 1 PPS (z3817a-trace.md); open: the board
+
+[[net]]
+name = "fpga-pps"
+type = "edge"
+from = "fpga.pps"
+to = ["chip.PGP0"]                                        # inferred: IC1, as the others'; open
+
+[[net]]
+name = "fpga-init"
+type = "logic"
+from = "fpga.INIT"
+to = ["chip.PCLK"]                                        # inferred: the loader as the Z3805A's (0x326c0, its fpga_program); open
+
+# schema: draft
+[[net]]
+name = "fpga-done"
+type = "wired-and"
+from = ["fpga.DONE", "chip.PF3"]
+to = ["chip.PF3", "fpga.DONE"]                           # inferred: as the Z3805A's; read: DDRF 0xf7 leaves PF3 an input (0x245d8)
+
+[[net]]
+name = "fpga-program"
+type = "logic"
+from = "chip.PE6"
+to = ["fpga.RESET"]                                       # read: PE6 the FPGA's PROGRAM (fpga_program 0x326c0; z3817a-3752.md, "Layout and chip selects"); inferred: the part's RESET
+
+[[net]]
+name = "fpga-readback"
+type = "logic"
+from = "chip.PF6"
+to = ["fpga.M0"]                                          # inferred: FPGA_READBACK_FIRST, PF6, as the Z3805A's loader; read: DDRF 0xf7 makes it an output
+
+[[net]]
+name = "efc-word"
+type = "bus"
+from = "efc_shift.Q"
+to = ["efc_dac.DB"]                                       # inferred: as z3805a.toml
+
+[[net]]
+name = "efc-load"
+type = "logic"
+from = "efc_strobe.out"
+to = ["efc_dac.LBE"]                                      # inferred: as z3805a.toml
+
+[[net]]
+name = "efc"
+type = "analog"
+from = "efc_dac.VOUT"
+to = ["ocxo.efc", "osc_link.efc"]                         # inferred; read: the oscillator reports the EFC it reads (0x3355e)
+
+[[net]]
+name = "adc-5v"
+type = "analog"
+from = "supplies.plus_5v"
+to = ["adc.CH1"]                                          # read: channel 1 5V, 4.5 to 5.5, x 0.0242 (0x32498, 0x31e56)
+
+[[net]]
+name = "adc-plus-15v"
+type = "analog"
+from = "supplies.plus_15v"
+to = ["adc.CH2"]                                          # read: channel 2 15V, 13.5 to 17.5, x 0.0763 (0x31ed2)
+
+[[net]]
+name = "adc-minus-15v"
+type = "analog"
+from = "supplies.minus_15v"
+to = ["adc.CH3"]                                          # read: channel 3 -15V, -17.5 to -13.5 (0x31eec)
+
+[[net]]
+name = "adc-plus-12v-b"
+type = "analog"
+from = "supplies.plus_12v_b"
+to = ["adc.CH4"]                                          # read: channel 4 12B, 11 to 13, x 0.0763 (0x31e70)
+
+[[net]]
+name = "adc-minus-12v-b"
+type = "analog"
+from = "supplies.minus_12v_b"
+to = ["adc.CH5"]                                          # read: channel 5 -12B, -13 to -11, x 0.0438 less channel 1 x 0.084 (0x31e8a)
+# read: channels 0, 6 and 7 have no entry; no oven or temperature
+# channel.  adc_read (0x2e614) sends channel n's own pin, where the
+# Z3805A's sends 2 x (n & 3) + (n >> 2)
+
+[[net]]
+name = "oscillator-report"
+type = "serial"
+from = "osc_link.tx"
+to = ["duart.RxDB"]                                        # read: drtb_get_byte frames the oscillator's reports (0x3374c; z3817a-3752.md, "The board as the image drives it")
+
+# ---------------------------------------------------------------- run-time endpoints
+# external.host: the SCI, device 0 of the I/O table (sciR, sciW; read:
+# z3817a-3752.md, "How it differs from the Z3815A"), the image's one
+# serial device beside the QSPI.  DUART channel B at 19200 is the
+# oscillator's link, above; what the firmware sends on it, if anything,
+# goes to the endpoint port_b.
+
+[[net]]
+name = "host-in"
+type = "serial"
+from = "external.host"
+to = ["chip.RXD"]                                         # read: the SCI, device 0; open: whether SCPI or the console (z3817a-3752.md, "Not established")
+
+[[net]]
+name = "host-out"
+type = "serial"
+from = "chip.TXD"
+to = ["external.host"]                                    # read: as host-in
+
+[[net]]
+name = "port-b-out"
+type = "serial"
+from = "duart.TxDB"
+to = ["external.port_b"]                                  # open: what it carries

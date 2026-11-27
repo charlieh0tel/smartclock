@@ -17,7 +17,8 @@ The data, one JSON object:
     images   one entry an image, in the tables' order (below)
     eeproms  every EEPROM held: file, in third_party/firmware/images/
              eeprom/, and image, the image whose rules decode it, its
-             unit's
+             unit's; synthetic, true for one the project made rather
+             than read from a unit, listed but decoded for no table
 
 An image's entry: image, model and firmware, as loop-constants.json's;
 rule, how its G is set (below); values, {name: {value, unit, rom}}, the
@@ -251,7 +252,7 @@ def held(data, entry, faults, link):
     """The cell for the EEPROMs whose unit runs entry's image."""
     results = []
     for eeprom in data['eeproms']:
-        if eeprom['image'] != entry['image']:
+        if eeprom['image'] != entry['image'] or eeprom.get('synthetic'):
             continue
         decoder = DECODERS.get(entry['rule'])
         if decoder is None:

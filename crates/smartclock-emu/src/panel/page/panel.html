@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartClock Panel</title>
+<!--
+  smartclock-emu's panel page (docs/emulator.md, "The panel page"):
+  its style is panel.css, its drawings drawings.js, the display's font
+  font.json, and its script panel.js, all built into the binary.  The
+  drawings are our own, drawn from photographs of the bench units, not
+  HP's artwork.  The display's font is HP's own, which segments light
+  for each character, from the sources cited at FONT in panel.js.
+-->
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<main>
+  <div id="panel" role="img" aria-label="The receiver's front panel"></div>
+  <div class="status">
+    <span id="link">connecting</span>
+    <span>cycle <b id="cycle">-</b></span>
+    <span>run time <b id="seconds">-</b> s</span>
+    <span>board LEDs</span>
+    <span class="board-leds" id="board-leds"></span>
+  </div>
+  <div class="controls" role="group" aria-label="Simulation controls, not the instrument's">
+    <span class="heading">simulation</span>
+    <button type="button" id="antenna" hidden>disconnect antenna</button>
+    <button type="button" id="skip-warm-up" hidden>skip warm-up</button>
+    <button type="button" id="power-cycle" hidden>power cycle</button>
+    <button type="button" id="reset" hidden>reset</button>
+  </div>
+  <section class="console" aria-label="Console on the host port">
+    <div class="who" id="console-who">host port: connecting</div>
+    <pre id="console-output" aria-live="polite"></pre>
+    <div class="quick" id="console-quick" role="group" aria-label="Lines to send"></div>
+    <form id="console-form" autocomplete="off">
+      <input id="console-input" type="text" spellcheck="false"
+             aria-label="A line for the host port" disabled>
+    </form>
+  </section>
+</main>
+<script src="drawings.js"></script>
+<script src="panel.js"></script>
+</body>
+</html>

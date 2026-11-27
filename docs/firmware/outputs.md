@@ -397,6 +397,7 @@ two steps are:
 | ---- | ----- | ------ | ---------- |
 | `netdump.js` (`netdump.sh` runs it with node, or in headless Chrome through `netdump.html`) | a bitstream, through the viewer's decoder | the design as JSON | `make check-fpga-decoder`, `make check-fpga-xapp`; `check-decoder-upstream`, the same netlists at upstream pull request #3 |
 | `netlist.py` | that JSON | structural Verilog over `xc3000.v` | `make -f tools/fpga/Makefile check` |
+| `lcanet.py` | that JSON and its bitstream | the netlist the emulator's LCA model runs, `xc3000.v`'s options a line a block (`fpga-codegen.md`) | `check-lca`, part of `check`, against `crates/smartclock-emu/src/board/fpga/<image>.netlist` |
 | `xc3000.v` | | models of the logic block, I/O block, clock buffer and 3-state buffer | the testbenches |
 | `<image>_tb.v`, run under `vvp` | the netlist | the readings, and with `+vcd=FILE` a VCD of the bench, its pins and internal nets | `check` (the read port, `tools/fpga/ref/<image>.readout`), `check-readings` (the long runs) |
 | Icarus Verilog `-Wall`, Yosys `check` | the netlist and its testbench | warnings, and the combinational loops by the nets they pass through | `check` (`tools/fpga/ref/<image>.structure`) |
@@ -551,8 +552,18 @@ Makefile's `READ_` lines (`time make` for how long one takes).
 `tools/fpga/z3805a_stimulus.v` runs the Z3805A's netlist from a
 stimulus file instead, register writes and reads, GPS 1 PPS edges and
 the interpolator's byte at given times, printing each read, each rise
-of P83 and each pulse of AH.Y.  `check-readings-z3805a.sync_3_late`
-runs it on `tools/fpga/z3805a.sync_3_late.stim`.
+of P83 and each pulse of AH.Y; its body, the file, the bus and what it
+prints, is `tools/fpga/stimulus.vh`, which each image's
+`<image>_stimulus.v` includes with its own pins, clocks and interval
+net.  `tools/fpga/differential.py` writes the emulator's cases as such
+files, in the emulator's board time, runs them and writes the fixture
+the emulator's differential tests replay through its models
+(`../emulator.md`, "The interval counter"), one an image,
+`crates/smartclock-emu/src/board/fpga/<image>.fixture` (`--images`
+lists them); `make -f tools/fpga/Makefile check-differential` runs each
+case as a target of its own, so that `-j` sets how many run at once,
+and diffs each fixture with the committed one,
+`check-differential-<image>` one image's.
 
 The netlist is kept generated, in `target/`, not committed: it is the
 vendor's design re-expressed, and making it needs the viewer, which

@@ -1105,7 +1105,9 @@ writes structural Verilog over our own models of the data sheet
 so it is never copied into the project; the tools load it from the
 clone `tools/fpga/Makefile` makes at the pinned commit
 (`tools/fpga/decoder.mk`); `netdump.js` corrects the viewer's faults.  The netlist
-stays generated, in `target/`, since it needs the viewer to make.
+stays generated, in `target/`, since it needs the viewer to make; the
+emulator's copy, which it cannot make, is checked in and diffed
+(`check-lca`).
 
 The decoder is held to XACT itself, not to what the firmware expects:
 XACT 6.0.1 runs headless in DOSBox-X (`tools/fpga/xact/`), and each
@@ -1126,8 +1128,10 @@ in firmware CI, and
 measuring the internal nets the docs quote, model hazards under 5 ns
 removed.  The long runs take minutes a simulated second, so `check-readings` is outside
 `check` and CI; it is run by hand when a testbench, the models, the
-netlist generator or the decoder pin change.
-
+netlist generator or the decoder pin change.  It checks the docs'
+figures alone: the emulator's differential fixture, which the
+emulator's test reads, is `check-differential`'s, so that a change to
+the emulator never touches the docs' check, nor the reverse.
 `check-decoder-upstream` decodes every design again at the viewer's
 upstream pull request #3 and requires the same netlists; it needs the
 network, so it too is run by hand, when `netdump.js` or the pin

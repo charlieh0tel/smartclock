@@ -353,6 +353,8 @@ repository root:
     make check-fpga-decoder               # the decoder against XACT's test designs
     make -f tools/fpga/Makefile check-decoder-upstream  # the six decodes at upstream PR #3
     make -j16 -f tools/fpga/Makefile check-readings      # the long runs
+    make -j16 -f tools/fpga/Makefile check-differential  # the emulator's differential fixtures
+    make -f tools/fpga/Makefile check-lca                # the emulator's LCA netlists
     cargo test -p smartclock-cli --test fpga_bitstreams   # the bitstreams' offsets, hashes, differences
 
 `make -f tools/fpga/Makefile <image>` and `check` run each testbench's
@@ -365,7 +367,8 @@ diagnostics (`.structure`), the viewer's pad tables (`pins.txt`) and
 the 58503A/Z3801A's logic and I/O blocks against the Z3805A's
 (`58503a-z3801a.tilediff`), the 58503B's blocks the trace pairs with
 the Z3805A's and the 58503A's, and the Z3817A's with the Z3805A's, as
-functions (`check-blocks`, `tools/fpga/*.match`), that the explainer
+functions (`check-blocks`, `tools/fpga/*.match`), the netlists the
+emulator's LCA model runs (`check-lca`), that the explainer
 page renders from the references and figures (`check-explainer`), and
 that the detail page renders from the decodes, every pin in use with a
 role, every output an element's, every section cited a heading of its
@@ -377,8 +380,11 @@ waits on the divider: the 1 PPS periods, the readings, the taps, the
 sync steps, P19, P38 and P40.  `check-readings` runs them all, each trace naming its runs as
 `check-readings-<image>.<run>` (the flags are the Makefile's `READ_`
 lines), with the nets `tools/fpga/probe.v` measures, and diffs each
-run's output against `tools/fpga/ref/<image>.<run>.readings`.  It is
-not part of `check` or CI, and wants `-j`: it is run by hand, whenever a testbench, the models
+run's output against `tools/fpga/ref/<image>.<run>.readings`.  It
+checks the docs' figures alone; `check-differential` regenerates the
+emulator's differential fixtures, one an image (`tools/fpga/differential.py`),
+and diffs each with the committed one.  Neither is part of `check` or CI, and
+both want `-j`: they are run by hand, whenever a testbench, the models
 (`xc3000.v`, `probe.v`), the netlist generator or the decoder pin
 changes, and before a doc quotes a new figure.  `time make` gives how long it takes on a machine.  `check-decoder-upstream` is run by hand
 too, when `netdump.js` or the pin changes: it needs the network for its

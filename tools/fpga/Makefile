@@ -8,6 +8,8 @@
 #     make -f tools/fpga/Makefile detail       # the detailed diagrams page from the decodes
 #     make -f tools/fpga/Makefile check        # rebuild all images, fail on drift
 #     make -j16 -f tools/fpga/Makefile check-readings      # the long runs
+#     make -j16 -f tools/fpga/Makefile check-differential  # the emulator's fixtures
+#     make -f tools/fpga/Makefile check-lca     # the emulator's LCA netlists
 #     make -f tools/fpga/Makefile check-decoder-upstream  # the decodes at upstream PR #3
 #
 # A receiver is an image with a bitstream at $(BITDIR)/<image>.bit and a
@@ -70,12 +72,12 @@ DECODE_TOOLS := $(HERE)/netdump.js $(HERE)/netdump.sh $(HERE)/netdump.html $(HER
   $(HERE)/decoder.mk $(VIEWER_STAMP)
 MODELS       := $(HERE)/xc3000.v $(HERE)/probe.v
 
-.PHONY: all figures check check-viewer check-pins check-tiles check-readings \
-  check-blocks check-explainer check-detail check-decoder-upstream explainer detail decodes clean FORCE \
+.PHONY: all figures check check-viewer check-pins check-tiles check-readings check-differential \
+  check-blocks check-lca check-explainer check-detail check-decoder-upstream explainer detail decodes clean FORCE \
   $(IMAGES)
-.PRECIOUS: $(OUT)/%.json $(UPSTREAM)/%.json $(OUT)/%.v $(OUT)/%_tb $(OUT)/%.vcd $(OUT)/%.readout $(OUT)/%.structure \
+.PRECIOUS: $(OUT)/%.json $(UPSTREAM)/%.json $(OUT)/%.v $(OUT)/%_tb $(OUT)/%_stimulus $(OUT)/%.vcd $(OUT)/%.readout $(OUT)/%.structure \
   $(OUT)/readings/%.readings $(OUT)/runs/%.vcd \
-  $(OUT)/%.flags $(OUT)/readings/%.flags
+  $(OUT)/%.flags $(OUT)/readings/%.flags $(OUT)/differential/%.case $(OUT)/%.netlist
 .DELETE_ON_ERROR:
 .SECONDEXPANSION:
 
@@ -190,7 +192,7 @@ $(OUT)/%.structure: $(OUT)/%.v $(MODELS) $(HERE)/%_tb.v
 	   | sed -n 's/^Warning: //p; s/^ *wire \(\S*\).*/  through \1/p'; } > $@
 	@rm -f $@.iverilog $@.yosys
 
-check: check-viewer $(addprefix check-,$(IMAGES)) check-pins check-tiles check-blocks check-explainer check-detail
+check: check-viewer $(addprefix check-,$(IMAGES)) check-pins check-tiles check-blocks check-lca check-explainer check-detail
 
 # The viewer's clone at the pin with no local change, on every check
 # (decoder.mk), not only when its stamp is made.
@@ -372,8 +374,7 @@ READ_z3817a.sync1       := +seconds=2 +sync=1
 READ_z3817a.sync2       := +seconds=2 +sync=2
 READ_z3817a.sync3       := +seconds=2 +sync=3
 READINGS := $(patsubst READ_%,%,$(filter READ_%,$(.VARIABLES)))
-# The runs on a stimulus file, tools/fpga/<run>.stim, instead of a
-# testbench's flags.
+# The runs on differential.py's stimulus instead of a testbench's flags.
 STIMULUS_READINGS := z3805a.sync_3_late
 reading_image = $(firstword $(subst ., ,$(1)))
 
@@ -390,15 +391,60 @@ $(OUT)/readings/%.readings: $(OUT)/$$(call reading_image,$$*)_tb $(OUT)/readings
 check-readings-%: $(OUT)/readings/%.readings
 	@diff -u $(HERE)/ref/$*.readings $< && echo "check-readings $*: matches reference"
 
-# The Z3805A's netlist under a stimulus file (z3805a_stimulus.v).
-$(OUT)/z3805a_stimulus: $(OUT)/z3805a.v $(MODELS) $(HERE)/z3805a_stimulus.v
-	iverilog -g2005 -Wall -o $@ $(MODELS) $< $(HERE)/z3805a_stimulus.v
+# An image's netlist under differential.py's stimulus (<image>_stimulus.v,
+# its body stimulus.vh).
+STIMULUS := $(HERE)/stimulus.vh $(HERE)/differential.py
+
+$(OUT)/%_stimulus: $(OUT)/%.v $(MODELS) $(HERE)/%_stimulus.v $(HERE)/stimulus.vh
+	iverilog -g2005 -Wall -I $(HERE) -o $@ $(MODELS) $< $(HERE)/$*_stimulus.v
 
 # The full sync the internal 1 PPS comes before, with the divider probed.
-$(OUT)/readings/z3805a.sync_3_late.readings: $(OUT)/z3805a_stimulus $(HERE)/z3805a.sync_3_late.stim
+$(OUT)/readings/z3805a.sync_3_late.readings: $(OUT)/z3805a_stimulus $(STIMULUS)
 	@mkdir -p $(dir $@)
-	vvp -n $< +stimulus=$(HERE)/z3805a.sync_3_late.stim +probe \
+	python3 -I $(HERE)/differential.py --stimulus sync_3_late > $(OUT)/readings/sync_3_late.stim
+	vvp -n $(OUT)/z3805a_stimulus +stimulus=$(OUT)/readings/sync_3_late.stim +probe \
 	  | grep -v '\$$finish called' > $@
+
+# The emulator's differential fixtures, each regenerated from its image's
+# netlist and diffed with the committed one, which the emulator's tests
+# read: each case a target, $(OUT)/differential/<image>/<case>.case, so
+# that -j runs them side by side.  differential.py names the images and
+# their fixtures.
+DIFFERENTIAL_IMAGES := $(shell python3 -I $(HERE)/differential.py --images | cut -d' ' -f1)
+differential_fixture = $(shell python3 -I $(HERE)/differential.py --images | sed -n 's/^$(1) //p')
+differential_cases = $(shell python3 -I $(HERE)/differential.py --image $(1) --list)
+differential_image = $(firstword $(subst /, ,$(1)))
+
+$(OUT)/differential/%.case: $(OUT)/$$(call differential_image,$$*)_stimulus $(STIMULUS)
+	@mkdir -p $(dir $@)
+	python3 -I $(HERE)/differential.py --image $(call differential_image,$*) \
+	  --netlist $(OUT)/$(call differential_image,$*).v --binary $< \
+	  --built --jobs 1 --only $(notdir $*) $@
+
+$(OUT)/differential/%.fixture: \
+  $$(addprefix $(OUT)/differential/$$*/,$$(addsuffix .case,$$(call differential_cases,$$*)))
+	cat $^ > $@
+
+check-differential: $(addprefix check-differential-,$(DIFFERENTIAL_IMAGES))
+
+check-differential-%: $(OUT)/differential/%.fixture
+	@diff -u $(call differential_fixture,$*) $< \
+	  && echo "check-differential $*: the emulator's fixture matches"
+
+# The netlists the emulator's LCA model executes (lcanet.py), each
+# regenerated from its bitstream's decode and diffed with the one the
+# emulator's crate carries, as the differential fixture is: the emulator
+# reads no decoder, so these are its only route to the bitstream's logic.
+LCA_IMAGES := z3805a 58503a-z3801a 58503b z3815a z3816a z3817a
+LCA_DIR    := crates/smartclock-emu/src/board/fpga
+
+$(OUT)/%.netlist: $(OUT)/%.json $(HERE)/lcanet.py $(BITDIR)/%.bit
+	python3 -I $(HERE)/lcanet.py $< --bitstream $(BITDIR)/$*.bit > $@
+
+check-lca: $(addprefix check-lca-,$(LCA_IMAGES))
+
+check-lca-%: $(OUT)/%.netlist
+	@diff -u $(LCA_DIR)/$*.netlist $< && echo "check-lca $*: the emulator's netlist matches"
 
 FORCE:
 

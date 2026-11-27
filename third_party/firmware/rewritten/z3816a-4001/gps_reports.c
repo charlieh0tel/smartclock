@@ -850,8 +850,9 @@ void gps_print_instrument_state(void) {
   if (!vp) {
     console_write("\r\n");
   } else {
-    printf("DCXO FREQ  Offs %d  Warp %d  Step %d\r\n", (uint32_t)gps.field_566,
-           (uint32_t)gps.field_568, (uint32_t)gps.field_56a);
+    printf("DCXO FREQ  Offs %d  Warp %d  Step %d\r\n",
+           (uint32_t)gps.dcxo_drift_reference, (uint32_t)gps.dcxo_setting,
+           (uint32_t)gps.dcxo_hz_per_step);
   }
 }
 

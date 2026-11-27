@@ -1137,8 +1137,8 @@ typedef enum __attribute__((packed)) gps_request_code {
   GPS_REQUEST_SELFTEST_8 = 0x36,               /* @@Fa, eight channels' @@Ca */
   GPS_REQUEST_LEAP_SECOND_STATUS = 0x37,       /* @@Gj */
   GPS_REQUEST_POWER_ON_FAILURE = 0x38,         /* @@Sz */
-  GPS_REQUEST_TA = 0x39,                       /* @@Ta, which neither manual
-                                                  names */
+  GPS_REQUEST_DCXO =
+      0x39, /* @@Ta, the engine's DCXO record, which neither manual names */
   GPS_REQUEST_POSITION_STATUS_8_SECOND = 0x3a, /* @@Ea again, without a decoder
                                                   or a filter */
   GPS_REQUEST_SELFTEST_SECOND = 0x3b,          /* @@Ca again, its filter
@@ -2126,12 +2126,14 @@ typedef struct gps_state {
   uint8_t receiver_id_received;   /* +0x450: set by @@Cj's decoder */
   oncore_receiver_id receiver_id; /* +0x451: @@Cj, whose fields gps_print_id
                                      prints from +0x451 to +0x54b */
-  uint16_t field_566; /* :DIAGnostic:GPSystem:DCXO? and the instrument state
-                         page print it, with the next two */
-  uint8_t field_568;
+  uint16_t dcxo_drift_reference;  /* @@Ta: the engine's drift reference, Hz at
+                                     L1; :DIAGnostic:GPSystem:DCXO? and the
+                                     instrument state page print the three as
+                                     Offs, Warp and Step (0x3ad80, 0x4f07e) */
+  uint8_t dcxo_setting;           /* @@Ta: the DCXO's setting */
   uint8_t field_569;
-  uint16_t field_56a;
-  uint8_t field_56c; /* gps_init clears it */
+  uint16_t dcxo_hz_per_step; /* @@Ta: Hz at L1 per step of the setting */
+  uint8_t field_56c;         /* gps_init clears it */
   uint8_t field_56d;
   uint32_t average_count;             /* +0x56e: positions averaged */
   double average_latitude;            /* +0x572: of @@Ba's, while surveying */

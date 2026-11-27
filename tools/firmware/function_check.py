@@ -4305,7 +4305,7 @@ IMAGE_GIVEN_CASES = {
         # a DCXO reading there, its readings all zero and its last not,
         # which the status register's paths reach no other way
         "scpi_query_DIAGnostic_GPSystem_DCXO": [
-            {PRESETS: {"gps.field_608": GPS_SIGNAL_SS_58503B, "gps.field_56a": last}} for last in (0, 1)
+            {PRESETS: {"gps.field_608": GPS_SIGNAL_SS_58503B, "gps.dcxo_hz_per_step": last}} for last in (0, 1)
         ],
     },
     # the Z3805A 1.01.03's console, the SCPI session's line on channel B,

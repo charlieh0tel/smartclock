@@ -1115,7 +1115,7 @@ typedef enum __attribute__((packed)) gps_request_code {
     GPS_REQUEST_SELFTEST_8=54,
     GPS_REQUEST_LEAP_SECOND_STATUS=55,
     GPS_REQUEST_POWER_ON_FAILURE=56,
-    GPS_REQUEST_TA=57,
+    GPS_REQUEST_DCXO=57,
     GPS_REQUEST_POSITION_STATUS_8_SECOND=58,
     GPS_REQUEST_SELFTEST_SECOND=59,
     GPS_REQUEST_SELFTEST_8_SECOND=60,
@@ -1670,10 +1670,10 @@ struct gps_state {
     uint8_t field_44f;
     uint8_t receiver_id_received;
     struct oncore_receiver_id receiver_id;
-    uint16_t field_566;
-    uint8_t field_568;
+    uint16_t dcxo_drift_reference;
+    uint8_t dcxo_setting;
     uint8_t field_569;
-    uint16_t field_56a;
+    uint16_t dcxo_hz_per_step;
     uint8_t field_56c;
     uint8_t field_56d;
     uint32_t average_count;

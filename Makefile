@@ -411,10 +411,17 @@ $(FIRMWARE_TARGETS):
 EMULATOR = $(CARGO) $(1) -p smartclock-emu $(2)
 EMULATOR_PROFILE ?= dev
 EMULATOR_EEPROM ?= target/smartclock-emu/z3805a-3625A01487-eeprom.bin
-.PHONY: emulator emulate
+.PHONY: emulator emulator-slow emulate
 emulator:
 	$(call EMULATOR,clippy) --all-targets -- -D warnings
 	$(call EMULATOR,test) --profile $(EMULATOR_PROFILE)
+
+# The emulator's tests too slow for every `cargo test`, ignored there:
+# the temporary holdovers, 520 s of board time each (docs/emulator.md,
+# "The oscillator the EEPROM describes").  firmware.yml's emulator job
+# runs them in the checked profile, as it runs the rest.
+emulator-slow:
+	$(call EMULATOR,test) --profile $(EMULATOR_PROFILE) --test temporary_holdover -- --ignored
 
 emulate:
 	$(call EMULATOR,run) -- third_party/firmware/images/z3805a-3543b.bin \

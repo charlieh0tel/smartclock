@@ -24,9 +24,9 @@ so a line between two parts is followed with a meter, not by eye.
 
 ## Working on the open Z3805A board
 
-The procedures under items 13, 20, 21 and 23 are written for the bench
-Z3805A (Z3805-68001, `board-atlas.html`) with the power off, with an
-ohmmeter.  The photos they call for are in `bench.md`, "Photos still
+The procedures under items 13, 20, 21, 23 and 28 are written for the
+bench Z3805A (Z3805-68001, `board-atlas.html`) with the power off,
+with an ohmmeter.  The photos they call for are in `bench.md`, "Photos still
 wanted".  These rules hold for all of them, and for items 24 to 26 on
 the bench 58503A (58503-60001 Rev C), with that board's parts as item
 24 places them.
@@ -1853,3 +1853,77 @@ are tied.  On the Z3805A and 58503A the parts are not yet found.
 
 *Changes:* `efc.md` drops *inferred* where the bench settles it, and
 `firmware/restart.md`'s `0x306000` row gets its device.
+
+## 28. What implements the interpolator
+
+*Open item:* which parts make the interpolator's byte.  Everything
+below past the FPGA's own logic is *inferred*, from the firmware, the
+FPGA's decoded design and two photos; none of it is traced.
+
+The FPGA counts whole 10 MHz clock ticks only.  In the 10 MHz designs
+(the 585xx's and the Z3805A's) the fraction of a tick comes from
+outside: the firmware reads an external interpolator's byte, which
+enters the FPGA on P3 to P6 and P8 to P11 and reads back at `0x10`
+and `0x11` complemented (`firmware/z3805a-trace.md`, "Register
+port"; `firmware/counter.md`, "The interpolator's calibration").
+Status bits 2 and 3 are that byte's P5 and P6 inputs again, not flags
+of their own.  The pulse it measures leaves on P81: AH.Y inverted,
+the start's pulse, Low on the pin (`firmware/z3805a-trace.md`, "Other
+outputs").
+
+The candidate, *inferred*: U36, a TI TLC0820AC, an 8-bit half-flash
+A/D converter with a parallel output in a PLCC-20, sits against the FPGA, and
+nothing in the firmware's QSPI devices or chip selects reads it
+(`board-atlas.html`).  Its D0 to D7 presumably drive P3 to P6 and P8
+to P11, which would explain why no chip select reaches it.  Beside it
+are Q2, U40 (a 78L12, a local +12 V) and U37, the MC144110 hex 6-bit
+DAC already inferred to trim the counter (item 23;
+`firmware/structures.md`, "The QSPI's devices").  On the solder side
+under them (`z3805a-analog-back.jpg`; which parts lie under which is
+aligned by the two standoffs and the board's cutout, and confirmed by
+the owner, not measured) are CR18 and CR19, SOT-23 parts marked A7p,
+BAV99 dual diodes by that marking, and a cluster of blue thin-film
+precision resistors, among them parts marked 5621, 2151, 1472, 5111
+and 5620; the rest of the cluster's codes are not legible in the
+photo.  In the cluster a resistor marked 1000, 100 Ω, has been
+reworked by hand, flux left round it (1800,1710 to 2000,1880).
+
+The reading, *inferred*: a diode-switch interpolator.  A constant
+current from Q2 is steered by CR18 and CR19 into a capacitor for as
+long as P81's start-to-clock gate is Low, U36 digitizes the
+capacitor's voltage, and U37 trims U36's REF+ and REF- or the
+current, which would be the references the firmware's calibration
+searches (`firmware/counter.md`, "The interpolator's calibration").
+P76 and P77 (BL.Y and BL.X inverted) are candidates for U36's control
+pins.
+
+U36 is a PLCC-20, TI's FN package, whose pin numbers are the DW's
+(TI SLAS064A, `third_party/ti/tlc0820a.pdf`, page 1, the FN pinout
+drawing; Terminal Functions): 1 ANLG IN, 2 to 5 D0 to D3,
+6 WR/RDY, 7 MODE, 8 RD, 9 INT, 10 GND, 11 REF-, 12 REF+, 13 CS,
+14 to 17 D4 to D7, 18 OFLW, 19 NC, 20 VCC.
+
+The Z3801A's board carries the same parts in the same places: U36 a
+TLC0820AC in a PLCC, U37 an MC144110DW, U40 marked 8L12A, a part at
+Q2 and U35 an ADC0838 (`z3801a-analog-top.jpg`); the 58503A's carries
+a TLC0820AC at U36 and an MC144110 at U37 (`board-atlas.html`).  The
+Z3815A's and Z3816A's FPGA designs do not read the interpolator
+(`firmware/fpga-comparison.md`, "The six designs"); whether those
+boards carry a U36 is open.
+
+Unpowered ("Working on the open Z3805A board" above):
+
+- [ ] TODO: P81 to CR18, CR19 and Q2.
+- [ ] TODO: CR18's and CR19's pins to Q2 and to U36 pin 1 (ANLG IN).
+- [ ] TODO: U36 pins 2 to 5 and 14 to 17 (D0 to D7) to the FPGA's
+  P3 to P6 and P8 to P11, or to the CPU's data bus.
+- [ ] TODO: U36 pins 6, 7, 8 and 13 (WR/RDY, MODE, RD, CS) to P76,
+  P77 or a tie.
+- [ ] TODO: U37's outputs to the divider at U36 pins 11 and 12 (REF-
+  and REF+), or to Q2's current.
+
+*Photos:* `z3805a-analog-top.jpg` (the component side: U32, U36, U40,
+Q2, U37) and `z3805a-analog-back.jpg` (the solder side under them),
+both in `board-atlas.html`.
+
+*Changes:* the atlas's U36, CR18 and CR19 rows get their roles.

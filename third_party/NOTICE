@@ -672,6 +672,12 @@ In `ti/`.
                              SLVS028K, revised September 2016,
                              www.ti.com/lit/ds/symlink/tl7705a.pdf.
                              U28, the reset generator.
+  tlc0820a.pdf               "TLC0820AC, TLC0820AI Advanced LinCMOS
+                             High-Speed 8-Bit Analog-to-Digital
+                             Converters Using Modified Flash
+                             Techniques", TI SLAS064A, revised June
+                             1994, www.ti.com/lit/ds/symlink/tlc0820a.pdf.
+                             U36.
 
 Xilinx
 ------

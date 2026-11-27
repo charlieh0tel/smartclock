@@ -1342,8 +1342,8 @@ enum {
 };
 
 /* :DIAGnostic:GPSystem:DCXO?: the receiver's three DCXO words,
- * gps.field_566, field_568 and field_56a, read with interrupts masked to
- * level 1; -241, Hardware missing, but for a "B" receiver
+ * gps.dcxo_drift_reference, dcxo_setting and dcxo_hz_per_step, read with
+ * interrupts masked to level 1; -241, Hardware missing, but for a "B" receiver
  * (GPS_FIELD_608_SIGNAL_SS), and -230 while all three are 0 (0x3ad38). */
 int32_t scpi_query_DIAGnostic_GPSystem_DCXO(void* parameters, void* response,
                                             scpi_call* call) {
@@ -1352,14 +1352,15 @@ int32_t scpi_query_DIAGnostic_GPSystem_DCXO(void* parameters, void* response,
   if ((gps.field_608 & GPS_FIELD_608_SIGNAL_SS) == 0) {
     return scpi_query_failed(STATUS_HARDWARE_MISSING, call);
   }
-  if (gps.field_566 == 0 && gps.field_568 == 0 && gps.field_56a == 0) {
+  if (gps.dcxo_drift_reference == 0 && gps.dcxo_setting == 0 &&
+      gps.dcxo_hz_per_step == 0) {
     return scpi_query_failed(STATUS_DATA_CORRUPT_OR_STALE, call);
   }
   uint16_t sr = set_interrupt_mask(CPU_IPL_1);
 
-  words[0].value = gps.field_566;
-  words[1].value = gps.field_568;
-  words[2].value = gps.field_56a;
+  words[0].value = gps.dcxo_drift_reference;
+  words[1].value = gps.dcxo_setting;
+  words[2].value = gps.dcxo_hz_per_step;
   set_interrupt_mask(sr);
   return 0;
 }

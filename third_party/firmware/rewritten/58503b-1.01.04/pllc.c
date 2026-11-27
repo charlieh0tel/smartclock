@@ -449,7 +449,7 @@ uint32_t pll_scpi_send_to_loop(gps_request_sender sender, uint8_t* status) {
   *status = 0;
   switch (code) {
     case GPS_REQUEST_TIME_OF_DAY:
-    case GPS_REQUEST_TA:
+    case GPS_REQUEST_DCXO:
       arguments[0] = pll_scpi_validated[0];
       arguments[1] = pll_scpi_validated[1];
       arguments[2] = pll_scpi_validated[2];

@@ -477,7 +477,11 @@ been run on a unit.  A word's arguments go to C in the order typed.
   page instead (`structures.md`, "Others").
 - The engine's `@@Ca` self-test result is kept at `0x100c36` (3543B:
   `0x100c38`), with the bits the VP reference gives: channels 1 to 6
-  correlation, 1 kHz presence, ROM, RAM, EEPROM, DCXO SPI, RTC.  It is
+  correlation, 1 kHz presence, ROM, RAM, EEPROM, DCXO SPI, RTC.  DCXO
+  SPI is the engine reading back a value written to the DCXO that tunes
+  its reference
+  ([oncore-vp's `docs/memory-map.md`](https://github.com/charlieh0tel/oncore-vp/blob/main/docs/memory-map.md),
+  "QSPI devices"; `SELFTEST_GPS_DCXO`).  It is
   run at power-up and by `*TST?` and `:DIAGnostic:TEST?`, both of which
   return the loop to power-up; `hex 100c36 w@ u.` reads the last result
   without running it.

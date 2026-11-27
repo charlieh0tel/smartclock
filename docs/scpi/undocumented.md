@@ -439,12 +439,18 @@ limits, a getter and a setter -- and the limits given are the record's.
 
 ### `:DIAGnostic:GPSystem:DCXO`
 
-- **Images:** 58503B.
+- **Images:** 58503B; the Z3805A 1.01.03 has the node, its setter
+  never passing its test and its query always -241.
 - **Handler:** only while bit 1 of the byte at `0x1017e8` is set: the
   query returns three values (`0x101746`, `0x101748`, `0x10174a`) once
   any is non-zero, and the setter stores three for the port
   (`0x1037b4` on) and hands them to the parameter record at
-  `0x446cc`.
+  `0x446cc`, which clamps them to 0 to 32767, 215 and 65535 and sends
+  them as `@@Ta`.
+- **Parameters:** a VP engine's drift reference in Hz at L1, the
+  setting of its DCXO and Hz at L1 per step of the setting; the engine
+  takes none of them unless each is in its range, the third below
+  32768 ([`../firmware/gps.md`](../firmware/gps.md), "The fields").
 
 ### `:SOURce:PTIMe:TDATe:GPS`
 

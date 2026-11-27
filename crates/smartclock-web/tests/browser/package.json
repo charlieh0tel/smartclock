@@ -1,7 +1,7 @@
 {
   "name": "smartclock-web-browser-tests",
   "private": true,
-  "description": "Browser tests for smartclock-web's pages: switching receivers, a daemon going and coming back, and the other edges every page must handle alike.",
+  "description": "Browser tests for smartclock-web's pages: switching receivers, a daemon going and coming back, and the other edges every page must handle alike; and for smartclock-emu's panel page.",
   "type": "module",
   "scripts": {
     "test": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",

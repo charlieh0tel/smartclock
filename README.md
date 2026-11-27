@@ -125,7 +125,7 @@ in SCPI.
 | 58503B | yes | Firmware studied |
 | Z3816A | yes[^z3816a] | Firmware studied |
 | 59551A | no; may work | No commands for its pulse output or time tags |
-| Z3815A | no; may work | Firmware studied; Furuno GPS engine |
+| Z3815A | yes | Firmware studied; Furuno GPS engine |
 
 [^z3816a]: Its one serial port also carries its time code, on from
     power-up.  With the time code turned off

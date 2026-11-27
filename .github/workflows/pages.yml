@@ -49,6 +49,13 @@ jobs:
             tools/markdown_page.py
             tools/firmware/figures_58501a.py
       - run: node --version && iverilog -V | head -n 1 && uv --version
+      # The emulator's page builds smartclock-emu-web for wasm32 and binds
+      # it with the wasm-bindgen CLI at the crate's exact version, the
+      # release's binary checked against its SHA-256, as web.yml does.
+      - run: rustup target add wasm32-unknown-unknown
+      - run: |
+          sh tools/install-wasm-bindgen.sh "$RUNNER_TEMP/wasm-bindgen"
+          echo "$RUNNER_TEMP/wasm-bindgen" >> "$GITHUB_PATH"
       - run: make pages PAGES_DIR=_site
       # On the site just built: make check-pages would build it again.
       - run: google-chrome --version && ./tools/check-pages.sh _site

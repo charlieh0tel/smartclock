@@ -213,16 +213,17 @@ PAGES_DIR ?= target/pages
 PAGES_DATA ?= target/pages-data
 HAND_PAGES := loop gps-architecture map55-4003 bench-sky-2026-10-03
 PAGES := fpga fpga-detail board-atlas block-diagram $(HAND_PAGES) pforth-models scpi-models coverage \
-	58501a-prototype
+	58501a-prototype emulator
 NEW_PAGE := gps-architecture
-FEATURED_PAGE := loop
+FEATURED_PAGE := emulator
 UNLISTED_PAGES := bench-sky-2026-10-03 58501a-prototype
 FORWARDING_PAGES := oncore-vp-test-points
 WIP_PAGES := block-diagram
 HERO_IMAGE :=
 HERO_ALT :=
-.PHONY: $(PAGES)
-pages: $(PAGES)
+.PHONY: $(PAGES) emulator-page
+# emulator.html is emulator-page's: `emulator` is the emulator's tests.
+pages: $(filter-out emulator,$(PAGES)) emulator-page
 	cp $(FORWARDING_PAGES:%=docs/pages/forwarding/%.html) $(PAGES_DIR)
 	python3 -I tools/pages_index.py \
 		$(if $(NEW_PAGE),--new $(NEW_PAGE).html) $(if $(FEATURED_PAGE),--featured $(FEATURED_PAGE).html) \
@@ -230,6 +231,16 @@ pages: $(PAGES)
 		$(WIP_PAGES:%=--wip %.html) \
 		$(if $(HERO_IMAGE),--hero $(HERO_IMAGE) --hero-alt "$(HERO_ALT)") \
 		$(PAGES_DIR) $(PAGES:%=%.html)
+
+# The emulator in a browser (emulator-web) as emulator.html, its files
+# under emulator/.
+emulator-page: emulator-web
+	rm -rf $(PAGES_DIR)/emulator
+	mkdir -p $(PAGES_DIR)
+	cp -r $(EMULATOR_WEB_DIR) $(PAGES_DIR)/emulator
+	rm $(PAGES_DIR)/emulator/index.html
+	sed -e 's|href="panel.css"|href="emulator/panel.css"|' -e 's|<script src="|&emulator/|' \
+		$(EMULATOR_WEB_DIR)/index.html > $(PAGES_DIR)/emulator.html
 
 # The board atlas, from docs/board-atlas.json, its photos copied beside
 # it; fails if the data cites a file or section that does not exist or

@@ -1,5 +1,9 @@
 # The disciplining loop
 
+Addresses are the Z3816A 4001's unless an image is named.  Another
+image's are in its `names.tsv` and `types/smartclock.h`; "The FFOM"
+gives each image's loop block.
+
 ## The stages
 
 From the state strings at `0x2c5be` to `0x2c758`: `coarse`, then

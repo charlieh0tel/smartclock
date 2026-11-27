@@ -179,12 +179,25 @@ console is gone.
 
 So `halt` returns the port to SCPI without restarting the processor,
 without the installer, without an EEPROM write and without the
-checksums the installer route costs, and needs no address.  It leaves
-two things undone.  The console's 4 KB dictionary, allocated with pSOS
-call 8 (Z3801A `0x1aa40`), is never returned -- the only callers of
-call 9 are the SCPI task's own parser buffer and the C library's
-`free`.  Yet two visits per unit on 2026-10-04 showed no loss in
-`mem_rep` (below).  And in the first five images the console does not
+checksums the installer route costs, and needs no address.  The
+console's 4 KB dictionary, allocated with pSOS call 8 (Z3801A
+`0x1aa40`) at each entry, is handed to the console task with call 10
+(58503A `0x1b018`), so deleting the task frees it: words defined in
+one visit are gone in the next, and `mem_rep` shows no loss (below).
+
+Nothing bounds the dictionary: `pforth_dictionary_end` is only
+written.  The built-in words fill most of it.  Definitions that run
+past its end overwrite the next segment's header, and `halt`'s free
+then takes an address error in the kernel (58503A,
+`kernel_free_for_task`); the watchdog resets the unit, a warm start.
+The 58503A did so on 2026-11-27, after 24 colon words holding 61 long
+stores; its system log has `Exception: , vector C00C, PC = 00015226,
+SR = 2000, addr = 209E4E75`, the address a definition's last `!` and
+`;`.  Before defining much, read the room left: `here @` against
+`pforth_dictionary_start`'s segment plus `0x1000`.  Stores typed as
+plain lines compile nothing.
+
+`halt` leaves one thing undone.  In the first five images the console does not
 close device 0 before deleting itself, whereas the SCPI task frees its
 buffer and closes its stream before handing over (`0x28fac` to
 `0x28fbc`).  The Z3815A's and 58503B's hooks add one call between

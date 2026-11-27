@@ -3,7 +3,9 @@ name: web
 # The browser tests, `make test-web`: smartclock-web's pages against a
 # faked API, for switching receivers, a daemon going and coming back,
 # and the other edges they must handle alike; and smartclock-emu's
-# panel page, against a faked run and a running 58503A.
+# panel page, against a faked run and a running 58503A.  And the
+# emulator's browser build, `make test-emulator-web`, in Node and in
+# Chromium, a job of its own.
 #
 # Separate from ci.yml because that one is the shared definition every
 # repository in the fleet calls, and this needs Node and a browser the
@@ -35,6 +37,8 @@ on:
       - "Cargo.lock"
       - "rust-toolchain.toml"
       - "Makefile"
+      - "crates/smartclock-emu-web/**"
+      - "tools/install-wasm-bindgen.sh"
       - ".github/workflows/web.yml"
   pull_request:
 
@@ -56,7 +60,7 @@ jobs:
         run: |
           if [ "$GITHUB_EVENT_NAME" != pull_request ] ||
             git diff --name-only HEAD^1 HEAD |
-            grep -qE '^(crates/(smartclock-web|smartclock|smartclock-log|smartclock-emu|smartclock-sim)/|boards/|third_party/firmware/images/(58503a-3704\.bin|eeprom/58503a-3710A01056-eeprom\.bin)$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|Makefile$|\.github/workflows/web\.yml$)'
+            grep -qE '^(crates/(smartclock-web|smartclock|smartclock-log|smartclock-emu|smartclock-sim|smartclock-emu-web)/|boards/|third_party/firmware/images/(58503a-3704\.bin|eeprom/58503a-3710A01056-eeprom\.bin)$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|Makefile$|tools/install-wasm-bindgen\.sh$|\.github/workflows/web\.yml$)'
           then
             echo test=true >> "$GITHUB_OUTPUT"
           fi
@@ -87,3 +91,36 @@ jobs:
       - run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium
         working-directory: crates/smartclock-web/tests/browser
       - run: make test-web
+
+  emulator-web:
+    # The emulator's browser build, the 58503A's (make emulator-web), the
+    # directory `make pages` publishes, booted in Node and in
+    # Playwright's Chromium (make test-emulator-web).  The wasm32 target
+    # goes on the compiler rust-toolchain.toml names; the wasm-bindgen
+    # CLI is the release's prebuilt binary at the crate's exact version,
+    # checked against its SHA-256 (tools/install-wasm-bindgen.sh), in
+    # seconds where `cargo install` would build it for minutes.
+    needs: changed
+    if: needs.changed.outputs.test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: crates/smartclock-web/tests/browser/package-lock.json
+      - run: rustup target add wasm32-unknown-unknown
+      - run: |
+          sh tools/install-wasm-bindgen.sh "$RUNNER_TEMP/wasm-bindgen"
+          echo "$RUNNER_TEMP/wasm-bindgen" >> "$GITHUB_PATH"
+      - run: npm ci --no-fund --no-audit
+        working-directory: crates/smartclock-web/tests/browser
+      - run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium
+        working-directory: crates/smartclock-web/tests/browser
+      # The pin rust-ci.yml carries.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: make test-emulator-web

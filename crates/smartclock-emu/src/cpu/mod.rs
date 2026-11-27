@@ -12,6 +12,8 @@
 //! device interrupts, which the machine tells it between runs.
 
 pub(crate) mod frame;
+#[cfg(feature = "unicorn")]
+mod unicorn;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -109,6 +111,12 @@ pub(crate) trait Cpu {
     /// Runs for about `budget` cycles from `now` on the board's clock,
     /// which the trace's records are stamped with.
     fn run(&mut self, now: Cycles, budget: Cycles) -> Result<Run, Error>;
+}
+
+/// The core this build has, its device regions on `bus`.
+#[cfg(feature = "unicorn")]
+pub(crate) fn core(bus: Rc<RefCell<dyn Bus>>) -> Result<Box<dyn Cpu>, Error> {
+    Ok(Box::new(unicorn::Core::new(bus)?))
 }
 
 /// The core this build has: none.

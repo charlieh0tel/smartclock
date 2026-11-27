@@ -408,13 +408,39 @@ $(FIRMWARE_TARGETS):
 # EMULATOR_PROFILE names the cargo profile the tests build in: dev by
 # default, `checked` (Cargo.toml) in firmware.yml, optimized with the
 # debug assertions and overflow checks kept.
+#
+# emulator-unicorn is the same with Unicorn, the frozen development
+# core, too, and the peripheral checks across the two; not CI's.
+# Unicorn needs cmake and libclang, and ninja if found; where libclang has no headers of its own,
+# BINDGEN_EXTRA_CLANG_ARGS takes gcc's.
 EMULATOR = $(CARGO) $(1) -p smartclock-emu $(2)
+EMULATOR_UNICORN = --features unicorn
 EMULATOR_PROFILE ?= dev
 EMULATOR_EEPROM ?= target/smartclock-emu/z3805a-3625A01487-eeprom.bin
-.PHONY: emulator emulator-slow emulate
+BINDGEN_EXTRA_CLANG_ARGS ?= -I$(shell gcc -print-file-name=include)
+export BINDGEN_EXTRA_CLANG_ARGS
+.PHONY: emulator emulator-unicorn emulator-slow emulate emulator-tools
+# What Unicorn's build needs, checked before cargo starts it: cmake and
+# libclang; ninja is used when found, cmake's Makefiles when not.
+# libclang is found where any one of these names it: LIBCLANG_PATH, the
+# file or its directory, as bindgen takes it; an LLVM's own lib; or a
+# distribution's library directories.
+LIBCLANG_GLOBS = $${LIBCLANG_PATH:+$$LIBCLANG_PATH $$LIBCLANG_PATH/libclang*.so*} \
+	/usr/lib/llvm-*/lib/libclang*.so* /usr/lib/*-linux-gnu/libclang*.so* \
+	/usr/lib64/libclang*.so* /usr/lib64/llvm*/libclang*.so*
+emulator-tools:
+	@command -v cmake >/dev/null || \
+	    { echo "smartclock-emu's unicorn feature needs cmake (docs/emulator.md)" >&2; exit 2; }
+	@for found in $(LIBCLANG_GLOBS); do test -f "$$found" && exit 0; done; \
+	    echo "smartclock-emu's unicorn feature needs libclang (docs/emulator.md)" >&2; exit 2
+
 emulator:
 	$(call EMULATOR,clippy) --all-targets -- -D warnings
 	$(call EMULATOR,test) --profile $(EMULATOR_PROFILE)
+
+emulator-unicorn: emulator-tools
+	$(call EMULATOR,clippy,$(EMULATOR_UNICORN)) --all-targets -- -D warnings
+	$(call EMULATOR,test,$(EMULATOR_UNICORN)) --profile $(EMULATOR_PROFILE)
 
 # The emulator's tests too slow for every `cargo test`, ignored there:
 # the temporary holdovers, 520 s of board time each (docs/emulator.md,

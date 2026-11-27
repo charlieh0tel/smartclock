@@ -827,6 +827,21 @@ fn the_pulse_waits_for_a_first_fix_of_four_satellites() {
     assert_eq!(pulse(&mut engine, &using(1, 20)), "1");
 }
 
+/// The holder's pulse follows `rrs`'s control mode (GT p. 15): mode 0
+/// puts out none even with the first fix made, mode 1 one always.
+#[test]
+fn the_pulse_follows_the_control_mode() {
+    let now = record(at(2026, 10, 22, 12, 0, 0));
+    let mut engine = Engine::new(&GT_74);
+    let mut sent = Sent::default();
+    engine.second(&now, &mut sent);
+    assert!(engine.pulsing(&now), "a first fix of the scene's sky");
+    engine.receive(b"$PFEC,GPrrs,0,100,0\r\n", &now, &mut sent);
+    assert!(!engine.pulsing(&now), "mode 0");
+    engine.receive(b"$PFEC,GPrrs,0,100,1\r\n", &Record::EMPTY, &mut sent);
+    assert!(engine.pulsing(&Record::EMPTY), "mode 1, no time at all");
+}
+
 /// `GGA`'s geoid separation stays six characters over GT p. 19's range,
 /// -999.9 to 9999.9, and at its ends past it, so the image takes the
 /// sentence.

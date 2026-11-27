@@ -1,0 +1,143 @@
+# XC3042 design netdump.js decoded, for the emulator's LCA model,
+# written by tools/fpga/lcanet.py.  Derived from the vendor's bitstream.
+part XC3042
+bitstream f095d6b52883a5d514cb110b972b10022bcfa32666529e658d4bfc7dd02360b5
+decoder 8563397909b54c6f5efdcd78eb8a1a3c6fd5b3d8
+buffer GCLK I=PAD7.I O=GCLK.O
+iob PAD1 pin=P11 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD1.I
+iob PAD2 pin=P10 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD2.I
+iob PAD5 pin=P9 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD5.I
+iob PAD6 pin=P8 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD6.I
+iob PAD7 pin=P7 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD7.I
+iob PAD8 pin=P6 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD8.I
+iob PAD9 pin=P5 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD9.I
+iob PAD10 pin=P4 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD10.I
+iob PAD11 pin=P3 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=1 I=PAD11.I
+iob PAD12 pin=P2 out=1 outregistered=0 outinvert=1 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=CA.X
+iob PAD13 pin=P84 out=1 outregistered=0 outinvert=1 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=PAD91.I
+iob PAD14 pin=P83 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=FH.Y OK=GCLK.O
+iob PAD15 pin=P82 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD15.I
+iob PAD16 pin=P81 out=1 outregistered=0 outinvert=1 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=AH.X
+iob PAD18 pin=P79 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=BJ.X T=AI.X
+iob PAD19 pin=P78 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=FH.X OK=GCLK.O
+iob PAD20 pin=P77 out=1 outregistered=0 outinvert=1 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=BL.X
+iob PAD23 pin=P76 out=1 outregistered=0 outinvert=1 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=BL.Y
+iob PAD24 pin=P75 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD24.I
+iob PAD26 pin=P72 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=AH.Y
+iob PAD29 pin=P71 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=CK.X T=HL.X OK=AL.Y I=PAD29.I
+iob PAD30 pin=P70 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=CK.Y T=HL.X OK=AL.X I=PAD30.I
+iob PAD32 pin=P69 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD32.I
+iob PAD33 pin=P68 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD33.I
+iob PAD34 pin=P67 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=EG.X T=HL.X OK=AL.Y
+iob PAD35 pin=P66 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD35.I
+iob PAD36 pin=P65 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=EG.X T=HL.X OK=AL.X I=PAD36.I
+iob PAD38 pin=P62 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=IK.X T=HL.X I=PAD38.I
+iob PAD39 pin=P61 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD39.I
+iob PAD40 pin=P60 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=IK.Y T=HL.X I=PAD40.I
+iob PAD42 pin=P59 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=IL.X T=HL.X I=PAD42.I
+iob PAD44 pin=P58 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=1 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=IL.Y T=HL.X I=PAD44.I
+iob PAD89 pin=P19 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=GB.Y
+iob PAD91 pin=P17 out=0 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 I=PAD91.I
+iob PAD92 pin=P16 out=1 outregistered=0 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=PAD15.I
+iob PAD95 pin=P14 out=1 outregistered=1 outinvert=0 okinvert=0 threestate=0 threestateinvert=0 inregistered=0 inlatch=1 ikinvert=0 pullup=0 O=HD.Y OK=GCLK.O I=PAD95.I
+clb AB f=74fc g=7430 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=PAD1.I B=EC.X C=AD.Y D=AL.Y E=PAD2.I Y=AB.Y
+clb AC f=5030 g=5f3f finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=PAD5.I B=PAD6.I C=EC.X D=AL.Y E=AE.Y Y=AC.Y
+clb AD f=cccc g=550f finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=PAD8.I B=BC.X C=PAD9.I D=AL.Y E=EC.Y Y=AD.Y
+clb AE f=f0f0 g=3355 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=PAD11.I B=PAD10.I C=BB.X D=AL.Y E=EC.Y Y=AE.Y
+clb AH f=0504 g=ffcc finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=DI ydata=G xout=F yout=G ec=0 rd=1 kinvert=0 A=BJ.Y C=AI.Y D=BH.Y DI=EI.Y K=PAD15.I RD=CF.Y X=AH.X Y=AH.Y
+clb AI f=fffc g=afae finputs=B,QY,E ginputs=QY,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=1 kinvert=0 A=CG.X B=AH.X C=CH.X D=BI.Y E=BJ.Y K=GCLK.O RD=EI.X X=AI.X Y=AI.Y
+clb AJ f=0000 g=0000 finputs=QY,QY,E ginputs=QY,QY,E merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0
+clb AL f=3333 g=cccc finputs=QY,C,D ginputs=QX,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=0 kinvert=0 K=GCLK.O X=AL.X Y=AL.Y
+clb BB f=d100 g=3333 finputs=B,QY,D ginputs=QY,C,E merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=1 kinvert=0 A=CF.X B=AL.Y D=EB.Y K=CF.X RD=EI.X X=BB.X Y=BB.Y
+clb BC f=e100 g=3333 finputs=QX,QY,E ginputs=QX,C,D merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y E=EB.Y DI=BC.Y K=BB.Y RD=EI.X X=BC.X Y=BC.Y
+clb BD f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EB.X DI=BD.Y K=BC.Y RD=EI.X X=BD.X Y=BD.Y
+clb BE f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EB.X DI=BE.Y K=CD.Y RD=EI.X X=BE.X Y=BE.Y
+clb BH f=0c0c g=0f0f finputs=QY,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=1 kinvert=0 C=EI.Y K=CH.Y RD=EI.X X=BH.X Y=BH.Y
+clb BI f=30fc g=fcfe finputs=QX,QY,E ginputs=QX,QY,D merged=0 xdata=F ydata=DI xout=QX yout=G ec=0 rd=1 kinvert=0 A=AH.X D=CG.Y E=BL.X DI=AH.X K=GCLK.O RD=EI.X Y=BI.Y
+clb BJ f=0000 g=fcfc finputs=QY,QY,E ginputs=B,QY,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=1 kinvert=0 B=BI.Y K=GCLK.O RD=EI.X X=BJ.X Y=BJ.Y
+clb BK f=3c3c g=3333 finputs=QX,QY,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 EC=BI.Y K=GCLK.O RD=EI.X X=BK.X Y=BK.Y
+clb BL f=eccc g=00fc finputs=QX,C,D ginputs=B,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=1 kinvert=0 A=CL.X B=BI.Y C=BK.X D=CL.Y K=GCLK.O RD=EI.X X=BL.X Y=BL.Y
+clb CA f=ffff g=ffff finputs=QY,QY,E ginputs=QY,QY,E merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 X=CA.X
+clb CB f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EB.Y DI=CB.Y K=DB.Y RD=EI.X X=CB.X Y=CB.Y
+clb CC f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EB.X DI=CC.Y K=BD.Y RD=EI.X X=CC.X Y=CC.Y
+clb CD f=a082 g=3333 finputs=QX,QY,E ginputs=QX,C,D merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=EB.X E=AL.Y DI=CD.Y K=DC.Y RD=EI.X X=CD.X Y=CD.Y
+clb CE f=5544 g=5550 finputs=B,QX,E ginputs=QX,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=FG.X B=BD.X C=CC.X D=AB.Y E=AC.Y X=CE.X Y=CE.Y
+clb CF f=4144 g=aaaa finputs=QX,C,D ginputs=B,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=EI.X C=DG.Y D=AI.Y K=GCLK.O X=CF.X Y=CF.Y
+clb CG f=f0cc g=ccf0 finputs=QX,C,D ginputs=B,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 B=PAD30.I C=PAD29.I D=DL.X K=GCLK.O X=CG.X Y=CG.Y
+clb CH f=fcfc g=cc33 finputs=B,QX,D ginputs=QY,C,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=1 kinvert=0 B=CG.X E=EI.Y K=GCLK.O RD=EI.X X=CH.X Y=CH.Y
+clb CI f=aaaa g=aaaa finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=1 kinvert=0 A=AH.Y K=EH.Y RD=EI.X X=CI.X
+clb CJ f=eeee g=cccc finputs=B,C,D ginputs=QX,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=0 kinvert=0 A=BH.X B=CI.X K=GCLK.O X=CJ.X Y=CJ.Y
+clb CK f=f0cc g=f0aa finputs=B,C,D ginputs=QX,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=AH.Y B=CJ.X C=DF.X D=GL.Y X=CK.X Y=CK.Y
+clb CL f=66cc g=78f0 finputs=QX,C,E ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=BK.X E=BK.Y EC=BI.Y K=GCLK.O RD=EI.X X=CL.X Y=CL.Y
+clb DB f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EC.X DI=DB.Y K=DD.Y RD=EI.X X=DB.X Y=DB.Y
+clb DC f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EB.Y DI=DC.Y K=CB.Y RD=EI.X X=DC.X Y=DC.Y
+clb DD f=a082 g=3333 finputs=QX,QY,E ginputs=QX,C,D merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=EC.X E=AL.Y DI=DD.Y K=EE.Y RD=EI.X X=DD.X Y=DD.Y
+clb DE f=fffe g=fffe finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 A=CD.X B=DD.X C=CB.X D=ED.X X=DE.X
+clb DF f=eeaa g=0000 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 A=CE.X B=DE.X D=FG.X E=FG.Y X=DF.X
+clb DG f=aaaa g=cccc finputs=B,C,D ginputs=QX,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=CJ.Y K=GCLK.O Y=DG.Y
+clb DH f=3030 g=cccc finputs=QX,QY,D ginputs=QY,C,D merged=0 xdata=G ydata=DI xout=F yout=QY ec=0 rd=0 kinvert=0 DI=PAD15.I K=GCLK.O X=DH.X
+clb DI f=acac g=fc0c finputs=QX,C,E ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=PAD30.I C=EL.X D=PAD29.I K=GCLK.O X=DI.X Y=DI.Y
+clb DJ f=ffcc g=0000 finputs=B,C,E ginputs=QY,QY,E merged=0 xdata=F ydata=F xout=F yout=QY ec=0 rd=0 kinvert=0 B=DI.X E=DI.Y K=GCLK.O X=DJ.X Y=DJ.Y
+clb DK f=0200 g=0200 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=FL.Y B=PAD35.I C=PAD32.I D=PAD33.I Y=DK.Y
+clb DL f=0200 g=0080 finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=FL.Y B=PAD35.I C=PAD33.I D=PAD32.I X=DL.X Y=DL.Y
+clb EB f=f000 g=00f0 finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 C=FI.Y D=FI.X X=EB.X Y=EB.Y
+clb EC f=0f00 g=000f finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 C=FI.Y D=FI.X X=EC.X Y=EC.Y
+clb ED f=a082 g=3333 finputs=QX,QY,E ginputs=QX,C,D merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=EC.Y E=AL.Y DI=ED.Y K=CC.Y RD=EI.X X=ED.X Y=ED.Y
+clb EE f=e100 g=3333 finputs=QX,QY,D ginputs=QX,C,E merged=0 xdata=DI ydata=G xout=F yout=QY ec=0 rd=1 kinvert=1 A=AL.Y D=EC.Y DI=EE.Y K=ED.Y RD=EI.X X=EE.X Y=EE.Y
+clb EF f=ffee g=ffff finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 A=DC.X B=EE.X D=DB.X E=BE.X X=EF.X
+clb EG f=00c0 g=00ff finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 B=EF.X C=FG.X D=FG.Y E=CE.Y X=EG.X
+clb EH f=f0f0 g=f0f0 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 C=HG.Y Y=EH.Y
+clb EI f=e4e4 g=72fa finputs=QX,C,D ginputs=B,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=EL.Y B=PAD30.I C=PAD42.I E=PAD29.I K=GCLK.O X=EI.X Y=EI.Y
+clb EJ f=0000 g=c000 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 B=DH.X C=EK.X D=DI.X E=DI.Y K=GCLK.O X=EJ.X Y=EJ.Y
+clb EK f=0c5c g=0050 finputs=B,QX,D ginputs=B,QX,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=EJ.Y B=DJ.X D=HH.Y E=DJ.Y K=GCLK.O X=EK.X
+clb EL f=4000 g=0100 finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=PAD35.I B=PAD32.I C=PAD33.I D=FL.Y X=EL.X Y=EL.Y
+clb FB f=0000 g=8000 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=GA.X B=GD.Y C=GB.X D=GB.Y E=GA.Y K=GCLK.O X=FB.X
+clb FD f=cc3c g=cc3c finputs=QY,C,D ginputs=QY,C,D merged=1 xdata=F ydata=F xout=QX yout=QY ec=0 rd=1 kinvert=0 C=HD.X D=HE.X K=GCLK.O RD=GH.Y Y=FD.Y
+clb FF f=ccf0 g=aacc finputs=B,QX,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=PAD29.I B=PAD30.I D=DL.Y K=GCLK.O X=FF.X Y=FF.Y
+clb FG f=ee44 g=ee44 finputs=QX,C,D ginputs=QY,C,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=DL.X D=PAD40.I E=PAD42.I K=GCLK.O X=FG.X Y=FG.Y
+clb FH f=ff00 g=33cc finputs=B,C,E ginputs=QX,C,D merged=0 xdata=F ydata=G xout=QX yout=G ec=0 rd=0 kinvert=0 D=FF.Y E=HK.X K=GCLK.O X=FH.X Y=FH.Y
+clb FI f=ee44 g=ee44 finputs=QX,C,D ginputs=QY,C,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=DL.X D=PAD36.I E=PAD38.I K=GCLK.O X=FI.X Y=FI.Y
+clb FJ f=fafa g=0000 finputs=B,C,D ginputs=QY,QY,E merged=0 xdata=F ydata=F xout=F yout=QY ec=0 rd=0 kinvert=0 A=EJ.Y C=LJ.Y K=GCLK.O X=FJ.X Y=FJ.Y
+clb FK f=cccc g=ff00 finputs=QY,C,E ginputs=B,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 D=HL.Y K=GCLK.O X=FK.X Y=FK.Y
+clb FL f=3030 g=3030 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 B=FK.X C=FK.Y Y=FL.Y
+clb GA f=3333 g=3c3c finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=0 kinvert=0 EC=GD.Y K=GCLK.O X=GA.X Y=GA.Y
+clb GB f=66cc g=78f0 finputs=QX,C,E ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=0 kinvert=0 A=GA.X E=GA.Y EC=GD.Y K=GCLK.O X=GB.X Y=GB.Y
+clb GC f=1414 g=1111 finputs=QX,QY,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=FB.X K=GCLK.O X=GC.X Y=GC.Y
+clb GD f=c0c0 g=c0c0 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 B=GC.X C=GC.Y Y=GD.Y
+clb GE f=cc3c g=3333 finputs=QX,QY,D ginputs=QY,C,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 D=GF.Y EC=JG.X K=GCLK.O RD=EJ.X X=GE.X Y=GE.Y
+clb GF f=66cc g=5850 finputs=QX,C,E ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=GE.Y E=GE.X EC=JG.X K=GCLK.O RD=EJ.X Y=GF.Y
+clb GG f=6444 g=d2d2 finputs=QX,QY,D ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=HF.Y D=HG.Y EC=HG.X K=GCLK.O RD=EJ.X X=GG.X Y=GG.Y
+clb GH f=aacc g=00cc finputs=QX,C,D ginputs=QX,C,E merged=0 xdata=F ydata=G xout=QX yout=G ec=0 rd=0 kinvert=0 A=PAD29.I D=DK.Y E=HE.Y K=GCLK.O X=GH.X Y=GH.Y
+clb GI f=0033 g=003c finputs=QX,C,E ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 E=FJ.X K=GCLK.O X=GI.X Y=GI.Y
+clb GJ f=8000 g=8000 finputs=B,C,D ginputs=B,C,E merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=HH.X B=EK.X C=JK.X D=DI.X E=DI.Y X=GJ.X Y=GJ.Y
+clb GK f=1000 g=0e01 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=IJ.Y B=GJ.X C=GJ.Y D=GI.X E=GI.Y Y=GK.Y
+clb GL f=00cc g=ffcc finputs=QY,C,D ginputs=QY,C,D merged=1 xdata=F ydata=F xout=QX yout=QY ec=0 rd=0 kinvert=0 D=DL.X E=PAD44.I K=GCLK.O Y=GL.Y
+clb HD f=3304 g=fbcc finputs=QX,C,D ginputs=QX,C,D merged=1 xdata=DI ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=FD.Y C=HE.X D=FF.X E=PAD95.I DI=HK.X K=GCLK.O X=HD.X Y=HD.Y
+clb HE f=cccc g=aaaa finputs=B,C,D ginputs=QX,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=0 rd=0 kinvert=0 A=GH.X B=HD.X K=GCLK.O X=HE.X Y=HE.Y
+clb HF f=8888 g=3333 finputs=B,C,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=1 rd=1 kinvert=0 A=GF.Y B=GE.Y EC=HG.X K=GCLK.O RD=EJ.X X=HF.X Y=HF.Y
+clb HG f=cc00 g=66cc finputs=B,C,E ginputs=QY,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=1 rd=1 kinvert=0 A=GG.Y B=HF.X D=HF.Y E=JG.X EC=HG.X K=GCLK.O RD=EJ.X X=HG.X Y=HG.Y
+clb HH f=8000 g=8000 finputs=B,C,E ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=HF.Y B=GG.X C=HF.X D=JG.X E=JG.Y X=HH.X Y=HH.Y
+clb HI f=8888 g=8888 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=GI.Y B=GI.X Y=HI.Y
+clb HJ f=8000 g=8000 finputs=B,C,E ginputs=B,C,E merged=1 xdata=F ydata=F xout=QX yout=G ec=0 rd=0 kinvert=0 A=IG.Y B=GI.Y C=JH.Y E=IH.X K=GCLK.O X=HJ.X
+clb HK f=ff00 g=ff3f finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 B=HJ.X C=KH.X D=HH.Y E=FH.X X=HK.X
+clb HL f=f5f5 g=0505 finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=0 kinvert=0 A=PAD24.I C=PAD39.I K=GCLK.O X=HL.X Y=HL.Y
+clb IE f=0000 g=0000 finputs=QY,QY,E ginputs=QY,QY,E merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0
+clb IG f=3c3c g=3333 finputs=QX,QY,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 EC=HI.Y K=GCLK.O RD=FJ.Y X=IG.X Y=IG.Y
+clb IH f=f0f0 g=78f0 finputs=B,QX,D ginputs=B,QX,D merged=1 xdata=F ydata=F xout=QX yout=G ec=1 rd=1 kinvert=0 A=JH.X B=IG.Y D=JH.Y E=IG.X EC=HI.Y K=GCLK.O RD=FJ.Y X=IH.X
+clb II f=0000 g=8000 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 A=JH.X B=IH.X C=IG.X D=JH.Y E=IG.Y X=II.X
+clb IJ f=8000 g=5500 finputs=B,C,D ginputs=QX,QX,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=KH.Y B=KI.Y C=KI.X D=KH.X X=IJ.X Y=IJ.Y
+clb IK f=3333 g=3c3c finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=0 kinvert=0 EC=HH.Y K=GCLK.O X=IK.X Y=IK.Y
+clb IL f=66cc g=78f0 finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=0 kinvert=0 A=IK.Y D=IK.X EC=HH.Y K=GCLK.O X=IL.X Y=IL.Y
+clb JG f=8800 g=cc00 finputs=B,C,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0 A=JK.Y B=KF.Y D=KG.Y X=JG.X Y=JG.Y
+clb JH f=66cc g=78f0 finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=IG.Y D=IG.X EC=HI.Y K=GCLK.O RD=FJ.Y X=JH.X Y=JH.Y
+clb JI f=8000 g=3c3c finputs=B,QY,E ginputs=QY,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=1 rd=1 kinvert=0 A=IG.X B=JH.X C=II.X E=GK.Y EC=HI.Y K=GCLK.O RD=FJ.Y X=JI.X
+clb JJ f=0000 g=8000 finputs=B,C,D ginputs=B,C,D merged=1 xdata=F ydata=F xout=F yout=G ec=0 rd=0 kinvert=0 A=KI.X B=KH.X C=KI.Y D=KJ.Y E=KH.Y X=JJ.X
+clb JK f=8800 g=8000 finputs=B,QX,D ginputs=B,C,D merged=0 xdata=F ydata=G xout=F yout=QY ec=0 rd=0 kinvert=0 A=IJ.X B=KJ.Y C=JI.X D=KK.Y K=GCLK.O X=JK.X Y=JK.Y
+clb JL f=0000 g=0000 finputs=QY,QY,E ginputs=QY,QY,E merged=0 xdata=F ydata=G xout=F yout=G ec=0 rd=0 kinvert=0
+clb KF f=9c9c g=3333 finputs=QX,QY,D ginputs=QY,C,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=KG.Y EC=JK.Y K=GCLK.O RD=EJ.X X=KF.X Y=KF.Y
+clb KG f=66cc g=5850 finputs=QX,C,E ginputs=QX,QY,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=KF.Y E=KF.X EC=JK.Y K=GCLK.O RD=EJ.X Y=KG.Y
+clb KH f=3333 g=3c3c finputs=QX,C,D ginputs=QX,QY,D merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 EC=FJ.X K=GCLK.O RD=EJ.X X=KH.X Y=KH.Y
+clb KI f=6ccc g=66cc finputs=QX,QY,E ginputs=QY,C,E merged=0 xdata=F ydata=G xout=QX yout=QY ec=1 rd=1 kinvert=0 A=KH.X E=KH.Y EC=FJ.X K=GCLK.O RD=EJ.X X=KI.X Y=KI.Y
+clb KJ f=f0f0 g=78f0 finputs=B,QY,D ginputs=B,QY,D merged=1 xdata=F ydata=F xout=QX yout=QY ec=1 rd=1 kinvert=0 A=KH.Y B=KI.X D=KH.X E=KI.Y EC=FJ.X K=GCLK.O RD=EJ.X Y=KJ.Y
+clb KK f=3c3c g=3c3c finputs=B,QY,D ginputs=B,QY,D merged=1 xdata=F ydata=F xout=QX yout=QY ec=1 rd=1 kinvert=0 B=JJ.X EC=FJ.X K=GCLK.O RD=EJ.X Y=KK.Y
+clb LJ f=aaaa g=0000 finputs=B,C,D ginputs=QY,QY,E merged=0 xdata=F ydata=F xout=QX yout=QY ec=0 rd=0 kinvert=0 A=JI.X K=GCLK.O Y=LJ.Y

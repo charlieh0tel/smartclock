@@ -434,10 +434,12 @@ straight to `sync_request`.
   `.sync2`: the first count unchanged and the next a tick lower or
   higher); **inferred** for one after it, from the equations: the step
   moves the divider, and with it the tap that stops the running count.
-  The emulator's differential fixture, coming soon, runs that case
-too: its `sync_1` and
-  `sync_2` cases, the GPS edge at 0.75 s, read the count under way a
-  tick below and above the `early` case's.  Kind 3 restarts the divider on the next GPS 1 PPS,
+  The emulator's differential fixture
+  (`crates/smartclock-emu/src/board/fpga/z3805a.fixture`, which
+  `make -j16 -f tools/fpga/Makefile check-differential-z3805a`
+  regenerates from the netlist and diffs) runs that case too: its
+  `sync_1` and `sync_2` cases, the GPS edge at 0.75 s, read the count
+  under way a tick below and above the `early` case's.  Kind 3 restarts the divider on the next GPS 1 PPS,
   which also starts the count under way, so it shows in that count
   already (**simulated**: `check-readings-z3805a.sync3`).
 

@@ -536,8 +536,7 @@ register before P83.
 
 **Untested:** a sync with the GPS 1 PPS after the tap, and kind 3
 with the internal 1 PPS before the GPS edge, which the Z3805A's
-`z3805a.sync_3_late` run and the emulator's differential cases (coming
-soon) cover and these runs do not;
+differential cases and `z3805a.sync_3_late` run and these runs do not;
 P14 inverted over more than one internal 1 PPS.
 
 **Open:**

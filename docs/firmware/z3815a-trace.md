@@ -103,6 +103,14 @@ P20's (`outputs.md`, "Netlists"), as for the Z3816A: both benign, as
 the Z3805A's, and borne out by P83 carrying the internal 1 PPS and P20
 pulsing once per internal 1 PPS, 76 ns before P83, in simulation.
 
+`tools/fpga/z3815a_stimulus.v` runs the netlist from
+`tools/fpga/differential.py`'s cases, P7 a 10 MHz clock of its own
+rather than P53 halved, for the emulator's LCA model's differential
+test (`fpga-codegen.md`, "Status"); the emulator has no hand-written
+Z3815A model, and the Z3815A's board runs this netlist on the LCA
+model, on ACLK alone with P7 held (`fpga-codegen.md`, "The Z3816A's
+clocks on the board"; `emulator.md`, "The boards").
+
 ## Clocks
 
 The Z3815A and the Z3816A are the two two-buffer designs (`outputs.md`,

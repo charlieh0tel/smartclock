@@ -50,9 +50,11 @@ each against `tools/fpga/ref/<image>.<run>.readings`; the runs and their
 flags are the Makefile's `READ_` variables, each run with `+probe`.
 The Z3805A's are `z3805a.fast`, `.byte_1c`, `.three`, `.late`, `.sync1`, `.sync2`,
 `.sync3`, `.low`, `.wide`, `.later` and `.nogps`, and `.sync_3_late`,
-on the stimulus file `tools/fpga/z3805a.sync_3_late.stim`
-(`tools/fpga/z3805a_stimulus.v`); a figure below names its run,
-`make -f tools/fpga/Makefile check-readings-z3805a.<run>`.
+on `tools/fpga/differential.py`'s stimulus; a figure below names its
+run, `make -f tools/fpga/Makefile check-readings-z3805a.<run>`.  The
+cases of `tools/fpga/differential.py`, the emulator's fixture, are
+regenerated and diffed by
+`make -j16 -f tools/fpga/Makefile check-differential-z3805a`.
 
 The probe removes every pulse under 5 ns, the models' hazards
 (`outputs.md`, "Simulation"); of the nets quoted here, JI.X and HH.X

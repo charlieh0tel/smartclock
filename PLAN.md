@@ -866,7 +866,7 @@ figures: `docs/firmware/rewrite.md`; the toolchain:
   the seventh, sent back to the six images' own C the DUART's
   input debounces, stop, channel A driver and transmit tests, which
   it lacks, `common/duart.c` and `common/duarta.c` going with them
-  until they came back, but the stop, for the six with a DUART
+  until they came back, but the stop, for those with a DUART
   (2026-11-14), as
   `common/scpi_unsupported.c` did for the five with the root's
   unsupported entries,

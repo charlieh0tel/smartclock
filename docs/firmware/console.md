@@ -186,7 +186,8 @@ console's 4 KB dictionary, allocated with pSOS call 8 (Z3801A
 one visit are gone in the next, and `mem_rep` shows no loss (below).
 
 Nothing bounds the dictionary: `pforth_dictionary_end` is only
-written.  The built-in words fill most of it.  Definitions that run
+written.  The built-in words fill most of it: on the 58503A, 2,812
+bytes used and 1,284 free (measured 2026-11-27).  Definitions that run
 past its end overwrite the next segment's header, and `halt`'s free
 then takes an address error in the kernel (58503A,
 `kernel_free_for_task`); the watchdog resets the unit, a warm start.

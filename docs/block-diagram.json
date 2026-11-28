@@ -1438,8 +1438,6 @@
   "speculative": "A dashed block is a part, or a line a connection, that no document yet ties to its role: a working hypothesis, its name followed by (?).  The interpolator is drawn so: the FPGA's design shows that one exists outside it, but what it is made of is not traced.  A line into it is marked by how far its FPGA end is known.",
   "title": "Board Block Diagram",
   "unlisted": [
-    "Q2",
-    "CR18",
-    "CR19"
+    "Q2"
   ]
 }

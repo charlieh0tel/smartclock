@@ -7,7 +7,7 @@ Pages; the page is not committed.
 
     python3 -I tools/board_atlas.py OUT
 
-The page is whole without JavaScript: the three photos stacked with
+The page is whole without JavaScript: the photos stacked with
 every part ringed, the parts table, the nets and the notes.  Its one
 inline script only adds to that: view tabs, zoom and pan, a card for
 the selected part, filters, a search and a #<part> deep link.  The script reads every part from its

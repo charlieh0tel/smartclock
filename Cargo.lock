@@ -1231,6 +1231,7 @@ dependencies = [
  "clap",
  "jiff",
  "serde_json",
+ "serialport",
  "sha2",
  "signal-hook",
  "smartclock",

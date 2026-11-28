@@ -105,6 +105,44 @@ run directory, or only `--listen`, is not found.  Where there are no
 Unix sockets it asks the default daemon, `tcp://127.0.0.1:9978`.
 With nothing found it says so and succeeds.
 
+### Listing the ports
+
+`smartclock-cli devices` lists the host's serial ports, one line each:
+the port and what is on it, then, each after ` | `, the USB adapter
+and the port's other names, such as under `/dev/serial/by-id`:
+
+    /dev/ttyS0: free
+    /dev/ttyUSB0: daemon ttyUSB0, running, Z3801A serial 0000A00000 firmware 3543-A | usb 1a86:7523 USB Serial | /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
+    /dev/ttyUSB1: free | usb 0403:6001 FTDI FT232R USB UART | /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_...-if00-port0
+    tcp://127.0.0.1:5025: daemon sim, running, Z3801A serial 0000A00000 firmware 3543-A
+    unknown: daemon ttyUSB2, not answering (it did not answer within ...)
+
+A port a daemon holds is named by the daemon, which says which port it
+was given, so nothing is sent to its receiver; the rest of the line is
+as `daemons` gives it.  A daemon on `tcp://`, or on a port the system
+does not list, has a line of its own.  One that does not say -- it is
+not answering, or is older than `devices` -- is placed by its instance
+name, as the unit opens `/dev/%I`, and failing that is on an
+`unknown` port.
+
+Listing opens no port.  Every other port is `free`: no daemon holds
+it, though another program may.  `--probe` asks each free port
+`*IDN?`, together, exactly as a daemon attaching does: at `--baud` and
+`--framing`, then at the settings receivers are found at, reading off
+the error queue whatever the wrong settings left there:
+
+    /dev/ttyS0: free, 58503A serial 0000A00000 firmware 3704-C at 9600 8N1
+    /dev/ttyS1: free, not identified (...)
+
+Each setting tried on a port that does not answer costs `--timeout`,
+so a probe takes a few of them.  It sends a line ending at each setting
+and, to what answers with a prompt, `*IDN?`, after `:SYSTem:ERRor?`
+until the queue is empty if the first setting did not answer.  But
+opening a port also raises its modem lines, which resets some boards,
+and a program holding a port without an exclusive lock has its replies
+taken.  It probes nothing while a daemon's port cannot be told, since
+that could be any port listed free.
+
 ### Picking a receiver by its serial
 
 Ports are not receivers: after the USB adapters enumerate in another

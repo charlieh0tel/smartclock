@@ -331,6 +331,7 @@ fn main() -> Result<()> {
     // table that is only becomes known once a receiver has answered.
     let info: server::SharedInfo = Arc::new(Mutex::new(server::Info {
         identity: String::new(),
+        device: cli.device.clone(),
         dialect: Dialect::Hp58503,
         database: database.clone(),
         policy,
@@ -1516,6 +1517,7 @@ mod tests {
             let info = || {
                 std::sync::Arc::new(std::sync::Mutex::new(server::Info {
                     identity: String::new(),
+                    device: String::new(),
                     dialect: smartclock::command::Dialect::Hp58503,
                     database: String::new(),
                     policy: server::Policy::default(),

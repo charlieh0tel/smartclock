@@ -36,7 +36,7 @@ const BUDGET: Duration = Duration::from_secs(3);
 
 /// What became of asking one instance.
 #[derive(Debug)]
-enum State {
+pub(crate) enum State {
     /// The daemon answered and its receiver is answering it.
     Answering(Identity),
     /// The daemon answered, but its receiver is not answering it: the
@@ -54,14 +54,24 @@ enum State {
 
 /// The daemons a listing or a lookup found: where they were looked
 /// for, and each instance with what became of asking it.
-struct Survey {
-    daemons: Daemons,
-    found: Vec<(Found, State)>,
+pub(crate) struct Survey {
+    pub(crate) daemons: Daemons,
+    pub(crate) found: Vec<Asked>,
+}
+
+/// One instance and what became of asking it.
+#[derive(Debug)]
+pub(crate) struct Asked {
+    pub(crate) found: Found,
+    pub(crate) state: State,
+    /// The port, or `tcp://` address, its daemon says it holds: `None`
+    /// from one that did not answer or is too old to say.
+    pub(crate) device: Option<String>,
 }
 
 /// Ask every daemon under `run_dir`, or where there are no Unix sockets
 /// the one a client asks by default, what it is attached to.
-fn survey(run_dir: Option<&Path>) -> Result<Survey> {
+pub(crate) fn survey(run_dir: Option<&Path>) -> Result<Survey> {
     let daemons = Daemons::from_names(&[], run_dir);
     let found: Vec<Found> = match &daemons {
         Daemons::Listed(listed) => listed
@@ -77,20 +87,28 @@ fn survey(run_dir: Option<&Path>) -> Result<Survey> {
             Err(e) => Err(e).with_context(|| format!("reading {}", dir.display()))?,
         },
     };
-    let states: Vec<State> = thread::scope(|scope| {
+    let states: Vec<(State, Option<String>)> = thread::scope(|scope| {
         let asked: Vec<_> = found.iter().map(|f| scope.spawn(|| state(f))).collect();
         asked
             .into_iter()
             .map(|asked| {
                 asked
                     .join()
-                    .unwrap_or_else(|_| State::Unanswered("asking it failed".to_owned()))
+                    .unwrap_or_else(|_| (State::Unanswered("asking it failed".to_owned()), None))
             })
             .collect()
     });
     Ok(Survey {
         daemons,
-        found: found.into_iter().zip(states).collect(),
+        found: found
+            .into_iter()
+            .zip(states)
+            .map(|(found, (state, device))| Asked {
+                found,
+                state,
+                device,
+            })
+            .collect(),
     })
 }
 
@@ -105,8 +123,8 @@ pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
         }
         return Ok(());
     }
-    for (found, state) in &found {
-        println!("{}", line(&found.instance, state));
+    for asked in &found {
+        println!("{}", line(&asked.found.instance, &asked.state));
     }
     Ok(())
 }
@@ -122,8 +140,8 @@ pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf
     };
     let matching: Vec<&Found> = found
         .iter()
-        .filter(|(_, state)| attached(state))
-        .map(|(found, _)| found)
+        .filter(|asked| attached(&asked.state))
+        .map(|asked| &asked.found)
         .collect();
     if let [one] = matching.as_slice() {
         return Ok(one.instance.endpoint.clone());
@@ -134,7 +152,7 @@ pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf
     };
     let listing: String = found
         .iter()
-        .map(|(found, state)| format!("\n  {}", line(&found.instance, state)))
+        .map(|asked| format!("\n  {}", line(&asked.found.instance, &asked.state)))
         .collect();
     match matching.len() {
         0 if found.is_empty() => {
@@ -151,39 +169,47 @@ pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf
     }
 }
 
-/// What is known of one instance: from its directory, and if a socket
-/// is there, from the daemon behind it.
-fn state(found: &Found) -> State {
+/// What is known of one instance, and the port its daemon says it
+/// holds: from its directory, and if a socket is there, from the daemon
+/// behind it.
+fn state(found: &Found) -> (State, Option<String>) {
     match found.socket {
-        Presence::Absent => State::Stopped("no socket".to_owned()),
-        Presence::Unreadable(kind) => State::Unreadable(kind),
+        Presence::Absent => (State::Stopped("no socket".to_owned()), None),
+        Presence::Unreadable(kind) => (State::Unreadable(kind), None),
         Presence::Present => ask(&found.instance.endpoint),
     }
 }
 
-/// Ask the daemon at `endpoint` what it is attached to, within
-/// [`BUDGET`].
-fn ask(endpoint: &Path) -> State {
+/// Ask the daemon at `endpoint` what it is attached to, and on which
+/// port, within [`BUDGET`].
+fn ask(endpoint: &Path) -> (State, Option<String>) {
     let mut daemon = match Daemon::connect_within(endpoint, BUDGET) {
         Ok(daemon) => daemon,
         // A socket left behind by a daemon that is gone refuses.
         Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::ConnectionRefused => {
-            return State::Stopped(format!("stale socket: {}", std::io::Error::from(e.kind())));
+            return (
+                State::Stopped(format!("stale socket: {}", std::io::Error::from(e.kind()))),
+                None,
+            );
         }
         // The directory let us in but the socket does not.
         Err(Error::Io(e)) if e.kind() == std::io::ErrorKind::PermissionDenied => {
-            return State::Unreadable(e.kind());
+            return (State::Unreadable(e.kind()), None);
         }
-        Err(e) => return State::Unanswered(reason(e)),
+        Err(e) => return (State::Unanswered(reason(e)), None),
     };
     let info = match daemon.info() {
         Ok(info) => info,
-        Err(e) => return State::Unanswered(reason(e)),
+        Err(e) => return (State::Unanswered(reason(e)), None),
     };
+    let device = client::device(&info);
     let Some(identity) = client::identity(&info) else {
-        return State::Silent(None, "no receiver has answered it".to_owned());
+        return (
+            State::Silent(None, "no receiver has answered it".to_owned()),
+            device,
+        );
     };
-    match daemon.latest() {
+    let state = match daemon.latest() {
         Ok(reading) => match reading.freshness {
             Freshness::Live => State::Answering(identity),
             Freshness::Stale => {
@@ -192,7 +218,8 @@ fn ask(endpoint: &Path) -> State {
             Freshness::Disconnected => State::Silent(Some(identity), why(&reading, "link down")),
         },
         Err(e) => State::Silent(Some(identity), reason(e)),
-    }
+    };
+    (state, device)
 }
 
 /// What went wrong asking a daemon.  Its own refusals and the client's
@@ -230,7 +257,7 @@ fn line(instance: &Instance, state: &State) -> String {
 }
 
 /// What an instance is attached to, or why that is not known.
-fn status(state: &State) -> String {
+pub(crate) fn status(state: &State) -> String {
     match state {
         State::Answering(id) => format!("running, {}", describe(id)),
         State::Silent(Some(id), why) => {

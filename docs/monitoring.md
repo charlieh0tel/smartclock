@@ -20,6 +20,7 @@ hand.
 | `smartclock-cli note`, `fact` | writes a note or a fact to the log of a daemon's receiver ([`running.md`](running.md#notes-and-facts)) |
 | `smartclock-cli sensors` | lists the host's sensors and their latest readings ([`sensors.md`](sensors.md)) |
 | `smartclock-cli daemons` | lists the host's receiver daemons, each with the socket to give `--daemon` and the receiver it is attached to ([`running.md`](running.md#finding-a-daemon)) |
+| `smartclock-cli devices` | lists the host's serial ports, each with the daemon holding it and its receiver, and with `--probe` asks the free ones `*IDN?` ([`running.md`](running.md#listing-the-ports)) |
 | `smartclock-sim` | a simulated receiver, in process for tests and over TCP for the real daemon ([`README.md`](../README.md#running-it)) |
 | `smartclock-gps-feed` | runs a `smartclock-gps` engine on a host and speaks Oncore binary, or the Z3815A's Furuno NMEA, to a `SmartClock`'s engine port, from gpsd, a UBX recording or a made-up sky (`smartclock-gps-feed --help`) |
 

@@ -96,6 +96,17 @@ client relying on a field asks first, since an older daemon ignores it.
   no new request, and nothing reaches a receiver.  A daemon on a socket
   outside the run directory, or on TCP alone, cannot be discovered and
   is not listed.
+- `smartclock-cli devices` lists ports against that same scan.  The
+  daemon's `info` names the port it was given (`device`), an added
+  reply field, so no new request and no version bump; one older than
+  that, or not answering, is placed by its unit's instance name
+  (`/dev/%I`).  Ports come from sysfs on Linux, not the serialport
+  crate's listing there, which opens every 8250 port to test for a UART
+  and, as root, sets another program's port raw at 9600; elsewhere
+  from the crate (SetupAPI, IOKit), which opens none.  `--probe` is
+  the daemon's own attach (`attach_with`), never on a port a daemon
+  holds, and not at all while any daemon's port cannot be told; macOS's
+  `tty.X` and `cu.X` are one port, each node with its own lock.
 - `smartclock-cli --serial` picks the receiver, not the port: after a
   USB re-enumeration swapped two daemons' receivers, a command meant
   for one rewrote the other's EEPROM.  Alone it finds the one daemon

@@ -6,7 +6,7 @@ There are two Debian packages, of one version, built from one tree:
 
 | Package | Programs | For |
 | - | - | - |
-| `smartclock-utils` | `smartclock-cli`, `smartclock-sim` | a receiver on the bench, a flash or ROM read, a daemon on another host; no service, no user |
+| `smartclock-utils` | `smartclock-cli`, `smartclock-sim`, `smartclock-gps-feed` | a receiver on the bench, a flash or ROM read, a daemon on another host; no service, no user |
 | `smartclockmon` | `smartclockd`, `smartclock-web`, `smartclock-exporter`, `smartclock-sensord` | a host that logs a receiver: the units, their `/etc/default` files and the `smartclockd` user |
 
 `smartclockmon` requires `smartclock-utils` of exactly its own

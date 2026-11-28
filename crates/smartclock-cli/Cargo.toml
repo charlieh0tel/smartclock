@@ -49,7 +49,9 @@ Command-line tools for HP / Symmetricom SmartClock GPS time and \
 frequency reference receivers, spoken to over RS-232: smartclock-cli \
 for queries, diagnostics, transcripts, ROM, EEPROM and firmware work, \
 directly or through a smartclockd daemon, and smartclock-sim, a \
-simulated receiver.  The daemon and web view are in smartclockmon."""
+simulated receiver, and smartclock-gps-feed, which runs the GPS \
+engine on a host and feeds a receiver's engine port from gpsd, a UBX \
+recording or a made-up sky.  The daemon and web view are in smartclockmon."""
 section = "utils"
 priority = "optional"
 depends = "$auto"
@@ -58,6 +60,7 @@ replaces = "smartclockmon (<< 1.10.1-1)"
 assets = [
     ["target/release/smartclock-cli", "usr/bin/", "755"],
     ["target/release/smartclock-sim", "usr/bin/", "755"],
+    ["target/release/smartclock-gps-feed", "usr/bin/", "755"],
     ["../../README.md", "usr/share/doc/smartclock-utils/README.md", "644"],
     ["../../docs/commands.md", "usr/share/doc/smartclock-utils/commands.md", "644"],
     ["../../docs/scpi/z3801-keywords.md", "usr/share/doc/smartclock-utils/z3801-keywords.md", "644"],

@@ -42,7 +42,11 @@ pub(crate) enum State {
     /// The daemon answered, but its receiver is not answering it: the
     /// receiver it last had, if any, and why.
     Silent(Option<Identity>, String),
-    /// No daemon is there: no socket, or one nobody listens on.
+    /// An instance directory with no socket: a daemon still waiting
+    /// for its first receiver, since it opens its socket only once one
+    /// has answered, and systemd removes the directory of one stopped.
+    Waiting,
+    /// No daemon is there: a socket nobody listens on.
     Stopped(String),
     /// Something listens but did not answer in time, or answered
     /// something else.
@@ -124,7 +128,10 @@ pub(crate) fn run(run_dir: Option<&Path>) -> Result<()> {
         return Ok(());
     }
     for asked in &found {
-        println!("{}", line(&asked.found.instance, &asked.state));
+        println!(
+            "{}",
+            line(&asked.found.instance, &asked.state, asked.device.as_deref())
+        );
     }
     Ok(())
 }
@@ -152,7 +159,12 @@ pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf
     };
     let listing: String = found
         .iter()
-        .map(|asked| format!("\n  {}", line(&asked.found.instance, &asked.state)))
+        .map(|asked| {
+            format!(
+                "\n  {}",
+                line(&asked.found.instance, &asked.state, asked.device.as_deref())
+            )
+        })
         .collect();
     match matching.len() {
         0 if found.is_empty() => {
@@ -174,7 +186,7 @@ pub(crate) fn serving(run_dir: Option<&Path>, serial: &Serial) -> Result<PathBuf
 /// behind it.
 fn state(found: &Found) -> (State, Option<String>) {
     match found.socket {
-        Presence::Absent => (State::Stopped("no socket".to_owned()), None),
+        Presence::Absent => (State::Waiting, None),
         Presence::Unreadable(kind) => (State::Unreadable(kind), None),
         Presence::Present => ask(&found.instance.endpoint),
     }
@@ -245,11 +257,15 @@ fn why(reading: &Reading, what: &str) -> String {
     }
 }
 
-/// One instance's line: its name, the endpoint to give `--daemon`, and
-/// what it is attached to or why that is not known.
-fn line(instance: &Instance, state: &State) -> String {
+/// One instance's line: its name, the endpoint to give `--daemon`, what
+/// it is attached to or why that is not known, and the port it says it
+/// holds.
+fn line(instance: &Instance, state: &State, device: Option<&str>) -> String {
+    let on = device
+        .map(|device| format!(" on {device}"))
+        .unwrap_or_default();
     format!(
-        "{} {}: {}",
+        "{} {}: {}{on}",
         instance.name,
         instance.endpoint.display(),
         status(state)
@@ -267,6 +283,7 @@ pub(crate) fn status(state: &State) -> String {
             )
         }
         State::Silent(None, why) => format!("running, receiver not answering ({why})"),
+        State::Waiting => "waiting for a receiver".to_owned(),
         State::Stopped(why) => format!("not running ({why})"),
         State::Unanswered(why) => format!("not answering ({why})"),
         State::Unreadable(kind) => format!(
@@ -291,13 +308,19 @@ mod tests {
         };
         let id = parse::identity("HEWLETT-PACKARD,58503A,0000A00000,3704-C").expect("identity");
         assert_eq!(
-            line(&instance, &State::Answering(id)),
-            "ttyUSB0 /run/smartclockd/ttyUSB0/socket: running, 58503A serial 0000A00000 firmware 3704-C"
+            line(&instance, &State::Answering(id), Some("/dev/ttyUSB0")),
+            "ttyUSB0 /run/smartclockd/ttyUSB0/socket: running, 58503A serial 0000A00000 \
+             firmware 3704-C on /dev/ttyUSB0"
+        );
+        assert_eq!(
+            line(&instance, &State::Waiting, None),
+            "ttyUSB0 /run/smartclockd/ttyUSB0/socket: waiting for a receiver"
         );
         assert_eq!(
             line(
                 &instance,
-                &State::Unreadable(std::io::ErrorKind::PermissionDenied)
+                &State::Unreadable(std::io::ErrorKind::PermissionDenied),
+                None
             ),
             "ttyUSB0 /run/smartclockd/ttyUSB0/socket: cannot tell (permission denied; are you in its group?)"
         );

@@ -40,7 +40,7 @@ fn each_daemon_is_listed_on_the_port_it_holds_and_a_gone_one_is_not() {
         [
             "unknown: daemon old, running, Z3801A serial 0000A00000 firmware 3543-A",
             "tcp://127.0.0.1:5025: daemon sim, running, Z3801A serial 0000A00000 firmware 3543-A",
-            "unknown: daemon waiting, not running (no socket)",
+            "unknown: daemon waiting, waiting for a receiver",
         ]
     );
     assert!(

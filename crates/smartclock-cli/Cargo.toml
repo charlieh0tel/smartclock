@@ -55,8 +55,8 @@ recording or a made-up sky.  The daemon and web view are in smartclockmon."""
 section = "utils"
 priority = "optional"
 depends = "$auto"
-breaks = "smartclockmon (<< 1.10.1-1)"
-replaces = "smartclockmon (<< 1.10.1-1)"
+breaks = "smartclockmon (<< 1.10.2-1)"
+replaces = "smartclockmon (<< 1.10.2-1)"
 assets = [
     ["target/release/smartclock-cli", "usr/bin/", "755"],
     ["target/release/smartclock-sim", "usr/bin/", "755"],

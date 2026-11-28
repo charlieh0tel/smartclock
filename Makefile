@@ -499,7 +499,7 @@ EMULATOR_WEB_IMAGES := third_party/firmware/images
 EMULATOR_WEB_FILES := boards/58503a.toml $(EMULATOR_WEB_IMAGES)/58503a-3704.bin \
 	$(EMULATOR_WEB_IMAGES)/eeprom/58503a-3710A01056-eeprom.bin
 EMULATOR_WEB_HEAD := <title>58503A in the Browser</title>\n<meta name="description" content="The HP 58503A 3704 firmware booted on an emulated board in the browser, on WebAssembly: the front panel, a console on the host port and simulation controls, nothing installed.">\n<meta name="smartclock-group" content="emulation">
-EMULATOR_WEB_INTRO := <p>The 58503A 3704 firmware, emulated in this page.  The image and EEPROM are from the bench unit (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/emulator.md\#in-a-browser">about</a>).</p>
+EMULATOR_WEB_INTRO := <p>The 58503A 3704 firmware, emulated in this page.  The image and EEPROM are from the bench unit (<a href="https://github.com/charlieh0tel/smartclock/blob/main/docs/emulator.md\#in-a-browser">about</a>).  Like a real 58503A, the firmware shows STABILIZING for hours after power-up before 10MHZ STABLE (<a href="https://charlieh0tel.github.io/smartclock/loop.html\#what-the-receiver-shows">why</a>).</p>
 .PHONY: emulator-web test-emulator-web
 emulator-web:
 	$(CARGO) build --locked --release --target $(WASM_TARGET) -p smartclock-emu-web

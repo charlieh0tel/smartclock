@@ -200,7 +200,7 @@ defects.
 
 Releases carry two Debian packages for amd64 and arm64, also in the
 APT repository, and an unsupported Windows zip.  `smartclock-utils` is
-`smartclock-cli` and `smartclock-sim`, with no service; `smartclockmon`
+`smartclock-cli`, `smartclock-sim` and `smartclock-gps-feed`, with no service; `smartclockmon`
 is the daemon, the web view, the exporter and the sensor service, and
 requires `smartclock-utils` of its own version.  Build with `make`, or
 `make deb` for both packages.  `smartclockmon` runs one daemon per

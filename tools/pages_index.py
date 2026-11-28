@@ -491,7 +491,7 @@ footer.wrap{color:var(--muted);font-size:.875rem;padding-top:2.5rem;padding-bott
 __HERO__
 </figure>
 <div class="intro">
-<p>The HP, Agilent and Symmetricom SmartClock GPS time and frequency receivers, the 58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A and Z3817A, taken apart: their firmware read and rewritten as C, their disciplining loop analyzed, their FPGAs decoded, their boards mapped from photographs.  A logging daemon and a browser view watch them.</p>
+<p>The HP, Agilent and Symmetricom SmartClock GPS time and frequency receivers, the 58503A/B, 59551A, Z3801A, Z3805A, Z3815A, Z3816A and Z3817A, taken apart: their firmware read and rewritten as C, their disciplining loop analyzed, their FPGAs decoded, their boards mapped from photographs, and their firmware run in an emulator.  A logging daemon and a browser view watch them.</p>
 <p>These pages are the parts best read in a browser.  The rest of the documentation is Markdown in the <a href="__REPOSITORY__">repository</a>.</p>
 </div>
 </section>

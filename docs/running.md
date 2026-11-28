@@ -140,8 +140,9 @@ and, to what answers with a prompt, `*IDN?`, after `:SYSTem:ERRor?`
 until the queue is empty if the first setting did not answer.  But
 opening a port also raises its modem lines, which resets some boards,
 and a program holding a port without an exclusive lock has its replies
-taken.  It probes nothing while a daemon's port cannot be told, since
-that could be any port listed free.
+taken.  A daemon that does not say which port it holds keeps its
+unit's port, `/dev/%I`, from the probe if there is one; the others are
+probed anyway, and what was skipped for it is said on standard error.
 
 ### Picking a receiver by its serial
 

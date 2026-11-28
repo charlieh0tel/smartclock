@@ -118,6 +118,10 @@ pub(crate) fn lock_or_poisoned<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_,
 pub(crate) struct Info {
     /// The receiver's identity string.
     pub identity: String,
+    /// The port, or `tcp://` address, the receiver is on, as the daemon
+    /// was given it, so a client listing ports knows which this daemon
+    /// holds.
+    pub device: String,
     /// Which command tree is in use.
     pub dialect: Dialect,
     /// Where the snapshot log lives, so a client can open it read-only.
@@ -246,6 +250,7 @@ fn handle_request(
             serde_json::json!({
                 "version": smartclock::VERSION,
                 "identity": info.identity,
+                "device": info.device,
                 "dialect": info.dialect.name(),
                 "database": info.database,
                 "allow_control": info.policy.control,
@@ -977,6 +982,7 @@ mod socket_tests {
             let handle = Handle::new(tx, Shared::new());
             let info = Arc::new(Mutex::new(Info {
                 identity: "HEWLETT-PACKARD,58503A,0000A00000,3704-C".to_owned(),
+                device: "/dev/ttyUSB0".to_owned(),
                 dialect: Dialect::Hp58503,
                 database: "/nowhere".to_owned(),
                 policy: Policy::default(),
@@ -1184,6 +1190,7 @@ mod note_tests {
         let (requests, queued) = channel();
         let info = Info {
             identity: identity.to_owned(),
+            device: DEVICE.to_owned(),
             dialect: Dialect::Hp58503,
             database: "/nowhere".to_owned(),
             policy: Policy::default(),
@@ -1212,6 +1219,9 @@ mod note_tests {
     }
 
     const UNIT: &str = "HEWLETT-PACKARD,58503A,3710A01056,3704-C";
+
+    /// The port [`UNIT`] is on.
+    const DEVICE: &str = "/dev/ttyUSB0";
 
     #[test]
     fn a_note_is_filed_under_the_attached_unit() {
@@ -1282,6 +1292,14 @@ mod note_tests {
         );
         assert!(error(reply).is_some());
         assert_eq!(queued, 0, "a refused command reached the device task");
+    }
+
+    #[test]
+    fn info_says_which_port_the_daemon_holds() {
+        match ask(UNIT, Op::Info) {
+            Message::Reply { ok: Some(ok), .. } => assert_eq!(ok["device"], DEVICE),
+            other => panic!("{other:?}"),
+        }
     }
 
     #[test]

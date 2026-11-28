@@ -458,6 +458,16 @@ pub fn identity(info: &serde_json::Value) -> Option<Identity> {
         .and_then(|text| parse::identity(text).ok())
 }
 
+/// The port, or `tcp://` address, a daemon holds, as it was given it,
+/// from its [`Daemon::info`] reply.
+///
+/// `None` from a daemon too old to say.
+pub fn device(info: &serde_json::Value) -> Option<String> {
+    info.get("device")
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned)
+}
+
 /// Whether the daemon that gave this [`Daemon::info`] reply refuses a
 /// request carrying another receiver's serial.
 pub fn checks_receiver_serial(info: &serde_json::Value) -> bool {
@@ -473,6 +483,7 @@ mod tests {
     use super::Instance;
     use super::Presence;
     use super::cadence;
+    use super::device;
     use super::identity;
     use super::scan;
     use crate::link::listen_scratch;
@@ -583,6 +594,13 @@ mod tests {
         );
         assert!(identity(&serde_json::json!({})).is_none());
         assert!(identity(&serde_json::json!({ "identity": "garbled" })).is_none());
+    }
+
+    #[test]
+    fn the_device_comes_from_the_info_reply() {
+        let info = serde_json::json!({ "device": "/dev/ttyUSB0" });
+        assert_eq!(device(&info).as_deref(), Some("/dev/ttyUSB0"));
+        assert!(device(&serde_json::json!({})).is_none());
     }
 
     #[test]

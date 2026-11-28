@@ -71,6 +71,9 @@ pub(crate) struct Fake {
     /// Whether its `info` says it checks a request's receiver serial,
     /// as a daemon older than that does not.
     pub(crate) checks: bool,
+    /// The port its `info` says it holds; `None` for a daemon too old
+    /// to say.
+    pub(crate) device: Option<&'static str>,
 }
 
 /// Every request a fake daemon was sent, in order.
@@ -83,6 +86,7 @@ impl Fake {
             identity,
             freshness: Freshness::Live,
             checks: true,
+            device: None,
         }
     }
 
@@ -117,6 +121,7 @@ impl Fake {
         match op {
             Op::Info if self.checks => serde_json::json!({
                 "identity": self.identity,
+                "device": self.device,
                 CHECKS_RECEIVER_SERIAL: true,
             }),
             Op::Info => serde_json::json!({ "identity": self.identity }),

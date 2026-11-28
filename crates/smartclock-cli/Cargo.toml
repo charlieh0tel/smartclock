@@ -25,6 +25,9 @@ thiserror = "2.0.21"
 [dev-dependencies]
 smartclock-sim = { path = "../smartclock-sim" }
 
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+serialport = "4.10.1"
+
 # The tools' package, smartclock-utils: the CLI and the simulator, and
 # the documents a CLI user reads -- the command table, the Z3801A's own
 # keyword spellings for raw SCPI, the flasher's notes and the pForth

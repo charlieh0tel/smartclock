@@ -279,6 +279,18 @@ enum Command {
     /// holds.  Needs neither a receiver nor `--daemon`; nothing is sent
     /// to a receiver.
     Daemons,
+    /// List the serial ports on this host, one line each: the port, the
+    /// receiver on it where that is known, and the adapter it is on.  A
+    /// port a daemon holds is named by the daemon, from what it holds;
+    /// any other is opened only with `--probe`.
+    Devices {
+        /// Ask each port no daemon holds `*IDN?`, at `--baud` and
+        /// `--framing` and then at the settings receivers are found at,
+        /// as a daemon attaching does, reading off the error queue what
+        /// the wrong settings left there.
+        #[arg(long)]
+        probe: bool,
+    },
 }
 
 /// Where a console read goes and what happens after it, shared by the
@@ -359,6 +371,7 @@ fn address(text: &str) -> std::result::Result<u32, String> {
 }
 
 mod daemons;
+mod devices;
 mod dump_oncore;
 mod dump_pforth;
 mod dump_scpi;
@@ -410,6 +423,18 @@ fn main() -> Result<()> {
     }
     if matches!(cli.command, Command::Daemons) {
         return daemons::run(cli.run_dir.as_deref());
+    }
+    if let Command::Devices { probe } = &cli.command {
+        let probe = if *probe {
+            Some(devices::Probe {
+                baud: baud(cli.baud)?,
+                framing: cli.framing,
+                config: config(cli.timeout),
+            })
+        } else {
+            None
+        };
+        return devices::run(cli.run_dir.as_deref(), probe.as_ref());
     }
     if let Command::JoinChips(args) = &cli.command {
         return flash::chips::run_join(args);
@@ -708,7 +733,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         }
         // Handled before the port is opened.
         Command::Commands => Ok(()),
-        Command::Sensors { .. } | Command::Daemons => Ok(()),
+        Command::Sensors { .. } | Command::Daemons | Command::Devices { .. } => Ok(()),
     };
     // Errors read off the queue so that no command was judged by them
     // (docs/protocol.md, "The error prompt"): the receiver raised them,
@@ -745,7 +770,8 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::Note { .. }
         | Command::Fact { .. }
         | Command::Sensors { .. }
-        | Command::Daemons => Vec::new(),
+        | Command::Daemons
+        | Command::Devices { .. } => Vec::new(),
     })
 }
 
@@ -1159,7 +1185,9 @@ fn through_daemon(socket: &Path, command: &Command, serial: Option<&Serial>) -> 
             Ok(())
         }
         Command::Sensors { sensord } => sensors(sensord),
-        Command::Daemons => unreachable!("handled before a daemon is asked"),
+        Command::Daemons | Command::Devices { .. } => {
+            unreachable!("handled before a daemon is asked")
+        }
         Command::JoinChips(args) => flash::chips::run_join(args),
         Command::SplitChips(args) => flash::chips::run_split(args),
         Command::DumpScpi(args) => dump_scpi::run(args),

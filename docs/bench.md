@@ -92,7 +92,8 @@ replaced.
 Main board Z3801-68001, serial 5UW00ME, date code 3549.  Not fitted on it: U17,
 U18, J4, J5, J6, J7, J8, J15 and the parts of the 10 MHz OUT B stage
 behind J15.  As built it has no 1 PPS output; the operator added one,
-with its own output buffer, on an SMA through the serial plate.  Its
+with its own output buffer, on an SMA through the serial plate,
+tapped at U5 pin 2, pin 1 at U5's notched end (owner, 2026-11-27).  Its
 flash is labeled Z3801-8007 Rev ZB.
 
 Its GPS engine module's shield is marked 326/2436 2643686MAC, and its
@@ -108,7 +109,9 @@ label 7VGN4.
 
 ![The FPGA, U32, wider: U31's bare footprint, the AT&T 1141LL at U41/U42, J4 and J5's footprints with CR14 and CR15, and the bare footprints round them, on 2026-11-10](images/Z3801-68001/z3801a-fpga-top.jpg)
 
-![Beside the serial connector: the AT&T 1141LL on the U5/U6 co-layout footprint, U2, the LT1180ACS, and U7, on 2026-11-10](images/Z3801-68001/z3801a-serial-top.jpg)
+![Beside the serial connector: the AT&T 1141LL at U5, U2, the LT1180ACS, and U7, on 2026-11-10](images/Z3801-68001/z3801a-serial-top.jpg)
+
+![U5, the AT&T 1141LL, U7, marked 48AD DS892 1M, and the added 1 PPS's wire on U5 pin 2, on 2026-11-27](images/Z3801-68001/z3801a-serial-closeup.jpg)
 
 A hand-wired board, carrying a Motorola MC74ACT14N hex Schmitt
 inverter, sits over the main board's J3 footprint, wired with blue

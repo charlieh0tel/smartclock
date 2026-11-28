@@ -125,7 +125,7 @@
   "nets_intro": "Measured on the bench Z3805A on 2026-10-30, power off, with an ohmmeter, by the rules of [[docs/hardware-investigations.md|Working on the open Z3805A board]].  Pin numbers are the 74ABT245A's (DIR 1, A1 to A8 2 to 9, /OE 19; [[third_party/ti/sn74abt245b.pdf]]) and the XC3042's PLCC-84.",
   "observations": [
     "The 58503A (58503-60001 Rev C, `58503a-interior.jpg`) carries the same parts at the same designators where they can be read: SCC68692C1A44 at U3, AT28C64B at U4, LT1180ACSW at U2, ADC0838CCV at U35, TLC0820AC at U36, MC144110 at U37, XC3042 at U32, and 78M12s at U45 and U46.  On the Z3801A (Z3801-68001, `z3801a-main-board.jpg`) U4 is an Atmel part, its type under the wires, U2 an LT1180ACS, U36 a TLC0820AC, U33 an MC68331CFC16, U32 an XC3042-70 and U44 a Philips 74ABT574AD; U3 is under the add-on board.",
-    "They differ in what is fitted.  U31: an empty PLCC-84 socket on the 58503A, bare pads on the Z3801A and Z3805A.  U5, U6 and U7, beside the serial connector: bare on the Z3805A; on the 58503A U7 alone is fitted, a National DS8921M RS-422 line driver and receiver pair (marking 6ZAG DS892 1M), which by its place beside the RS-232/RS-422 jumper block {{XW1}} is inferred, not traced, to be the port's RS-422 side; on the Z3801A, whose port is RS-422 (097-z3801-01), an AT&T part sits at U5 or U6, the photo does not show which label is its.  J2 and J3: boxed headers on the 58503A, bare on the Z3805A; on the Z3801A J2 is bare and a hand-wired add-on board, an MC74ACT14N on it, sits over J3.  J13: on the Z3801A a bare five-position footprint beside U44, on the 58503A an AMP connector at that place; on the Z3805A the designator is printed beside U44.  U34 (a TL072AC dual JFET op amp on the 58503A), J14, J20, CR3 to CR6, CR16, CR17, Q7 and TP4: fitted on the 58503A, bare on the Z3805A, as seen on both boards.",
+    "They differ in what is fitted.  U31: an empty PLCC-84 socket on the 58503A, bare pads on the Z3801A and Z3805A.  U34: fitted on the 58503A, a TL072AC dual JFET op amp, bare on the Z3805A and the Z3801A (owner, 2026-11-10).  U5, U6 and U7, beside the serial connector: bare on the Z3805A; on the 58503A U7 alone is fitted, a National DS8921M RS-422 line driver and receiver pair (marking 6ZAG DS892 1M), which by its place beside the RS-232/RS-422 jumper block {{XW1}} is inferred, not traced, to be the port's RS-422 side; U5 and U6 are a co-layout, one SOIC-16 footprint labeled both, and on the Z3801A, whose port is RS-422 (097-z3801-01), an AT&T 1141LL sits on it, next to U2 (owner, 2026-11-10).  J2 and J3: boxed headers on the 58503A, bare on the Z3805A; on the Z3801A J2 is bare and a hand-wired add-on board, an MC74ACT14N on it, sits over J3.  J13, in the same place on all three boards, between the 10 MHz B jack and U44: the same connector, 4 pins at 0.100 in pitch, right-angle, fitted on the 58503A and the Z3805A, and bare on the Z3801A, a footprint of four pads (owner, 2026-11-09).  J14, J20, CR3 to CR6, CR16, CR17, Q7 and TP4: fitted on the 58503A, bare on the Z3805A, as seen on both boards.",
     "The three boot two FPGA designs: the 58503A and the Z3801A share one byte for byte, and the Z3805A's differs from it at pins 14 and 45 among others ([[docs/firmware/outputs.md|The FPGA bitstreams]]).  The 58503A's J4 is fitted and carries no 1 PPS, though every resistor pack on its back side, R32 among them, is fitted ([[docs/hardware-investigations.md|item 19]])."
   ],
   "open": [
@@ -138,9 +138,70 @@
     "{{U51}} and {{U57}}, under the heatsink.",
     "Which byte {{U9}} and {{U16}} each take.",
     "Whether the Z3805A's and Z3801A's J12 are the BDM header the 58503A's is ([[docs/hardware-investigations.md|item 13]]).",
-    "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them; on the bench 58503A /IRQ2 follows the DUART's interrupt output, measured powered ([[docs/hardware-investigations.md|item 21]])."
+    "The DUART's /INTR to U33's /IRQ2, and whether {{U29}} is between them; on the bench 58503A /IRQ2 follows the DUART's interrupt output, measured powered ([[docs/hardware-investigations.md|item 21]]).",
+    "What {{CR18}}, {{CR19}} and the precision resistors under {{U36}} and {{U37}} do, what reads U36, and why the 100 ohm resistor beside them was reworked: [[docs/hardware-investigations.md|item 28]]."
   ],
   "parts": [
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "analog-back": {
+          "x": 40.85,
+          "y": 65.0
+        },
+        "bottom": {
+          "x": 44.98,
+          "y": 53.64
+        }
+      },
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "A7p",
+      "marking_confidence": "board",
+      "note": "Read on `z3805a-analog-back.jpg`.  A7 is the marking code a BAV99 carries; the part is not identified beyond it.  A resistor marked 1000 beside them has been reworked by hand, flux left round it (`z3805a-analog-back.jpg`, 1800,1710 to 2000,1880).",
+      "ref": "CR18",
+      "role": "Not traced; under U36/U37 (inferred interpolator), by the standoffs' alignment the owner confirmed: [[docs/hardware-investigations.md|item 28]].",
+      "role_confidence": "inferred",
+      "type": "dual series diode, SOT-23, BAV99 by its marking A7",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
+    {
+      "58503a": {
+        "note": "",
+        "status": "open"
+      },
+      "at": {
+        "analog-back": {
+          "x": 40.92,
+          "y": 69.85
+        },
+        "bottom": {
+          "x": 44.98,
+          "y": 54.99
+        }
+      },
+      "firmware": "",
+      "group": "analog",
+      "id_confidence": "board",
+      "marking": "A7p",
+      "marking_confidence": "board",
+      "note": "Read on `z3805a-analog-back.jpg`.  A7 is the marking code a BAV99 carries; the part is not identified beyond it.",
+      "ref": "CR19",
+      "role": "Not traced; under U36/U37 (inferred interpolator), by the standoffs' alignment the owner confirmed: [[docs/hardware-investigations.md|item 28]].",
+      "role_confidence": "inferred",
+      "type": "dual series diode, SOT-23, BAV99 by its marking A7",
+      "z3801a": {
+        "note": "",
+        "status": "open"
+      }
+    },
     {
       "58503a": {
         "note": "fitted (recalled, not photographed)",
@@ -221,13 +282,17 @@
     },
     {
       "58503a": {
-        "note": "an AMP connector",
-        "status": "differs"
+        "note": "fitted, the same connector (owner, 2026-11-09)",
+        "status": "same"
       },
       "at": {
         "top": {
           "x": 55.4,
           "y": 58.41
+        },
+        "z3801a-analog": {
+          "x": 24.9,
+          "y": 77.0
         }
       },
       "firmware": "[[docs/hardware-investigations.md|item 20]]",
@@ -235,13 +300,13 @@
       "id_confidence": "board",
       "marking": "J13 (silkscreen)",
       "marking_confidence": "board",
-      "note": "The designator was read on the 2026-10-30 top-side photo.",
+      "note": "In the same place on all three boards, between the 10 MHz B jack and U44: fitted on the Z3805A and the 58503A, the same part, 4 pins at 0.100 in pitch, right-angle, and bare on the Z3801A (owner, 2026-11-09).  Seen on `z3805a-main-board-component-side.jpg`, `z3805a-analog-top.jpg`, `58503a-interior.jpg` and `z3801a-main-board.jpg`.  The designator was read on the 2026-10-30 top-side photo.",
       "ref": "J13",
-      "role": "Not traced.  Beside U44.  Whether the front lamp board's ribbon plugs in here is open.",
+      "role": "Not traced.  Between the 10 MHz B jack and U44.  Whether the front lamp board's ribbon plugs in here is open.",
       "role_confidence": "open",
-      "type": "Header footprint",
+      "type": "4-pin, 0.100 in pitch, right-angle connector, black, keyed, one window, fitted; AMP on the 58503A's",
       "z3801a": {
-        "note": "a bare five-position footprint, beside U44",
+        "note": "not fitted: a bare footprint of four pads in the same place; a via beside them, misread once as a fifth pad, is not part of the connector (owner, 2026-11-09); four pads on `z3801a-analog-top.jpg`",
         "status": "differs"
       }
     },
@@ -597,16 +662,16 @@
       "firmware": "",
       "group": "conn",
       "id_confidence": "board",
-      "marking": "not read",
-      "marking_confidence": "open",
-      "note": "",
+      "marking": "unfitted",
+      "marking_confidence": "board",
+      "note": "Seen bare on `z3805a-analog-top.jpg`, beside U17 to U20.",
       "ref": "J10",
-      "role": "Not identified.",
+      "role": "None fitted.",
       "role_confidence": "open",
-      "type": "Not identified",
+      "type": "Three-hole footprint, no part",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "bare (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -623,16 +688,16 @@
       "firmware": "",
       "group": "conn",
       "id_confidence": "board",
-      "marking": "not read",
-      "marking_confidence": "open",
-      "note": "",
+      "marking": "unfitted",
+      "marking_confidence": "board",
+      "note": "Seen bare on `z3805a-analog-top.jpg`, beside U17 to U20.",
       "ref": "J11",
-      "role": "Not identified.",
+      "role": "None fitted.",
       "role_confidence": "open",
-      "type": "Not identified",
+      "type": "Three-hole footprint, no part",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "bare (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -745,6 +810,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog-back": {
+          "x": 80.35,
+          "y": 69.25
+        },
         "bottom": {
           "x": 56.41,
           "y": 55.2
@@ -1031,6 +1100,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog-back": {
+          "x": 75.9,
+          "y": 13.25
+        },
         "bottom": {
           "x": 55.31,
           "y": 38.83
@@ -1057,6 +1130,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog-back": {
+          "x": 96.28,
+          "y": 48.25
+        },
         "bottom": {
           "x": 62.15,
           "y": 49.26
@@ -1083,6 +1160,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 72.71,
+          "y": 52.15
+        },
         "mcu": {
           "x": 3.36,
           "y": 99.21
@@ -1103,8 +1184,8 @@
       "role_confidence": "inferred",
       "type": "8-position DIP switch",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "not fitted (owner, 2026-11-10; bare pads on `z3801a-analog-top.jpg`)",
+        "status": "differs"
       }
     },
     {
@@ -1295,6 +1376,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 6.97,
+          "y": 15.6
+        },
         "top": {
           "x": 74.88,
           "y": 28.98
@@ -1311,8 +1396,8 @@
       "role_confidence": "board",
       "type": "TI 74ABT245A, octal bus transceiver, 3-state ([[third_party/ti/sn74abt245b.pdf]])",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "not fitted (owner, 2026-11-10; bare pads on `z3801a-analog-top.jpg`)",
+        "status": "differs"
       }
     },
     {
@@ -1321,6 +1406,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 7.3,
+          "y": 23.5
+        },
         "top": {
           "x": 69.09,
           "y": 28.7
@@ -1337,8 +1426,8 @@
       "role_confidence": "board",
       "type": "TI 74ABT245A, octal bus transceiver, 3-state ([[third_party/ti/sn74abt245b.pdf]])",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "not fitted (owner, 2026-11-10; bare pads on `z3801a-analog-top.jpg`)",
+        "status": "differs"
       }
     },
     {
@@ -1347,6 +1436,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 7.3,
+          "y": 35.75
+        },
         "top": {
           "x": 61.34,
           "y": 28.62
@@ -1399,6 +1492,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 7.64,
+          "y": 46.25
+        },
         "top": {
           "x": 54.62,
           "y": 28.5
@@ -1425,6 +1522,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 6.97,
+          "y": 66.0
+        },
         "mcu": {
           "x": 77,
           "y": 68
@@ -1455,6 +1556,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 6.97,
+          "y": 73.5
+        },
         "mcu": {
           "x": 77,
           "y": 53
@@ -1485,6 +1590,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 16.27,
+          "y": 57.5
+        },
         "mcu": {
           "x": 66.48,
           "y": 86.25
@@ -1515,6 +1624,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 17.93,
+          "y": 87.0
+        },
         "mcu": {
           "x": 65.17,
           "y": 25.87
@@ -1545,6 +1658,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 19.26,
+          "y": 66.1
+        },
         "mcu": {
           "x": 62,
           "y": 68
@@ -1575,6 +1692,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 19.59,
+          "y": 73.6
+        },
         "mcu": {
           "x": 62,
           "y": 53
@@ -1605,6 +1726,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 28.55,
+          "y": 57.5
+        },
         "mcu": {
           "x": 51.65,
           "y": 86.26
@@ -1635,6 +1760,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 29.68,
+          "y": 65.5
+        },
         "mcu": {
           "x": 49.94,
           "y": 68.41
@@ -1720,6 +1849,10 @@
         "top": {
           "x": 75.23,
           "y": 40.18
+        },
+        "z3801a-analog": {
+          "x": 66.4,
+          "y": 37.0
         }
       },
       "firmware": "Chip select 4 (`0x500000`) is set up and no instruction addresses it: [[docs/firmware/restart.md|The chip selects]].  The bare footprints are where a CS4 device would go, a place to look, not a finding: [[docs/firmware/58503a-3704.md|Not established]].",
@@ -1727,13 +1860,13 @@
       "id_confidence": "board",
       "marking": "unfitted",
       "marking_confidence": "board",
-      "note": "",
+      "note": "No part fitted on any of the three boards (owner, 2026-11-10).  On `z3805a-analog-top.jpg` and `z3801a-analog-top.jpg` the bare pads are a fine-pitch pattern, more a QFP's than a PLCC-84's; how that site takes the 58503A's socket is open.",
       "ref": "U31",
       "role": "None fitted.",
       "role_confidence": "open",
-      "type": "PLCC-84 footprint, no part",
+      "type": "Unfitted site: bare pads on the Z3805A and Z3801A, an empty PLCC-84 socket on the 58503A",
       "z3801a": {
-        "note": "bare pads",
+        "note": "bare pads (`z3801a-analog-top.jpg`)",
         "status": "same"
       }
     },
@@ -1743,9 +1876,17 @@
         "status": "same"
       },
       "at": {
+        "analog": {
+          "x": 38.51,
+          "y": 38.0
+        },
         "top": {
           "x": 59,
           "y": 40
+        },
+        "z3801a-analog": {
+          "x": 33.53,
+          "y": 37.5
         }
       },
       "firmware": "CS5's `0x304000`, `fpga_port`: [[docs/firmware/counter.md|The register port]]; loaded over QSPI device 6 (`fpga_program`) and verified over 12: [[docs/firmware/structures.md|The QSPI's devices]]; the design, `z3805a.bit`, and its pins: [[docs/firmware/outputs.md|The FPGA bitstreams]].",
@@ -1769,6 +1910,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 47.14,
+          "y": 82.0
+        },
         "mcu": {
           "x": 28,
           "y": 34
@@ -1811,12 +1956,12 @@
       "marking_confidence": "board",
       "note": "",
       "ref": "U34",
-      "role": "None fitted.",
+      "role": "None fitted on the Z3805A (owner, 2026-11-10; bare pads on `z3805a-adc-top.jpg`).",
       "role_confidence": "open",
       "type": "Small-outline footprint, no part",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "not fitted (owner, 2026-11-10; bare pads on `z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -1825,9 +1970,17 @@
         "status": "same"
       },
       "at": {
+        "analog": {
+          "x": 57.44,
+          "y": 14.1
+        },
         "top": {
           "x": 74.97,
           "y": 47.92
+        },
+        "z3801a-analog": {
+          "x": 67.4,
+          "y": 52.5
         }
       },
       "firmware": "QSPI device 1, `QSPI_ADC`, read by `adc_read`: [[docs/firmware/structures.md|The QSPI's devices]]; [[docs/hardware-investigations.md|item 5]].",
@@ -1841,8 +1994,8 @@
       "role_confidence": "read",
       "type": "National ADC0838, 8-bit A/D converter, 8-channel multiplexer, serial I/O",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "ADC0838CCV (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -1851,12 +2004,20 @@
         "status": "same"
       },
       "at": {
+        "analog": {
+          "x": 56.97,
+          "y": 31.1
+        },
         "top": {
           "x": 63.96,
           "y": 47.13
+        },
+        "z3801a-analog": {
+          "x": 43.82,
+          "y": 51.75
         }
       },
-      "firmware": "[[docs/hardware-investigations.md|item 5]]",
+      "firmware": "[[docs/hardware-investigations.md|item 5]]; the interpolator's converter, inferred: [[docs/hardware-investigations.md|item 28]].",
       "group": "analog",
       "id_confidence": "board",
       "marking": "TI TLC0820AC 61A95EW",
@@ -1865,9 +2026,9 @@
       "ref": "U36",
       "role": "Not traced: what reads it is not in the firmware's QSPI devices or chip selects.",
       "role_confidence": "open",
-      "type": "TI TLC0820A, 8-bit A/D converter, parallel output",
+      "type": "TI TLC0820A, 8-bit A/D converter, parallel output, PLCC-20 (TI's FN package, the DW's pin numbers; [[third_party/ti/tlc0820a.pdf]], page 1)",
       "z3801a": {
-        "note": "TLC0820AC",
+        "note": "TLC0820AC, PLCC (`z3801a-analog-top.jpg`)",
         "status": "same"
       }
     },
@@ -1877,9 +2038,17 @@
         "status": "same"
       },
       "at": {
+        "analog": {
+          "x": 57.77,
+          "y": 39.1
+        },
         "top": {
           "x": 58.19,
           "y": 47.34
+        },
+        "z3801a-analog": {
+          "x": 31.54,
+          "y": 53.25
         }
       },
       "firmware": "[[docs/firmware/structures.md|The QSPI's devices]]; [[docs/firmware/ovens.md|What `hdac` is not]]; its supply: [[docs/hardware-investigations.md|item 23]].",
@@ -1893,8 +2062,8 @@
       "role_confidence": "inferred",
       "type": "Motorola MC144110, hex 6-bit D/A converter, serial input ([[third_party/motorola/MC144110.pdf]])",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "MC144110DW (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -1903,6 +2072,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 52.92,
+          "y": 61.4
+        },
         "mcu": {
           "x": 22.14,
           "y": 76.83
@@ -1933,9 +2106,17 @@
         "status": "same"
       },
       "at": {
+        "analog": {
+          "x": 60.09,
+          "y": 8.6
+        },
         "top": {
           "x": 78.74,
           "y": 48.94
+        },
+        "z3801a-analog": {
+          "x": 76.03,
+          "y": 54.75
         }
       },
       "firmware": "",
@@ -1949,8 +2130,8 @@
       "role_confidence": "open",
       "type": "LM385-2.5, 2.5 V micropower voltage reference",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "385-2 (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -1985,9 +2166,17 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 63.75,
+          "y": 29.0
+        },
         "top": {
           "x": 64.65,
           "y": 50.44
+        },
+        "z3801a-analog": {
+          "x": 46.81,
+          "y": 58.75
         }
       },
       "firmware": "",
@@ -2001,8 +2190,8 @@
       "role_confidence": "inferred",
       "type": "78L12, +12 V 100 mA regulator, SO-8",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "8L12A, a 78L12 (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -2023,12 +2212,12 @@
       "marking_confidence": "board",
       "note": "One place on the board map, which asks whether the two are one co-layout.",
       "ref": "U41, U42",
-      "role": "None fitted.",
+      "role": "None fitted on the Z3805A.",
       "role_confidence": "open",
-      "type": "Small-outline footprints, no part",
+      "type": "Co-layout footprint pair: alternative footprints for one part (owner, 2026-11-10)",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "fitted: AT&T 1141LL (co-layout; owner, 2026-11-10; `z3801a-analog-top.jpg`)",
+        "status": "differs"
       }
     },
     {
@@ -2037,6 +2226,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 86.32,
+          "y": 27.65
+        },
         "top": {
           "x": 65.57,
           "y": 58.78
@@ -2063,6 +2256,10 @@
         "status": "fitted"
       },
       "at": {
+        "analog": {
+          "x": 87.12,
+          "y": 52.65
+        },
         "top": {
           "x": 49.26,
           "y": 58.59
@@ -2071,9 +2268,9 @@
       "firmware": "CS5's `0x300000`, `lamp_latch`, written whole by `leds_update` and `lamp_test`: [[docs/firmware/restart.md|The chip selects]]; its bits: [[docs/firmware/outputs.md|The Z3805A's lamps]]; the procedure: [[docs/hardware-investigations.md|item 20]].",
       "group": "mcu",
       "id_confidence": "board",
-      "marking": "74ABT574",
+      "marking": "Philips 74ABT574AD FV19713 9605",
       "marking_confidence": "board",
-      "note": "Read on the 2026-10-30 top-side photo; out of focus in every earlier one.",
+      "note": "Read in full on `z3805a-analog-top.jpg`; first read on the 2026-10-30 top-side photo, out of focus in every earlier one.",
       "ref": "U44",
       "role": "The lamp latch at `0x300000`: the candidate.  Beside J13.",
       "role_confidence": "inferred",
@@ -2215,7 +2412,7 @@
     },
     {
       "58503a": {
-        "note": "",
+        "note": "not fitted (owner, 2026-11-10)",
         "status": "same"
       },
       "at": {
@@ -2229,13 +2426,13 @@
       "id_confidence": "board",
       "marking": "unfitted",
       "marking_confidence": "board",
-      "note": "One place on the board map, which asks whether the two are one co-layout.",
+      "note": "",
       "ref": "U5, U6",
-      "role": "None fitted.  Beside U2 and J1.",
+      "role": "None fitted on the Z3805A.  Beside U2 and J1.",
       "role_confidence": "open",
-      "type": "Small-outline footprints, no part",
+      "type": "SOIC-16 co-layout, one footprint labeled both (owner, 2026-11-10), no part",
       "z3801a": {
-        "note": "an AT&T part at U5 or U6; the port is RS-422",
+        "note": "fitted: AT&T 1141LL, marking AT&T 1141LL 9526T 93316 (owner, 2026-11-10; `z3801a-serial-top.jpg`); the port is RS-422",
         "status": "differs"
       }
     },
@@ -2827,14 +3024,14 @@
       "id_confidence": "board",
       "marking": "unfitted",
       "marking_confidence": "board",
-      "note": "",
+      "note": "Seen bare on `z3805a-analog-top.jpg`, beside U17 to U20.",
       "ref": "CR16",
       "role": "None fitted.",
       "role_confidence": "open",
-      "type": "Footprint, no part",
+      "type": "Two-pad footprint, no part",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "bare (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -2853,14 +3050,14 @@
       "id_confidence": "board",
       "marking": "unfitted",
       "marking_confidence": "board",
-      "note": "",
+      "note": "Seen bare on `z3805a-analog-top.jpg`, beside U17 to U20.",
       "ref": "CR17",
       "role": "None fitted.",
       "role_confidence": "open",
-      "type": "Footprint, no part",
+      "type": "Two-pad footprint, no part",
       "z3801a": {
-        "note": "",
-        "status": "open"
+        "note": "bare (`z3801a-analog-top.jpg`)",
+        "status": "same"
       }
     },
     {
@@ -3387,7 +3584,8 @@
   "tags": [
     "Photos 2026-10-30, board out of the chassis",
     "GPS engine module removed",
-    "Nets measured cold, with an ohmmeter"
+    "Nets measured cold, with an ohmmeter",
+    "Close-ups 2026-11-09, the analog corner's two sides"
   ],
   "title": "SmartClock Board Atlas",
   "views": [
@@ -3420,6 +3618,66 @@
       "short": "close-up",
       "title": "Processor and logic",
       "width": 4080
+    },
+    {
+      "alt": "Close-up of the Z3805A's component side round the XC3042 FPGA, U32: the TLC0820AC U36, the 78L12 U40 and Q2 beside it, the MC144110 U37 below them, the ADC0838 U35 above, the regulators U43, VR3 and VR4, S1, U44 and J13 at the right, and the MC68331 U33 at the bottom",
+      "caption": "The FPGA and the analog corner beside it, read on 2026-11-09.",
+      "height": 4080,
+      "id": "analog",
+      "image": "images/Z3805-68001/z3805a-analog-top.jpg",
+      "short": "analog close-up",
+      "title": "FPGA and analog corner",
+      "width": 3072
+    },
+    {
+      "alt": "Close-up of the Z3805A's solder side under U36, U37, Q2 and U40: the dual diodes CR18 and CR19, a cluster of blue precision resistors, ceramic capacitors and a blue molded part marked 4R7, the resistor networks R55, R92 and R115, and a resistor marked 1000 reworked by hand, flux round it, right of center",
+      "caption": "The solder side under the analog close-up, a quarter turn and a mirror image against it.  Which parts lie under which is aligned by the two standoffs (the left insert here is the standoff between U35 and U36, the right the one by U27) and the board's cutout, and confirmed by the owner, not measured.",
+      "height": 4080,
+      "id": "analog-back",
+      "image": "images/Z3805-68001/z3805a-analog-back.jpg",
+      "short": "analog back",
+      "title": "Under the analog corner",
+      "width": 3072
+    },
+    {
+      "alt": "Close-up of the Z3801A main board, Z3801-68001, round its XC3042 FPGA, U32, its legends upside down: U31's bare fine-pitch footprint at its side, the TLC0820AC U36, the MC144110DW U37, the 78L12 U40 and Q2 below it, the ADC0838 U35 and U39 beside them, J13's four bare pads by U44",
+      "caption": "The Z3801A's board, not the Z3805A's: the same corner, read on 2026-11-09, for the Z3801A column.  Its rings mark the Z3805A rows' designators where this board has them.",
+      "height": 4080,
+      "id": "z3801a-analog",
+      "image": "images/Z3801-68001/z3801a-analog-top.jpg",
+      "short": "Z3801A close-up",
+      "title": "Z3801A analog corner",
+      "width": 3072
+    },
+    {
+      "alt": "The Z3801A main board, Z3801-68001, round its XC3042 FPGA, U32, wider than the analog corner: U31's bare fine-pitch footprint below the FPGA, the AT&T 1141LL at U41 and U42 at the lower left, J4 and J5's footprints, Out A and Out B, with CR14 and CR15, J7 and J8's footprints with CR11 to CR13, J2's header footprint, U17 and U18's bare footprints, CR16 and CR17, and U5, U6 and U2 at the upper right",
+      "caption": "The Z3801A's board, not the Z3805A's: its FPGA, J4 and J5 and the bare footprints round them, on 2026-11-10, for the Z3801A column.  No rings yet.",
+      "height": 3072,
+      "id": "z3801a-fpga",
+      "image": "images/Z3801-68001/z3801a-fpga-top.jpg",
+      "short": "Z3801A FPGA",
+      "title": "Z3801A FPGA and J4, J5",
+      "width": 4080
+    },
+    {
+      "alt": "Close-up of the Z3801A main board beside its serial connector: the AT&T 1141LL on the U5/U6 co-layout footprint, marked 9526T 93316, the LT1180ACS U2, marked LT 9546, the SO-8 U7 above them, the crystal Y1, CR7 to CR10 and CR25 to CR28 below, and the PLCC flash socket at the left",
+      "caption": "The Z3801A's board: the serial parts beside J1, on 2026-11-10, for the Z3801A column.  No rings yet.",
+      "height": 3072,
+      "id": "z3801a-serial",
+      "image": "images/Z3801-68001/z3801a-serial-top.jpg",
+      "short": "Z3801A serial",
+      "title": "Z3801A serial parts",
+      "width": 4080
+    },
+    {
+      "alt": "Close-up of the Z3805A's component side at U31's corner: U31's bare fine-pitch footprint filling the top, the ADC0838CCV U35 below it, U34's bare pads beside U35, and U39, marked 385-2, below them",
+      "caption": "U31's bare footprint and U34's bare pads, on 2026-11-10.  No rings yet.",
+      "height": 4080,
+      "id": "adc",
+      "image": "images/Z3805-68001/z3805a-adc-top.jpg",
+      "short": "U31 corner",
+      "title": "U31 corner and U34",
+      "width": 3072
     }
   ]
 }

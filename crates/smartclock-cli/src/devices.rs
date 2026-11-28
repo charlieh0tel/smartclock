@@ -42,19 +42,6 @@ const UNKNOWN_PORT: &str = "unknown";
 /// adapter, then each other name for the port.
 const SEPARATOR: &str = " | ";
 
-/// Where hosts keep UUCP lock files, `LCK..<name>`, which programs such
-/// as minicom take instead of an exclusive open.  `/var/lock` is often
-/// a link to `/run/lock`; the first holding a port's file is the one
-/// read.
-const LOCK_DIRS: [&str; 2] = ["/var/lock", "/run/lock"];
-
-/// Where each running process has an entry named by its pid, to tell
-/// a stale lock.  Without it a lock is taken as live.
-const PROC: &str = "/proc";
-
-/// The prefix of a UUCP lock file's name, before the port's.
-const LOCK_PREFIX: &str = "LCK..";
-
 /// How to ask a port no daemon holds what is on it.
 #[derive(Debug)]
 pub(crate) struct Probe {
@@ -119,20 +106,6 @@ enum Seen {
     },
     /// Asked, and nothing answered: why.
     Unidentified(String),
-    /// Not asked, for another program's lock on it.
-    Locked(Lock),
-}
-
-/// A UUCP lock file on a port.
-#[derive(Debug, PartialEq, Eq)]
-struct Lock {
-    /// The file.
-    file: String,
-    /// The pid it names, if it could be read.
-    pid: Option<u32>,
-    /// Whether that pid is known not to be running.  A stale lock is
-    /// skipped all the same, and left where it is.
-    stale: bool,
 }
 
 /// One line of the listing.
@@ -341,13 +314,8 @@ fn probe_free(rows: Vec<Row>, probe: &Probe) -> Vec<Row> {
             .iter()
             .map(|row| {
                 scope.spawn(|| {
-                    matches!(row.seen, Seen::Free).then(|| {
-                        let dirs = LOCK_DIRS.map(Path::new);
-                        match lock(&row.port, &dirs, Path::new(PROC)) {
-                            Some(lock) => Seen::Locked(lock),
-                            None => identify(&row.port, probe, transport::open),
-                        }
-                    })
+                    matches!(row.seen, Seen::Free)
+                        .then(|| identify(&row.port, probe, transport::open))
                 })
             })
             .collect();
@@ -367,33 +335,6 @@ fn probe_free(rows: Vec<Row>, probe: &Probe) -> Vec<Row> {
             None => row,
         })
         .collect()
-}
-
-/// The UUCP lock file on `port` in the first of `dirs` holding one, and
-/// whether the process it names is gone, by `proc`.
-fn lock(port: &str, dirs: &[&Path], proc: &Path) -> Option<Lock> {
-    let name = Path::new(port).file_name()?.to_str()?;
-    let file = dirs
-        .iter()
-        .map(|dir| dir.join(format!("{LOCK_PREFIX}{name}")))
-        .find(|file| file.is_file())?;
-    let pid = std::fs::read(&file).ok().and_then(|bytes| lock_pid(&bytes));
-    let stale = pid.is_some_and(|pid| proc.is_dir() && !proc.join(pid.to_string()).exists());
-    Some(Lock {
-        file: file.display().to_string(),
-        pid,
-        stale,
-    })
-}
-
-/// The pid in a lock file: ASCII digits, as the HDB format writes it,
-/// or a four-byte binary one, as the older format does.
-fn lock_pid(bytes: &[u8]) -> Option<u32> {
-    std::str::from_utf8(bytes)
-        .ok()
-        .and_then(|text| text.trim().parse().ok())
-        .or_else(|| <[u8; 4]>::try_from(bytes).ok().map(u32::from_ne_bytes))
-        .filter(|pid| *pid > 0)
 }
 
 /// What answers `*IDN?` on `path`, opening it with `open`, by the
@@ -436,14 +377,6 @@ fn line(row: &Row) -> String {
             framing,
         } => format!("free, {} at {baud} {framing}", describe(identity)),
         Seen::Unidentified(why) => format!("free, not identified ({why})"),
-        Seen::Locked(Lock { file, pid, stale }) => {
-            let by = match (pid, stale) {
-                (Some(pid), false) => format!("locked by pid {pid}"),
-                (Some(pid), true) => format!("stale lock by pid {pid}, no such process"),
-                (None, _) => "locked, pid unreadable".to_owned(),
-            };
-            format!("free, {by} ({file}), not probed")
-        }
     };
     let usb = row.usb.iter().map(|usb| {
         let names = [&usb.manufacturer, &usb.product]
@@ -592,7 +525,6 @@ mod tests {
     use smartclock_sim::transport::SimTransport;
 
     use super::Holder;
-    use super::Lock;
     use super::Port;
     use super::Probe;
     use super::Row;
@@ -600,8 +532,6 @@ mod tests {
     use super::Usb;
     use super::identify;
     use super::line;
-    use super::lock;
-    use super::lock_pid;
     use super::rows;
     use super::spelling;
     use super::unit_device;
@@ -824,76 +754,6 @@ mod tests {
                 "daemon ttyUSB1 did not say which port it holds; not probing /dev/ttyUSB1, \
               its unit's port"
             ]
-        );
-    }
-
-    #[test]
-    fn a_lock_file_names_its_pid_and_whether_it_is_running() {
-        let root = std::env::temp_dir().join(format!("smartclock-locks-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&root);
-        let (var, run, proc) = (root.join("var"), root.join("run"), root.join("proc"));
-        for dir in [&var, &run, &proc.join("1234")] {
-            std::fs::create_dir_all(dir).expect("directory");
-        }
-        std::fs::write(run.join("LCK..ttyS0"), "      1234\n").expect("live lock");
-        std::fs::write(run.join("LCK..ttyS1"), "      4321\n").expect("stale lock");
-        std::fs::write(var.join("LCK..ttyS2"), "garbage").expect("unreadable lock");
-        let dirs = [var.as_path(), run.as_path()];
-        let found: Vec<Option<Lock>> = ["/dev/ttyS0", "/dev/ttyS1", "/dev/ttyS2", "/dev/ttyS3"]
-            .into_iter()
-            .map(|port| lock(port, &dirs, &proc))
-            .collect();
-        let _ = std::fs::remove_dir_all(&root);
-        let file = |dir: &std::path::Path, name: &str| dir.join(name).display().to_string();
-        assert_eq!(
-            found,
-            [
-                Some(Lock {
-                    file: file(&run, "LCK..ttyS0"),
-                    pid: Some(1234),
-                    stale: false
-                }),
-                Some(Lock {
-                    file: file(&run, "LCK..ttyS1"),
-                    pid: Some(4321),
-                    stale: true
-                }),
-                Some(Lock {
-                    file: file(&var, "LCK..ttyS2"),
-                    pid: None,
-                    stale: false
-                }),
-                None,
-            ]
-        );
-        assert_eq!(lock_pid(&77u32.to_ne_bytes()), Some(77));
-    }
-
-    #[test]
-    fn a_locked_port_says_by_whom_and_that_it_was_not_probed() {
-        let row = |lock| Row {
-            port: "/dev/ttyS0".to_owned(),
-            aliases: Vec::new(),
-            usb: None,
-            seen: Seen::Locked(lock),
-        };
-        let lock = |pid, stale| Lock {
-            file: "/run/lock/LCK..ttyS0".to_owned(),
-            pid,
-            stale,
-        };
-        assert_eq!(
-            line(&row(lock(Some(1234), false))),
-            "/dev/ttyS0: free, locked by pid 1234 (/run/lock/LCK..ttyS0), not probed"
-        );
-        assert_eq!(
-            line(&row(lock(Some(1234), true))),
-            "/dev/ttyS0: free, stale lock by pid 1234, no such process \
-             (/run/lock/LCK..ttyS0), not probed"
-        );
-        assert_eq!(
-            line(&row(lock(None, false))),
-            "/dev/ttyS0: free, locked, pid unreadable (/run/lock/LCK..ttyS0), not probed"
         );
     }
 

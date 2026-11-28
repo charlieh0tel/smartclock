@@ -107,15 +107,14 @@ client relying on a field asks first, since an older daemon ignores it.
   the daemon's own attach (`attach_with`), never on a port a daemon
   holds.  A daemon that does not say has only its unit's port skipped,
   and is named on stderr, rather than every probe refused for one
-  wedged or older daemon.  A port with a UUCP lock file is not probed,
-  stale or not: a lock's owner is another program's business, and
-  deleting a stale one is its job, not a listing's.  `daemons` shows
-  the port too.  An instance directory with no socket reads "waiting
-  for a receiver" in both: systemd removes a stopped unit's directory,
-  and a daemon opens its socket only once a receiver answers; a daemon
-  that has stopped leaves a socket nobody answers on, which still
-  reads not running.  macOS's
-  `tty.X` and `cu.X` are one port, each node with its own lock.
+  wedged or older daemon.  UUCP lock files are not checked, as there
+  is no portable way.  `daemons` shows the port too.  An instance
+  directory with no socket reads "waiting for a receiver" in both:
+  systemd removes a stopped unit's directory, and a daemon opens its
+  socket only once a receiver answers; a daemon that has stopped
+  leaves a socket nobody answers on, which still reads not running.
+  macOS's `tty.X` and `cu.X` are one port, each node with its own
+  lock.
 - `smartclock-cli --serial` picks the receiver, not the port: after a
   USB re-enumeration swapped two daemons' receivers, a command meant
   for one rewrote the other's EEPROM.  Alone it finds the one daemon

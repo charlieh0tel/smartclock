@@ -104,6 +104,12 @@ label 7VGN4.
 
 ![The main board](images/Z3801-68001/z3801a-main-board.jpg)
 
+![The FPGA, U32, and the analog corner beside it, as on the Z3805A: U36, the TLC0820AC, U37, the MC144110DW, U40 and Q2, U35, the ADC0838, and U31's bare footprint, on 2026-11-09](images/Z3801-68001/z3801a-analog-top.jpg)
+
+![The FPGA, U32, wider: U31's bare footprint, the AT&T 1141LL at U41/U42, J4 and J5's footprints with CR14 and CR15, and the bare footprints round them, on 2026-11-10](images/Z3801-68001/z3801a-fpga-top.jpg)
+
+![Beside the serial connector: the AT&T 1141LL on the U5/U6 co-layout footprint, U2, the LT1180ACS, and U7, on 2026-11-10](images/Z3801-68001/z3801a-serial-top.jpg)
+
 A hand-wired board, carrying a Motorola MC74ACT14N hex Schmitt
 inverter, sits over the main board's J3 footprint, wired with blue
 wire; it is not HP's, and its wiring was not traced.
@@ -280,12 +286,21 @@ DC-DC power module.
 
 ![The power supply, reverse: its part number and labels](images/Z3805-68001/z3805a-power-supply-bottom.jpg)
 
+![The FPGA, U32, and the analog corner beside it: U36, the TLC0820AC, U40, Q2 and U37, the MC144110, on 2026-11-09](images/Z3805-68001/z3805a-analog-top.jpg)
+
+![The solder side under U36, U37, Q2 and U40, aligned by the standoffs: CR18 and CR19, the precision resistors and a reworked resistor marked 1000 (`hardware-investigations.md`, item 28)](images/Z3805-68001/z3805a-analog-back.jpg)
+
+![U31's bare footprint, U35, the ADC0838CCV, U34's bare pads and U39, on 2026-11-10](images/Z3805-68001/z3805a-adc-top.jpg)
+
 ### Photos still wanted
 
 What the photos above leave open (`hardware-investigations.md`,
 items 13, 19, 20 and 21).  The 2026-10-30 photos of the board out of
-the chassis show both sides whole and read U44, a 74ABT574 beside J13;
-the close-ups below are still wanted.  Power off throughout, as in
+the chassis show both sides whole and read U44, a 74ABT574 beside J13,
+a 4-pin, 0.100 in pitch, right-angle connector, the one the 58503A
+carries there too (owner, 2026-11-09); the 2026-11-09 analog close-up
+reads U44 in full, Philips 74ABT574AD.  The close-ups below are still
+wanted.  Power off throughout, as in
 `hardware-investigations.md`, "Working on the open Z3805A board".
 For all of them: the full-resolution file, no crop, the camera's own
 EXIF rotation; a tripod or a rest, and focus set on the part, not the

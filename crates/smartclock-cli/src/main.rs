@@ -380,6 +380,22 @@ fn parse() -> Cli {
     Cli::from_arg_matches(&command.get_matches()).unwrap_or_else(|e| e.exit())
 }
 
+/// `--baud`, checked against the rates a port can be opened at.
+fn baud(bits_per_second: u32) -> Result<BaudRate> {
+    BaudRate::new(bits_per_second).with_context(|| {
+        let supported = BaudRate::ALL.map(|b| b.to_string()).join(", ");
+        format!("{bits_per_second} is not a rate the receiver supports ({supported})")
+    })
+}
+
+/// A session's settings, waiting `timeout` for a prompt.
+fn config(timeout: Duration) -> Config {
+    Config {
+        timeout,
+        ..Config::default()
+    }
+}
+
 fn main() -> Result<()> {
     let cli = parse();
 
@@ -448,13 +464,7 @@ fn main() -> Result<()> {
     let checked = typed(&cli.command)?;
     refuse_forbidden(&checked)?;
 
-    let baud = BaudRate::new(cli.baud).with_context(|| {
-        let supported = BaudRate::ALL.map(|b| b.to_string()).join(", ");
-        format!(
-            "{} is not a rate the receiver supports ({supported})",
-            cli.baud
-        )
-    })?;
+    let baud = baud(cli.baud)?;
     // clap will not let a global argument be required, so the check is
     // here.  It is still not optional: guessing at a path means talking
     // to whatever is on it.
@@ -480,10 +490,7 @@ fn main() -> Result<()> {
         framing: cli.framing,
         read_timeout: Duration::from_millis(250),
     };
-    let config = Config {
-        timeout: cli.timeout,
-        ..Config::default()
-    };
+    let config = config(cli.timeout);
     // The console has its own prompt, where `*IDN?` means nothing, so a
     // console read finds its line settings by either prompt instead.
     let at_console =

@@ -339,14 +339,15 @@ where
     Err(ConsoleError::NoLineSettings(settings.path.clone()))
 }
 
-/// A console on a serial port.
-struct Console<T> {
+/// A console on a serial port, at its prompt.
+#[derive(Debug)]
+pub struct Console<T> {
     port: T,
 }
 
 impl<T: Read + Write> Console<T> {
     /// Send one line and return everything up to the prompt after it.
-    fn send(&mut self, line: &str) -> Result<String> {
+    pub fn send(&mut self, line: &str) -> Result<String> {
         self.send_within(line, REQUEST_TIMEOUT)
     }
 
@@ -405,7 +406,7 @@ impl<T: Read + Write> Console<T> {
 
     /// The console on `port`: an empty line, and when no console prompt
     /// answers it, [`ENTER`] and the prompt after it.
-    fn reach(port: T, progress: &mut impl FnMut(Progress)) -> Result<Self> {
+    pub fn reach(port: T, progress: &mut impl FnMut(Progress)) -> Result<Self> {
         let mut console = Self { port };
         if console.send_within("", PROBE_TIMEOUT).is_err() {
             progress(Progress::Entering);
@@ -441,11 +442,16 @@ impl<T: Read + Write> Console<T> {
 
     /// The long word at `address`, read in `hex`.
     fn long(&mut self, address: u32) -> Result<u32> {
-        let request = Fetch::new(address, Width::Long)?.request();
-        match words(&self.send(&request)?, &request)?.as_slice() {
+        self.number(&Fetch::new(address, Width::Long)?.request())
+    }
+
+    /// The one number `request` prints, in the current base, which must
+    /// be `hex`.
+    pub fn number(&mut self, request: &str) -> Result<u32> {
+        match words(&self.send(request)?, request)?.as_slice() {
             [word] => Ok(*word),
             other => Err(ConsoleError::WordCount {
-                request,
+                request: request.to_owned(),
                 got: other.len(),
                 wanted: 1,
             }),
@@ -804,8 +810,9 @@ pub fn back_to_scpi<T: Transport>(port: T, config: Config) -> Result<String> {
     leave(port, config, WayBack::HaltOrInstaller)
 }
 
-/// Return a port at the console to the primary's SCPI parser `way`.
-fn leave<T: Transport>(port: T, config: Config, way: WayBack) -> Result<String> {
+/// Return a port at the console to the primary's SCPI parser `way`,
+/// and return the primary's `*IDN?` answer.
+pub fn leave<T: Transport>(port: T, config: Config, way: WayBack) -> Result<String> {
     let (halted, port) = by_halt(port, &config);
     let Err(halt) = halted else {
         return halted;
@@ -926,9 +933,9 @@ mod tests {
         }
     }
 
-    // Borrowed, so a test can read what was sent once the session that
-    // took the port is gone.
-    impl Transport for &mut Fake {
+    // Lent as `&mut Fake`, so a test can read what was sent once the
+    // session that took the port is gone.
+    impl Transport for Fake {
         fn describe(&self) -> String {
             "fake console".to_owned()
         }

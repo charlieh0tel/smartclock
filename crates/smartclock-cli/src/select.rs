@@ -6,7 +6,61 @@ use std::path::Path;
 use anyhow::Result;
 use smartclock::client;
 use smartclock::client::Daemon;
+use smartclock::console::Fetch;
+use smartclock::console::Width;
 use smartclock::parse::Identity;
+
+/// The EEPROM's identity record: the model, NUL-padded, and the
+/// serial number, each as (address, bytes) (the units' dumps under
+/// `third_party/firmware/images/eeprom/`).
+pub(crate) const EEPROM_MODEL: (u32, usize) = (0x40_0012, 6);
+pub(crate) const EEPROM_SERIAL: (u32, usize) = (0x40_0024, 10);
+
+/// What a unit's EEPROM says it is, read through the console, where
+/// `*IDN?` cannot be asked.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct EepromIdentity {
+    /// The model, such as `Z3805A`.
+    pub(crate) model: String,
+    /// The serial number.
+    pub(crate) serial: String,
+}
+
+impl EepromIdentity {
+    /// The console fetches that read the record, a byte each: the
+    /// model's, then the serial's.
+    pub(crate) fn fetches() -> Result<Vec<Fetch>> {
+        [EEPROM_MODEL, EEPROM_SERIAL]
+            .iter()
+            .flat_map(|&(at, n)| at..at + n as u32)
+            .map(|address| Ok(Fetch::new(address, Width::Byte)?))
+            .collect()
+    }
+
+    /// The identity in the values [`Self::fetches`] gave, which `values`
+    /// starts with, and the values after them.
+    pub(crate) fn split(values: &[u32]) -> (Self, &[u32]) {
+        let (model, rest) = values.split_at(EEPROM_MODEL.1);
+        let (serial, rest) = rest.split_at(EEPROM_SERIAL.1);
+        (
+            Self {
+                model: text(model),
+                serial: text(serial),
+            },
+            rest,
+        )
+    }
+}
+
+/// The text of bytes read one a fetch, up to the first NUL.
+pub(crate) fn text(bytes: &[u32]) -> String {
+    bytes
+        .iter()
+        .map(|&byte| byte as u8)
+        .take_while(|&byte| byte != 0)
+        .map(char::from)
+        .collect()
+}
 
 /// A receiver's serial number as `*IDN?` gives it, trimmed.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,9 +144,44 @@ pub(crate) fn check_daemon(
 
 #[cfg(test)]
 mod tests {
+    use super::EEPROM_MODEL;
+    use super::EEPROM_SERIAL;
+    use super::EepromIdentity;
     use super::Serial;
     use super::check_direct;
     use smartclock::parse;
+
+    /// Where chip select 9 puts the EEPROM.
+    const EEPROM_BASE: u32 = 0x40_0000;
+
+    #[test]
+    fn the_eeprom_identity_is_read_from_each_units_dump() {
+        for (name, model, serial) in [
+            ("z3801a-3542A01548", "Z3801A", "3542A01548"),
+            ("58503b-L00000", "58503B", "L00000"),
+        ] {
+            let path = format!(
+                "{}/../../third_party/firmware/images/eeprom/{name}-eeprom.bin",
+                env!("CARGO_MANIFEST_DIR")
+            );
+            let eeprom = std::fs::read(&path).expect(&path);
+            let values: Vec<u32> = [EEPROM_MODEL, EEPROM_SERIAL]
+                .iter()
+                .flat_map(|&(at, n)| {
+                    let at = (at - EEPROM_BASE) as usize;
+                    eeprom[at..at + n].iter().map(|&byte| u32::from(byte))
+                })
+                .collect();
+            assert_eq!(
+                EepromIdentity::fetches().expect("fetches").len(),
+                values.len()
+            );
+            let (identity, rest) = EepromIdentity::split(&values);
+            assert_eq!(identity.model, model, "{name}");
+            assert_eq!(identity.serial, serial, "{name}");
+            assert!(rest.is_empty());
+        }
+    }
 
     #[test]
     fn a_serial_is_trimmed_and_not_empty() {

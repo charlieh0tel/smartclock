@@ -24,7 +24,11 @@ use smartclock::console::Width;
 use smartclock::session::Config;
 use smartclock::transport::Transport;
 
+use crate::select::EEPROM_MODEL;
+use crate::select::EEPROM_SERIAL;
+use crate::select::EepromIdentity;
 use crate::select::Serial;
+use crate::select::text;
 
 /// What `read-registers` is asked to do.
 #[derive(Debug, clap::Args)]
@@ -102,12 +106,6 @@ impl Model {
         }
     }
 }
-
-/// The EEPROM's identity record: the model, NUL-padded, and the
-/// serial number (the units' dumps under
-/// `third_party/firmware/images/eeprom/`).
-const EEPROM_MODEL: (u32, usize) = (0x40_0012, 6);
-const EEPROM_SERIAL: (u32, usize) = (0x40_0024, 10);
 
 /// The DUART on chip select 8: register n at `DUART + 2n + 1`, its
 /// lower byte lane (`boards/z3805a.toml`; MC68681 Table 4-1).
@@ -638,15 +636,14 @@ fn plan(args: &ReadRegistersArgs) -> Result<(Vec<Register>, Vec<Fetch>)> {
 /// The identity reads: the EEPROM's model and serial, the flash's
 /// revision string, a byte each.
 fn identity_fetches(profile: &Profile) -> Result<Vec<Fetch>> {
-    [
-        EEPROM_MODEL,
-        EEPROM_SERIAL,
-        (profile.revision_at, profile.revision.len()),
-    ]
-    .iter()
-    .flat_map(|&(at, n)| at..at + n as u32)
-    .map(|address| Ok(Fetch::new(address, Width::Byte)?))
-    .collect()
+    let revision = (profile.revision_at..)
+        .take(profile.revision.len())
+        .map(|address| Ok(Fetch::new(address, Width::Byte)?));
+    EepromIdentity::fetches()?
+        .into_iter()
+        .map(Ok)
+        .chain(revision)
+        .collect()
 }
 
 /// The width's console word and its digits.
@@ -748,21 +745,16 @@ pub(crate) fn dry_run(args: &ReadRegistersArgs) -> Result<()> {
     Ok(())
 }
 
-/// The text of bytes read one a fetch, up to the first NUL.
-fn text(bytes: &[u32]) -> String {
-    bytes
-        .iter()
-        .map(|&byte| byte as u8)
-        .take_while(|&byte| byte != 0)
-        .map(char::from)
-        .collect()
-}
-
 /// Why the unit is not the one asked for, or `None` if it is.
 fn mismatch(profile: &Profile, serial: &str, identity: &[u32]) -> Option<String> {
-    let (model, rest) = identity.split_at(EEPROM_MODEL.1);
-    let (found_serial, revision) = rest.split_at(EEPROM_SERIAL.1);
-    let (model, found_serial, revision) = (text(model), text(found_serial), text(revision));
+    let (
+        EepromIdentity {
+            model,
+            serial: found_serial,
+        },
+        revision,
+    ) = EepromIdentity::split(identity);
+    let revision = text(revision);
     (model != profile.model || found_serial != serial || revision != profile.revision).then(|| {
         format!(
             "the unit's EEPROM says {model} {found_serial} and its flash {revision:?}, \

@@ -47,6 +47,11 @@ impl<T: Transport, W: Write> TeeTransport<T, W> {
         }
     }
 
+    /// The transport recorded, for what its own type offers.
+    pub fn inner_mut(&mut self) -> &mut T {
+        &mut self.inner
+    }
+
     /// Write out any pending run and flush.  Dropping the tee does this
     /// too; call it explicitly when a write failure should be noticed.
     pub fn finish(&mut self) -> Result<()> {

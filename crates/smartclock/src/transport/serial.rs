@@ -47,18 +47,9 @@ pub struct SerialTransport {
 impl SerialTransport {
     /// Open the port, at the settings' framing, with no flow control.
     pub fn open(settings: &Settings) -> Result<Self> {
-        let data_bits = match settings.framing.data_bits() {
-            7 => serialport::DataBits::Seven,
-            _ => serialport::DataBits::Eight,
-        };
-        let parity = match settings.framing.odd_parity() {
-            None => serialport::Parity::None,
-            Some(true) => serialport::Parity::Odd,
-            Some(false) => serialport::Parity::Even,
-        };
         let port = serialport::new(&settings.path, settings.baud.get())
-            .data_bits(data_bits)
-            .parity(parity)
+            .data_bits(DataBits::of(settings.framing).port())
+            .parity(parity(settings.framing.odd_parity()))
             .stop_bits(serialport::StopBits::One)
             .flow_control(serialport::FlowControl::None)
             .timeout(settings.read_timeout)
@@ -67,6 +58,64 @@ impl SerialTransport {
             port,
             path: settings.path.clone(),
         })
+    }
+
+    /// Move the open port to `baud`, `bits` and the parity
+    /// `odd_parity` names as [`Framing::odd_parity`] does, which may be
+    /// one no receiver's port uses, and drop what it has received.
+    pub fn set_line(
+        &mut self,
+        baud: BaudRate,
+        bits: DataBits,
+        odd_parity: Option<bool>,
+    ) -> Result<()> {
+        self.port.set_baud_rate(baud.get())?;
+        self.port.set_data_bits(bits.port())?;
+        self.port.set_parity(parity(odd_parity))?;
+        self.port.clear(serialport::ClearBuffer::Input)?;
+        Ok(())
+    }
+
+    /// Hold the line in a break for `length`.
+    pub fn send_break(&mut self, length: Duration) -> Result<()> {
+        self.port.set_break()?;
+        std::thread::sleep(length);
+        self.port.clear_break()?;
+        Ok(())
+    }
+}
+
+/// Data bits a character, as a port can be set to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DataBits {
+    /// Seven.
+    Seven,
+    /// Eight.
+    Eight,
+}
+
+impl DataBits {
+    /// A framing's.
+    fn of(framing: Framing) -> Self {
+        match framing {
+            Framing::EightNone => Self::Eight,
+            Framing::SevenOdd => Self::Seven,
+        }
+    }
+
+    fn port(self) -> serialport::DataBits {
+        match self {
+            Self::Seven => serialport::DataBits::Seven,
+            Self::Eight => serialport::DataBits::Eight,
+        }
+    }
+}
+
+fn parity(odd_parity: Option<bool>) -> serialport::Parity {
+    match odd_parity {
+        None => serialport::Parity::None,
+        Some(true) => serialport::Parity::Odd,
+        Some(false) => serialport::Parity::Even,
     }
 }
 

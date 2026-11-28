@@ -702,6 +702,25 @@ firmware; a pod adapter (`pod_target.py`) drives the mc683xx pod,
 through which a bench trial on a 58503A passed on 2026-11-22.
 `tools/bdm/README.md`.
 
+### Passthrough runs a relay from the console's dictionary
+
+`smartclock-cli passthrough` reaches a closed unit's GPS engine by
+compiling a CPU32 word, `relay`, into the pForth console's RAM
+dictionary and calling it, rather than by any firmware change: nothing
+is written outside the dictionary, and a reset undoes it.  The source,
+`crates/smartclock-cli/src/passthrough/relay.s`, is checked in beside
+the bytes the CLI embeds, and `make check-relay` holds them together;
+the Forth definition is generated from the bytes and read back before
+the call.  The relay finds the host port at run time (DUART channel B,
+or the SCI) instead of by model, but only the models it is proven on,
+by the EEPROM's model, are started: the 58503A, Z3801A, Z3805A and
+Z3816A.  Any other, the 58503B, whose engine port is an MC6850, among
+them, is refused until it is proven.  It is gated as
+`read-registers --read` and `flash --write` are: a dry run unless
+given `--start` and a `--serial` the EEPROM matches.  It ends only by
+a reset: the host's break with no setting left stops the watchdog's
+service.  `docs/running.md`, "Passthrough to the GPS engine".
+
 ### The firmware in C
 
 The goal is idiomatic C a person can read, proven function by function

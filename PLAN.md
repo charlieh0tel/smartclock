@@ -105,7 +105,9 @@ client relying on a field asks first, since an older daemon ignores it.
   and, as root, sets another program's port raw at 9600; elsewhere
   from the crate (SetupAPI, IOKit), which opens none.  `--probe` is
   the daemon's own attach (`attach_with`), never on a port a daemon
-  holds, and not at all while any daemon's port cannot be told; macOS's
+  holds.  A daemon that does not say has only its unit's port skipped,
+  and is named on stderr, rather than every probe refused for one
+  wedged or older daemon; macOS's
   `tty.X` and `cu.X` are one port, each node with its own lock.
 - `smartclock-cli --serial` picks the receiver, not the port: after a
   USB re-enumeration swapped two daemons' receivers, a command meant

@@ -87,6 +87,9 @@ struct Holder {
     /// that does not, as the packaged unit names it.  `None` when
     /// neither tells.
     port: Option<String>,
+    /// Whether the daemon said `port` itself, rather than it being
+    /// guessed from the instance name.
+    reported: bool,
 }
 
 /// What is known of what is on a port.
@@ -129,26 +132,30 @@ pub(crate) fn run(run_dir: Option<&Path>, probe: Option<&Probe>) -> Result<()> {
         print(&rows);
         return Ok(());
     };
-    let unplaced = unplaced(&holders);
-    if !unplaced.is_empty() {
-        print(&rows);
-        anyhow::bail!(
-            "nothing was probed: which port {} holds cannot be told, and a port a daemon \
-             holds is never probed.  Stop it, or ask one port with --device ... query *IDN?",
-            unplaced.join(", ")
-        );
+    for note in unplaced(&holders) {
+        eprintln!("{note}");
     }
     print(&probe_free(rows, probe));
     Ok(())
 }
 
-/// The daemons whose port cannot be told, any of which forbids probing:
-/// it could be on any port listed free.
-fn unplaced(holders: &[Holder]) -> Vec<&str> {
+/// What a probe skips for each daemon that did not say which port it
+/// holds: its unit's port, if there is one, and nothing else.
+fn unplaced(holders: &[Holder]) -> Vec<String> {
     holders
         .iter()
-        .filter(|holder| holder.port.is_none())
-        .map(|holder| holder.name.as_str())
+        .filter(|holder| !holder.reported)
+        .map(|holder| match &holder.port {
+            Some(port) => format!(
+                "daemon {} did not say which port it holds; not probing {port}, its unit's port",
+                holder.name
+            ),
+            None => format!(
+                "daemon {} did not say which port it holds, and no port is named after it; \
+                 nothing was skipped for it",
+                holder.name
+            ),
+        })
         .collect()
 }
 
@@ -169,6 +176,7 @@ fn holder(daemons: &Daemons, asked: Asked) -> Option<Holder> {
     if matches!(asked.state, State::Stopped(_)) && asked.found.socket == Presence::Present {
         return None;
     }
+    let reported = asked.device.is_some();
     let port = asked.device.or_else(|| match daemons {
         Daemons::Dir(_) => {
             unit_device(&asked.found.instance.name).filter(|path| Path::new(path).exists())
@@ -179,6 +187,7 @@ fn holder(daemons: &Daemons, asked: Asked) -> Option<Holder> {
         name: asked.found.instance.name,
         status: daemons::status(&asked.state),
         port,
+        reported,
     })
 }
 
@@ -586,6 +595,7 @@ mod tests {
             name: name.to_owned(),
             status: "running, Z3801A serial 0000A00000 firmware 3543-A".to_owned(),
             port: port.map(str::to_owned),
+            reported: port.is_some(),
         }
     }
 
@@ -733,7 +743,24 @@ mod tests {
         )
         .expect("a daemon still waiting for its receiver");
         assert_eq!(waiting.port, None);
-        assert_eq!(unplaced(&[named, waiting]), ["no-such-port"]);
+        let notes = unplaced(&[named, waiting]);
+        assert_eq!(notes.len(), 1, "{notes:?}");
+        assert!(
+            notes[0].starts_with("daemon no-such-port ")
+                && notes[0].ends_with("nothing was skipped for it"),
+            "{notes:?}"
+        );
+        let guessed = Holder {
+            reported: false,
+            ..holder("ttyUSB1", Some("/dev/ttyUSB1"))
+        };
+        assert_eq!(
+            unplaced(&[guessed]),
+            [
+                "daemon ttyUSB1 did not say which port it holds; not probing /dev/ttyUSB1, \
+              its unit's port"
+            ]
+        );
     }
 
     #[test]

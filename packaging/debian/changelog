@@ -1,3 +1,20 @@
+smartclockmon (1.10.0-1) unstable; urgency=low
+
+  * `smartclock-cli devices` lists the host's serial ports, one line
+    each: the daemon holding the port and its receiver, the USB adapter
+    and the port's other names.  Listing opens no port; `--probe` asks
+    each free port `*IDN?`, as a daemon attaching does.
+  * `smartclock-cli --serial` picks a receiver by its serial number and
+    finds the daemon attached to it.  With `--daemon` or `--device` it
+    refuses before anything is sent to a different receiver.  `flash
+    --write` and `read-registers --read` require it.
+  * `smartclock-cli daemons` shows each daemon's port, and a daemon
+    waiting for its first receiver as waiting.  `--run-dir` applies to
+    every command.
+  * The logs stay at schema 13.
+
+ -- Christopher Hoover <ch@murgatroid.com>  Fri, 27 Nov 2026 23:50:27 -0800
+
 smartclockmon (1.9.2-1) unstable; urgency=low
 
   * `smartclock-cli flash` takes the Z3805A's 1.01.03 image, the

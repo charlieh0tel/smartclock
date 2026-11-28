@@ -221,7 +221,17 @@ fn why(reading: &Reading, what: &str) -> String {
 /// One instance's line: its name, the endpoint to give `--daemon`, and
 /// what it is attached to or why that is not known.
 fn line(instance: &Instance, state: &State) -> String {
-    let status = match state {
+    format!(
+        "{} {}: {}",
+        instance.name,
+        instance.endpoint.display(),
+        status(state)
+    )
+}
+
+/// What an instance is attached to, or why that is not known.
+fn status(state: &State) -> String {
+    match state {
         State::Answering(id) => format!("running, {}", describe(id)),
         State::Silent(Some(id), why) => {
             format!(
@@ -236,12 +246,7 @@ fn line(instance: &Instance, state: &State) -> String {
             "cannot tell ({}; are you in its group?)",
             std::io::Error::from(*kind)
         ),
-    };
-    format!(
-        "{} {}: {status}",
-        instance.name,
-        instance.endpoint.display()
-    )
+    }
 }
 
 #[cfg(test)]

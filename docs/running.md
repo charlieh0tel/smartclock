@@ -133,6 +133,7 @@ the error queue whatever the wrong settings left there:
 
     /dev/ttyS0: free, 58503A serial 0000A00000 firmware 3704-C at 9600 8N1
     /dev/ttyS1: free, not identified (...)
+    /dev/ttyS2: free, locked by pid 1234 (/var/lock/LCK..ttyS2), not probed
 
 Each setting tried on a port that does not answer costs `--timeout`,
 so a probe takes a few of them.  It sends a line ending at each setting
@@ -140,7 +141,11 @@ and, to what answers with a prompt, `*IDN?`, after `:SYSTem:ERRor?`
 until the queue is empty if the first setting did not answer.  But
 opening a port also raises its modem lines, which resets some boards,
 and a program holding a port without an exclusive lock has its replies
-taken.  A daemon that does not say which port it holds keeps its
+taken.  A port with a UUCP lock file, `LCK..<port>` in `/var/lock` or
+`/run/lock`, as minicom and the like take, is not probed: it reads
+locked, with the pid in the file if it can be read, and a stale lock,
+whose pid is not running, is skipped all the same and left in place.
+A daemon that does not say which port it holds keeps its
 unit's port, `/dev/%I`, from the probe if there is one; the others are
 probed anyway, and what was skipped for it is said on standard error.
 

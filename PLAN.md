@@ -107,7 +107,9 @@ client relying on a field asks first, since an older daemon ignores it.
   the daemon's own attach (`attach_with`), never on a port a daemon
   holds.  A daemon that does not say has only its unit's port skipped,
   and is named on stderr, rather than every probe refused for one
-  wedged or older daemon; macOS's
+  wedged or older daemon.  A port with a UUCP lock file is not probed,
+  stale or not: a lock's owner is another program's business, and
+  deleting a stale one is its job, not a listing's; macOS's
   `tty.X` and `cu.X` are one port, each node with its own lock.
 - `smartclock-cli --serial` picks the receiver, not the port: after a
   USB re-enumeration swapped two daemons' receivers, a command meant

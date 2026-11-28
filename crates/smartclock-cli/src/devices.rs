@@ -17,7 +17,6 @@ use anyhow::Context as _;
 use anyhow::Result;
 use smartclock::attach::attach_with;
 use smartclock::client::Daemons;
-use smartclock::client::Presence;
 use smartclock::parse::Identity;
 use smartclock::session::Config;
 use smartclock::transport;
@@ -196,11 +195,11 @@ fn print(rows: &[Row]) {
 }
 
 /// The daemon behind `asked`, unless there is none: a socket nobody
-/// listens on is a daemon gone.  An instance directory with no socket
-/// is kept, since a daemon opens its socket only once a receiver has
-/// answered, and until then it is opening its port again and again.
+/// listens on is a daemon gone.  One waiting for its first receiver is
+/// kept, since until one answers it is opening its port again and
+/// again.
 fn holder(daemons: &Daemons, asked: Asked) -> Option<Holder> {
-    if matches!(asked.state, State::Stopped(_)) && asked.found.socket == Presence::Present {
+    if matches!(asked.state, State::Stopped(_)) {
         return None;
     }
     let reported = asked.device.is_some();
@@ -804,12 +803,7 @@ mod tests {
         assert!(super::holder(&run, stale).is_none());
         let waiting = super::holder(
             &run,
-            asked(
-                "no-such-port",
-                Presence::Absent,
-                State::Stopped("no socket".to_owned()),
-                None,
-            ),
+            asked("no-such-port", Presence::Absent, State::Waiting, None),
         )
         .expect("a daemon still waiting for its receiver");
         assert_eq!(waiting.port, None);

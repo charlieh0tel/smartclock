@@ -52,12 +52,16 @@ fn daemons(dir: &Path) -> (bool, String) {
 fn every_instance_is_listed_with_what_it_is_attached_to_or_why_not() {
     let run = RunDir::new("daemons");
     let live = run.instance("live");
-    fake(&live, Freshness::Live);
+    Fake {
+        device: Some("/dev/ttyUSB0"),
+        ..Fake::attached(IDENTITY)
+    }
+    .serve(&live);
     let silent = run.instance("silent");
     fake(&silent, Freshness::Disconnected);
     let stale = run.instance("stale");
     drop(std::os::unix::net::UnixListener::bind(&stale).expect("bind"));
-    let stopped = run.instance("stopped");
+    let waiting = run.instance("waiting");
     let hung = run.instance("wedged");
     wedged(&hung);
     let shut = run.instance("shut");
@@ -76,7 +80,7 @@ fn every_instance_is_listed_with_what_it_is_attached_to_or_why_not() {
     let lines: Vec<&str> = out.lines().collect();
     let expected = [
         format!(
-            "live {}: running, 58503A serial 0000A00000 firmware 3704-C",
+            "live {}: running, 58503A serial 0000A00000 firmware 3704-C on /dev/ttyUSB0",
             live.display()
         ),
         if root {
@@ -96,7 +100,7 @@ fn every_instance_is_listed_with_what_it_is_attached_to_or_why_not() {
             "stale {}: not running (stale socket: connection refused)",
             stale.display()
         ),
-        format!("stopped {}: not running (no socket)", stopped.display()),
+        format!("waiting {}: waiting for a receiver", waiting.display()),
         format!(
             "wedged {}: not answering (it did not answer within 3.0s)",
             hung.display()

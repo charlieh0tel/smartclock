@@ -87,19 +87,23 @@ sensors in `/etc/default/smartclock-sensord` first, then
 ### Finding a daemon
 
 `smartclock-cli daemons` lists the instances under `/run/smartclockd`,
-one line each: the instance, the socket to give `--daemon`, and what
-it found there:
+one line each: the instance, the socket to give `--daemon`, what it
+found there, and the port the daemon says it holds:
 
-    ttyUSB0 /run/smartclockd/ttyUSB0/socket: running, 58503A serial 0000A00000 firmware 3704-C
-    ttyUSB1 /run/smartclockd/ttyUSB1/socket: running, receiver not answering (last ...; link down: ...)
-    ttyS0 /run/smartclockd/ttyS0/socket: not running (no socket)
+    ttyUSB0 /run/smartclockd/ttyUSB0/socket: running, 58503A serial 0000A00000 firmware 3704-C on /dev/ttyUSB0
+    ttyUSB1 /run/smartclockd/ttyUSB1/socket: running, receiver not answering (last ...; link down: ...) on /dev/ttyUSB1
+    ttyS0 /run/smartclockd/ttyS0/socket: waiting for a receiver
     ttyS1 /run/smartclockd/ttyS1/socket: not running (stale socket: connection refused)
     ttyS2 /run/smartclockd/ttyS2/socket: cannot tell (permission denied; are you in its group?)
     ttyS3 /run/smartclockd/ttyS3/socket: not answering (it did not answer within ...)
 
 The receiver is the daemon's own account, from memory, so nothing is
 sent to it.  A daemon opens its socket only once a receiver has
-answered, so "no socket" is also a daemon still waiting for its first.
+answered, and systemd removes a stopped unit's directory, so an
+instance directory with no socket is a daemon waiting for its first
+receiver.  One that has stopped leaves its socket behind, which nobody
+answers on: "not running (stale socket ...)".  A daemon too old to
+report its port shows none.
 `--run-dir` looks elsewhere; a daemon given a `--socket` outside any
 run directory, or only `--listen`, is not found.  Where there are no
 Unix sockets it asks the default daemon, `tcp://127.0.0.1:9978`.

@@ -492,9 +492,11 @@ and receiver, two of each (`z3805a-interior.jpg`, 450,900 to
 an SO-8 National DS8921M, an RS-422 line driver and receiver pair
 (marking 6ZAG DS892 1M); beside the RS-232/RS-422 jumper block XW1, it
 is inferred, not traced, to be the port's RS-422 side.  The Z3801A,
-whose port the manual makes RS-422, fits an AT&T part at U5 or U6
+whose port the manual makes RS-422, fits an AT&T 1141LL at U5/U6
 (`z3801a-main-board.jpg`, 1500,2550 to 2150,3072), which suggests its
-RS-422 driver goes there.
+RS-422 driver goes there.  U5 and U6 are a co-layout: one SOIC-16
+footprint labeled both, bare on the Z3805A and the 58503A (owner,
+2026-11-10).
 The lines from U33's PQS6 and PQS7 leave through vias; not followed.
 Still needs the bench.
 
@@ -1341,7 +1343,9 @@ pack on its back side is seen fitted, R32 between U17 and J4 among
 them, so a missing pack does not explain J4.  Decoded with
 an XC3000 bitstream viewer, the Z3805A's bitstream makes FPGA pin 45
 an output that the 58503A's leaves unused, and pin 14 a registered
-output where the 58503A's is unregistered (`firmware/outputs.md`).
+output of the divider's 1 PPS (EI.Y) where the 58503A's is
+unregistered and passes pin 17's input through: a different signal,
+not only a different register (`firmware/outputs.md`).
 
 - [ ] TODO: follow J4's center pin back to its buffer (U17 or U18) and
   scope the buffer's input and output.  A pulse at the input and none
@@ -1397,7 +1401,8 @@ differs on the 58503A's board, and where the pulse was looked for are
 not recorded.
 
 *Changes:* whether the 58503A can have a second 1 PPS, and whether
-that takes parts or the Z3805A's FPGA bitstream.
+that takes parts, the Z3805A's FPGA bitstream (which alone did not
+give one) or cabling.
 
 ## 20. Where the Z3805A's lamp latch goes
 
@@ -1432,9 +1437,12 @@ board at the front of the chassis, reached by a ribbon cable from a
 header at the upper right of the main board (`z3805a-interior.jpg`,
 2500,1050 to 4080,2450); that board's back shows a column of two-pad
 joints, as for lamps, its parts facing away, and its lamps were not
-counted.  At about the same place on the Z3801A is J13, bare, beside U44,
-a Philips 74ABT574AD (`z3801a-main-board.jpg`, 1600,0 to 2200,500):
-an octal D flip-flop with 3-state outputs, its outputs enabled by
+counted.  At about the same place is J13, between the 10 MHz B jack
+and U44 on all three boards: a 4-pin, 0.100 in pitch, right-angle
+connector fitted, the same part, on the Z3805A and the 58503A, and
+bare on the Z3801A (owner, 2026-11-09).  Beside it is U44, on the
+Z3801A a Philips 74ABT574AD (`z3801a-main-board.jpg`, 1600,0 to
+2200,500): an octal D flip-flop with 3-state outputs, its outputs enabled by
 /OE, and no clear or reset input (`third_party/philips/
 74ABT574A.pdf`, Table 2; the AD is the 74ABT574A in SO-20).  Its
 feature list does claim a power-on reset, so it may come up cleared
@@ -1444,7 +1452,9 @@ is the candidate.  On the Z3805A that corner is out of focus in every in-chassis
 photo (`z3805a-main-board-2026-09-27.jpg`, 2350,2250 to 3150,3072):
 neither U44's designator nor its marking was read there.  On the
 2026-10-30 photo of the board out of the chassis (`board-atlas.html`)
-U44 reads 74ABT574, beside J13, as on the Z3801A.  If U44 is
+U44 reads 74ABT574, beside J13, as on the Z3801A; the 2026-11-09
+close-up (`z3805a-analog-top.jpg`) reads it in full, Philips
+74ABT574AD FV19713 9605.  If U44 is
 the latch, the part itself keeps its outputs through a reset,
 unless its /OE is tied to the reset line, as the emulator assumes it
 is not.  Suggests; the bench still has to tie CS5's decode to U44's
@@ -1741,8 +1751,8 @@ on the panel.  The bench 58503A has Option 001 (`bench.md`).
 - [ ] TODO: powered, the panel's bus on a scope and the key lamps
   against the firmware's map.
 
-*Photos:* the main board has two connectors that may take the panel's
-cable: an AMP connector
+*Photos:* the 58503A's front panel was not photographed.  The main
+board has two connectors that may take its cable: an AMP connector
 with one window beside the 10 MHz B jack, J15 (`58503a-interior.jpg`,
 930,1540 to 1130,1780), and, beside the oscillator near the photo's
 top edge, a 2 × 8 boxed header with locking ears, empty in the photo

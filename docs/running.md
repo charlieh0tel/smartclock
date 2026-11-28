@@ -171,13 +171,14 @@ refuses before anything is sent to a different one:
   that, or not yet attached to a receiver, is refused.
 - directly, by `*IDN?`, sent first.  A port already at the pForth
   console cannot be asked, so a console read refuses it;
-  `read-registers` checks the serial in the unit's EEPROM instead.
+  `read-registers` and `passthrough` check the serial in the unit's
+  EEPROM instead.
 
 The serial is compared exactly, case included, after trimming spaces.
 A command that needs the port, such as `probe` or `read-eeprom`, is
 told which daemon to stop.  Commands that need no receiver ignore it,
-as `flash` does without `--device`.  `flash --write` and
-`read-registers --read` require it.  The simulator's serial is
+as `flash` does without `--device`.  `flash --write`,
+`read-registers --read` and `passthrough --start` require it.  The simulator's serial is
 `0000A00000` whatever the model.
 
 ### Upgrading
@@ -383,7 +384,32 @@ checks ([the flasher](firmware/restart.md#the-flasher)).
 with the console's `halt`, or failing that through the installer with
 `:SYSTem:LANGuage "PRIMARY"` (`firmware/console.md`, "Reading memory through
 it").  `read-registers` enters the same way and returns with `halt`
-alone.
+alone.  `passthrough` enters the same way and, started, does not
+return: the unit relays until it is reset.
+
+### Passthrough to the GPS engine
+
+`smartclock-cli passthrough` makes a unit's host port a byte relay to
+its GPS engine's port, so a tool on the host can talk to the engine
+through the closed unit.  It defines a small machine-code word,
+`relay`, in the pForth console, checks it by reading it back, and
+calls it; at the relay's first answer it prints `ready` and exits,
+and the port is the engine's.  Stop the port's daemon first.  Without
+`--start` and `--serial` it is a dry run that prints what it would
+send:
+
+    smartclock-cli --device <port> passthrough             # opens nothing
+    smartclock-cli --device <port> passthrough --start --serial <serial>
+
+The relay runs at `--relay-baud` and `--relay-framing`, 9600 8N1 by
+default, on both ports; `--then-baud` and `--then-framing` name a
+second setting, which the host's first break moves both ports to.
+`--oncore-emu-bootloader` is 9600 8N1, then 19200 8E1, the settings an
+Oncore emulator board's bootloader takes.  Only a reset, a power
+cycle, or a break from the host with no setting left ends the relay;
+that break resets the unit.  Only the models it is proven on, the
+58503A, Z3801A, Z3805A and Z3816A, are started; any other is refused.  It needs a local serial port, since it changes the port's
+line settings.
 
 ## Where things live
 

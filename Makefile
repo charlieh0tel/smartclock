@@ -555,6 +555,25 @@ test-bdm:
 	python3 -I tools/bdm/test_pod_target.py
 	uv run -q tools/bdm/test_flash.py
 
+# smartclock-cli passthrough's relay, a CPU32 word the CLI defines in
+# the pForth console: relay-code assembles relay.s into the relay.bin
+# the CLI embeds, and check-relay fails unless they agree.  They need
+# the m68k binutils, which are not part of ci;
+# .github/workflows/firmware.yml runs check-relay.
+RELAY_SOURCE := crates/smartclock-cli/src/passthrough/relay
+RELAY_BUILD := target/relay
+.PHONY: relay-code check-relay
+$(RELAY_BUILD)/relay.bin: $(RELAY_SOURCE).s
+	mkdir -p $(RELAY_BUILD)
+	m68k-linux-gnu-as -mcpu=cpu32 -o $(RELAY_BUILD)/relay.o $<
+	m68k-linux-gnu-objcopy -O binary -j .text $(RELAY_BUILD)/relay.o $@
+
+relay-code: $(RELAY_BUILD)/relay.bin
+	cp $< $(RELAY_SOURCE).bin
+
+check-relay: $(RELAY_BUILD)/relay.bin
+	cmp $< $(RELAY_SOURCE).bin
+
 clean:
 	$(CARGO) clean
 

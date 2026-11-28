@@ -46,6 +46,13 @@ here, where they go stale unnoticed.
   and return to SCPI; `read-registers` only reads and never takes
   that exit.  Neither sends `:DIAGnostic:ERASe` or
   `:DIAGnostic:DOWNload`.
+- Exception: `smartclock-cli passthrough` enters the pForth console,
+  defines and runs `relay`, a machine-code word that makes the host
+  port a relay to the GPS engine's, and leaves it running; the unit
+  comes out of it only by a reset (a power cycle, or a host break with
+  no setting left, which the watchdog answers).  It never sends
+  `:DIAGnostic:ERASe`, `:DIAGnostic:DOWNload`, `:SYSTem:LANGuage
+  "INSTALL"` or any other command listed above.
 - The daemon holds the port open.  Stop it before using a direct-mode
   tool, and say so.
 

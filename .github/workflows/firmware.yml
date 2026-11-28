@@ -18,7 +18,8 @@ name: firmware
 # and the coverage page built from their data, every citation in them
 # checked; the FPGA decoder against XACT's test designs; and the FPGA
 # netlists' fast path against their references, and the explainer and
-# detail pages built.  And, in jobs of their own, the emulator (make
+# detail pages built; and smartclock-cli passthrough's relay against
+# its source.  And, in jobs of their own, the emulator (make
 # emulator) and its tests too slow unoptimized (make emulator-slow), and
 # its check for the browser's target (make emulator-wasm).
 #
@@ -144,6 +145,9 @@ jobs:
       - run: make check-scpi-tree IMAGE=z3801a-3543
         if: ${{ !cancelled() }}
       - run: make check-pforth-words
+        if: ${{ !cancelled() }}
+      # smartclock-cli passthrough's relay against its source.
+      - run: make check-relay
         if: ${{ !cancelled() }}
       - run: make check-image-diff
         if: ${{ !cancelled() }}

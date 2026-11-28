@@ -45,6 +45,7 @@ use smartclock::session::Config;
 use smartclock::session::Session;
 use smartclock::transport;
 use smartclock::transport::Transport;
+use smartclock::transport::serial::SerialTransport;
 use smartclock::transport::serial::Settings;
 use smartclock::transport::tee::TeeTransport;
 use smartclock::types::BaudRate;
@@ -58,6 +59,7 @@ use crate::dump_scpi::DumpScpiArgs;
 use crate::flash::FlashArgs;
 use crate::flash::chips::JoinArgs;
 use crate::flash::chips::SplitArgs;
+use crate::passthrough::PassthroughArgs;
 use crate::registers::ReadRegistersArgs;
 use crate::select::Serial;
 use crate::simulate_loop::SimulateLoopArgs;
@@ -229,6 +231,17 @@ enum Command {
     /// EEPROM and flash, reads with `c@` and `w@` only, and returns to
     /// SCPI with `halt` alone.
     ReadRegisters(ReadRegistersArgs),
+    /// Make the host port a byte relay to the GPS engine's port, for a
+    /// tool on the host to talk to the engine.  A dry run unless given
+    /// `--start` and `--serial`; then it enters the console as
+    /// `read-memory` does, checks the serial and the model in the
+    /// unit's EEPROM, defines and reads back a machine-code word,
+    /// `relay`, and calls it, prints `ready` once the relay answers,
+    /// and exits.  The relay runs until the unit is reset or power
+    /// cycled, or until a break from the host with no setting left
+    /// resets it (docs/running.md, "Passthrough to the GPS engine").
+    /// Needs a local serial port.
+    Passthrough(PassthroughArgs),
     /// Read the whole flash, 512 KiB from address 0, as `read-memory`
     /// does.
     ReadFlash {
@@ -329,6 +342,13 @@ fn console_read(command: &Command) -> Option<(u32, u32, &ReadTo)> {
     }
 }
 
+/// Whether `command` checks `--serial` in the unit's EEPROM, through
+/// the console, rather than by `*IDN?`, which a port at the console
+/// cannot answer.
+const fn checks_eeprom(command: &Command) -> bool {
+    matches!(command, Command::ReadRegisters(_) | Command::Passthrough(_))
+}
+
 /// Print a console read's progress.
 fn report(progress: Progress) {
     match progress {
@@ -377,6 +397,7 @@ mod dump_pforth;
 mod dump_scpi;
 mod flash;
 mod image;
+mod passthrough;
 mod registers;
 mod select;
 mod simulate_loop;
@@ -460,6 +481,11 @@ fn main() -> Result<()> {
     {
         return registers::dry_run(args);
     }
+    if let Command::Passthrough(args) = &cli.command
+        && !args.starts()
+    {
+        return passthrough::dry_run(args);
+    }
 
     // A command that needs the port is found its receiver's daemon only
     // to be told which to stop; flash without --device inspects only the
@@ -509,6 +535,14 @@ fn main() -> Result<()> {
         "--device is required and has no default; SMARTCLOCK_DEVICE works too, \
              and --serial alone finds the receiver's daemon",
     )?;
+    // Before the port is opened: the relay's start changes the port's
+    // line settings, which a network port does not carry.
+    if matches!(cli.command, Command::Passthrough(_)) && transport::is_network(&device) {
+        anyhow::bail!(
+            "passthrough changes the port's line settings, so needs a local serial port, \
+             not {device}; nothing was sent"
+        );
+    }
     let settings = Settings {
         path: device.clone(),
         baud,
@@ -518,8 +552,7 @@ fn main() -> Result<()> {
     let config = config(cli.timeout);
     // The console has its own prompt, where `*IDN?` means nothing, so a
     // console read finds its line settings by either prompt instead.
-    let at_console =
-        console_read(&cli.command).is_some() || matches!(cli.command, Command::ReadRegisters(_));
+    let at_console = console_read(&cli.command).is_some() || checks_eeprom(&cli.command);
     let settings = if at_console {
         let (found, reached) = console::line_settings(&settings, transport::open)
             .with_context(|| format!("no receiver answered on {}", settings.path))?;
@@ -536,8 +569,7 @@ fn main() -> Result<()> {
                     .with_context(|| format!("no receiver answered on {}", found.path))?;
                 select::check_direct(serial, &identity, &device)?;
             }
-            // read-registers checks the serial in the unit's EEPROM.
-            (Some(_), Reached::Console) if matches!(cli.command, Command::ReadRegisters(_)) => {}
+            (Some(_), Reached::Console) if checks_eeprom(&cli.command) => {}
             (Some(serial), Reached::Console) => anyhow::bail!(
                 "{device} is at the pForth console, where *IDN? cannot be asked, so it \
                  cannot be checked for serial {serial}; nothing was sent.  Leave the \
@@ -562,6 +594,18 @@ fn main() -> Result<()> {
     // file stops it before the run sends anything.  The line-settings
     // probe above has already spoken to the receiver, unrecorded.
     let capture = cli.capture.as_deref().map(transcript).transpose()?;
+    if let Command::Passthrough(args) = &cli.command {
+        let serial = cli
+            .serial
+            .as_ref()
+            .context("--start needs --serial: the unit's serial number")?;
+        let port = SerialTransport::open(&settings)
+            .with_context(|| format!("opening {device} at {} baud", settings.baud))?;
+        return match capture {
+            Some(file) => passthrough::run(TeeTransport::new(port, file), args, serial, config),
+            None => passthrough::run(port, args, serial, config),
+        };
+    }
     let port = transport::open(&settings)
         .with_context(|| format!("opening {device} at {} baud", settings.baud))?;
     // Capture wraps the port, so a recording covers the sync exchange
@@ -721,6 +765,7 @@ fn run<T: Transport>(mut session: Session<T>, command: &Command, checked: &[Stri
         | Command::ReadFlash { .. }
         | Command::ReadEeprom { .. }
         | Command::ReadRegisters(_)
+        | Command::Passthrough(_)
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
@@ -760,6 +805,7 @@ fn typed(command: &Command) -> Result<Vec<String>> {
         | Command::ReadFlash { .. }
         | Command::ReadEeprom { .. }
         | Command::ReadRegisters(_)
+        | Command::Passthrough(_)
         | Command::Flash(_)
         | Command::JoinChips(_)
         | Command::SplitChips(_)
@@ -1214,6 +1260,11 @@ fn through_daemon(socket: &Path, command: &Command, serial: Option<&Serial>) -> 
                 socket.display()
             )
         }
+        Command::Passthrough(_) => anyhow::bail!(
+            "passthrough talks to the pForth console on the port, not to the daemon; \
+             stop the smartclockd at {} and use --device",
+            socket.display()
+        ),
     }
 }
 

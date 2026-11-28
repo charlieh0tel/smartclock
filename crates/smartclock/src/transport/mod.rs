@@ -34,6 +34,14 @@ impl<T: Transport + ?Sized> Transport for Box<T> {
     }
 }
 
+/// So a caller can lend a port to work that would take it, and keep it
+/// for what follows.
+impl<T: Transport + ?Sized> Transport for &mut T {
+    fn describe(&self) -> String {
+        (**self).describe()
+    }
+}
+
 /// The prefix that means a receiver on the network rather than a local
 /// serial port.
 const NETWORK_PREFIX: &str = "tcp://";
